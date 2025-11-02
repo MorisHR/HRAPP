@@ -1,0 +1,1775 @@
+2025-11-02 03:49:41.196 +00:00 [INF] [] =================================================
+2025-11-02 03:49:41.232 +00:00 [INF] [] HRMS API Starting - Environment: Development
+2025-11-02 03:49:41.233 +00:00 [INF] [] =================================================
+2025-11-02 03:49:41.240 +00:00 [INF] [] Google Secret Manager disabled - using configuration/environment variables
+2025-11-02 03:49:41.316 +00:00 [INF] [] Rate limiting configured: Login (5/15min), API (100/min, 1000/hour)
+2025-11-02 03:49:41.326 +00:00 [INF] [] Health checks configured: PostgreSQL, Redis
+2025-11-02 03:49:41.610 +00:00 [INF] [] Initializing master database...
+2025-11-02 03:49:42.083 +00:00 [WRN] [] Sensitive data logging is enabled. Log entries and exception messages may include sensitive application data; this mode should only be enabled during development.
+2025-11-02 03:49:42.317 +00:00 [FTL] [] FATAL: Master database initialization failed
+Npgsql.NpgsqlException (0x80004005): Failed to connect to 127.0.0.1:5432
+ ---> System.Net.Sockets.SocketException (111): Connection refused
+   at System.Net.Sockets.Socket.AwaitableSocketAsyncEventArgs.ThrowException(SocketError error, CancellationToken cancellationToken)
+   at System.Net.Sockets.Socket.AwaitableSocketAsyncEventArgs.System.Threading.Tasks.Sources.IValueTaskSource.GetResult(Int16 token)
+   at System.Net.Sockets.Socket.<ConnectAsync>g__WaitForConnectWithCancellation|285_0(AwaitableSocketAsyncEventArgs saea, ValueTask connectTask, CancellationToken cancellationToken)
+   at Npgsql.TaskTimeoutAndCancellation.ExecuteAsync(Func`2 getTaskFunc, NpgsqlTimeout timeout, CancellationToken cancellationToken)
+   at Npgsql.Internal.NpgsqlConnector.ConnectAsync(NpgsqlTimeout timeout, CancellationToken cancellationToken)
+   at Npgsql.Internal.NpgsqlConnector.ConnectAsync(NpgsqlTimeout timeout, CancellationToken cancellationToken)
+   at Npgsql.Internal.NpgsqlConnector.RawOpen(SslMode sslMode, NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken)
+   at Npgsql.Internal.NpgsqlConnector.<Open>g__OpenCore|214_1(NpgsqlConnector conn, SslMode sslMode, NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken)
+   at Npgsql.Internal.NpgsqlConnector.Open(NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken)
+   at Npgsql.UnpooledDataSource.Get(NpgsqlConnection conn, NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken)
+   at Npgsql.NpgsqlConnection.<Open>g__OpenAsync|42_0(Boolean async, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalConnection.OpenInternalAsync(Boolean errorsExpected, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalConnection.OpenInternalAsync(Boolean errorsExpected, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalConnection.OpenAsync(CancellationToken cancellationToken, Boolean errorsExpected)
+   at Npgsql.EntityFrameworkCore.PostgreSQL.Storage.Internal.NpgsqlDatabaseCreator.Exists(Boolean async, CancellationToken cancellationToken)
+   at Npgsql.EntityFrameworkCore.PostgreSQL.Storage.Internal.NpgsqlDatabaseCreator.Exists(Boolean async, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalDatabaseCreator.EnsureCreatedAsync(CancellationToken cancellationToken)
+   at Program.<Main>$(String[] args) in /workspaces/HRAPP/src/HRMS.API/Program.cs:line 431
+2025-11-02 04:16:01.176 +00:00 [INF] [] =================================================
+2025-11-02 04:16:01.279 +00:00 [INF] [] HRMS API Starting - Environment: Development
+2025-11-02 04:16:01.284 +00:00 [INF] [] =================================================
+2025-11-02 04:16:01.304 +00:00 [INF] [] Google Secret Manager disabled - using configuration/environment variables
+2025-11-02 04:16:01.341 +00:00 [INF] [] Rate limiting configured: Login (5/15min), API (100/min, 1000/hour)
+2025-11-02 04:16:01.342 +00:00 [INF] [] Response compression enabled: Brotli (primary), Gzip (fallback) - Expected 60-80% bandwidth savings
+2025-11-02 04:16:01.353 +00:00 [INF] [] Health checks configured: PostgreSQL, Redis
+2025-11-02 04:16:01.383 +00:00 [INF] [] JSON serialization optimized: Nulls ignored, cycles handled, camelCase - Expected 30% smaller payloads
+2025-11-02 04:16:01.822 +00:00 [INF] [] Initializing master database...
+2025-11-02 04:16:03.351 +00:00 [WRN] [] Sensitive data logging is enabled. Log entries and exception messages may include sensitive application data; this mode should only be enabled during development.
+2025-11-02 04:16:05.678 +00:00 [INF] [] Executed DbCommand (372ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT CASE WHEN COUNT(*) = 0 THEN FALSE ELSE TRUE END
+FROM pg_class AS cls
+JOIN pg_namespace AS ns ON ns.oid = cls.relnamespace
+WHERE
+        cls.relkind IN ('r', 'v', 'm', 'f', 'p') AND
+        ns.nspname NOT IN ('pg_catalog', 'information_schema') AND
+        -- Exclude tables which are members of PG extensions
+        NOT EXISTS (
+            SELECT 1 FROM pg_depend WHERE
+                classid=(
+                    SELECT cls.oid
+                    FROM pg_class AS cls
+                             JOIN pg_namespace AS ns ON ns.oid = cls.relnamespace
+                    WHERE relname='pg_class' AND ns.nspname='pg_catalog'
+                ) AND
+                objid=cls.oid AND
+                deptype IN ('e', 'x')
+        )
+2025-11-02 04:16:05.734 +00:00 [ERR] [] Failed executing DbCommand (11ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT "MigrationId", "ProductVersion"
+FROM "__EFMigrationsHistory"
+ORDER BY "MigrationId";
+2025-11-02 04:16:05.740 +00:00 [INF] [] Applying 1 pending migrations
+2025-11-02 04:16:05.745 +00:00 [ERR] [] Failed executing DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT "MigrationId", "ProductVersion"
+FROM "__EFMigrationsHistory"
+ORDER BY "MigrationId";
+2025-11-02 04:16:06.010 +00:00 [FTL] [] FATAL: Master database initialization failed
+System.InvalidOperationException: An error was generated for warning 'Microsoft.EntityFrameworkCore.Migrations.PendingModelChangesWarning': The model for context 'MasterDbContext' has pending changes. Add a new migration before updating the database. See https://aka.ms/efcore-docs-pending-changes. This exception can be suppressed or logged by passing event ID 'RelationalEventId.PendingModelChangesWarning' to the 'ConfigureWarnings' method in 'DbContext.OnConfiguring' or 'AddDbContext'.
+   at Microsoft.EntityFrameworkCore.Diagnostics.EventDefinition`1.Log[TLoggerCategory](IDiagnosticsLogger`1 logger, TParam arg)
+   at Microsoft.EntityFrameworkCore.Diagnostics.RelationalLoggerExtensions.PendingModelChangesWarning(IDiagnosticsLogger`1 diagnostics, Type contextType)
+   at Microsoft.EntityFrameworkCore.Migrations.Internal.Migrator.ValidateMigrations(Boolean useTransaction, String targetMigration)
+   at Microsoft.EntityFrameworkCore.Migrations.Internal.Migrator.MigrateAsync(String targetMigration, CancellationToken cancellationToken)
+   at Npgsql.EntityFrameworkCore.PostgreSQL.Migrations.Internal.NpgsqlMigrator.MigrateAsync(String targetMigration, CancellationToken cancellationToken)
+   at Program.<Main>$(String[] args) in /workspaces/HRAPP/src/HRMS.API/Program.cs:line 485
+2025-11-02 04:16:40.502 +00:00 [INF] [] =================================================
+2025-11-02 04:16:40.626 +00:00 [INF] [] HRMS API Starting - Environment: Development
+2025-11-02 04:16:40.630 +00:00 [INF] [] =================================================
+2025-11-02 04:16:40.640 +00:00 [INF] [] Google Secret Manager disabled - using configuration/environment variables
+2025-11-02 04:16:40.662 +00:00 [INF] [] Rate limiting configured: Login (5/15min), API (100/min, 1000/hour)
+2025-11-02 04:16:40.663 +00:00 [INF] [] Response compression enabled: Brotli (primary), Gzip (fallback) - Expected 60-80% bandwidth savings
+2025-11-02 04:16:40.681 +00:00 [INF] [] Health checks configured: PostgreSQL, Redis
+2025-11-02 04:16:40.707 +00:00 [INF] [] JSON serialization optimized: Nulls ignored, cycles handled, camelCase - Expected 30% smaller payloads
+2025-11-02 04:16:42.013 +00:00 [WRN] [] Sensitive data logging is enabled. Log entries and exception messages may include sensitive application data; this mode should only be enabled during development.
+2025-11-02 04:17:58.772 +00:00 [INF] [] =================================================
+2025-11-02 04:17:58.974 +00:00 [INF] [] HRMS API Starting - Environment: Development
+2025-11-02 04:17:58.982 +00:00 [INF] [] =================================================
+2025-11-02 04:17:59.013 +00:00 [INF] [] Google Secret Manager disabled - using configuration/environment variables
+2025-11-02 04:17:59.052 +00:00 [INF] [] Rate limiting configured: Login (5/15min), API (100/min, 1000/hour)
+2025-11-02 04:17:59.052 +00:00 [INF] [] Response compression enabled: Brotli (primary), Gzip (fallback) - Expected 60-80% bandwidth savings
+2025-11-02 04:17:59.063 +00:00 [INF] [] Health checks configured: PostgreSQL, Redis
+2025-11-02 04:17:59.096 +00:00 [INF] [] JSON serialization optimized: Nulls ignored, cycles handled, camelCase - Expected 30% smaller payloads
+2025-11-02 04:17:59.738 +00:00 [INF] [] Initializing master database...
+2025-11-02 04:18:01.110 +00:00 [WRN] [] Sensitive data logging is enabled. Log entries and exception messages may include sensitive application data; this mode should only be enabled during development.
+2025-11-02 04:18:01.857 +00:00 [INF] [] Executed DbCommand (69ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT CASE WHEN COUNT(*) = 0 THEN FALSE ELSE TRUE END
+FROM pg_class AS cls
+JOIN pg_namespace AS ns ON ns.oid = cls.relnamespace
+WHERE
+        cls.relkind IN ('r', 'v', 'm', 'f', 'p') AND
+        ns.nspname NOT IN ('pg_catalog', 'information_schema') AND
+        -- Exclude tables which are members of PG extensions
+        NOT EXISTS (
+            SELECT 1 FROM pg_depend WHERE
+                classid=(
+                    SELECT cls.oid
+                    FROM pg_class AS cls
+                             JOIN pg_namespace AS ns ON ns.oid = cls.relnamespace
+                    WHERE relname='pg_class' AND ns.nspname='pg_catalog'
+                ) AND
+                objid=cls.oid AND
+                deptype IN ('e', 'x')
+        )
+2025-11-02 04:18:01.956 +00:00 [ERR] [] Failed executing DbCommand (7ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT "MigrationId", "ProductVersion"
+FROM "__EFMigrationsHistory"
+ORDER BY "MigrationId";
+2025-11-02 04:18:01.957 +00:00 [INF] [] Applying 2 pending migrations
+2025-11-02 04:18:01.963 +00:00 [ERR] [] Failed executing DbCommand (3ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT "MigrationId", "ProductVersion"
+FROM "__EFMigrationsHistory"
+ORDER BY "MigrationId";
+2025-11-02 04:18:02.445 +00:00 [INF] [] Applying migration '20251031135011_InitialMasterSchema'.
+2025-11-02 04:18:02.604 +00:00 [ERR] [] Failed executing DbCommand (4ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE TABLE master."AdminUsers" (
+    "Id" uuid NOT NULL,
+    "UserName" character varying(100) NOT NULL,
+    "Email" character varying(100) NOT NULL,
+    "PasswordHash" text NOT NULL,
+    "FirstName" character varying(100) NOT NULL,
+    "LastName" character varying(100) NOT NULL,
+    "IsActive" boolean NOT NULL,
+    "LastLoginDate" timestamp with time zone,
+    "PhoneNumber" character varying(20),
+    "IsTwoFactorEnabled" boolean NOT NULL,
+    "TwoFactorSecret" text,
+    "CreatedAt" timestamp with time zone NOT NULL,
+    "CreatedBy" text,
+    "UpdatedAt" timestamp with time zone,
+    "UpdatedBy" text,
+    "IsDeleted" boolean NOT NULL,
+    "DeletedAt" timestamp with time zone,
+    "DeletedBy" text,
+    CONSTRAINT "PK_AdminUsers" PRIMARY KEY ("Id")
+);
+2025-11-02 04:18:02.632 +00:00 [FTL] [] FATAL: Master database initialization failed
+Npgsql.PostgresException (0x80004005): 42P07: relation "AdminUsers" already exists
+   at Npgsql.Internal.NpgsqlConnector.ReadMessageLong(Boolean async, DataRowLoadingMode dataRowLoadingMode, Boolean readingNotifications, Boolean isReadingPrependedMessage)
+   at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1.StateMachineBox`1.System.Threading.Tasks.Sources.IValueTaskSource<TResult>.GetResult(Int16 token)
+   at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
+   at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
+   at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
+   at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
+   at Npgsql.NpgsqlCommand.ExecuteNonQuery(Boolean async, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteNonQueryAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteNonQueryAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteNonQueryAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Migrations.Internal.MigrationCommandExecutor.ExecuteAsync(IReadOnlyList`1 migrationCommands, IRelationalConnection connection, MigrationExecutionState executionState, Boolean beginTransaction, Boolean commitTransaction, Nullable`1 isolationLevel, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Migrations.Internal.MigrationCommandExecutor.ExecuteAsync(IReadOnlyList`1 migrationCommands, IRelationalConnection connection, MigrationExecutionState executionState, Boolean beginTransaction, Boolean commitTransaction, Nullable`1 isolationLevel, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.ExecuteAsync[TState,TResult](TState state, Func`4 operation, Func`4 verifySucceeded, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Migrations.Internal.MigrationCommandExecutor.ExecuteNonQueryAsync(IReadOnlyList`1 migrationCommands, IRelationalConnection connection, MigrationExecutionState executionState, Boolean commitTransaction, Nullable`1 isolationLevel, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Migrations.Internal.Migrator.MigrateImplementationAsync(DbContext context, String targetMigration, MigrationExecutionState state, Boolean useTransaction, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Migrations.Internal.Migrator.MigrateImplementationAsync(DbContext context, String targetMigration, MigrationExecutionState state, Boolean useTransaction, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Migrations.Internal.Migrator.<>c.<<MigrateAsync>b__22_1>d.MoveNext()
+--- End of stack trace from previous location ---
+   at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.<>c__DisplayClass30_0`2.<<ExecuteAsync>b__0>d.MoveNext()
+--- End of stack trace from previous location ---
+   at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.ExecuteImplementationAsync[TState,TResult](Func`4 operation, Func`4 verifySucceeded, TState state, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.ExecuteImplementationAsync[TState,TResult](Func`4 operation, Func`4 verifySucceeded, TState state, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.ExecuteAsync[TState,TResult](TState state, Func`4 operation, Func`4 verifySucceeded, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Migrations.Internal.Migrator.MigrateAsync(String targetMigration, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Migrations.Internal.Migrator.MigrateAsync(String targetMigration, CancellationToken cancellationToken)
+   at Npgsql.EntityFrameworkCore.PostgreSQL.Migrations.Internal.NpgsqlMigrator.MigrateAsync(String targetMigration, CancellationToken cancellationToken)
+   at Program.<Main>$(String[] args) in /workspaces/HRAPP/src/HRMS.API/Program.cs:line 485
+  Exception data:
+    Severity: ERROR
+    SqlState: 42P07
+    MessageText: relation "AdminUsers" already exists
+    File: heap.c
+    Line: 1150
+    Routine: heap_create_with_catalog
+2025-11-02 04:18:40.298 +00:00 [INF] [] =================================================
+2025-11-02 04:18:40.356 +00:00 [INF] [] HRMS API Starting - Environment: Development
+2025-11-02 04:18:40.360 +00:00 [INF] [] =================================================
+2025-11-02 04:18:40.370 +00:00 [INF] [] Google Secret Manager disabled - using configuration/environment variables
+2025-11-02 04:18:40.384 +00:00 [INF] [] Rate limiting configured: Login (5/15min), API (100/min, 1000/hour)
+2025-11-02 04:18:40.384 +00:00 [INF] [] Response compression enabled: Brotli (primary), Gzip (fallback) - Expected 60-80% bandwidth savings
+2025-11-02 04:18:40.391 +00:00 [INF] [] Health checks configured: PostgreSQL, Redis
+2025-11-02 04:18:40.408 +00:00 [INF] [] JSON serialization optimized: Nulls ignored, cycles handled, camelCase - Expected 30% smaller payloads
+2025-11-02 04:18:41.478 +00:00 [WRN] [] Sensitive data logging is enabled. Log entries and exception messages may include sensitive application data; this mode should only be enabled during development.
+2025-11-02 04:18:43.988 +00:00 [INF] [] Executed DbCommand (23ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT "MigrationId", "ProductVersion"
+FROM "__EFMigrationsHistory"
+ORDER BY "MigrationId";
+2025-11-02 04:20:10.479 +00:00 [INF] [] =================================================
+2025-11-02 04:20:10.578 +00:00 [INF] [] HRMS API Starting - Environment: Development
+2025-11-02 04:20:10.582 +00:00 [INF] [] =================================================
+2025-11-02 04:20:10.600 +00:00 [INF] [] Google Secret Manager disabled - using configuration/environment variables
+2025-11-02 04:20:10.617 +00:00 [INF] [] Rate limiting configured: Login (5/15min), API (100/min, 1000/hour)
+2025-11-02 04:20:10.620 +00:00 [INF] [] Response compression enabled: Brotli (primary), Gzip (fallback) - Expected 60-80% bandwidth savings
+2025-11-02 04:20:10.639 +00:00 [INF] [] Health checks configured: PostgreSQL, Redis
+2025-11-02 04:20:10.666 +00:00 [INF] [] JSON serialization optimized: Nulls ignored, cycles handled, camelCase - Expected 30% smaller payloads
+2025-11-02 04:20:10.984 +00:00 [INF] [] Initializing master database...
+2025-11-02 04:20:11.944 +00:00 [WRN] [] Sensitive data logging is enabled. Log entries and exception messages may include sensitive application data; this mode should only be enabled during development.
+2025-11-02 04:20:13.126 +00:00 [INF] [] Executed DbCommand (125ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT CASE WHEN COUNT(*) = 0 THEN FALSE ELSE TRUE END
+FROM pg_class AS cls
+JOIN pg_namespace AS ns ON ns.oid = cls.relnamespace
+WHERE
+        cls.relkind IN ('r', 'v', 'm', 'f', 'p') AND
+        ns.nspname NOT IN ('pg_catalog', 'information_schema') AND
+        -- Exclude tables which are members of PG extensions
+        NOT EXISTS (
+            SELECT 1 FROM pg_depend WHERE
+                classid=(
+                    SELECT cls.oid
+                    FROM pg_class AS cls
+                             JOIN pg_namespace AS ns ON ns.oid = cls.relnamespace
+                    WHERE relname='pg_class' AND ns.nspname='pg_catalog'
+                ) AND
+                objid=cls.oid AND
+                deptype IN ('e', 'x')
+        )
+2025-11-02 04:20:13.233 +00:00 [INF] [] Executed DbCommand (14ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT "MigrationId", "ProductVersion"
+FROM "__EFMigrationsHistory"
+ORDER BY "MigrationId";
+2025-11-02 04:20:13.250 +00:00 [INF] [] Applying 1 pending migrations
+2025-11-02 04:20:13.258 +00:00 [INF] [] Executed DbCommand (2ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT "MigrationId", "ProductVersion"
+FROM "__EFMigrationsHistory"
+ORDER BY "MigrationId";
+2025-11-02 04:20:13.523 +00:00 [INF] [] Executed DbCommand (25ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE TABLE IF NOT EXISTS "__EFMigrationsHistory" (
+    "MigrationId" character varying(150) NOT NULL,
+    "ProductVersion" character varying(32) NOT NULL,
+    CONSTRAINT "PK___EFMigrationsHistory" PRIMARY KEY ("MigrationId")
+);
+2025-11-02 04:20:13.568 +00:00 [INF] [] Executed DbCommand (2ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+LOCK TABLE "__EFMigrationsHistory" IN ACCESS EXCLUSIVE MODE
+2025-11-02 04:20:13.576 +00:00 [INF] [] Executed DbCommand (7ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT "MigrationId", "ProductVersion"
+FROM "__EFMigrationsHistory"
+ORDER BY "MigrationId";
+2025-11-02 04:20:13.593 +00:00 [INF] [] Applying migration '20251031135011_InitialMasterSchema'.
+2025-11-02 04:20:13.649 +00:00 [INF] [] Executed DbCommand (4ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM pg_namespace WHERE nspname = 'master') THEN
+        CREATE SCHEMA master;
+    END IF;
+END $EF$;
+2025-11-02 04:20:13.660 +00:00 [ERR] [] Failed executing DbCommand (8ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE TABLE master."AdminUsers" (
+    "Id" uuid NOT NULL,
+    "UserName" character varying(100) NOT NULL,
+    "Email" character varying(100) NOT NULL,
+    "PasswordHash" text NOT NULL,
+    "FirstName" character varying(100) NOT NULL,
+    "LastName" character varying(100) NOT NULL,
+    "IsActive" boolean NOT NULL,
+    "LastLoginDate" timestamp with time zone,
+    "PhoneNumber" character varying(20),
+    "IsTwoFactorEnabled" boolean NOT NULL,
+    "TwoFactorSecret" text,
+    "CreatedAt" timestamp with time zone NOT NULL,
+    "CreatedBy" text,
+    "UpdatedAt" timestamp with time zone,
+    "UpdatedBy" text,
+    "IsDeleted" boolean NOT NULL,
+    "DeletedAt" timestamp with time zone,
+    "DeletedBy" text,
+    CONSTRAINT "PK_AdminUsers" PRIMARY KEY ("Id")
+);
+2025-11-02 04:20:13.694 +00:00 [FTL] [] FATAL: Master database initialization failed
+Npgsql.PostgresException (0x80004005): 42P07: relation "AdminUsers" already exists
+   at Npgsql.Internal.NpgsqlConnector.ReadMessageLong(Boolean async, DataRowLoadingMode dataRowLoadingMode, Boolean readingNotifications, Boolean isReadingPrependedMessage)
+   at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1.StateMachineBox`1.System.Threading.Tasks.Sources.IValueTaskSource<TResult>.GetResult(Int16 token)
+   at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
+   at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
+   at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
+   at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
+   at Npgsql.NpgsqlCommand.ExecuteNonQuery(Boolean async, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteNonQueryAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteNonQueryAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteNonQueryAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Migrations.Internal.MigrationCommandExecutor.ExecuteAsync(IReadOnlyList`1 migrationCommands, IRelationalConnection connection, MigrationExecutionState executionState, Boolean beginTransaction, Boolean commitTransaction, Nullable`1 isolationLevel, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Migrations.Internal.MigrationCommandExecutor.ExecuteAsync(IReadOnlyList`1 migrationCommands, IRelationalConnection connection, MigrationExecutionState executionState, Boolean beginTransaction, Boolean commitTransaction, Nullable`1 isolationLevel, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.ExecuteAsync[TState,TResult](TState state, Func`4 operation, Func`4 verifySucceeded, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Migrations.Internal.MigrationCommandExecutor.ExecuteNonQueryAsync(IReadOnlyList`1 migrationCommands, IRelationalConnection connection, MigrationExecutionState executionState, Boolean commitTransaction, Nullable`1 isolationLevel, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Migrations.Internal.Migrator.MigrateImplementationAsync(DbContext context, String targetMigration, MigrationExecutionState state, Boolean useTransaction, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Migrations.Internal.Migrator.MigrateImplementationAsync(DbContext context, String targetMigration, MigrationExecutionState state, Boolean useTransaction, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Migrations.Internal.Migrator.<>c.<<MigrateAsync>b__22_1>d.MoveNext()
+--- End of stack trace from previous location ---
+   at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.<>c__DisplayClass30_0`2.<<ExecuteAsync>b__0>d.MoveNext()
+--- End of stack trace from previous location ---
+   at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.ExecuteImplementationAsync[TState,TResult](Func`4 operation, Func`4 verifySucceeded, TState state, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.ExecuteImplementationAsync[TState,TResult](Func`4 operation, Func`4 verifySucceeded, TState state, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.ExecuteAsync[TState,TResult](TState state, Func`4 operation, Func`4 verifySucceeded, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Migrations.Internal.Migrator.MigrateAsync(String targetMigration, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Migrations.Internal.Migrator.MigrateAsync(String targetMigration, CancellationToken cancellationToken)
+   at Npgsql.EntityFrameworkCore.PostgreSQL.Migrations.Internal.NpgsqlMigrator.MigrateAsync(String targetMigration, CancellationToken cancellationToken)
+   at Program.<Main>$(String[] args) in /workspaces/HRAPP/src/HRMS.API/Program.cs:line 485
+  Exception data:
+    Severity: ERROR
+    SqlState: 42P07
+    MessageText: relation "AdminUsers" already exists
+    File: heap.c
+    Line: 1150
+    Routine: heap_create_with_catalog
+2025-11-02 04:26:38.796 +00:00 [INF] [] =================================================
+2025-11-02 04:26:38.869 +00:00 [INF] [] HRMS API Starting - Environment: Development
+2025-11-02 04:26:38.874 +00:00 [INF] [] =================================================
+2025-11-02 04:26:38.898 +00:00 [INF] [] Google Secret Manager disabled - using configuration/environment variables
+2025-11-02 04:26:38.915 +00:00 [INF] [] Rate limiting configured: Login (5/15min), API (100/min, 1000/hour)
+2025-11-02 04:26:38.915 +00:00 [INF] [] Response compression enabled: Brotli (primary), Gzip (fallback) - Expected 60-80% bandwidth savings
+2025-11-02 04:26:38.926 +00:00 [INF] [] Health checks configured: PostgreSQL, Redis
+2025-11-02 04:26:38.962 +00:00 [INF] [] JSON serialization optimized: Nulls ignored, cycles handled, camelCase - Expected 30% smaller payloads
+2025-11-02 04:26:39.607 +00:00 [INF] [] Initializing master database...
+2025-11-02 04:26:41.227 +00:00 [WRN] [] Sensitive data logging is enabled. Log entries and exception messages may include sensitive application data; this mode should only be enabled during development.
+2025-11-02 04:26:42.599 +00:00 [INF] [] Executed DbCommand (174ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT CASE WHEN COUNT(*) = 0 THEN FALSE ELSE TRUE END
+FROM pg_class AS cls
+JOIN pg_namespace AS ns ON ns.oid = cls.relnamespace
+WHERE
+        cls.relkind IN ('r', 'v', 'm', 'f', 'p') AND
+        ns.nspname NOT IN ('pg_catalog', 'information_schema') AND
+        -- Exclude tables which are members of PG extensions
+        NOT EXISTS (
+            SELECT 1 FROM pg_depend WHERE
+                classid=(
+                    SELECT cls.oid
+                    FROM pg_class AS cls
+                             JOIN pg_namespace AS ns ON ns.oid = cls.relnamespace
+                    WHERE relname='pg_class' AND ns.nspname='pg_catalog'
+                ) AND
+                objid=cls.oid AND
+                deptype IN ('e', 'x')
+        )
+2025-11-02 04:26:42.703 +00:00 [INF] [] Executed DbCommand (3ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT "MigrationId", "ProductVersion"
+FROM "__EFMigrationsHistory"
+ORDER BY "MigrationId";
+2025-11-02 04:26:43.319 +00:00 [INF] [] Executed DbCommand (20ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT EXISTS (
+    SELECT 1
+    FROM master."AdminUsers" AS a
+    WHERE NOT (a."IsDeleted"))
+2025-11-02 04:26:43.370 +00:00 [INF] [] Admin users already exist. Skipping default admin creation.
+2025-11-02 04:26:43.370 +00:00 [INF] [] Database seeding completed successfully
+2025-11-02 04:26:43.411 +00:00 [INF] [] Executed DbCommand (7ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT EXISTS (
+    SELECT 1
+    FROM master."IndustrySectors" AS i
+    WHERE NOT (i."IsDeleted"))
+2025-11-02 04:26:43.843 +00:00 [INF] [] Executed DbCommand (56ms) [Parameters=[@p0='1', @p1='2025-11-02T04:26:43.4193566Z' (DbType = DateTime), @p2=NULL, @p3='True', @p4='False', @p5=NULL (DbType = Int32), @p6='GN No. 185 of 2023', @p7='2023' (Nullable = true), @p8='False', @p9='CAT' (Nullable = false), @p10='Catering & Tourism Industries' (Nullable = false), @p11='Industries de l'Hôtellerie et du Tourisme', @p12=NULL (DbType = DateTime), @p13='10', @p14='2025-11-02T04:26:43.4195103Z' (DbType = DateTime), @p15=NULL, @p16='True', @p17='False', @p18=NULL (DbType = Int32), @p19='GN No. 162 of 2022', @p20='2022' (Nullable = true), @p21='False', @p22='CONST' (Nullable = false), @p23='Construction & Quarrying Industries' (Nullable = false), @p24='Industries de la Construction et des Carrières', @p25=NULL (DbType = DateTime), @p26='11', @p27='2025-11-02T04:26:43.4195110Z' (DbType = DateTime), @p28=NULL, @p29='True', @p30='False', @p31=NULL (DbType = Int32), @p32='GN No. 201 of 2023', @p33='2023' (Nullable = true), @p34='False', @p35='BPO' (Nullable = false), @p36='Business Process Outsourcing (BPO)' (Nullable = false), @p37='Externalisation des Processus d'Affaires', @p38=NULL (DbType = DateTime), @p39='12', @p40='2025-11-02T04:26:43.4195114Z' (DbType = DateTime), @p41=NULL, @p42='True', @p43='False', @p44=NULL (DbType = Int32), @p45='GN No. 178 of 2023', @p46='2023' (Nullable = true), @p47='True', @p48='SECURITY' (Nullable = false), @p49='Security Services' (Nullable = false), @p50='Services de Sécurité', @p51=NULL (DbType = DateTime), @p52='13', @p53='2025-11-02T04:26:43.4195117Z' (DbType = DateTime), @p54=NULL, @p55='True', @p56='False', @p57=NULL (DbType = Int32), @p58='GN No. 165 of 2022', @p59='2022' (Nullable = true), @p60='False', @p61='CLEANING' (Nullable = false), @p62='Cleaning Services' (Nullable = false), @p63='Services de Nettoyage', @p64=NULL (DbType = DateTime), @p65='14', @p66='2025-11-02T04:26:43.4195119Z' (DbType = DateTime), @p67=NULL, @p68='True', @p69='False', @p70=NULL (DbType = Int32), @p71='GN No. 189 of 2023', @p72='2023' (Nullable = true), @p73='True', @p74='FINANCE' (Nullable = false), @p75='Financial Services' (Nullable = false), @p76='Services Financiers', @p77=NULL (DbType = DateTime), @p78='19', @p79='2025-11-02T04:26:43.4195138Z' (DbType = DateTime), @p80=NULL, @p81='True', @p82='False', @p83=NULL (DbType = Int32), @p84='GN No. 195 of 2023', @p85='2023' (Nullable = true), @p86='False', @p87='ICT' (Nullable = false), @p88='Information & Communication Technology' (Nullable = false), @p89='Technologies de l'Information et de la Communication', @p90=NULL (DbType = DateTime), @p91='20', @p92='2025-11-02T04:26:43.4195169Z' (DbType = DateTime), @p93=NULL, @p94='True', @p95='False', @p96=NULL (DbType = Int32), @p97='GN No. 172 of 2022', @p98='2022' (Nullable = true), @p99='False', @p100='MANUFACTURING' (Nullable = false), @p101='Manufacturing Industries' (Nullable = false), @p102='Industries Manufacturières', @p103=NULL (DbType = DateTime), @p104='25', @p105='2025-11-02T04:26:43.4195185Z' (DbType = DateTime), @p106=NULL, @p107='True', @p108='False', @p109=NULL (DbType = Int32), @p110='GN No. 183 of 2023', @p111='2023' (Nullable = true), @p112='False', @p113='RETAIL' (Nullable = false), @p114='Retail & Distributive Trade' (Nullable = false), @p115='Commerce de Détail et Distribution', @p116=NULL (DbType = DateTime), @p117='29', @p118='2025-11-02T04:26:43.4195197Z' (DbType = DateTime), @p119=NULL, @p120='True', @p121='False', @p122=NULL (DbType = Int32), @p123='GN No. 191 of 2023', @p124='2023' (Nullable = true), @p125='True', @p126='HEALTHCARE' (Nullable = false), @p127='Healthcare & Medical Services' (Nullable = false), @p128='Services de Santé et Médicaux', @p129=NULL (DbType = DateTime), @p130='30', @p131='2025-11-02T04:26:43.4195200Z' (DbType = DateTime), @p132=NULL, @p133='True', @p134='False', @p135=NULL (DbType = Int32), @p136='GN No. 187 of 2023', @p137='2023' (Nullable = true), @p138='False', @p139='EDUCATION' (Nullable = false), @p140='Education & Training Services' (Nullable = false), @p141='Services d'Éducation et de Formation', @p142=NULL (DbType = DateTime), @p143='31', @p144='2025-11-02T04:26:43.4195203Z' (DbType = DateTime), @p145=NULL, @p146='True', @p147='False', @p148=NULL (DbType = Int32), @p149='GN No. 174 of 2022', @p150='2022' (Nullable = true), @p151='True', @p152='TRANSPORT' (Nullable = false), @p153='Transport & Logistics' (Nullable = false), @p154='Transport et Logistique', @p155=NULL (DbType = DateTime), @p156='35', @p157='2025-11-02T04:26:43.4195215Z' (DbType = DateTime), @p158=NULL, @p159='True', @p160='False', @p161=NULL (DbType = Int32), @p162='GN No. 168 of 2022', @p163='2022' (Nullable = true), @p164='False', @p165='BAKERY' (Nullable = false), @p166='Bakeries & Confectionery' (Nullable = false), @p167='Boulangeries et Confiseries', @p168=NULL (DbType = DateTime), @p169='36', @p170='2025-11-02T04:26:43.4195218Z' (DbType = DateTime), @p171=NULL, @p172='True', @p173='False', @p174=NULL (DbType = Int32), @p175='GN No. 179 of 2023', @p176='2023' (Nullable = true), @p177='False', @p178='ENTERTAINMENT' (Nullable = false), @p179='Cinema & Entertainment' (Nullable = false), @p180='Cinéma et Divertissement', @p181=NULL (DbType = DateTime), @p182='37', @p183='2025-11-02T04:26:43.4195221Z' (DbType = DateTime), @p184=NULL, @p185='True', @p186='False', @p187=NULL (DbType = Int32), @p188='GN No. 193 of 2023', @p189='2023' (Nullable = true), @p190='True', @p191='LEGAL' (Nullable = false), @p192='Legal Services (Attorneys & Notaries)' (Nullable = false), @p193='Services Juridiques (Avocats et Notaires)', @p194=NULL (DbType = DateTime), @p195='38', @p196='2025-11-02T04:26:43.4195226Z' (DbType = DateTime), @p197=NULL, @p198='True', @p199='False', @p200=NULL (DbType = Int32), @p201='GN No. 186 of 2023', @p202='2023' (Nullable = true), @p203='False', @p204='REALESTATE' (Nullable = false), @p205='Real Estate & Property Management' (Nullable = false), @p206='Immobilier et Gestion de Propriétés', @p207=NULL (DbType = DateTime), @p208='39', @p209='2025-11-02T04:26:43.4195229Z' (DbType = DateTime), @p210=NULL, @p211='True', @p212='False', @p213=NULL (DbType = Int32), @p214='GN No. 161 of 2022', @p215='2022' (Nullable = true), @p216='False', @p217='AGRICULTURE' (Nullable = false), @p218='Agriculture & Fishing' (Nullable = false), @p219='Agriculture et Pêche', @p220=NULL (DbType = DateTime), @p221='40', @p222='2025-11-02T04:26:43.4195231Z' (DbType = DateTime), @p223=NULL, @p224='True', @p225='False', @p226=NULL (DbType = Int32), @p227='GN No. 177 of 2023', @p228='2023' (Nullable = true), @p229='False', @p230='PRINTING' (Nullable = false), @p231='Printing & Publishing' (Nullable = false), @p232='Imprimerie et Édition', @p233=NULL (DbType = DateTime), @p234='41', @p235='2025-11-02T04:26:43.4195234Z' (DbType = DateTime), @p236=NULL, @p237='True', @p238='False', @p239=NULL (DbType = Int32), @p240='GN No. 197 of 2023', @p241='2023' (Nullable = true), @p242='True', @p243='TELECOM' (Nullable = false), @p244='Telecommunications' (Nullable = false), @p245='Télécommunications', @p246=NULL (DbType = DateTime), @p247='42', @p248='2025-11-02T04:26:43.4195237Z' (DbType = DateTime), @p249=NULL, @p250='True', @p251='False', @p252=NULL (DbType = Int32), @p253='GN No. 182 of 2023', @p254='2023' (Nullable = true), @p255='False', @p256='IMPORTEXPORT' (Nullable = false), @p257='Import/Export Trade' (Nullable = false), @p258='Commerce d'Importation/Exportation', @p259=NULL (DbType = DateTime), @p260='43', @p261='2025-11-02T04:26:43.4195240Z' (DbType = DateTime), @p262=NULL, @p263='True', @p264='False', @p265=NULL (DbType = Int32), @p266='GN No. 175 of 2022', @p267='2022' (Nullable = true), @p268='False', @p269='WAREHOUSE' (Nullable = false), @p270='Warehouse & Storage Services' (Nullable = false), @p271='Services d'Entreposage et de Stockage', @p272=NULL (DbType = DateTime), @p273='44', @p274='2025-11-02T04:26:43.4195243Z' (DbType = DateTime), @p275=NULL, @p276='True', @p277='False', @p278=NULL (DbType = Int32), @p279='GN No. 192 of 2023', @p280='2023' (Nullable = true), @p281='False', @p282='PROFESSIONAL' (Nullable = false), @p283='Professional Services (Accounting, Consulting)' (Nullable = false), @p284='Services Professionnels (Comptabilité, Conseil)', @p285=NULL (DbType = DateTime), @p286='45', @p287='2025-11-02T04:26:43.4195246Z' (DbType = DateTime), @p288=NULL, @p289='True', @p290='False', @p291=NULL (DbType = Int32), @p292='GN No. 188 of 2023', @p293='2023' (Nullable = true), @p294='False', @p295='HOSPITALITY' (Nullable = false), @p296='Hospitality Services (excluding Catering)' (Nullable = false), @p297='Services d'Accueil (hors Restauration)', @p298=NULL (DbType = DateTime), @p299='46', @p300='2025-11-02T04:26:43.4195248Z' (DbType = DateTime), @p301=NULL, @p302='True', @p303='False', @p304=NULL (DbType = Int32), @p305='GN No. 169 of 2022', @p306='2022' (Nullable = true), @p307='False', @p308='BEAUTY' (Nullable = false), @p309='Beauty & Wellness Services' (Nullable = false), @p310='Services de Beauté et de Bien-être', @p311=NULL (DbType = DateTime), @p312='47', @p313='2025-11-02T04:26:43.4195251Z' (DbType = DateTime), @p314=NULL, @p315='True', @p316='False', @p317=NULL (DbType = Int32), @p318='GN No. 184 of 2023', @p319='2023' (Nullable = true), @p320='False', @p321='EVENTS' (Nullable = false), @p322='Event Management & Wedding Services' (Nullable = false), @p323='Gestion d'Événements et Services de Mariage', @p324=NULL (DbType = DateTime), @p325='48', @p326='2025-11-02T04:26:43.4195254Z' (DbType = DateTime), @p327=NULL, @p328='True', @p329='False', @p330=NULL (DbType = Int32), @p331='GN No. 166 of 2022', @p332='2022' (Nullable = true), @p333='False', @p334='DOMESTIC' (Nullable = false), @p335='Domestic Services' (Nullable = false), @p336='Services Domestiques', @p337=NULL (DbType = DateTime), @p338='49', @p339='2025-11-02T04:26:43.4195257Z' (DbType = DateTime), @p340=NULL, @p341='True', @p342='False', @p343=NULL (DbType = Int32), @p344='GN No. 199 of 2023', @p345='2023' (Nullable = true), @p346='False', @p347='GENERAL' (Nullable = false), @p348='General Office & Administrative Services' (Nullable = false), @p349='Services Généraux de Bureau et Administratifs', @p350=NULL (DbType = DateTime), @p351='50', @p352='2025-11-02T04:26:43.4195260Z' (DbType = DateTime), @p353=NULL, @p354='True', @p355='False', @p356=NULL (DbType = Int32), @p357='GN No. 190 of 2023', @p358='2023' (Nullable = true), @p359='True', @p360='PHARMACY' (Nullable = false), @p361='Pharmacy & Pharmaceutical Services' (Nullable = false), @p362='Pharmacie et Services Pharmaceutiques', @p363=NULL (DbType = DateTime), @p364='51', @p365='2025-11-02T04:26:43.4195262Z' (DbType = DateTime), @p366=NULL, @p367='True', @p368='False', @p369=NULL (DbType = Int32), @p370='GN No. 170 of 2022', @p371='2022' (Nullable = true), @p372='False', @p373='AUTOMOTIVE' (Nullable = false), @p374='Automotive Services & Repairs' (Nullable = false), @p375='Services Automobiles et Réparations', @p376=NULL (DbType = DateTime), @p377='52', @p378='2025-11-02T04:26:43.4195265Z' (DbType = DateTime), @p379=NULL, @p380='True', @p381='False', @p382=NULL (DbType = Int32), @p383='GN No. 194 of 2023', @p384='2023' (Nullable = true), @p385='True', @p386='RECRUITMENT' (Nullable = false), @p387='Recruitment & Employment Agencies' (Nullable = false), @p388='Agences de Recrutement et d'Emploi', @p389=NULL (DbType = DateTime), @p390='2', @p391='2025-11-02T04:26:43.4194073Z' (DbType = DateTime), @p392=NULL, @p393='True', @p394='False', @p395='1' (Nullable = true), @p396='GN No. 185 of 2023', @p397='2023' (Nullable = true), @p398='False', @p399='CAT-HOTEL-LARGE' (Nullable = false), @p400='Hotels & Accommodation (40+ covers)' (Nullable = false), @p401='Hôtels et Hébergement (40+ couverts)', @p402=NULL (DbType = DateTime), @p403='3', @p404='2025-11-02T04:26:43.4194078Z' (DbType = DateTime), @p405=NULL, @p406='True', @p407='False', @p408='1' (Nullable = true), @p409='GN No. 185 of 2023', @p410='2023' (Nullable = true), @p411='False', @p412='CAT-HOTEL-SMALL' (Nullable = false), @p413='Hotels & Accommodation (Under 40 covers)' (Nullable = false), @p414='Hôtels et Hébergement (Moins de 40 couverts)', @p415=NULL (DbType = DateTime), @p416='4', @p417='2025-11-02T04:26:43.4194081Z' (DbType = DateTime), @p418=NULL, @p419='True', @p420='False', @p421='1' (Nullable = true), @p422='GN No. 185 of 2023', @p423='2023' (Nullable = true), @p424='False', @p425='CAT-RESTAURANT-LARGE' (Nullable = false), @p426='Restaurants & Cafés (40+ covers)' (Nullable = false), @p427='Restaurants et Cafés (40+ couverts)', @p428=NULL (DbType = DateTime), @p429='5', @p430='2025-11-02T04:26:43.4194085Z' (DbType = DateTime), @p431=NULL, @p432='True', @p433='False', @p434='1' (Nullable = true), @p435='GN No. 185 of 2023', @p436='2023' (Nullable = true), @p437='False', @p438='CAT-RESTAURANT-SMALL' (Nullable = false), @p439='Restaurants & Cafés (Under 40 covers)' (Nullable = false), @p440='Restaurants et Cafés (Moins de 40 couverts)', @p441=NULL (DbType = DateTime), @p442='6', @p443='2025-11-02T04:26:43.4194088Z' (DbType = DateTime), @p444=NULL, @p445='True', @p446='False', @p447='1' (Nullable = true), @p448='GN No. 185 of 2023', @p449='2023' (Nullable = true), @p450='False', @p451='CAT-FASTFOOD' (Nullable = false), @p452='Fast Food Outlets' (Nullable = false), @p453='Restauration Rapide', @p454=NULL (DbType = DateTime), @p455='7', @p456='2025-11-02T04:26:43.4194091Z' (DbType = DateTime), @p457=NULL, @p458='True', @p459='False', @p460='1' (Nullable = true), @p461='GN No. 185 of 2023', @p462='2023' (Nullable = true), @p463='False', @p464='CAT-BARS' (Nullable = false), @p465='Bars & Night Clubs' (Nullable = false), @p466='Bars et Boîtes de Nuit', @p467=NULL (DbType = DateTime), @p468='8', @p469='2025-11-02T04:26:43.4194136Z' (DbType = DateTime), @p470=NULL, @p471='True', @p472='False', @p473='1' (Nullable = true), @p474='GN No. 185 of 2023', @p475='2023' (Nullable = true), @p476='False', @p477='CAT-BOARDINGHOUSE' (Nullable = false), @p478='Boarding Houses & Guest Houses' (Nullable = false), @p479='Pensions et Maisons d'Hôtes', @p480=NULL (DbType = DateTime), @p481='9', @p482='2025-11-02T04:26:43.4194140Z' (DbType = DateTime), @p483=NULL, @p484='True', @p485='False', @p486='1' (Nullable = true), @p487='GN No. 185 of 2023', @p488='2023' (Nullable = true), @p489='False', @p490='CAT-ATTRACTIONS' (Nullable = false), @p491='Tourist Attractions & Leisure Parks' (Nullable = false), @p492='Attractions Touristiques et Parcs de Loisirs', @p493=NULL (DbType = DateTime), @p494='15', @p495='2025-11-02T04:26:43.4195123Z' (DbType = DateTime), @p496=NULL, @p497='True', @p498='False', @p499='14' (Nullable = true), @p500='GN No. 189 of 2023', @p501='2023' (Nullable = true), @p502='True', @p503='FINANCE-BANKING' (Nullable = false), @p504='Banking' (Nullable = false), @p505='Services Bancaires', @p506=NULL (DbType = DateTime), @p507='16', @p508='2025-11-02T04:26:43.4195125Z' (DbType = DateTime), @p509=NULL, @p510='True', @p511='False', @p512='14' (Nullable = true), @p513='GN No. 189 of 2023', @p514='2023' (Nullable = true), @p515='True', @p516='FINANCE-INSURANCE' (Nullable = false), @p517='Insurance' (Nullable = false), @p518='Assurance', @p519=NULL (DbType = DateTime), @p520='17', @p521='2025-11-02T04:26:43.4195128Z' (DbType = DateTime), @p522=NULL, @p523='True', @p524='False', @p525='14' (Nullable = true), @p526='GN No. 189 of 2023', @p527='2023' (Nullable = true), @p528='True', @p529='FINANCE-FUND' (Nullable = false), @p530='Fund Administration' (Nullable = false), @p531='Administration de Fonds', @p532=NULL (DbType = DateTime), @p533='18', @p534='2025-11-02T04:26:43.4195131Z' (DbType = DateTime), @p535=NULL, @p536='True', @p537='False', @p538='14' (Nullable = true), @p539='GN No. 189 of 2023', @p540='2023' (Nullable = true), @p541='True', @p542='FINANCE-WEALTH' (Nullable = false), @p543='Wealth Management' (Nullable = false), @p544='Gestion de Patrimoine', @p545=NULL (DbType = DateTime), @p546='21', @p547='2025-11-02T04:26:43.4195172Z' (DbType = DateTime), @p548=NULL, @p549='True', @p550='False', @p551='20' (Nullable = true), @p552='GN No. 172 of 2022', @p553='2022' (Nullable = true), @p554='False', @p555='MFG-TEXTILE' (Nullable = false), @p556='Textiles & Apparel (Export Enterprises)' (Nullable = false), @p557='Textile et Habillement (Entreprises d'Exportation)', @p558=NULL (DbType = DateTime), @p559='22', @p560='2025-11-02T04:26:43.4195175Z' (DbType = DateTime), @p561=NULL, @p562='True', @p563='False', @p564='20' (Nullable = true), @p565='GN No. 172 of 2022', @p566='2022' (Nullable = true), @p567='False', @p568='MFG-JEWELRY' (Nullable = false), @p569='Jewelry & Optical Goods' (Nullable = false), @p570='Bijouterie et Optique', @p571=NULL (DbType = DateTime), @p572='23', @p573='2025-11-02T04:26:43.4195178Z' (DbType = DateTime), @p574=NULL, @p575='True', @p576='False', @p577='20' (Nullable = true), @p578='GN No. 172 of 2022', @p579='2022' (Nullable = true), @p580='False', @p581='MFG-FURNITURE' (Nullable = false), @p582='Furniture Manufacturing' (Nullable = false), @p583='Fabrication de Meubles', @p584=NULL (DbType = DateTime), @p585='24', @p586='2025-11-02T04:26:43.4195181Z' (DbType = DateTime), @p587=NULL, @p588='True', @p589='False', @p590='20' (Nullable = true), @p591='GN No. 172 of 2022', @p592='2022' (Nullable = true), @p593='False', @p594='MFG-FOOD' (Nullable = false), @p595='Food Processing & Beverages' (Nullable = false), @p596='Transformation Alimentaire et Boissons', @p597=NULL (DbType = DateTime), @p598='26', @p599='2025-11-02T04:26:43.4195188Z' (DbType = DateTime), @p600=NULL, @p601='True', @p602='False', @p603='25' (Nullable = true), @p604='GN No. 183 of 2023', @p605='2023' (Nullable = true), @p606='False', @p607='RETAIL-SUPERMARKET' (Nullable = false), @p608='Supermarkets & Hypermarkets' (Nullable = false), @p609='Supermarchés et Hypermarchés', @p610=NULL (DbType = DateTime), @p611='27', @p612='2025-11-02T04:26:43.4195191Z' (DbType = DateTime), @p613=NULL, @p614='True', @p615='False', @p616='25' (Nullable = true), @p617='GN No. 183 of 2023', @p618='2023' (Nullable = true), @p619='False', @p620='RETAIL-SHOPS' (Nullable = false), @p621='Shops & Stores' (Nullable = false), @p622='Boutiques et Magasins', @p623=NULL (DbType = DateTime), @p624='28', @p625='2025-11-02T04:26:43.4195194Z' (DbType = DateTime), @p626=NULL, @p627='True', @p628='False', @p629='25' (Nullable = true), @p630='GN No. 183 of 2023', @p631='2023' (Nullable = true), @p632='False', @p633='RETAIL-WHOLESALE' (Nullable = false), @p634='Wholesale Trade' (Nullable = false), @p635='Commerce de Gros', @p636=NULL (DbType = DateTime), @p637='32', @p638='2025-11-02T04:26:43.4195206Z' (DbType = DateTime), @p639=NULL, @p640='True', @p641='False', @p642='31' (Nullable = true), @p643='GN No. 174 of 2022', @p644='2022' (Nullable = true), @p645='True', @p646='TRANSPORT-FREIGHT' (Nullable = false), @p647='Freight & Cargo Services' (Nullable = false), @p648='Services de Fret et Cargaison', @p649=NULL (DbType = DateTime), @p650='33', @p651='2025-11-02T04:26:43.4195209Z' (DbType = DateTime), @p652=NULL, @p653='True', @p654='False', @p655='31' (Nullable = true), @p656='GN No. 174 of 2022', @p657='2022' (Nullable = true), @p658='True', @p659='TRANSPORT-TAXI' (Nullable = false), @p660='Taxi Services' (Nullable = false), @p661='Services de Taxi', @p662=NULL (DbType = DateTime), @p663='34', @p664='2025-11-02T04:26:43.4195212Z' (DbType = DateTime), @p665=NULL, @p666='True', @p667='False', @p668='31' (Nullable = true), @p669='GN No. 174 of 2022', @p670='2022' (Nullable = true), @p671='True', @p672='TRANSPORT-BUS' (Nullable = false), @p673='Bus Services' (Nullable = false), @p674='Services de Bus', @p675=NULL (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+INSERT INTO master."IndustrySectors" ("Id", "CreatedAt", "Description", "IsActive", "IsDeleted", "ParentSectorId", "RemunerationOrderReference", "RemunerationOrderYear", "RequiresSpecialPermits", "SectorCode", "SectorName", "SectorNameFrench", "UpdatedAt")
+VALUES (@p0, @p1, @p2, @p3, @p4, @p5, @p6, @p7, @p8, @p9, @p10, @p11, @p12);
+INSERT INTO master."IndustrySectors" ("Id", "CreatedAt", "Description", "IsActive", "IsDeleted", "ParentSectorId", "RemunerationOrderReference", "RemunerationOrderYear", "RequiresSpecialPermits", "SectorCode", "SectorName", "SectorNameFrench", "UpdatedAt")
+VALUES (@p13, @p14, @p15, @p16, @p17, @p18, @p19, @p20, @p21, @p22, @p23, @p24, @p25);
+INSERT INTO master."IndustrySectors" ("Id", "CreatedAt", "Description", "IsActive", "IsDeleted", "ParentSectorId", "RemunerationOrderReference", "RemunerationOrderYear", "RequiresSpecialPermits", "SectorCode", "SectorName", "SectorNameFrench", "UpdatedAt")
+VALUES (@p26, @p27, @p28, @p29, @p30, @p31, @p32, @p33, @p34, @p35, @p36, @p37, @p38);
+INSERT INTO master."IndustrySectors" ("Id", "CreatedAt", "Description", "IsActive", "IsDeleted", "ParentSectorId", "RemunerationOrderReference", "RemunerationOrderYear", "RequiresSpecialPermits", "SectorCode", "SectorName", "SectorNameFrench", "UpdatedAt")
+VALUES (@p39, @p40, @p41, @p42, @p43, @p44, @p45, @p46, @p47, @p48, @p49, @p50, @p51);
+INSERT INTO master."IndustrySectors" ("Id", "CreatedAt", "Description", "IsActive", "IsDeleted", "ParentSectorId", "RemunerationOrderReference", "RemunerationOrderYear", "RequiresSpecialPermits", "SectorCode", "SectorName", "SectorNameFrench", "UpdatedAt")
+VALUES (@p52, @p53, @p54, @p55, @p56, @p57, @p58, @p59, @p60, @p61, @p62, @p63, @p64);
+INSERT INTO master."IndustrySectors" ("Id", "CreatedAt", "Description", "IsActive", "IsDeleted", "ParentSectorId", "RemunerationOrderReference", "RemunerationOrderYear", "RequiresSpecialPermits", "SectorCode", "SectorName", "SectorNameFrench", "UpdatedAt")
+VALUES (@p65, @p66, @p67, @p68, @p69, @p70, @p71, @p72, @p73, @p74, @p75, @p76, @p77);
+INSERT INTO master."IndustrySectors" ("Id", "CreatedAt", "Description", "IsActive", "IsDeleted", "ParentSectorId", "RemunerationOrderReference", "RemunerationOrderYear", "RequiresSpecialPermits", "SectorCode", "SectorName", "SectorNameFrench", "UpdatedAt")
+VALUES (@p78, @p79, @p80, @p81, @p82, @p83, @p84, @p85, @p86, @p87, @p88, @p89, @p90);
+INSERT INTO master."IndustrySectors" ("Id", "CreatedAt", "Description", "IsActive", "IsDeleted", "ParentSectorId", "RemunerationOrderReference", "RemunerationOrderYear", "RequiresSpecialPermits", "SectorCode", "SectorName", "SectorNameFrench", "UpdatedAt")
+VALUES (@p91, @p92, @p93, @p94, @p95, @p96, @p97, @p98, @p99, @p100, @p101, @p102, @p103);
+INSERT INTO master."IndustrySectors" ("Id", "CreatedAt", "Description", "IsActive", "IsDeleted", "ParentSectorId", "RemunerationOrderReference", "RemunerationOrderYear", "RequiresSpecialPermits", "SectorCode", "SectorName", "SectorNameFrench", "UpdatedAt")
+VALUES (@p104, @p105, @p106, @p107, @p108, @p109, @p110, @p111, @p112, @p113, @p114, @p115, @p116);
+INSERT INTO master."IndustrySectors" ("Id", "CreatedAt", "Description", "IsActive", "IsDeleted", "ParentSectorId", "RemunerationOrderReference", "RemunerationOrderYear", "RequiresSpecialPermits", "SectorCode", "SectorName", "SectorNameFrench", "UpdatedAt")
+VALUES (@p117, @p118, @p119, @p120, @p121, @p122, @p123, @p124, @p125, @p126, @p127, @p128, @p129);
+INSERT INTO master."IndustrySectors" ("Id", "CreatedAt", "Description", "IsActive", "IsDeleted", "ParentSectorId", "RemunerationOrderReference", "RemunerationOrderYear", "RequiresSpecialPermits", "SectorCode", "SectorName", "SectorNameFrench", "UpdatedAt")
+VALUES (@p130, @p131, @p132, @p133, @p134, @p135, @p136, @p137, @p138, @p139, @p140, @p141, @p142);
+INSERT INTO master."IndustrySectors" ("Id", "CreatedAt", "Description", "IsActive", "IsDeleted", "ParentSectorId", "RemunerationOrderReference", "RemunerationOrderYear", "RequiresSpecialPermits", "SectorCode", "SectorName", "SectorNameFrench", "UpdatedAt")
+VALUES (@p143, @p144, @p145, @p146, @p147, @p148, @p149, @p150, @p151, @p152, @p153, @p154, @p155);
+INSERT INTO master."IndustrySectors" ("Id", "CreatedAt", "Description", "IsActive", "IsDeleted", "ParentSectorId", "RemunerationOrderReference", "RemunerationOrderYear", "RequiresSpecialPermits", "SectorCode", "SectorName", "SectorNameFrench", "UpdatedAt")
+VALUES (@p156, @p157, @p158, @p159, @p160, @p161, @p162, @p163, @p164, @p165, @p166, @p167, @p168);
+INSERT INTO master."IndustrySectors" ("Id", "CreatedAt", "Description", "IsActive", "IsDeleted", "ParentSectorId", "RemunerationOrderReference", "RemunerationOrderYear", "RequiresSpecialPermits", "SectorCode", "SectorName", "SectorNameFrench", "UpdatedAt")
+VALUES (@p169, @p170, @p171, @p172, @p173, @p174, @p175, @p176, @p177, @p178, @p179, @p180, @p181);
+INSERT INTO master."IndustrySectors" ("Id", "CreatedAt", "Description", "IsActive", "IsDeleted", "ParentSectorId", "RemunerationOrderReference", "RemunerationOrderYear", "RequiresSpecialPermits", "SectorCode", "SectorName", "SectorNameFrench", "UpdatedAt")
+VALUES (@p182, @p183, @p184, @p185, @p186, @p187, @p188, @p189, @p190, @p191, @p192, @p193, @p194);
+INSERT INTO master."IndustrySectors" ("Id", "CreatedAt", "Description", "IsActive", "IsDeleted", "ParentSectorId", "RemunerationOrderReference", "RemunerationOrderYear", "RequiresSpecialPermits", "SectorCode", "SectorName", "SectorNameFrench", "UpdatedAt")
+VALUES (@p195, @p196, @p197, @p198, @p199, @p200, @p201, @p202, @p203, @p204, @p205, @p206, @p207);
+INSERT INTO master."IndustrySectors" ("Id", "CreatedAt", "Description", "IsActive", "IsDeleted", "ParentSectorId", "RemunerationOrderReference", "RemunerationOrderYear", "RequiresSpecialPermits", "SectorCode", "SectorName", "SectorNameFrench", "UpdatedAt")
+VALUES (@p208, @p209, @p210, @p211, @p212, @p213, @p214, @p215, @p216, @p217, @p218, @p219, @p220);
+INSERT INTO master."IndustrySectors" ("Id", "CreatedAt", "Description", "IsActive", "IsDeleted", "ParentSectorId", "RemunerationOrderReference", "RemunerationOrderYear", "RequiresSpecialPermits", "SectorCode", "SectorName", "SectorNameFrench", "UpdatedAt")
+VALUES (@p221, @p222, @p223, @p224, @p225, @p226, @p227, @p228, @p229, @p230, @p231, @p232, @p233);
+INSERT INTO master."IndustrySectors" ("Id", "CreatedAt", "Description", "IsActive", "IsDeleted", "ParentSectorId", "RemunerationOrderReference", "RemunerationOrderYear", "RequiresSpecialPermits", "SectorCode", "SectorName", "SectorNameFrench", "UpdatedAt")
+VALUES (@p234, @p235, @p236, @p237, @p238, @p239, @p240, @p241, @p242, @p243, @p244, @p245, @p246);
+INSERT INTO master."IndustrySectors" ("Id", "CreatedAt", "Description", "IsActive", "IsDeleted", "ParentSectorId", "RemunerationOrderReference", "RemunerationOrderYear", "RequiresSpecialPermits", "SectorCode", "SectorName", "SectorNameFrench", "UpdatedAt")
+VALUES (@p247, @p248, @p249, @p250, @p251, @p252, @p253, @p254, @p255, @p256, @p257, @p258, @p259);
+INSERT INTO master."IndustrySectors" ("Id", "CreatedAt", "Description", "IsActive", "IsDeleted", "ParentSectorId", "RemunerationOrderReference", "RemunerationOrderYear", "RequiresSpecialPermits", "SectorCode", "SectorName", "SectorNameFrench", "UpdatedAt")
+VALUES (@p260, @p261, @p262, @p263, @p264, @p265, @p266, @p267, @p268, @p269, @p270, @p271, @p272);
+INSERT INTO master."IndustrySectors" ("Id", "CreatedAt", "Description", "IsActive", "IsDeleted", "ParentSectorId", "RemunerationOrderReference", "RemunerationOrderYear", "RequiresSpecialPermits", "SectorCode", "SectorName", "SectorNameFrench", "UpdatedAt")
+VALUES (@p273, @p274, @p275, @p276, @p277, @p278, @p279, @p280, @p281, @p282, @p283, @p284, @p285);
+INSERT INTO master."IndustrySectors" ("Id", "CreatedAt", "Description", "IsActive", "IsDeleted", "ParentSectorId", "RemunerationOrderReference", "RemunerationOrderYear", "RequiresSpecialPermits", "SectorCode", "SectorName", "SectorNameFrench", "UpdatedAt")
+VALUES (@p286, @p287, @p288, @p289, @p290, @p291, @p292, @p293, @p294, @p295, @p296, @p297, @p298);
+INSERT INTO master."IndustrySectors" ("Id", "CreatedAt", "Description", "IsActive", "IsDeleted", "ParentSectorId", "RemunerationOrderReference", "RemunerationOrderYear", "RequiresSpecialPermits", "SectorCode", "SectorName", "SectorNameFrench", "UpdatedAt")
+VALUES (@p299, @p300, @p301, @p302, @p303, @p304, @p305, @p306, @p307, @p308, @p309, @p310, @p311);
+INSERT INTO master."IndustrySectors" ("Id", "CreatedAt", "Description", "IsActive", "IsDeleted", "ParentSectorId", "RemunerationOrderReference", "RemunerationOrderYear", "RequiresSpecialPermits", "SectorCode", "SectorName", "SectorNameFrench", "UpdatedAt")
+VALUES (@p312, @p313, @p314, @p315, @p316, @p317, @p318, @p319, @p320, @p321, @p322, @p323, @p324);
+INSERT INTO master."IndustrySectors" ("Id", "CreatedAt", "Description", "IsActive", "IsDeleted", "ParentSectorId", "RemunerationOrderReference", "RemunerationOrderYear", "RequiresSpecialPermits", "SectorCode", "SectorName", "SectorNameFrench", "UpdatedAt")
+VALUES (@p325, @p326, @p327, @p328, @p329, @p330, @p331, @p332, @p333, @p334, @p335, @p336, @p337);
+INSERT INTO master."IndustrySectors" ("Id", "CreatedAt", "Description", "IsActive", "IsDeleted", "ParentSectorId", "RemunerationOrderReference", "RemunerationOrderYear", "RequiresSpecialPermits", "SectorCode", "SectorName", "SectorNameFrench", "UpdatedAt")
+VALUES (@p338, @p339, @p340, @p341, @p342, @p343, @p344, @p345, @p346, @p347, @p348, @p349, @p350);
+INSERT INTO master."IndustrySectors" ("Id", "CreatedAt", "Description", "IsActive", "IsDeleted", "ParentSectorId", "RemunerationOrderReference", "RemunerationOrderYear", "RequiresSpecialPermits", "SectorCode", "SectorName", "SectorNameFrench", "UpdatedAt")
+VALUES (@p351, @p352, @p353, @p354, @p355, @p356, @p357, @p358, @p359, @p360, @p361, @p362, @p363);
+INSERT INTO master."IndustrySectors" ("Id", "CreatedAt", "Description", "IsActive", "IsDeleted", "ParentSectorId", "RemunerationOrderReference", "RemunerationOrderYear", "RequiresSpecialPermits", "SectorCode", "SectorName", "SectorNameFrench", "UpdatedAt")
+VALUES (@p364, @p365, @p366, @p367, @p368, @p369, @p370, @p371, @p372, @p373, @p374, @p375, @p376);
+INSERT INTO master."IndustrySectors" ("Id", "CreatedAt", "Description", "IsActive", "IsDeleted", "ParentSectorId", "RemunerationOrderReference", "RemunerationOrderYear", "RequiresSpecialPermits", "SectorCode", "SectorName", "SectorNameFrench", "UpdatedAt")
+VALUES (@p377, @p378, @p379, @p380, @p381, @p382, @p383, @p384, @p385, @p386, @p387, @p388, @p389);
+INSERT INTO master."IndustrySectors" ("Id", "CreatedAt", "Description", "IsActive", "IsDeleted", "ParentSectorId", "RemunerationOrderReference", "RemunerationOrderYear", "RequiresSpecialPermits", "SectorCode", "SectorName", "SectorNameFrench", "UpdatedAt")
+VALUES (@p390, @p391, @p392, @p393, @p394, @p395, @p396, @p397, @p398, @p399, @p400, @p401, @p402);
+INSERT INTO master."IndustrySectors" ("Id", "CreatedAt", "Description", "IsActive", "IsDeleted", "ParentSectorId", "RemunerationOrderReference", "RemunerationOrderYear", "RequiresSpecialPermits", "SectorCode", "SectorName", "SectorNameFrench", "UpdatedAt")
+VALUES (@p403, @p404, @p405, @p406, @p407, @p408, @p409, @p410, @p411, @p412, @p413, @p414, @p415);
+INSERT INTO master."IndustrySectors" ("Id", "CreatedAt", "Description", "IsActive", "IsDeleted", "ParentSectorId", "RemunerationOrderReference", "RemunerationOrderYear", "RequiresSpecialPermits", "SectorCode", "SectorName", "SectorNameFrench", "UpdatedAt")
+VALUES (@p416, @p417, @p418, @p419, @p420, @p421, @p422, @p423, @p424, @p425, @p426, @p427, @p428);
+INSERT INTO master."IndustrySectors" ("Id", "CreatedAt", "Description", "IsActive", "IsDeleted", "ParentSectorId", "RemunerationOrderReference", "RemunerationOrderYear", "RequiresSpecialPermits", "SectorCode", "SectorName", "SectorNameFrench", "UpdatedAt")
+VALUES (@p429, @p430, @p431, @p432, @p433, @p434, @p435, @p436, @p437, @p438, @p439, @p440, @p441);
+INSERT INTO master."IndustrySectors" ("Id", "CreatedAt", "Description", "IsActive", "IsDeleted", "ParentSectorId", "RemunerationOrderReference", "RemunerationOrderYear", "RequiresSpecialPermits", "SectorCode", "SectorName", "SectorNameFrench", "UpdatedAt")
+VALUES (@p442, @p443, @p444, @p445, @p446, @p447, @p448, @p449, @p450, @p451, @p452, @p453, @p454);
+INSERT INTO master."IndustrySectors" ("Id", "CreatedAt", "Description", "IsActive", "IsDeleted", "ParentSectorId", "RemunerationOrderReference", "RemunerationOrderYear", "RequiresSpecialPermits", "SectorCode", "SectorName", "SectorNameFrench", "UpdatedAt")
+VALUES (@p455, @p456, @p457, @p458, @p459, @p460, @p461, @p462, @p463, @p464, @p465, @p466, @p467);
+INSERT INTO master."IndustrySectors" ("Id", "CreatedAt", "Description", "IsActive", "IsDeleted", "ParentSectorId", "RemunerationOrderReference", "RemunerationOrderYear", "RequiresSpecialPermits", "SectorCode", "SectorName", "SectorNameFrench", "UpdatedAt")
+VALUES (@p468, @p469, @p470, @p471, @p472, @p473, @p474, @p475, @p476, @p477, @p478, @p479, @p480);
+INSERT INTO master."IndustrySectors" ("Id", "CreatedAt", "Description", "IsActive", "IsDeleted", "ParentSectorId", "RemunerationOrderReference", "RemunerationOrderYear", "RequiresSpecialPermits", "SectorCode", "SectorName", "SectorNameFrench", "UpdatedAt")
+VALUES (@p481, @p482, @p483, @p484, @p485, @p486, @p487, @p488, @p489, @p490, @p491, @p492, @p493);
+INSERT INTO master."IndustrySectors" ("Id", "CreatedAt", "Description", "IsActive", "IsDeleted", "ParentSectorId", "RemunerationOrderReference", "RemunerationOrderYear", "RequiresSpecialPermits", "SectorCode", "SectorName", "SectorNameFrench", "UpdatedAt")
+VALUES (@p494, @p495, @p496, @p497, @p498, @p499, @p500, @p501, @p502, @p503, @p504, @p505, @p506);
+INSERT INTO master."IndustrySectors" ("Id", "CreatedAt", "Description", "IsActive", "IsDeleted", "ParentSectorId", "RemunerationOrderReference", "RemunerationOrderYear", "RequiresSpecialPermits", "SectorCode", "SectorName", "SectorNameFrench", "UpdatedAt")
+VALUES (@p507, @p508, @p509, @p510, @p511, @p512, @p513, @p514, @p515, @p516, @p517, @p518, @p519);
+INSERT INTO master."IndustrySectors" ("Id", "CreatedAt", "Description", "IsActive", "IsDeleted", "ParentSectorId", "RemunerationOrderReference", "RemunerationOrderYear", "RequiresSpecialPermits", "SectorCode", "SectorName", "SectorNameFrench", "UpdatedAt")
+VALUES (@p520, @p521, @p522, @p523, @p524, @p525, @p526, @p527, @p528, @p529, @p530, @p531, @p532);
+INSERT INTO master."IndustrySectors" ("Id", "CreatedAt", "Description", "IsActive", "IsDeleted", "ParentSectorId", "RemunerationOrderReference", "RemunerationOrderYear", "RequiresSpecialPermits", "SectorCode", "SectorName", "SectorNameFrench", "UpdatedAt")
+VALUES (@p533, @p534, @p535, @p536, @p537, @p538, @p539, @p540, @p541, @p542, @p543, @p544, @p545);
+INSERT INTO master."IndustrySectors" ("Id", "CreatedAt", "Description", "IsActive", "IsDeleted", "ParentSectorId", "RemunerationOrderReference", "RemunerationOrderYear", "RequiresSpecialPermits", "SectorCode", "SectorName", "SectorNameFrench", "UpdatedAt")
+VALUES (@p546, @p547, @p548, @p549, @p550, @p551, @p552, @p553, @p554, @p555, @p556, @p557, @p558);
+INSERT INTO master."IndustrySectors" ("Id", "CreatedAt", "Description", "IsActive", "IsDeleted", "ParentSectorId", "RemunerationOrderReference", "RemunerationOrderYear", "RequiresSpecialPermits", "SectorCode", "SectorName", "SectorNameFrench", "UpdatedAt")
+VALUES (@p559, @p560, @p561, @p562, @p563, @p564, @p565, @p566, @p567, @p568, @p569, @p570, @p571);
+INSERT INTO master."IndustrySectors" ("Id", "CreatedAt", "Description", "IsActive", "IsDeleted", "ParentSectorId", "RemunerationOrderReference", "RemunerationOrderYear", "RequiresSpecialPermits", "SectorCode", "SectorName", "SectorNameFrench", "UpdatedAt")
+VALUES (@p572, @p573, @p574, @p575, @p576, @p577, @p578, @p579, @p580, @p581, @p582, @p583, @p584);
+INSERT INTO master."IndustrySectors" ("Id", "CreatedAt", "Description", "IsActive", "IsDeleted", "ParentSectorId", "RemunerationOrderReference", "RemunerationOrderYear", "RequiresSpecialPermits", "SectorCode", "SectorName", "SectorNameFrench", "UpdatedAt")
+VALUES (@p585, @p586, @p587, @p588, @p589, @p590, @p591, @p592, @p593, @p594, @p595, @p596, @p597);
+INSERT INTO master."IndustrySectors" ("Id", "CreatedAt", "Description", "IsActive", "IsDeleted", "ParentSectorId", "RemunerationOrderReference", "RemunerationOrderYear", "RequiresSpecialPermits", "SectorCode", "SectorName", "SectorNameFrench", "UpdatedAt")
+VALUES (@p598, @p599, @p600, @p601, @p602, @p603, @p604, @p605, @p606, @p607, @p608, @p609, @p610);
+INSERT INTO master."IndustrySectors" ("Id", "CreatedAt", "Description", "IsActive", "IsDeleted", "ParentSectorId", "RemunerationOrderReference", "RemunerationOrderYear", "RequiresSpecialPermits", "SectorCode", "SectorName", "SectorNameFrench", "UpdatedAt")
+VALUES (@p611, @p612, @p613, @p614, @p615, @p616, @p617, @p618, @p619, @p620, @p621, @p622, @p623);
+INSERT INTO master."IndustrySectors" ("Id", "CreatedAt", "Description", "IsActive", "IsDeleted", "ParentSectorId", "RemunerationOrderReference", "RemunerationOrderYear", "RequiresSpecialPermits", "SectorCode", "SectorName", "SectorNameFrench", "UpdatedAt")
+VALUES (@p624, @p625, @p626, @p627, @p628, @p629, @p630, @p631, @p632, @p633, @p634, @p635, @p636);
+INSERT INTO master."IndustrySectors" ("Id", "CreatedAt", "Description", "IsActive", "IsDeleted", "ParentSectorId", "RemunerationOrderReference", "RemunerationOrderYear", "RequiresSpecialPermits", "SectorCode", "SectorName", "SectorNameFrench", "UpdatedAt")
+VALUES (@p637, @p638, @p639, @p640, @p641, @p642, @p643, @p644, @p645, @p646, @p647, @p648, @p649);
+INSERT INTO master."IndustrySectors" ("Id", "CreatedAt", "Description", "IsActive", "IsDeleted", "ParentSectorId", "RemunerationOrderReference", "RemunerationOrderYear", "RequiresSpecialPermits", "SectorCode", "SectorName", "SectorNameFrench", "UpdatedAt")
+VALUES (@p650, @p651, @p652, @p653, @p654, @p655, @p656, @p657, @p658, @p659, @p660, @p661, @p662);
+INSERT INTO master."IndustrySectors" ("Id", "CreatedAt", "Description", "IsActive", "IsDeleted", "ParentSectorId", "RemunerationOrderReference", "RemunerationOrderYear", "RequiresSpecialPermits", "SectorCode", "SectorName", "SectorNameFrench", "UpdatedAt")
+VALUES (@p663, @p664, @p665, @p666, @p667, @p668, @p669, @p670, @p671, @p672, @p673, @p674, @p675);
+2025-11-02 04:26:43.895 +00:00 [INF] [] Executed DbCommand (11ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT EXISTS (
+    SELECT 1
+    FROM master."SectorComplianceRules" AS s
+    WHERE NOT (s."IsDeleted"))
+2025-11-02 04:26:43.965 +00:00 [INF] [] Executed DbCommand (2ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT i."Id", i."CreatedAt", i."Description", i."IsActive", i."IsDeleted", i."ParentSectorId", i."RemunerationOrderReference", i."RemunerationOrderYear", i."RequiresSpecialPermits", i."SectorCode", i."SectorName", i."SectorNameFrench", i."UpdatedAt"
+FROM master."IndustrySectors" AS i
+WHERE NOT (i."IsDeleted") AND i."SectorCode" = 'CAT-HOTEL-LARGE'
+LIMIT 1
+2025-11-02 04:26:43.989 +00:00 [INF] [] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT i."Id", i."CreatedAt", i."Description", i."IsActive", i."IsDeleted", i."ParentSectorId", i."RemunerationOrderReference", i."RemunerationOrderYear", i."RequiresSpecialPermits", i."SectorCode", i."SectorName", i."SectorNameFrench", i."UpdatedAt"
+FROM master."IndustrySectors" AS i
+WHERE NOT (i."IsDeleted") AND i."SectorCode" = 'BPO'
+LIMIT 1
+2025-11-02 04:26:44.011 +00:00 [INF] [] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT i."Id", i."CreatedAt", i."Description", i."IsActive", i."IsDeleted", i."ParentSectorId", i."RemunerationOrderReference", i."RemunerationOrderYear", i."RequiresSpecialPermits", i."SectorCode", i."SectorName", i."SectorNameFrench", i."UpdatedAt"
+FROM master."IndustrySectors" AS i
+WHERE NOT (i."IsDeleted") AND i."SectorCode" = 'SECURITY'
+LIMIT 1
+2025-11-02 04:26:44.041 +00:00 [INF] [] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT i."Id", i."CreatedAt", i."Description", i."IsActive", i."IsDeleted", i."ParentSectorId", i."RemunerationOrderReference", i."RemunerationOrderYear", i."RequiresSpecialPermits", i."SectorCode", i."SectorName", i."SectorNameFrench", i."UpdatedAt"
+FROM master."IndustrySectors" AS i
+WHERE NOT (i."IsDeleted") AND i."SectorCode" = 'FINANCE-BANKING'
+LIMIT 1
+2025-11-02 04:26:44.063 +00:00 [INF] [] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT i."Id", i."CreatedAt", i."Description", i."IsActive", i."IsDeleted", i."ParentSectorId", i."RemunerationOrderReference", i."RemunerationOrderYear", i."RequiresSpecialPermits", i."SectorCode", i."SectorName", i."SectorNameFrench", i."UpdatedAt"
+FROM master."IndustrySectors" AS i
+WHERE NOT (i."IsDeleted") AND i."SectorCode" = 'CONST'
+LIMIT 1
+2025-11-02 04:26:44.092 +00:00 [INF] [] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT i."Id", i."CreatedAt", i."Description", i."IsActive", i."IsDeleted", i."ParentSectorId", i."RemunerationOrderReference", i."RemunerationOrderYear", i."RequiresSpecialPermits", i."SectorCode", i."SectorName", i."SectorNameFrench", i."UpdatedAt"
+FROM master."IndustrySectors" AS i
+WHERE NOT (i."IsDeleted") AND i."SectorCode" = 'RETAIL-SUPERMARKET'
+LIMIT 1
+2025-11-02 04:26:44.160 +00:00 [ERR] [] Failed executing DbCommand (3ms) [Parameters=[@p0='1', @p1='2025-11-02T04:26:44.0954578Z' (DbType = DateTime), @p2='2025-01-01T00:00:00.0000000' (DbType = DateTime), @p3=NULL (DbType = DateTime), @p4='False', @p5='GN No. 185 of 2023 - Catering & Tourism Remuneration Order', @p6=NULL, @p7='OVERTIME' (Nullable = false), @p8='{
+                "weekday_overtime_rate": 1.5,
+                "weekend_overtime_rate": 2.0,
+                "sunday_rate": 2.0,
+                "public_holiday_normal_hours_rate": 2.0,
+                "public_holiday_after_hours_rate": 3.0,
+                "cyclone_warning_class_3_rate": 3.0,
+                "night_shift_rate": 1.25,
+                "max_overtime_hours_per_day": 4,
+                "max_overtime_hours_per_week": 20,
+                "meal_allowance_after_hours": 2,
+                "meal_allowance_amount_mur": 85,
+                "time_off_in_lieu_allowed": true
+            }' (Nullable = false) (DbType = Object), @p9='Catering & Tourism - Overtime Rates' (Nullable = false), @p10='2', @p11=NULL (DbType = DateTime), @p12='2', @p13='2025-11-02T04:26:44.0954643Z' (DbType = DateTime), @p14='2025-01-01T00:00:00.0000000' (DbType = DateTime), @p15=NULL (DbType = DateTime), @p16='False', @p17='GN No. 185 of 2023 + National Minimum Wage Regulations 2025', @p18=NULL, @p19='MINIMUM_WAGE' (Nullable = false), @p20='{
+                "monthly_minimum_wage_mur": 17110,
+                "salary_compensation_mur": 610,
+                "effective_date": "2025-01-01",
+                "applies_to_basic_salary_up_to_mur": 50000,
+                "currency": "MUR",
+                "notes": "Minimum wage increased Jan 2025 from MUR 16,500 to MUR 17,110. Salary compensation increased from MUR 500 to MUR 610."
+            }' (Nullable = false) (DbType = Object), @p21='Catering & Tourism - Minimum Wage 2025' (Nullable = false), @p22='2', @p23=NULL (DbType = DateTime), @p24='3', @p25='2025-11-02T04:26:44.0954646Z' (DbType = DateTime), @p26='2025-01-01T00:00:00.0000000' (DbType = DateTime), @p27=NULL (DbType = DateTime), @p28='False', @p29='GN No. 185 of 2023 - Catering & Tourism Remuneration Order', @p30=NULL, @p31='WORKING_HOURS' (Nullable = false), @p32='{
+                "standard_weekly_hours": 45,
+                "standard_daily_hours": 9,
+                "working_pattern_options": [
+                    "9 hours x 5 days per week",
+                    "8 hours x 5 days + 5 hours x 1 day"
+                ],
+                "mandatory_lunch_break_minutes": 60,
+                "daily_max_hours": 12,
+                "unsocial_hours_start": "22:00",
+                "unsocial_hours_end": "06:00",
+                "shift_patterns_allowed": true,
+                "rotational_shifts": true
+            }' (Nullable = false) (DbType = Object), @p33='Catering & Tourism - Working Hours' (Nullable = false), @p34='2', @p35=NULL (DbType = DateTime), @p36='4', @p37='2025-11-02T04:26:44.0954649Z' (DbType = DateTime), @p38='2025-01-01T00:00:00.0000000' (DbType = DateTime), @p39=NULL (DbType = DateTime), @p40='False', @p41='GN No. 185 of 2023', @p42=NULL, @p43='ALLOWANCES' (Nullable = false), @p44='{
+                "meal_allowance_per_shift_mur": 85,
+                "transport_allowance_per_month_mur": 0,
+                "uniform_allowance_per_year_mur": 500,
+                "housing_allowance_applicable": false,
+                "tips_pooling_allowed": true,
+                "service_charge_distribution": "As per hotel policy"
+            }' (Nullable = false) (DbType = Object), @p45='Catering & Tourism - Allowances' (Nullable = false), @p46='2', @p47=NULL (DbType = DateTime), @p48='5', @p49='2025-11-02T04:26:44.0954652Z' (DbType = DateTime), @p50='2025-01-01T00:00:00.0000000' (DbType = DateTime), @p51=NULL (DbType = DateTime), @p52='False', @p53='Workers' Rights Act 2019 + GN No. 185 of 2023', @p54=NULL, @p55='LEAVE' (Nullable = false), @p56='{
+                "annual_leave_days": 22,
+                "sick_leave_days": 15,
+                "casual_leave_days": 5,
+                "maternity_leave_weeks": 14,
+                "paternity_leave_days": 5,
+                "leave_calculation_basis": "working_days",
+                "annual_leave_carry_forward_max_days": 5,
+                "encashment_allowed_on_resignation": true
+            }' (Nullable = false) (DbType = Object), @p57='Catering & Tourism - Leave Entitlements' (Nullable = false), @p58='2', @p59=NULL (DbType = DateTime), @p60='6', @p61='2025-11-02T04:26:44.0954661Z' (DbType = DateTime), @p62='2025-01-01T00:00:00.0000000' (DbType = DateTime), @p63=NULL (DbType = DateTime), @p64='False', @p65='Workers' Rights Act 2019 Section 111', @p66=NULL, @p67='GRATUITY' (Nullable = false), @p68='{
+                "formula": "15 days per year of service",
+                "calculation_basis": "basic_salary",
+                "minimum_service_months": 12,
+                "max_gratuity_amount_mur": null,
+                "pro_rated_for_partial_year": true,
+                "notes": "Gratuity = (Basic Salary / 22) * 15 * Years of Service"
+            }' (Nullable = false) (DbType = Object), @p69='Catering & Tourism - Gratuity Calculation' (Nullable = false), @p70='2', @p71=NULL (DbType = DateTime), @p72='7', @p73='2025-11-02T04:26:44.0954664Z' (DbType = DateTime), @p74='2025-01-01T00:00:00.0000000' (DbType = DateTime), @p75=NULL (DbType = DateTime), @p76='False', @p77='GN No. 201 of 2023 - BPO Remuneration Order', @p78=NULL, @p79='OVERTIME' (Nullable = false), @p80='{
+                "weekday_overtime_rate": 1.5,
+                "weekend_overtime_rate": 2.0,
+                "sunday_rate": 2.0,
+                "public_holiday_normal_hours_rate": 2.0,
+                "public_holiday_after_hours_rate": 3.0,
+                "night_shift_allowance_percentage": 10,
+                "max_overtime_hours_per_day": 4,
+                "max_overtime_hours_per_week": 20,
+                "time_off_in_lieu_allowed": true
+            }' (Nullable = false) (DbType = Object), @p81='BPO - Overtime Rates' (Nullable = false), @p82='11', @p83=NULL (DbType = DateTime), @p84='8', @p85='2025-11-02T04:26:44.0954666Z' (DbType = DateTime), @p86='2025-01-01T00:00:00.0000000' (DbType = DateTime), @p87=NULL (DbType = DateTime), @p88='False', @p89='GN No. 201 of 2023 + National Minimum Wage Regulations 2025', @p90=NULL, @p91='MINIMUM_WAGE' (Nullable = false), @p92='{
+                "monthly_minimum_wage_mur": 17110,
+                "salary_compensation_mur": 610,
+                "effective_date": "2025-01-01",
+                "applies_to_basic_salary_up_to_mur": 50000,
+                "currency": "MUR"
+            }' (Nullable = false) (DbType = Object), @p93='BPO - Minimum Wage 2025' (Nullable = false), @p94='11', @p95=NULL (DbType = DateTime), @p96='9', @p97='2025-11-02T04:26:44.0954668Z' (DbType = DateTime), @p98='2025-01-01T00:00:00.0000000' (DbType = DateTime), @p99=NULL (DbType = DateTime), @p100='False', @p101='GN No. 201 of 2023', @p102=NULL, @p103='WORKING_HOURS' (Nullable = false), @p104='{
+                "standard_weekly_hours": 45,
+                "standard_daily_hours": 9,
+                "working_pattern_options": [
+                    "9 hours x 5 days per week",
+                    "8 hours x 5 days + 5 hours x 1 day"
+                ],
+                "mandatory_break_minutes": 60,
+                "daily_max_hours": 12,
+                "shift_patterns_allowed": true,
+                "rotational_shifts": true,
+                "night_shifts_allowed": true
+            }' (Nullable = false) (DbType = Object), @p105='BPO - Working Hours' (Nullable = false), @p106='11', @p107=NULL (DbType = DateTime), @p108='10', @p109='2025-11-02T04:26:44.0954673Z' (DbType = DateTime), @p110='2025-01-01T00:00:00.0000000' (DbType = DateTime), @p111=NULL (DbType = DateTime), @p112='False', @p113='GN No. 178 of 2023 - Security Services Remuneration Order', @p114=NULL, @p115='OVERTIME' (Nullable = false), @p116='{
+                "weekday_overtime_rate": 1.25,
+                "weekend_overtime_rate": 1.5,
+                "sunday_rate": 2.0,
+                "public_holiday_normal_hours_rate": 2.0,
+                "public_holiday_after_hours_rate": 2.5,
+                "night_shift_rate": 1.1,
+                "max_overtime_hours_per_day": 6,
+                "max_overtime_hours_per_week": 24,
+                "time_off_in_lieu_allowed": false
+            }' (Nullable = false) (DbType = Object), @p117='Security Services - Overtime Rates' (Nullable = false), @p118='12', @p119=NULL (DbType = DateTime), @p120='11', @p121='2025-11-02T04:26:44.0954675Z' (DbType = DateTime), @p122='2025-01-01T00:00:00.0000000' (DbType = DateTime), @p123=NULL (DbType = DateTime), @p124='False', @p125='GN No. 178 of 2023', @p126=NULL, @p127='WORKING_HOURS' (Nullable = false), @p128='{
+                "standard_weekly_hours": 48,
+                "standard_daily_hours": 8,
+                "working_pattern_options": [
+                    "8 hours x 6 days per week",
+                    "12-hour shifts (rotating)"
+                ],
+                "mandatory_break_minutes": 60,
+                "daily_max_hours": 14,
+                "shift_patterns_allowed": true,
+                "rotational_shifts": true,
+                "continuous_duty_max_hours": 12
+            }' (Nullable = false) (DbType = Object), @p129='Security Services - Working Hours' (Nullable = false), @p130='12', @p131=NULL (DbType = DateTime), @p132='12', @p133='2025-11-02T04:26:44.0954678Z' (DbType = DateTime), @p134='2025-01-01T00:00:00.0000000' (DbType = DateTime), @p135=NULL (DbType = DateTime), @p136='False', @p137='GN No. 189 of 2023 - Financial Services Remuneration Order', @p138=NULL, @p139='WORKING_HOURS' (Nullable = false), @p140='{
+                "standard_weekly_hours": 40,
+                "standard_daily_hours": 8,
+                "working_pattern_options": [
+                    "8 hours x 5 days per week (Monday-Friday)"
+                ],
+                "mandatory_break_minutes": 60,
+                "daily_max_hours": 10,
+                "shift_patterns_allowed": false,
+                "weekend_work_exceptional_only": true
+            }' (Nullable = false) (DbType = Object), @p141='Banking - Working Hours' (Nullable = false), @p142='15', @p143=NULL (DbType = DateTime), @p144='13', @p145='2025-11-02T04:26:44.0954680Z' (DbType = DateTime), @p146='2025-01-01T00:00:00.0000000' (DbType = DateTime), @p147=NULL (DbType = DateTime), @p148='False', @p149='GN No. 189 of 2023', @p150=NULL, @p151='OVERTIME' (Nullable = false), @p152='{
+                "weekday_overtime_rate": 1.5,
+                "weekend_overtime_rate": 2.5,
+                "sunday_rate": 2.5,
+                "public_holiday_rate": 3.0,
+                "max_overtime_hours_per_week": 10,
+                "time_off_in_lieu_preferred": true,
+                "notes": "Banking sector typically minimizes overtime due to strict working hours"
+            }' (Nullable = false) (DbType = Object), @p153='Banking - Overtime Rates' (Nullable = false), @p154='15', @p155=NULL (DbType = DateTime), @p156='14', @p157='2025-11-02T04:26:44.0954682Z' (DbType = DateTime), @p158='2025-01-01T00:00:00.0000000' (DbType = DateTime), @p159=NULL (DbType = DateTime), @p160='False', @p161='GN No. 162 of 2022 - Construction Remuneration Order', @p162=NULL, @p163='OVERTIME' (Nullable = false), @p164='{
+                "weekday_overtime_rate": 1.5,
+                "weekend_overtime_rate": 2.0,
+                "sunday_rate": 2.0,
+                "public_holiday_rate": 2.5,
+                "night_shift_rate": 1.25,
+                "max_overtime_hours_per_day": 4,
+                "max_overtime_hours_per_week": 20
+            }' (Nullable = false) (DbType = Object), @p165='Construction - Overtime Rates' (Nullable = false), @p166='10', @p167=NULL (DbType = DateTime), @p168='15', @p169='2025-11-02T04:26:44.0954685Z' (DbType = DateTime), @p170='2025-01-01T00:00:00.0000000' (DbType = DateTime), @p171=NULL (DbType = DateTime), @p172='False', @p173='GN No. 162 of 2022', @p174=NULL, @p175='ALLOWANCES' (Nullable = false), @p176='{
+                "transport_allowance_per_day_mur": 50,
+                "meal_allowance_per_day_mur": 85,
+                "tool_allowance_per_month_mur": 200,
+                "height_work_allowance_per_day_mur": 100,
+                "hazard_allowance_applicable": true,
+                "safety_equipment_provided_by_employer": true
+            }' (Nullable = false) (DbType = Object), @p177='Construction - Allowances' (Nullable = false), @p178='10', @p179=NULL (DbType = DateTime), @p180='16', @p181='2025-11-02T04:26:44.0954687Z' (DbType = DateTime), @p182='2025-01-01T00:00:00.0000000' (DbType = DateTime), @p183=NULL (DbType = DateTime), @p184='False', @p185='GN No. 183 of 2023 - Retail & Distributive Trade Remuneration Order', @p186=NULL, @p187='WORKING_HOURS' (Nullable = false), @p188='{
+                "standard_weekly_hours": 45,
+                "standard_daily_hours": 9,
+                "working_pattern_options": [
+                    "9 hours x 5 days per week",
+                    "8 hours x 5 days + 5 hours x 1 day"
+                ],
+                "mandatory_break_minutes": 60,
+                "daily_max_hours": 12,
+                "shift_patterns_allowed": true,
+                "sunday_trading_hours_restricted": true,
+                "public_holiday_trading_requires_approval": true
+            }' (Nullable = false) (DbType = Object), @p189='Retail - Working Hours' (Nullable = false), @p190='26', @p191=NULL (DbType = DateTime), @p192='17', @p193='2025-11-02T04:26:44.0954690Z' (DbType = DateTime), @p194='2025-01-01T00:00:00.0000000' (DbType = DateTime), @p195=NULL (DbType = DateTime), @p196='False', @p197='GN No. 183 of 2023', @p198=NULL, @p199='OVERTIME' (Nullable = false), @p200='{
+                "weekday_overtime_rate": 1.5,
+                "weekend_overtime_rate": 2.0,
+                "sunday_rate": 2.5,
+                "public_holiday_rate": 3.0,
+                "max_overtime_hours_per_day": 4,
+                "max_overtime_hours_per_week": 20,
+                "time_off_in_lieu_allowed": true
+            }' (Nullable = false) (DbType = Object), @p201='Retail - Overtime Rates' (Nullable = false), @p202='26', @p203=NULL (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+INSERT INTO master."SectorComplianceRules" ("Id", "CreatedAt", "EffectiveFrom", "EffectiveTo", "IsDeleted", "LegalReference", "Notes", "RuleCategory", "RuleConfig", "RuleName", "SectorId", "UpdatedAt")
+VALUES (@p0, @p1, @p2, @p3, @p4, @p5, @p6, @p7, @p8, @p9, @p10, @p11);
+INSERT INTO master."SectorComplianceRules" ("Id", "CreatedAt", "EffectiveFrom", "EffectiveTo", "IsDeleted", "LegalReference", "Notes", "RuleCategory", "RuleConfig", "RuleName", "SectorId", "UpdatedAt")
+VALUES (@p12, @p13, @p14, @p15, @p16, @p17, @p18, @p19, @p20, @p21, @p22, @p23);
+INSERT INTO master."SectorComplianceRules" ("Id", "CreatedAt", "EffectiveFrom", "EffectiveTo", "IsDeleted", "LegalReference", "Notes", "RuleCategory", "RuleConfig", "RuleName", "SectorId", "UpdatedAt")
+VALUES (@p24, @p25, @p26, @p27, @p28, @p29, @p30, @p31, @p32, @p33, @p34, @p35);
+INSERT INTO master."SectorComplianceRules" ("Id", "CreatedAt", "EffectiveFrom", "EffectiveTo", "IsDeleted", "LegalReference", "Notes", "RuleCategory", "RuleConfig", "RuleName", "SectorId", "UpdatedAt")
+VALUES (@p36, @p37, @p38, @p39, @p40, @p41, @p42, @p43, @p44, @p45, @p46, @p47);
+INSERT INTO master."SectorComplianceRules" ("Id", "CreatedAt", "EffectiveFrom", "EffectiveTo", "IsDeleted", "LegalReference", "Notes", "RuleCategory", "RuleConfig", "RuleName", "SectorId", "UpdatedAt")
+VALUES (@p48, @p49, @p50, @p51, @p52, @p53, @p54, @p55, @p56, @p57, @p58, @p59);
+INSERT INTO master."SectorComplianceRules" ("Id", "CreatedAt", "EffectiveFrom", "EffectiveTo", "IsDeleted", "LegalReference", "Notes", "RuleCategory", "RuleConfig", "RuleName", "SectorId", "UpdatedAt")
+VALUES (@p60, @p61, @p62, @p63, @p64, @p65, @p66, @p67, @p68, @p69, @p70, @p71);
+INSERT INTO master."SectorComplianceRules" ("Id", "CreatedAt", "EffectiveFrom", "EffectiveTo", "IsDeleted", "LegalReference", "Notes", "RuleCategory", "RuleConfig", "RuleName", "SectorId", "UpdatedAt")
+VALUES (@p72, @p73, @p74, @p75, @p76, @p77, @p78, @p79, @p80, @p81, @p82, @p83);
+INSERT INTO master."SectorComplianceRules" ("Id", "CreatedAt", "EffectiveFrom", "EffectiveTo", "IsDeleted", "LegalReference", "Notes", "RuleCategory", "RuleConfig", "RuleName", "SectorId", "UpdatedAt")
+VALUES (@p84, @p85, @p86, @p87, @p88, @p89, @p90, @p91, @p92, @p93, @p94, @p95);
+INSERT INTO master."SectorComplianceRules" ("Id", "CreatedAt", "EffectiveFrom", "EffectiveTo", "IsDeleted", "LegalReference", "Notes", "RuleCategory", "RuleConfig", "RuleName", "SectorId", "UpdatedAt")
+VALUES (@p96, @p97, @p98, @p99, @p100, @p101, @p102, @p103, @p104, @p105, @p106, @p107);
+INSERT INTO master."SectorComplianceRules" ("Id", "CreatedAt", "EffectiveFrom", "EffectiveTo", "IsDeleted", "LegalReference", "Notes", "RuleCategory", "RuleConfig", "RuleName", "SectorId", "UpdatedAt")
+VALUES (@p108, @p109, @p110, @p111, @p112, @p113, @p114, @p115, @p116, @p117, @p118, @p119);
+INSERT INTO master."SectorComplianceRules" ("Id", "CreatedAt", "EffectiveFrom", "EffectiveTo", "IsDeleted", "LegalReference", "Notes", "RuleCategory", "RuleConfig", "RuleName", "SectorId", "UpdatedAt")
+VALUES (@p120, @p121, @p122, @p123, @p124, @p125, @p126, @p127, @p128, @p129, @p130, @p131);
+INSERT INTO master."SectorComplianceRules" ("Id", "CreatedAt", "EffectiveFrom", "EffectiveTo", "IsDeleted", "LegalReference", "Notes", "RuleCategory", "RuleConfig", "RuleName", "SectorId", "UpdatedAt")
+VALUES (@p132, @p133, @p134, @p135, @p136, @p137, @p138, @p139, @p140, @p141, @p142, @p143);
+INSERT INTO master."SectorComplianceRules" ("Id", "CreatedAt", "EffectiveFrom", "EffectiveTo", "IsDeleted", "LegalReference", "Notes", "RuleCategory", "RuleConfig", "RuleName", "SectorId", "UpdatedAt")
+VALUES (@p144, @p145, @p146, @p147, @p148, @p149, @p150, @p151, @p152, @p153, @p154, @p155);
+INSERT INTO master."SectorComplianceRules" ("Id", "CreatedAt", "EffectiveFrom", "EffectiveTo", "IsDeleted", "LegalReference", "Notes", "RuleCategory", "RuleConfig", "RuleName", "SectorId", "UpdatedAt")
+VALUES (@p156, @p157, @p158, @p159, @p160, @p161, @p162, @p163, @p164, @p165, @p166, @p167);
+INSERT INTO master."SectorComplianceRules" ("Id", "CreatedAt", "EffectiveFrom", "EffectiveTo", "IsDeleted", "LegalReference", "Notes", "RuleCategory", "RuleConfig", "RuleName", "SectorId", "UpdatedAt")
+VALUES (@p168, @p169, @p170, @p171, @p172, @p173, @p174, @p175, @p176, @p177, @p178, @p179);
+INSERT INTO master."SectorComplianceRules" ("Id", "CreatedAt", "EffectiveFrom", "EffectiveTo", "IsDeleted", "LegalReference", "Notes", "RuleCategory", "RuleConfig", "RuleName", "SectorId", "UpdatedAt")
+VALUES (@p180, @p181, @p182, @p183, @p184, @p185, @p186, @p187, @p188, @p189, @p190, @p191);
+INSERT INTO master."SectorComplianceRules" ("Id", "CreatedAt", "EffectiveFrom", "EffectiveTo", "IsDeleted", "LegalReference", "Notes", "RuleCategory", "RuleConfig", "RuleName", "SectorId", "UpdatedAt")
+VALUES (@p192, @p193, @p194, @p195, @p196, @p197, @p198, @p199, @p200, @p201, @p202, @p203);
+2025-11-02 04:26:44.193 +00:00 [ERR] [] An exception occurred in the database while saving changes for context type 'HRMS.Infrastructure.Data.MasterDbContext'.
+Microsoft.EntityFrameworkCore.DbUpdateException: An error occurred while saving the entity changes. See the inner exception for details.
+ ---> System.ArgumentException: Cannot write DateTime with Kind=Unspecified to PostgreSQL type 'timestamp with time zone', only UTC is supported. Note that it's not possible to mix DateTimes with different Kinds in an array, range, or multirange. (Parameter 'value')
+   at Npgsql.Internal.Converters.DateTimeConverterResolver`1.Get(DateTime value, Nullable`1 expectedPgTypeId, Boolean validateOnly)
+   at Npgsql.Internal.Converters.DateTimeConverterResolver.<>c.<CreateResolver>b__0_0(DateTimeConverterResolver`1 resolver, DateTime value, Nullable`1 expectedPgTypeId)
+   at Npgsql.Internal.Converters.DateTimeConverterResolver`1.Get(T value, Nullable`1 expectedPgTypeId)
+   at Npgsql.Internal.PgConverterResolver`1.GetAsObjectInternal(PgTypeInfo typeInfo, Object value, Nullable`1 expectedPgTypeId)
+   at Npgsql.Internal.PgResolverTypeInfo.GetResolutionAsObject(Object value, Nullable`1 expectedPgTypeId)
+   at Npgsql.Internal.PgTypeInfo.GetObjectResolution(Object value)
+   at Npgsql.NpgsqlParameter.ResolveConverter(PgTypeInfo typeInfo)
+   at Npgsql.NpgsqlParameter.ResolveTypeInfo(PgSerializerOptions options)
+   at Npgsql.NpgsqlParameterCollection.ProcessParameters(PgSerializerOptions options, Boolean validateValues, CommandType commandType)
+   at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
+   at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
+   at Npgsql.NpgsqlCommand.ExecuteReader(CommandBehavior behavior)
+   at Npgsql.NpgsqlCommand.ExecuteDbDataReader(CommandBehavior behavior)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReader(RelationalCommandParameterObject parameterObject)
+   at Microsoft.EntityFrameworkCore.Update.ReaderModificationCommandBatch.Execute(IRelationalConnection connection)
+   --- End of inner exception stack trace ---
+   at Microsoft.EntityFrameworkCore.Update.ReaderModificationCommandBatch.Execute(IRelationalConnection connection)
+   at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.Execute(IEnumerable`1 commandBatches, IRelationalConnection connection)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalDatabase.SaveChanges(IList`1 entries)
+   at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChanges(IList`1 entriesToSave)
+   at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChanges(StateManager stateManager, Boolean acceptAllChangesOnSuccess)
+   at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.<>c.<SaveChanges>b__112_0(DbContext _, ValueTuple`2 t)
+   at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.<>c__DisplayClass28_0`2.<Execute>b__0(DbContext context, TState state)
+   at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.ExecuteImplementation[TState,TResult](Func`3 operation, Func`3 verifySucceeded, TState state)
+   at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.Execute[TState,TResult](TState state, Func`3 operation, Func`3 verifySucceeded)
+   at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChanges(Boolean acceptAllChangesOnSuccess)
+   at Microsoft.EntityFrameworkCore.DbContext.SaveChanges(Boolean acceptAllChangesOnSuccess)
+Microsoft.EntityFrameworkCore.DbUpdateException: An error occurred while saving the entity changes. See the inner exception for details.
+ ---> System.ArgumentException: Cannot write DateTime with Kind=Unspecified to PostgreSQL type 'timestamp with time zone', only UTC is supported. Note that it's not possible to mix DateTimes with different Kinds in an array, range, or multirange. (Parameter 'value')
+   at Npgsql.Internal.Converters.DateTimeConverterResolver`1.Get(DateTime value, Nullable`1 expectedPgTypeId, Boolean validateOnly)
+   at Npgsql.Internal.Converters.DateTimeConverterResolver.<>c.<CreateResolver>b__0_0(DateTimeConverterResolver`1 resolver, DateTime value, Nullable`1 expectedPgTypeId)
+   at Npgsql.Internal.Converters.DateTimeConverterResolver`1.Get(T value, Nullable`1 expectedPgTypeId)
+   at Npgsql.Internal.PgConverterResolver`1.GetAsObjectInternal(PgTypeInfo typeInfo, Object value, Nullable`1 expectedPgTypeId)
+   at Npgsql.Internal.PgResolverTypeInfo.GetResolutionAsObject(Object value, Nullable`1 expectedPgTypeId)
+   at Npgsql.Internal.PgTypeInfo.GetObjectResolution(Object value)
+   at Npgsql.NpgsqlParameter.ResolveConverter(PgTypeInfo typeInfo)
+   at Npgsql.NpgsqlParameter.ResolveTypeInfo(PgSerializerOptions options)
+   at Npgsql.NpgsqlParameterCollection.ProcessParameters(PgSerializerOptions options, Boolean validateValues, CommandType commandType)
+   at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
+   at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
+   at Npgsql.NpgsqlCommand.ExecuteReader(CommandBehavior behavior)
+   at Npgsql.NpgsqlCommand.ExecuteDbDataReader(CommandBehavior behavior)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReader(RelationalCommandParameterObject parameterObject)
+   at Microsoft.EntityFrameworkCore.Update.ReaderModificationCommandBatch.Execute(IRelationalConnection connection)
+   --- End of inner exception stack trace ---
+   at Microsoft.EntityFrameworkCore.Update.ReaderModificationCommandBatch.Execute(IRelationalConnection connection)
+   at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.Execute(IEnumerable`1 commandBatches, IRelationalConnection connection)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalDatabase.SaveChanges(IList`1 entries)
+   at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChanges(IList`1 entriesToSave)
+   at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChanges(StateManager stateManager, Boolean acceptAllChangesOnSuccess)
+   at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.<>c.<SaveChanges>b__112_0(DbContext _, ValueTuple`2 t)
+   at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.<>c__DisplayClass28_0`2.<Execute>b__0(DbContext context, TState state)
+   at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.ExecuteImplementation[TState,TResult](Func`3 operation, Func`3 verifySucceeded, TState state)
+   at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.Execute[TState,TResult](TState state, Func`3 operation, Func`3 verifySucceeded)
+   at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChanges(Boolean acceptAllChangesOnSuccess)
+   at Microsoft.EntityFrameworkCore.DbContext.SaveChanges(Boolean acceptAllChangesOnSuccess)
+2025-11-02 04:26:44.198 +00:00 [FTL] [] FATAL: Master database initialization failed
+Microsoft.EntityFrameworkCore.DbUpdateException: An error occurred while saving the entity changes. See the inner exception for details.
+ ---> System.ArgumentException: Cannot write DateTime with Kind=Unspecified to PostgreSQL type 'timestamp with time zone', only UTC is supported. Note that it's not possible to mix DateTimes with different Kinds in an array, range, or multirange. (Parameter 'value')
+   at Npgsql.Internal.Converters.DateTimeConverterResolver`1.Get(DateTime value, Nullable`1 expectedPgTypeId, Boolean validateOnly)
+   at Npgsql.Internal.Converters.DateTimeConverterResolver.<>c.<CreateResolver>b__0_0(DateTimeConverterResolver`1 resolver, DateTime value, Nullable`1 expectedPgTypeId)
+   at Npgsql.Internal.Converters.DateTimeConverterResolver`1.Get(T value, Nullable`1 expectedPgTypeId)
+   at Npgsql.Internal.PgConverterResolver`1.GetAsObjectInternal(PgTypeInfo typeInfo, Object value, Nullable`1 expectedPgTypeId)
+   at Npgsql.Internal.PgResolverTypeInfo.GetResolutionAsObject(Object value, Nullable`1 expectedPgTypeId)
+   at Npgsql.Internal.PgTypeInfo.GetObjectResolution(Object value)
+   at Npgsql.NpgsqlParameter.ResolveConverter(PgTypeInfo typeInfo)
+   at Npgsql.NpgsqlParameter.ResolveTypeInfo(PgSerializerOptions options)
+   at Npgsql.NpgsqlParameterCollection.ProcessParameters(PgSerializerOptions options, Boolean validateValues, CommandType commandType)
+   at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
+   at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
+   at Npgsql.NpgsqlCommand.ExecuteReader(CommandBehavior behavior)
+   at Npgsql.NpgsqlCommand.ExecuteDbDataReader(CommandBehavior behavior)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReader(RelationalCommandParameterObject parameterObject)
+   at Microsoft.EntityFrameworkCore.Update.ReaderModificationCommandBatch.Execute(IRelationalConnection connection)
+   --- End of inner exception stack trace ---
+   at Microsoft.EntityFrameworkCore.Update.ReaderModificationCommandBatch.Execute(IRelationalConnection connection)
+   at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.Execute(IEnumerable`1 commandBatches, IRelationalConnection connection)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalDatabase.SaveChanges(IList`1 entries)
+   at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChanges(IList`1 entriesToSave)
+   at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChanges(StateManager stateManager, Boolean acceptAllChangesOnSuccess)
+   at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.<>c.<SaveChanges>b__112_0(DbContext _, ValueTuple`2 t)
+   at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.<>c__DisplayClass28_0`2.<Execute>b__0(DbContext context, TState state)
+   at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.ExecuteImplementation[TState,TResult](Func`3 operation, Func`3 verifySucceeded, TState state)
+   at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.Execute[TState,TResult](TState state, Func`3 operation, Func`3 verifySucceeded)
+   at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChanges(Boolean acceptAllChangesOnSuccess)
+   at Microsoft.EntityFrameworkCore.DbContext.SaveChanges(Boolean acceptAllChangesOnSuccess)
+   at Microsoft.EntityFrameworkCore.DbContext.SaveChanges()
+   at HRMS.Infrastructure.Data.SectorSeedData.SeedSectorComplianceRules(MasterDbContext context) in /workspaces/HRAPP/src/HRMS.Infrastructure/Data/SectorSeedData.cs:line 1296
+   at Program.<Main>$(String[] args) in /workspaces/HRAPP/src/HRMS.API/Program.cs:line 497
+2025-11-02 04:31:20.596 +00:00 [INF] [] =================================================
+2025-11-02 04:31:20.711 +00:00 [INF] [] HRMS API Starting - Environment: Development
+2025-11-02 04:31:20.719 +00:00 [INF] [] =================================================
+2025-11-02 04:31:20.736 +00:00 [INF] [] Google Secret Manager disabled - using configuration/environment variables
+2025-11-02 04:31:20.754 +00:00 [INF] [] Rate limiting configured: Login (5/15min), API (100/min, 1000/hour)
+2025-11-02 04:31:20.755 +00:00 [INF] [] Response compression enabled: Brotli (primary), Gzip (fallback) - Expected 60-80% bandwidth savings
+2025-11-02 04:31:20.772 +00:00 [INF] [] Health checks configured: PostgreSQL, Redis
+2025-11-02 04:31:20.799 +00:00 [INF] [] JSON serialization optimized: Nulls ignored, cycles handled, camelCase - Expected 30% smaller payloads
+2025-11-02 04:31:21.202 +00:00 [INF] [] Initializing master database...
+2025-11-02 04:31:22.809 +00:00 [WRN] [] Sensitive data logging is enabled. Log entries and exception messages may include sensitive application data; this mode should only be enabled during development.
+2025-11-02 04:31:24.709 +00:00 [INF] [] Executed DbCommand (117ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT CASE WHEN COUNT(*) = 0 THEN FALSE ELSE TRUE END
+FROM pg_class AS cls
+JOIN pg_namespace AS ns ON ns.oid = cls.relnamespace
+WHERE
+        cls.relkind IN ('r', 'v', 'm', 'f', 'p') AND
+        ns.nspname NOT IN ('pg_catalog', 'information_schema') AND
+        -- Exclude tables which are members of PG extensions
+        NOT EXISTS (
+            SELECT 1 FROM pg_depend WHERE
+                classid=(
+                    SELECT cls.oid
+                    FROM pg_class AS cls
+                             JOIN pg_namespace AS ns ON ns.oid = cls.relnamespace
+                    WHERE relname='pg_class' AND ns.nspname='pg_catalog'
+                ) AND
+                objid=cls.oid AND
+                deptype IN ('e', 'x')
+        )
+2025-11-02 04:31:24.806 +00:00 [INF] [] Executed DbCommand (4ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT "MigrationId", "ProductVersion"
+FROM "__EFMigrationsHistory"
+ORDER BY "MigrationId";
+2025-11-02 04:31:25.382 +00:00 [INF] [] Executed DbCommand (7ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT EXISTS (
+    SELECT 1
+    FROM master."AdminUsers" AS a
+    WHERE NOT (a."IsDeleted"))
+2025-11-02 04:31:25.422 +00:00 [INF] [] Admin users already exist. Skipping default admin creation.
+2025-11-02 04:31:25.423 +00:00 [INF] [] Database seeding completed successfully
+2025-11-02 04:31:25.465 +00:00 [INF] [] Executed DbCommand (8ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT EXISTS (
+    SELECT 1
+    FROM master."IndustrySectors" AS i
+    WHERE NOT (i."IsDeleted"))
+2025-11-02 04:31:25.485 +00:00 [INF] [] Executed DbCommand (2ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT EXISTS (
+    SELECT 1
+    FROM master."SectorComplianceRules" AS s
+    WHERE NOT (s."IsDeleted"))
+2025-11-02 04:31:25.660 +00:00 [INF] [] Executed DbCommand (2ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT i."Id", i."CreatedAt", i."Description", i."IsActive", i."IsDeleted", i."ParentSectorId", i."RemunerationOrderReference", i."RemunerationOrderYear", i."RequiresSpecialPermits", i."SectorCode", i."SectorName", i."SectorNameFrench", i."UpdatedAt"
+FROM master."IndustrySectors" AS i
+WHERE NOT (i."IsDeleted") AND i."SectorCode" = 'CAT-HOTEL-LARGE'
+LIMIT 1
+2025-11-02 04:31:25.805 +00:00 [INF] [] Executed DbCommand (3ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT i."Id", i."CreatedAt", i."Description", i."IsActive", i."IsDeleted", i."ParentSectorId", i."RemunerationOrderReference", i."RemunerationOrderYear", i."RequiresSpecialPermits", i."SectorCode", i."SectorName", i."SectorNameFrench", i."UpdatedAt"
+FROM master."IndustrySectors" AS i
+WHERE NOT (i."IsDeleted") AND i."SectorCode" = 'BPO'
+LIMIT 1
+2025-11-02 04:31:25.828 +00:00 [INF] [] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT i."Id", i."CreatedAt", i."Description", i."IsActive", i."IsDeleted", i."ParentSectorId", i."RemunerationOrderReference", i."RemunerationOrderYear", i."RequiresSpecialPermits", i."SectorCode", i."SectorName", i."SectorNameFrench", i."UpdatedAt"
+FROM master."IndustrySectors" AS i
+WHERE NOT (i."IsDeleted") AND i."SectorCode" = 'SECURITY'
+LIMIT 1
+2025-11-02 04:31:25.845 +00:00 [INF] [] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT i."Id", i."CreatedAt", i."Description", i."IsActive", i."IsDeleted", i."ParentSectorId", i."RemunerationOrderReference", i."RemunerationOrderYear", i."RequiresSpecialPermits", i."SectorCode", i."SectorName", i."SectorNameFrench", i."UpdatedAt"
+FROM master."IndustrySectors" AS i
+WHERE NOT (i."IsDeleted") AND i."SectorCode" = 'FINANCE-BANKING'
+LIMIT 1
+2025-11-02 04:31:25.873 +00:00 [INF] [] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT i."Id", i."CreatedAt", i."Description", i."IsActive", i."IsDeleted", i."ParentSectorId", i."RemunerationOrderReference", i."RemunerationOrderYear", i."RequiresSpecialPermits", i."SectorCode", i."SectorName", i."SectorNameFrench", i."UpdatedAt"
+FROM master."IndustrySectors" AS i
+WHERE NOT (i."IsDeleted") AND i."SectorCode" = 'CONST'
+LIMIT 1
+2025-11-02 04:31:25.903 +00:00 [INF] [] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT i."Id", i."CreatedAt", i."Description", i."IsActive", i."IsDeleted", i."ParentSectorId", i."RemunerationOrderReference", i."RemunerationOrderYear", i."RequiresSpecialPermits", i."SectorCode", i."SectorName", i."SectorNameFrench", i."UpdatedAt"
+FROM master."IndustrySectors" AS i
+WHERE NOT (i."IsDeleted") AND i."SectorCode" = 'RETAIL-SUPERMARKET'
+LIMIT 1
+2025-11-02 04:31:26.146 +00:00 [INF] [] Executed DbCommand (35ms) [Parameters=[@p0='1', @p1='2025-11-02T04:31:25.9042228Z' (DbType = DateTime), @p2='2025-01-01T00:00:00.0000000Z' (DbType = DateTime), @p3=NULL (DbType = DateTime), @p4='False', @p5='GN No. 185 of 2023 - Catering & Tourism Remuneration Order', @p6=NULL, @p7='OVERTIME' (Nullable = false), @p8='{
+                "weekday_overtime_rate": 1.5,
+                "weekend_overtime_rate": 2.0,
+                "sunday_rate": 2.0,
+                "public_holiday_normal_hours_rate": 2.0,
+                "public_holiday_after_hours_rate": 3.0,
+                "cyclone_warning_class_3_rate": 3.0,
+                "night_shift_rate": 1.25,
+                "max_overtime_hours_per_day": 4,
+                "max_overtime_hours_per_week": 20,
+                "meal_allowance_after_hours": 2,
+                "meal_allowance_amount_mur": 85,
+                "time_off_in_lieu_allowed": true
+            }' (Nullable = false) (DbType = Object), @p9='Catering & Tourism - Overtime Rates' (Nullable = false), @p10='2', @p11=NULL (DbType = DateTime), @p12='2', @p13='2025-11-02T04:31:25.9043123Z' (DbType = DateTime), @p14='2025-01-01T00:00:00.0000000Z' (DbType = DateTime), @p15=NULL (DbType = DateTime), @p16='False', @p17='GN No. 185 of 2023 + National Minimum Wage Regulations 2025', @p18=NULL, @p19='MINIMUM_WAGE' (Nullable = false), @p20='{
+                "monthly_minimum_wage_mur": 17110,
+                "salary_compensation_mur": 610,
+                "effective_date": "2025-01-01",
+                "applies_to_basic_salary_up_to_mur": 50000,
+                "currency": "MUR",
+                "notes": "Minimum wage increased Jan 2025 from MUR 16,500 to MUR 17,110. Salary compensation increased from MUR 500 to MUR 610."
+            }' (Nullable = false) (DbType = Object), @p21='Catering & Tourism - Minimum Wage 2025' (Nullable = false), @p22='2', @p23=NULL (DbType = DateTime), @p24='3', @p25='2025-11-02T04:31:25.9043127Z' (DbType = DateTime), @p26='2025-01-01T00:00:00.0000000Z' (DbType = DateTime), @p27=NULL (DbType = DateTime), @p28='False', @p29='GN No. 185 of 2023 - Catering & Tourism Remuneration Order', @p30=NULL, @p31='WORKING_HOURS' (Nullable = false), @p32='{
+                "standard_weekly_hours": 45,
+                "standard_daily_hours": 9,
+                "working_pattern_options": [
+                    "9 hours x 5 days per week",
+                    "8 hours x 5 days + 5 hours x 1 day"
+                ],
+                "mandatory_lunch_break_minutes": 60,
+                "daily_max_hours": 12,
+                "unsocial_hours_start": "22:00",
+                "unsocial_hours_end": "06:00",
+                "shift_patterns_allowed": true,
+                "rotational_shifts": true
+            }' (Nullable = false) (DbType = Object), @p33='Catering & Tourism - Working Hours' (Nullable = false), @p34='2', @p35=NULL (DbType = DateTime), @p36='4', @p37='2025-11-02T04:31:25.9043130Z' (DbType = DateTime), @p38='2025-01-01T00:00:00.0000000Z' (DbType = DateTime), @p39=NULL (DbType = DateTime), @p40='False', @p41='GN No. 185 of 2023', @p42=NULL, @p43='ALLOWANCES' (Nullable = false), @p44='{
+                "meal_allowance_per_shift_mur": 85,
+                "transport_allowance_per_month_mur": 0,
+                "uniform_allowance_per_year_mur": 500,
+                "housing_allowance_applicable": false,
+                "tips_pooling_allowed": true,
+                "service_charge_distribution": "As per hotel policy"
+            }' (Nullable = false) (DbType = Object), @p45='Catering & Tourism - Allowances' (Nullable = false), @p46='2', @p47=NULL (DbType = DateTime), @p48='5', @p49='2025-11-02T04:31:25.9043133Z' (DbType = DateTime), @p50='2025-01-01T00:00:00.0000000Z' (DbType = DateTime), @p51=NULL (DbType = DateTime), @p52='False', @p53='Workers' Rights Act 2019 + GN No. 185 of 2023', @p54=NULL, @p55='LEAVE' (Nullable = false), @p56='{
+                "annual_leave_days": 22,
+                "sick_leave_days": 15,
+                "casual_leave_days": 5,
+                "maternity_leave_weeks": 14,
+                "paternity_leave_days": 5,
+                "leave_calculation_basis": "working_days",
+                "annual_leave_carry_forward_max_days": 5,
+                "encashment_allowed_on_resignation": true
+            }' (Nullable = false) (DbType = Object), @p57='Catering & Tourism - Leave Entitlements' (Nullable = false), @p58='2', @p59=NULL (DbType = DateTime), @p60='6', @p61='2025-11-02T04:31:25.9043142Z' (DbType = DateTime), @p62='2025-01-01T00:00:00.0000000Z' (DbType = DateTime), @p63=NULL (DbType = DateTime), @p64='False', @p65='Workers' Rights Act 2019 Section 111', @p66=NULL, @p67='GRATUITY' (Nullable = false), @p68='{
+                "formula": "15 days per year of service",
+                "calculation_basis": "basic_salary",
+                "minimum_service_months": 12,
+                "max_gratuity_amount_mur": null,
+                "pro_rated_for_partial_year": true,
+                "notes": "Gratuity = (Basic Salary / 22) * 15 * Years of Service"
+            }' (Nullable = false) (DbType = Object), @p69='Catering & Tourism - Gratuity Calculation' (Nullable = false), @p70='2', @p71=NULL (DbType = DateTime), @p72='7', @p73='2025-11-02T04:31:25.9043145Z' (DbType = DateTime), @p74='2025-01-01T00:00:00.0000000Z' (DbType = DateTime), @p75=NULL (DbType = DateTime), @p76='False', @p77='GN No. 201 of 2023 - BPO Remuneration Order', @p78=NULL, @p79='OVERTIME' (Nullable = false), @p80='{
+                "weekday_overtime_rate": 1.5,
+                "weekend_overtime_rate": 2.0,
+                "sunday_rate": 2.0,
+                "public_holiday_normal_hours_rate": 2.0,
+                "public_holiday_after_hours_rate": 3.0,
+                "night_shift_allowance_percentage": 10,
+                "max_overtime_hours_per_day": 4,
+                "max_overtime_hours_per_week": 20,
+                "time_off_in_lieu_allowed": true
+            }' (Nullable = false) (DbType = Object), @p81='BPO - Overtime Rates' (Nullable = false), @p82='11', @p83=NULL (DbType = DateTime), @p84='8', @p85='2025-11-02T04:31:25.9043147Z' (DbType = DateTime), @p86='2025-01-01T00:00:00.0000000Z' (DbType = DateTime), @p87=NULL (DbType = DateTime), @p88='False', @p89='GN No. 201 of 2023 + National Minimum Wage Regulations 2025', @p90=NULL, @p91='MINIMUM_WAGE' (Nullable = false), @p92='{
+                "monthly_minimum_wage_mur": 17110,
+                "salary_compensation_mur": 610,
+                "effective_date": "2025-01-01",
+                "applies_to_basic_salary_up_to_mur": 50000,
+                "currency": "MUR"
+            }' (Nullable = false) (DbType = Object), @p93='BPO - Minimum Wage 2025' (Nullable = false), @p94='11', @p95=NULL (DbType = DateTime), @p96='9', @p97='2025-11-02T04:31:25.9043150Z' (DbType = DateTime), @p98='2025-01-01T00:00:00.0000000Z' (DbType = DateTime), @p99=NULL (DbType = DateTime), @p100='False', @p101='GN No. 201 of 2023', @p102=NULL, @p103='WORKING_HOURS' (Nullable = false), @p104='{
+                "standard_weekly_hours": 45,
+                "standard_daily_hours": 9,
+                "working_pattern_options": [
+                    "9 hours x 5 days per week",
+                    "8 hours x 5 days + 5 hours x 1 day"
+                ],
+                "mandatory_break_minutes": 60,
+                "daily_max_hours": 12,
+                "shift_patterns_allowed": true,
+                "rotational_shifts": true,
+                "night_shifts_allowed": true
+            }' (Nullable = false) (DbType = Object), @p105='BPO - Working Hours' (Nullable = false), @p106='11', @p107=NULL (DbType = DateTime), @p108='10', @p109='2025-11-02T04:31:25.9043154Z' (DbType = DateTime), @p110='2025-01-01T00:00:00.0000000Z' (DbType = DateTime), @p111=NULL (DbType = DateTime), @p112='False', @p113='GN No. 178 of 2023 - Security Services Remuneration Order', @p114=NULL, @p115='OVERTIME' (Nullable = false), @p116='{
+                "weekday_overtime_rate": 1.25,
+                "weekend_overtime_rate": 1.5,
+                "sunday_rate": 2.0,
+                "public_holiday_normal_hours_rate": 2.0,
+                "public_holiday_after_hours_rate": 2.5,
+                "night_shift_rate": 1.1,
+                "max_overtime_hours_per_day": 6,
+                "max_overtime_hours_per_week": 24,
+                "time_off_in_lieu_allowed": false
+            }' (Nullable = false) (DbType = Object), @p117='Security Services - Overtime Rates' (Nullable = false), @p118='12', @p119=NULL (DbType = DateTime), @p120='11', @p121='2025-11-02T04:31:25.9043157Z' (DbType = DateTime), @p122='2025-01-01T00:00:00.0000000Z' (DbType = DateTime), @p123=NULL (DbType = DateTime), @p124='False', @p125='GN No. 178 of 2023', @p126=NULL, @p127='WORKING_HOURS' (Nullable = false), @p128='{
+                "standard_weekly_hours": 48,
+                "standard_daily_hours": 8,
+                "working_pattern_options": [
+                    "8 hours x 6 days per week",
+                    "12-hour shifts (rotating)"
+                ],
+                "mandatory_break_minutes": 60,
+                "daily_max_hours": 14,
+                "shift_patterns_allowed": true,
+                "rotational_shifts": true,
+                "continuous_duty_max_hours": 12
+            }' (Nullable = false) (DbType = Object), @p129='Security Services - Working Hours' (Nullable = false), @p130='12', @p131=NULL (DbType = DateTime), @p132='12', @p133='2025-11-02T04:31:25.9043160Z' (DbType = DateTime), @p134='2025-01-01T00:00:00.0000000Z' (DbType = DateTime), @p135=NULL (DbType = DateTime), @p136='False', @p137='GN No. 189 of 2023 - Financial Services Remuneration Order', @p138=NULL, @p139='WORKING_HOURS' (Nullable = false), @p140='{
+                "standard_weekly_hours": 40,
+                "standard_daily_hours": 8,
+                "working_pattern_options": [
+                    "8 hours x 5 days per week (Monday-Friday)"
+                ],
+                "mandatory_break_minutes": 60,
+                "daily_max_hours": 10,
+                "shift_patterns_allowed": false,
+                "weekend_work_exceptional_only": true
+            }' (Nullable = false) (DbType = Object), @p141='Banking - Working Hours' (Nullable = false), @p142='15', @p143=NULL (DbType = DateTime), @p144='13', @p145='2025-11-02T04:31:25.9043162Z' (DbType = DateTime), @p146='2025-01-01T00:00:00.0000000Z' (DbType = DateTime), @p147=NULL (DbType = DateTime), @p148='False', @p149='GN No. 189 of 2023', @p150=NULL, @p151='OVERTIME' (Nullable = false), @p152='{
+                "weekday_overtime_rate": 1.5,
+                "weekend_overtime_rate": 2.5,
+                "sunday_rate": 2.5,
+                "public_holiday_rate": 3.0,
+                "max_overtime_hours_per_week": 10,
+                "time_off_in_lieu_preferred": true,
+                "notes": "Banking sector typically minimizes overtime due to strict working hours"
+            }' (Nullable = false) (DbType = Object), @p153='Banking - Overtime Rates' (Nullable = false), @p154='15', @p155=NULL (DbType = DateTime), @p156='14', @p157='2025-11-02T04:31:25.9043165Z' (DbType = DateTime), @p158='2025-01-01T00:00:00.0000000Z' (DbType = DateTime), @p159=NULL (DbType = DateTime), @p160='False', @p161='GN No. 162 of 2022 - Construction Remuneration Order', @p162=NULL, @p163='OVERTIME' (Nullable = false), @p164='{
+                "weekday_overtime_rate": 1.5,
+                "weekend_overtime_rate": 2.0,
+                "sunday_rate": 2.0,
+                "public_holiday_rate": 2.5,
+                "night_shift_rate": 1.25,
+                "max_overtime_hours_per_day": 4,
+                "max_overtime_hours_per_week": 20
+            }' (Nullable = false) (DbType = Object), @p165='Construction - Overtime Rates' (Nullable = false), @p166='10', @p167=NULL (DbType = DateTime), @p168='15', @p169='2025-11-02T04:31:25.9043167Z' (DbType = DateTime), @p170='2025-01-01T00:00:00.0000000Z' (DbType = DateTime), @p171=NULL (DbType = DateTime), @p172='False', @p173='GN No. 162 of 2022', @p174=NULL, @p175='ALLOWANCES' (Nullable = false), @p176='{
+                "transport_allowance_per_day_mur": 50,
+                "meal_allowance_per_day_mur": 85,
+                "tool_allowance_per_month_mur": 200,
+                "height_work_allowance_per_day_mur": 100,
+                "hazard_allowance_applicable": true,
+                "safety_equipment_provided_by_employer": true
+            }' (Nullable = false) (DbType = Object), @p177='Construction - Allowances' (Nullable = false), @p178='10', @p179=NULL (DbType = DateTime), @p180='16', @p181='2025-11-02T04:31:25.9043170Z' (DbType = DateTime), @p182='2025-01-01T00:00:00.0000000Z' (DbType = DateTime), @p183=NULL (DbType = DateTime), @p184='False', @p185='GN No. 183 of 2023 - Retail & Distributive Trade Remuneration Order', @p186=NULL, @p187='WORKING_HOURS' (Nullable = false), @p188='{
+                "standard_weekly_hours": 45,
+                "standard_daily_hours": 9,
+                "working_pattern_options": [
+                    "9 hours x 5 days per week",
+                    "8 hours x 5 days + 5 hours x 1 day"
+                ],
+                "mandatory_break_minutes": 60,
+                "daily_max_hours": 12,
+                "shift_patterns_allowed": true,
+                "sunday_trading_hours_restricted": true,
+                "public_holiday_trading_requires_approval": true
+            }' (Nullable = false) (DbType = Object), @p189='Retail - Working Hours' (Nullable = false), @p190='26', @p191=NULL (DbType = DateTime), @p192='17', @p193='2025-11-02T04:31:25.9043173Z' (DbType = DateTime), @p194='2025-01-01T00:00:00.0000000Z' (DbType = DateTime), @p195=NULL (DbType = DateTime), @p196='False', @p197='GN No. 183 of 2023', @p198=NULL, @p199='OVERTIME' (Nullable = false), @p200='{
+                "weekday_overtime_rate": 1.5,
+                "weekend_overtime_rate": 2.0,
+                "sunday_rate": 2.5,
+                "public_holiday_rate": 3.0,
+                "max_overtime_hours_per_day": 4,
+                "max_overtime_hours_per_week": 20,
+                "time_off_in_lieu_allowed": true
+            }' (Nullable = false) (DbType = Object), @p201='Retail - Overtime Rates' (Nullable = false), @p202='26', @p203=NULL (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+INSERT INTO master."SectorComplianceRules" ("Id", "CreatedAt", "EffectiveFrom", "EffectiveTo", "IsDeleted", "LegalReference", "Notes", "RuleCategory", "RuleConfig", "RuleName", "SectorId", "UpdatedAt")
+VALUES (@p0, @p1, @p2, @p3, @p4, @p5, @p6, @p7, @p8, @p9, @p10, @p11);
+INSERT INTO master."SectorComplianceRules" ("Id", "CreatedAt", "EffectiveFrom", "EffectiveTo", "IsDeleted", "LegalReference", "Notes", "RuleCategory", "RuleConfig", "RuleName", "SectorId", "UpdatedAt")
+VALUES (@p12, @p13, @p14, @p15, @p16, @p17, @p18, @p19, @p20, @p21, @p22, @p23);
+INSERT INTO master."SectorComplianceRules" ("Id", "CreatedAt", "EffectiveFrom", "EffectiveTo", "IsDeleted", "LegalReference", "Notes", "RuleCategory", "RuleConfig", "RuleName", "SectorId", "UpdatedAt")
+VALUES (@p24, @p25, @p26, @p27, @p28, @p29, @p30, @p31, @p32, @p33, @p34, @p35);
+INSERT INTO master."SectorComplianceRules" ("Id", "CreatedAt", "EffectiveFrom", "EffectiveTo", "IsDeleted", "LegalReference", "Notes", "RuleCategory", "RuleConfig", "RuleName", "SectorId", "UpdatedAt")
+VALUES (@p36, @p37, @p38, @p39, @p40, @p41, @p42, @p43, @p44, @p45, @p46, @p47);
+INSERT INTO master."SectorComplianceRules" ("Id", "CreatedAt", "EffectiveFrom", "EffectiveTo", "IsDeleted", "LegalReference", "Notes", "RuleCategory", "RuleConfig", "RuleName", "SectorId", "UpdatedAt")
+VALUES (@p48, @p49, @p50, @p51, @p52, @p53, @p54, @p55, @p56, @p57, @p58, @p59);
+INSERT INTO master."SectorComplianceRules" ("Id", "CreatedAt", "EffectiveFrom", "EffectiveTo", "IsDeleted", "LegalReference", "Notes", "RuleCategory", "RuleConfig", "RuleName", "SectorId", "UpdatedAt")
+VALUES (@p60, @p61, @p62, @p63, @p64, @p65, @p66, @p67, @p68, @p69, @p70, @p71);
+INSERT INTO master."SectorComplianceRules" ("Id", "CreatedAt", "EffectiveFrom", "EffectiveTo", "IsDeleted", "LegalReference", "Notes", "RuleCategory", "RuleConfig", "RuleName", "SectorId", "UpdatedAt")
+VALUES (@p72, @p73, @p74, @p75, @p76, @p77, @p78, @p79, @p80, @p81, @p82, @p83);
+INSERT INTO master."SectorComplianceRules" ("Id", "CreatedAt", "EffectiveFrom", "EffectiveTo", "IsDeleted", "LegalReference", "Notes", "RuleCategory", "RuleConfig", "RuleName", "SectorId", "UpdatedAt")
+VALUES (@p84, @p85, @p86, @p87, @p88, @p89, @p90, @p91, @p92, @p93, @p94, @p95);
+INSERT INTO master."SectorComplianceRules" ("Id", "CreatedAt", "EffectiveFrom", "EffectiveTo", "IsDeleted", "LegalReference", "Notes", "RuleCategory", "RuleConfig", "RuleName", "SectorId", "UpdatedAt")
+VALUES (@p96, @p97, @p98, @p99, @p100, @p101, @p102, @p103, @p104, @p105, @p106, @p107);
+INSERT INTO master."SectorComplianceRules" ("Id", "CreatedAt", "EffectiveFrom", "EffectiveTo", "IsDeleted", "LegalReference", "Notes", "RuleCategory", "RuleConfig", "RuleName", "SectorId", "UpdatedAt")
+VALUES (@p108, @p109, @p110, @p111, @p112, @p113, @p114, @p115, @p116, @p117, @p118, @p119);
+INSERT INTO master."SectorComplianceRules" ("Id", "CreatedAt", "EffectiveFrom", "EffectiveTo", "IsDeleted", "LegalReference", "Notes", "RuleCategory", "RuleConfig", "RuleName", "SectorId", "UpdatedAt")
+VALUES (@p120, @p121, @p122, @p123, @p124, @p125, @p126, @p127, @p128, @p129, @p130, @p131);
+INSERT INTO master."SectorComplianceRules" ("Id", "CreatedAt", "EffectiveFrom", "EffectiveTo", "IsDeleted", "LegalReference", "Notes", "RuleCategory", "RuleConfig", "RuleName", "SectorId", "UpdatedAt")
+VALUES (@p132, @p133, @p134, @p135, @p136, @p137, @p138, @p139, @p140, @p141, @p142, @p143);
+INSERT INTO master."SectorComplianceRules" ("Id", "CreatedAt", "EffectiveFrom", "EffectiveTo", "IsDeleted", "LegalReference", "Notes", "RuleCategory", "RuleConfig", "RuleName", "SectorId", "UpdatedAt")
+VALUES (@p144, @p145, @p146, @p147, @p148, @p149, @p150, @p151, @p152, @p153, @p154, @p155);
+INSERT INTO master."SectorComplianceRules" ("Id", "CreatedAt", "EffectiveFrom", "EffectiveTo", "IsDeleted", "LegalReference", "Notes", "RuleCategory", "RuleConfig", "RuleName", "SectorId", "UpdatedAt")
+VALUES (@p156, @p157, @p158, @p159, @p160, @p161, @p162, @p163, @p164, @p165, @p166, @p167);
+INSERT INTO master."SectorComplianceRules" ("Id", "CreatedAt", "EffectiveFrom", "EffectiveTo", "IsDeleted", "LegalReference", "Notes", "RuleCategory", "RuleConfig", "RuleName", "SectorId", "UpdatedAt")
+VALUES (@p168, @p169, @p170, @p171, @p172, @p173, @p174, @p175, @p176, @p177, @p178, @p179);
+INSERT INTO master."SectorComplianceRules" ("Id", "CreatedAt", "EffectiveFrom", "EffectiveTo", "IsDeleted", "LegalReference", "Notes", "RuleCategory", "RuleConfig", "RuleName", "SectorId", "UpdatedAt")
+VALUES (@p180, @p181, @p182, @p183, @p184, @p185, @p186, @p187, @p188, @p189, @p190, @p191);
+INSERT INTO master."SectorComplianceRules" ("Id", "CreatedAt", "EffectiveFrom", "EffectiveTo", "IsDeleted", "LegalReference", "Notes", "RuleCategory", "RuleConfig", "RuleName", "SectorId", "UpdatedAt")
+VALUES (@p192, @p193, @p194, @p195, @p196, @p197, @p198, @p199, @p200, @p201, @p202, @p203);
+2025-11-02 04:31:26.166 +00:00 [INF] [] Master database initialized successfully
+2025-11-02 04:31:26.186 +00:00 [INF] [] Swagger UI enabled at /swagger
+2025-11-02 04:31:26.312 +00:00 [INF] [] Start installing Hangfire SQL objects...
+2025-11-02 04:31:26.324 +00:00 [INF] [] Hangfire SQL objects installed.
+2025-11-02 04:31:26.330 +00:00 [INF] [] Hangfire dashboard enabled at /hangfire
+2025-11-02 04:31:26.517 +00:00 [INF] [] Recurring jobs configured: document-expiry-alerts, absent-marking, leave-accrual
+2025-11-02 04:31:26.527 +00:00 [INF] [] Health check endpoints: /health, /health/ready, /health/detailed
+2025-11-02 04:31:26.697 +00:00 [INF] [] =================================================
+2025-11-02 04:31:26.697 +00:00 [INF] [] HRMS API Started Successfully
+2025-11-02 04:31:26.698 +00:00 [INF] [] Environment: Development
+2025-11-02 04:31:26.698 +00:00 [INF] [] HTTPS Metadata Required: false
+2025-11-02 04:31:26.698 +00:00 [INF] [] Health Checks: Enabled
+2025-11-02 04:31:26.698 +00:00 [INF] [] Hangfire Dashboard: Enabled
+2025-11-02 04:31:26.698 +00:00 [INF] [] Google Secret Manager: Disabled
+2025-11-02 04:31:26.699 +00:00 [INF] [] Multi-Tenant Architecture: Schema-per-Tenant
+2025-11-02 04:31:26.699 +00:00 [INF] [] =================================================
+2025-11-02 04:31:26.713 +00:00 [WRN] [] Storing keys in a directory '/home/codespace/.aspnet/DataProtection-Keys' that may not be persisted outside of the container. Protected data will be unavailable when container is destroyed. For more information go to https://aka.ms/aspnet/dataprotectionwarning
+2025-11-02 04:31:26.713 +00:00 [INF] [] User profile is available. Using '/home/codespace/.aspnet/DataProtection-Keys' as key repository; keys will not be encrypted at rest.
+2025-11-02 04:31:26.873 +00:00 [INF] [] Now listening on: http://localhost:5090
+2025-11-02 04:31:26.877 +00:00 [INF] [] Starting Hangfire Server using job storage: 'PostgreSQL Server: Host: localhost, DB: hrms_master, Schema: hangfire'
+2025-11-02 04:31:26.878 +00:00 [INF] [] Using the following options for PostgreSQL job storage:
+2025-11-02 04:31:26.878 +00:00 [INF] []     Queue poll interval: 00:00:15.
+2025-11-02 04:31:26.878 +00:00 [INF] []     Invisibility timeout: 00:30:00.
+2025-11-02 04:31:26.878 +00:00 [INF] []     Use sliding invisibility timeout: False.
+2025-11-02 04:31:26.878 +00:00 [INF] [] Using the following options for Hangfire Server:
+    Worker count: 2
+    Listening queues: 'default'
+    Shutdown timeout: 00:00:15
+    Schedule polling interval: 00:00:15
+2025-11-02 04:31:26.893 +00:00 [INF] [] Application started. Press Ctrl+C to shut down.
+2025-11-02 04:31:26.894 +00:00 [INF] [] Hosting environment: Development
+2025-11-02 04:31:26.896 +00:00 [INF] [] Content root path: /workspaces/HRAPP/src/HRMS.API
+2025-11-02 04:31:26.895 +00:00 [DBG] [] Execution loop BackgroundServerProcess:bad16991 has started in 2.8679 ms
+2025-11-02 04:31:26.922 +00:00 [INF] [] Server hrms-codespaces-eaf641:84611:1f199e0b successfully announced in 15.5161 ms
+2025-11-02 04:31:26.925 +00:00 [DBG] [] Execution loop ServerHeartbeatProcess:e1979764 has started in 0.9016 ms
+2025-11-02 04:31:26.925 +00:00 [INF] [] Server hrms-codespaces-eaf641:84611:1f199e0b is starting the registered dispatchers: ServerWatchdog, ServerJobCancellationWatcher, ExpirationManager, CountersAggregator, Worker, DelayedJobScheduler, RecurringJobScheduler...
+2025-11-02 04:31:26.926 +00:00 [DBG] [] Execution loop ServerWatchdog:9fef697b has started in 0.453 ms
+2025-11-02 04:31:26.927 +00:00 [DBG] [] Execution loop ServerJobCancellationWatcher:a94c77df has started in 1.6694 ms
+2025-11-02 04:31:26.929 +00:00 [INF] [] 1 servers were removed due to timeout
+2025-11-02 04:31:26.930 +00:00 [DBG] [] Execution loop ExpirationManager:027f5f6b has started in 1.3025 ms
+2025-11-02 04:31:26.931 +00:00 [DBG] [] Execution loop CountersAggregator:3597ecb2 has started in 0.9993 ms
+2025-11-02 04:31:26.931 +00:00 [DBG] [] Removing outdated records from table 'aggregatedcounter'...
+2025-11-02 04:31:26.931 +00:00 [DBG] [] Execution loop Worker:5630abb3 has started in 0.4966 ms
+2025-11-02 04:31:26.931 +00:00 [DBG] [] Aggregating records in 'Counter' table...
+2025-11-02 04:31:26.933 +00:00 [DBG] [] Execution loop Worker:bc856488 has started in 2.518 ms
+2025-11-02 04:31:26.934 +00:00 [DBG] [] Execution loop DelayedJobScheduler:20bbcb0b has started in 0.1847 ms
+2025-11-02 04:31:26.934 +00:00 [DBG] [] Execution loop RecurringJobScheduler:da6e5cd5 has started in 0.2503 ms
+2025-11-02 04:31:26.935 +00:00 [INF] [] Server hrms-codespaces-eaf641:84611:1f199e0b all the dispatchers started
+2025-11-02 04:31:26.953 +00:00 [DBG] [] Removing outdated records from table 'counter'...
+2025-11-02 04:31:26.965 +00:00 [DBG] [] Removing outdated records from table 'job'...
+2025-11-02 04:31:27.000 +00:00 [DBG] [] Removing outdated records from table 'list'...
+2025-11-02 04:31:27.021 +00:00 [DBG] [] Removing outdated records from table 'set'...
+2025-11-02 04:31:27.048 +00:00 [DBG] [] Removing outdated records from table 'hash'...
+2025-11-02 04:31:27.191 +00:00 [DBG] [] 1 recurring job(s) processed by scheduler.
+2025-11-02 04:31:27.231 +00:00 [INF] [] Absent Marking Job started at "2025-11-02T04:31:27.2311077Z"
+2025-11-02 04:31:27.301 +00:00 [INF] [] Executed DbCommand (11ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT t."Id", t."AdminEmail", t."AdminUserName", t."CompanyName", t."ContactEmail", t."ContactPhone", t."CreatedAt", t."CreatedBy", t."CurrentStorageBytes", t."CurrentUserCount", t."DeletedAt", t."DeletedBy", t."DeletionReason", t."GracePeriodDays", t."IsDeleted", t."MaxApiCallsPerHour", t."MaxStorageBytes", t."MaxUsers", t."SchemaName", t."SectorId", t."SectorSelectedAt", t."SoftDeleteDate", t."Status", t."Subdomain", t."SubscriptionEndDate", t."SubscriptionPlan", t."SubscriptionStartDate", t."SuspensionDate", t."SuspensionReason", t."TrialEndDate", t."UpdatedAt", t."UpdatedBy"
+FROM master."Tenants" AS t
+WHERE NOT (t."IsDeleted") AND t."Status" = 1 AND NOT (t."IsDeleted")
+2025-11-02 04:31:27.303 +00:00 [INF] [] Absent Marking Job completed. Total employees marked absent: 0
+2025-11-02 04:31:56.930 +00:00 [DBG] [] Server hrms-codespaces-eaf641:84611:1f199e0b heartbeat successfully sent
+2025-11-02 04:32:14.143 +00:00 [DBG] [] Hangfire Server is stopping...
+2025-11-02 04:32:14.145 +00:00 [INF] [] Server hrms-codespaces-eaf641:84611:1f199e0b caught stopping signal...
+2025-11-02 04:32:14.146 +00:00 [DBG] [] Execution loop CountersAggregator:3597ecb2 stopped in 0.5211 ms
+2025-11-02 04:32:14.147 +00:00 [DBG] [] Execution loop RecurringJobScheduler:da6e5cd5 stopped in 2.1293 ms
+2025-11-02 04:32:14.147 +00:00 [DBG] [] Execution loop ExpirationManager:027f5f6b stopped in 2.3714 ms
+2025-11-02 04:32:14.148 +00:00 [DBG] [] Execution loop ServerJobCancellationWatcher:a94c77df stopped in 2.5894 ms
+2025-11-02 04:32:14.146 +00:00 [DBG] [] Execution loop Worker:bc856488 stopped in 0.8391 ms
+2025-11-02 04:32:14.145 +00:00 [INF] [] Application is shutting down...
+2025-11-02 04:32:14.146 +00:00 [DBG] [] Execution loop DelayedJobScheduler:20bbcb0b stopped in 1.0009 ms
+2025-11-02 04:32:14.146 +00:00 [DBG] [] Execution loop Worker:5630abb3 stopped in 1.0843 ms
+2025-11-02 04:32:14.146 +00:00 [DBG] [] Execution loop ServerWatchdog:9fef697b stopped in 1.1732 ms
+2025-11-02 04:32:14.154 +00:00 [INF] [] Server hrms-codespaces-eaf641:84611:1f199e0b All dispatchers stopped
+2025-11-02 04:32:14.155 +00:00 [DBG] [] Execution loop ServerHeartbeatProcess:e1979764 stopped in 0.4569 ms
+2025-11-02 04:32:14.166 +00:00 [INF] [] Server hrms-codespaces-eaf641:84611:1f199e0b successfully reported itself as stopped in 9.0011 ms
+2025-11-02 04:32:14.166 +00:00 [INF] [] Server hrms-codespaces-eaf641:84611:1f199e0b has been stopped in total 21.0074 ms
+2025-11-02 04:32:14.166 +00:00 [DBG] [] Execution loop BackgroundServerProcess:bad16991 stopped in 21.142 ms
+2025-11-02 04:32:14.168 +00:00 [DBG] [] Hangfire Server is stopping...
+2025-11-02 04:35:09.092 +00:00 [INF] [] =================================================
+2025-11-02 04:35:09.224 +00:00 [INF] [] HRMS API Starting - Environment: Development
+2025-11-02 04:35:09.228 +00:00 [INF] [] =================================================
+2025-11-02 04:35:09.247 +00:00 [INF] [] Google Secret Manager disabled - using configuration/environment variables
+2025-11-02 04:35:09.264 +00:00 [INF] [] Rate limiting configured: Login (5/15min), API (100/min, 1000/hour)
+2025-11-02 04:35:09.266 +00:00 [INF] [] Response compression enabled: Brotli (primary), Gzip (fallback) - Expected 60-80% bandwidth savings
+2025-11-02 04:35:09.277 +00:00 [INF] [] Health checks configured: PostgreSQL, Redis
+2025-11-02 04:35:09.307 +00:00 [INF] [] JSON serialization optimized: Nulls ignored, cycles handled, camelCase - Expected 30% smaller payloads
+2025-11-02 04:35:09.876 +00:00 [INF] [] Initializing master database...
+2025-11-02 04:35:11.115 +00:00 [WRN] [] Sensitive data logging is enabled. Log entries and exception messages may include sensitive application data; this mode should only be enabled during development.
+2025-11-02 04:35:12.455 +00:00 [INF] [] Executed DbCommand (124ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT CASE WHEN COUNT(*) = 0 THEN FALSE ELSE TRUE END
+FROM pg_class AS cls
+JOIN pg_namespace AS ns ON ns.oid = cls.relnamespace
+WHERE
+        cls.relkind IN ('r', 'v', 'm', 'f', 'p') AND
+        ns.nspname NOT IN ('pg_catalog', 'information_schema') AND
+        -- Exclude tables which are members of PG extensions
+        NOT EXISTS (
+            SELECT 1 FROM pg_depend WHERE
+                classid=(
+                    SELECT cls.oid
+                    FROM pg_class AS cls
+                             JOIN pg_namespace AS ns ON ns.oid = cls.relnamespace
+                    WHERE relname='pg_class' AND ns.nspname='pg_catalog'
+                ) AND
+                objid=cls.oid AND
+                deptype IN ('e', 'x')
+        )
+2025-11-02 04:35:12.596 +00:00 [INF] [] Executed DbCommand (17ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT "MigrationId", "ProductVersion"
+FROM "__EFMigrationsHistory"
+ORDER BY "MigrationId";
+2025-11-02 04:35:13.217 +00:00 [INF] [] Executed DbCommand (4ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT EXISTS (
+    SELECT 1
+    FROM master."AdminUsers" AS a
+    WHERE NOT (a."IsDeleted"))
+2025-11-02 04:35:13.254 +00:00 [INF] [] Admin users already exist. Skipping default admin creation.
+2025-11-02 04:35:13.255 +00:00 [INF] [] Database seeding completed successfully
+2025-11-02 04:35:13.292 +00:00 [INF] [] Executed DbCommand (6ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT EXISTS (
+    SELECT 1
+    FROM master."IndustrySectors" AS i
+    WHERE NOT (i."IsDeleted"))
+2025-11-02 04:35:13.313 +00:00 [INF] [] Executed DbCommand (3ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT EXISTS (
+    SELECT 1
+    FROM master."SectorComplianceRules" AS s
+    WHERE NOT (s."IsDeleted"))
+2025-11-02 04:35:13.316 +00:00 [INF] [] Master database initialized successfully
+2025-11-02 04:35:13.336 +00:00 [INF] [] Swagger UI enabled at /swagger
+2025-11-02 04:35:13.380 +00:00 [INF] [] Start installing Hangfire SQL objects...
+2025-11-02 04:35:13.420 +00:00 [INF] [] Hangfire SQL objects installed.
+2025-11-02 04:35:13.434 +00:00 [INF] [] Hangfire dashboard enabled at /hangfire
+2025-11-02 04:35:13.831 +00:00 [INF] [] Recurring jobs configured: document-expiry-alerts, absent-marking, leave-accrual
+2025-11-02 04:35:13.864 +00:00 [INF] [] Health check endpoints: /health, /health/ready, /health/detailed
+2025-11-02 04:35:14.100 +00:00 [INF] [] =================================================
+2025-11-02 04:35:14.100 +00:00 [INF] [] HRMS API Started Successfully
+2025-11-02 04:35:14.101 +00:00 [INF] [] Environment: Development
+2025-11-02 04:35:14.101 +00:00 [INF] [] HTTPS Metadata Required: false
+2025-11-02 04:35:14.101 +00:00 [INF] [] Health Checks: Enabled
+2025-11-02 04:35:14.102 +00:00 [INF] [] Hangfire Dashboard: Enabled
+2025-11-02 04:35:14.102 +00:00 [INF] [] Google Secret Manager: Disabled
+2025-11-02 04:35:14.102 +00:00 [INF] [] Multi-Tenant Architecture: Schema-per-Tenant
+2025-11-02 04:35:14.102 +00:00 [INF] [] =================================================
+2025-11-02 04:35:14.112 +00:00 [WRN] [] Storing keys in a directory '/home/codespace/.aspnet/DataProtection-Keys' that may not be persisted outside of the container. Protected data will be unavailable when container is destroyed. For more information go to https://aka.ms/aspnet/dataprotectionwarning
+2025-11-02 04:35:14.113 +00:00 [INF] [] User profile is available. Using '/home/codespace/.aspnet/DataProtection-Keys' as key repository; keys will not be encrypted at rest.
+2025-11-02 04:35:14.659 +00:00 [INF] [] Now listening on: http://localhost:5090
+2025-11-02 04:35:14.669 +00:00 [INF] [] Starting Hangfire Server using job storage: 'PostgreSQL Server: Host: localhost, DB: hrms_master, Schema: hangfire'
+2025-11-02 04:35:14.671 +00:00 [INF] [] Using the following options for PostgreSQL job storage:
+2025-11-02 04:35:14.671 +00:00 [INF] []     Queue poll interval: 00:00:15.
+2025-11-02 04:35:14.671 +00:00 [INF] []     Invisibility timeout: 00:30:00.
+2025-11-02 04:35:14.673 +00:00 [INF] []     Use sliding invisibility timeout: False.
+2025-11-02 04:35:14.674 +00:00 [INF] [] Using the following options for Hangfire Server:
+    Worker count: 2
+    Listening queues: 'default'
+    Shutdown timeout: 00:00:15
+    Schedule polling interval: 00:00:15
+2025-11-02 04:35:14.698 +00:00 [INF] [] Application started. Press Ctrl+C to shut down.
+2025-11-02 04:35:14.705 +00:00 [INF] [] Hosting environment: Development
+2025-11-02 04:35:14.708 +00:00 [INF] [] Content root path: /workspaces/HRAPP/src/HRMS.API
+2025-11-02 04:35:14.709 +00:00 [DBG] [] Execution loop BackgroundServerProcess:ae7cd59e has started in 7.7493 ms
+2025-11-02 04:35:14.765 +00:00 [INF] [] Server hrms-codespaces-eaf641:87555:bde1613f successfully announced in 42.189 ms
+2025-11-02 04:35:14.772 +00:00 [DBG] [] Execution loop ServerHeartbeatProcess:896a1954 has started in 5.5514 ms
+2025-11-02 04:35:14.772 +00:00 [INF] [] Server hrms-codespaces-eaf641:87555:bde1613f is starting the registered dispatchers: ServerWatchdog, ServerJobCancellationWatcher, ExpirationManager, CountersAggregator, Worker, DelayedJobScheduler, RecurringJobScheduler...
+2025-11-02 04:35:14.778 +00:00 [DBG] [] Execution loop ServerWatchdog:58582629 has started in 0.9283 ms
+2025-11-02 04:35:14.781 +00:00 [DBG] [] Execution loop ServerJobCancellationWatcher:ba6afbad has started in 2.8328 ms
+2025-11-02 04:35:14.783 +00:00 [DBG] [] Execution loop ExpirationManager:4f9277f7 has started in 0.3633 ms
+2025-11-02 04:35:14.784 +00:00 [DBG] [] Removing outdated records from table 'aggregatedcounter'...
+2025-11-02 04:35:14.791 +00:00 [DBG] [] Execution loop CountersAggregator:dc2bb76e has started in 1.7956 ms
+2025-11-02 04:35:14.791 +00:00 [DBG] [] Aggregating records in 'Counter' table...
+2025-11-02 04:35:14.794 +00:00 [DBG] [] Execution loop Worker:c2a5410c has started in 3.2289 ms
+2025-11-02 04:35:14.794 +00:00 [DBG] [] Execution loop Worker:d61ede59 has started in 3.6836 ms
+2025-11-02 04:35:14.797 +00:00 [DBG] [] Execution loop DelayedJobScheduler:279c1175 has started in 2.4143 ms
+2025-11-02 04:35:14.803 +00:00 [DBG] [] Execution loop RecurringJobScheduler:70417c6d has started in 2.8432 ms
+2025-11-02 04:35:14.804 +00:00 [INF] [] Server hrms-codespaces-eaf641:87555:bde1613f all the dispatchers started
+2025-11-02 04:35:14.977 +00:00 [DBG] [] Removing outdated records from table 'counter'...
+2025-11-02 04:35:14.986 +00:00 [DBG] [] Removing outdated records from table 'job'...
+2025-11-02 04:35:15.007 +00:00 [DBG] [] Removing outdated records from table 'list'...
+2025-11-02 04:35:15.020 +00:00 [DBG] [] Removing outdated records from table 'set'...
+2025-11-02 04:35:15.031 +00:00 [DBG] [] Removing outdated records from table 'hash'...
+2025-11-02 04:35:44.778 +00:00 [DBG] [] Server hrms-codespaces-eaf641:87555:bde1613f heartbeat successfully sent
+2025-11-02 04:36:14.781 +00:00 [DBG] [] Server hrms-codespaces-eaf641:87555:bde1613f heartbeat successfully sent
+2025-11-02 04:36:44.783 +00:00 [DBG] [] Server hrms-codespaces-eaf641:87555:bde1613f heartbeat successfully sent
+2025-11-02 04:37:14.788 +00:00 [DBG] [] Server hrms-codespaces-eaf641:87555:bde1613f heartbeat successfully sent
+2025-11-02 04:37:29.111 +00:00 [INF] [] Request starting HTTP/1.1 GET http://localhost:5090/api/health - null null
+2025-11-02 04:37:29.132 +00:00 [DBG] [79d90043936748908eb206e347330cc6] Request started with CorrelationId: 79d90043936748908eb206e347330cc6
+2025-11-02 04:37:29.151 +00:00 [INF] [79d90043936748908eb206e347330cc6] HTTP Request [79d90043936748908eb206e347330cc6]
+Method: GET
+Path: /api/health
+Protocol: HTTP/1.1
+User: Anonymous
+Headers:
+  Accept: */*
+  Host: localhost:5090
+  User-Agent: curl/8.5.0
+
+2025-11-02 04:37:29.166 +00:00 [WRN] [79d90043936748908eb206e347330cc6] Failed to determine the https port for redirect.
+2025-11-02 04:37:29.213 +00:00 [DBG] [79d90043936748908eb206e347330cc6] No tenant context resolved for request: /api/health
+2025-11-02 04:37:29.350 +00:00 [INF] [79d90043936748908eb206e347330cc6] HTTP GET /api/health responded 404 in 195.6850 ms
+2025-11-02 04:37:29.352 +00:00 [WRN] [79d90043936748908eb206e347330cc6] HTTP Response [79d90043936748908eb206e347330cc6]
+Status: 404
+Duration: 211ms
+
+2025-11-02 04:37:29.352 +00:00 [DBG] [79d90043936748908eb206e347330cc6] Request completed with CorrelationId: 79d90043936748908eb206e347330cc6
+2025-11-02 04:37:29.365 +00:00 [INF] [] Request finished HTTP/1.1 GET http://localhost:5090/api/health - 404 0 null 253.6146ms
+2025-11-02 04:37:29.366 +00:00 [INF] [] Request reached the end of the middleware pipeline without being handled by application code. Request path: GET http://localhost:5090/api/health, Response status code: 404
+2025-11-02 04:37:29.379 +00:00 [INF] [] Request starting HTTP/1.1 GET http://localhost:5090/api/health - null null
+2025-11-02 04:37:29.381 +00:00 [DBG] [4466d819576f45478498237f2e404114] Request started with CorrelationId: 4466d819576f45478498237f2e404114
+2025-11-02 04:37:29.382 +00:00 [INF] [4466d819576f45478498237f2e404114] HTTP Request [4466d819576f45478498237f2e404114]
+Method: GET
+Path: /api/health
+Protocol: HTTP/1.1
+User: Anonymous
+Headers:
+  Accept: */*
+  Host: localhost:5090
+  User-Agent: curl/8.5.0
+  Accept-Encoding: br,gzip
+
+2025-11-02 04:37:29.386 +00:00 [DBG] [4466d819576f45478498237f2e404114] No tenant context resolved for request: /api/health
+2025-11-02 04:37:29.388 +00:00 [INF] [4466d819576f45478498237f2e404114] HTTP GET /api/health responded 404 in 5.5862 ms
+2025-11-02 04:37:29.388 +00:00 [WRN] [4466d819576f45478498237f2e404114] HTTP Response [4466d819576f45478498237f2e404114]
+Status: 404
+Duration: 6ms
+
+2025-11-02 04:37:29.388 +00:00 [DBG] [4466d819576f45478498237f2e404114] Request completed with CorrelationId: 4466d819576f45478498237f2e404114
+2025-11-02 04:37:29.389 +00:00 [INF] [] Request finished HTTP/1.1 GET http://localhost:5090/api/health - 404 0 null 9.3398ms
+2025-11-02 04:37:29.389 +00:00 [INF] [] Request reached the end of the middleware pipeline without being handled by application code. Request path: GET http://localhost:5090/api/health, Response status code: 404
+2025-11-02 04:37:34.597 +00:00 [INF] [] Request starting HTTP/1.1 GET http://localhost:5090/api/health - null null
+2025-11-02 04:37:34.597 +00:00 [DBG] [2262e51a3d264129a12ed3e0b6f0c760] Request started with CorrelationId: 2262e51a3d264129a12ed3e0b6f0c760
+2025-11-02 04:37:34.598 +00:00 [INF] [2262e51a3d264129a12ed3e0b6f0c760] HTTP Request [2262e51a3d264129a12ed3e0b6f0c760]
+Method: GET
+Path: /api/health
+Protocol: HTTP/1.1
+User: Anonymous
+Headers:
+  Accept: */*
+  Host: localhost:5090
+  User-Agent: curl/8.5.0
+
+2025-11-02 04:37:34.600 +00:00 [DBG] [2262e51a3d264129a12ed3e0b6f0c760] No tenant context resolved for request: /api/health
+2025-11-02 04:37:34.602 +00:00 [INF] [2262e51a3d264129a12ed3e0b6f0c760] HTTP GET /api/health responded 404 in 3.7768 ms
+2025-11-02 04:37:34.602 +00:00 [WRN] [2262e51a3d264129a12ed3e0b6f0c760] HTTP Response [2262e51a3d264129a12ed3e0b6f0c760]
+Status: 404
+Duration: 4ms
+
+2025-11-02 04:37:34.602 +00:00 [DBG] [2262e51a3d264129a12ed3e0b6f0c760] Request completed with CorrelationId: 2262e51a3d264129a12ed3e0b6f0c760
+2025-11-02 04:37:34.603 +00:00 [INF] [] Request finished HTTP/1.1 GET http://localhost:5090/api/health - 404 0 null 5.8402ms
+2025-11-02 04:37:34.603 +00:00 [INF] [] Request reached the end of the middleware pipeline without being handled by application code. Request path: GET http://localhost:5090/api/health, Response status code: 404
+2025-11-02 04:37:39.575 +00:00 [INF] [] Request starting HTTP/1.1 GET http://localhost:5090/api/health - null null
+2025-11-02 04:37:39.575 +00:00 [DBG] [a20a4974b2e44a5d9fbe34c3b974346b] Request started with CorrelationId: a20a4974b2e44a5d9fbe34c3b974346b
+2025-11-02 04:37:39.576 +00:00 [INF] [a20a4974b2e44a5d9fbe34c3b974346b] HTTP Request [a20a4974b2e44a5d9fbe34c3b974346b]
+Method: GET
+Path: /api/health
+Protocol: HTTP/1.1
+User: Anonymous
+Headers:
+  Accept: */*
+  Host: localhost:5090
+  User-Agent: curl/8.5.0
+
+2025-11-02 04:37:39.577 +00:00 [DBG] [a20a4974b2e44a5d9fbe34c3b974346b] No tenant context resolved for request: /api/health
+2025-11-02 04:37:39.577 +00:00 [INF] [a20a4974b2e44a5d9fbe34c3b974346b] HTTP GET /api/health responded 404 in 1.1053 ms
+2025-11-02 04:37:39.577 +00:00 [WRN] [a20a4974b2e44a5d9fbe34c3b974346b] HTTP Response [a20a4974b2e44a5d9fbe34c3b974346b]
+Status: 404
+Duration: 2ms
+
+2025-11-02 04:37:39.578 +00:00 [DBG] [a20a4974b2e44a5d9fbe34c3b974346b] Request completed with CorrelationId: a20a4974b2e44a5d9fbe34c3b974346b
+2025-11-02 04:37:39.578 +00:00 [INF] [] Request finished HTTP/1.1 GET http://localhost:5090/api/health - 404 0 null 2.971ms
+2025-11-02 04:37:39.578 +00:00 [INF] [] Request reached the end of the middleware pipeline without being handled by application code. Request path: GET http://localhost:5090/api/health, Response status code: 404
+2025-11-02 04:37:44.792 +00:00 [DBG] [] Server hrms-codespaces-eaf641:87555:bde1613f heartbeat successfully sent
+2025-11-02 04:37:47.030 +00:00 [INF] [] Request starting HTTP/1.1 GET http://localhost:5090/api/sectors - null null
+2025-11-02 04:37:47.032 +00:00 [DBG] [3ed3142d2f2945eba71bd8aee4adfb97] Request started with CorrelationId: 3ed3142d2f2945eba71bd8aee4adfb97
+2025-11-02 04:37:47.032 +00:00 [INF] [3ed3142d2f2945eba71bd8aee4adfb97] HTTP Request [3ed3142d2f2945eba71bd8aee4adfb97]
+Method: GET
+Path: /api/sectors
+Protocol: HTTP/1.1
+User: Anonymous
+Headers:
+  Accept: */*
+  Host: localhost:5090
+  User-Agent: curl/8.5.0
+
+2025-11-02 04:37:47.033 +00:00 [DBG] [3ed3142d2f2945eba71bd8aee4adfb97] No tenant context resolved for request: /api/sectors
+2025-11-02 04:37:47.034 +00:00 [INF] [3ed3142d2f2945eba71bd8aee4adfb97] Executing endpoint 'HRMS.API.Controllers.SectorsController.GetAllSectors (HRMS.API)'
+2025-11-02 04:37:47.046 +00:00 [INF] [3ed3142d2f2945eba71bd8aee4adfb97] Route matched with {action = "GetAllSectors", controller = "Sectors"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] GetAllSectors(Boolean) on controller HRMS.API.Controllers.SectorsController (HRMS.API).
+2025-11-02 04:37:47.058 +00:00 [INF] [3ed3142d2f2945eba71bd8aee4adfb97] Fetching all sectors as flat list (activeOnly: true)
+2025-11-02 04:37:47.205 +00:00 [WRN] [3ed3142d2f2945eba71bd8aee4adfb97] Compiling a query which loads related collections for more than one collection navigation, either via 'Include' or through projection, but no 'QuerySplittingBehavior' has been configured. By default, Entity Framework will use 'QuerySplittingBehavior.SingleQuery', which can potentially result in slow query performance. See https://go.microsoft.com/fwlink/?linkid=2134277 for more information. To identify the query that's triggering this warning call 'ConfigureWarnings(w => w.Throw(RelationalEventId.MultipleCollectionIncludeWarning))'.
+2025-11-02 04:37:47.260 +00:00 [INF] [3ed3142d2f2945eba71bd8aee4adfb97] Executed DbCommand (7ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT i."Id", i."CreatedAt", i."Description", i."IsActive", i."IsDeleted", i."ParentSectorId", i."RemunerationOrderReference", i."RemunerationOrderYear", i."RequiresSpecialPermits", i."SectorCode", i."SectorName", i."SectorNameFrench", i."UpdatedAt", i1."Id", i1."CreatedAt", i1."Description", i1."IsActive", i1."IsDeleted", i1."ParentSectorId", i1."RemunerationOrderReference", i1."RemunerationOrderYear", i1."RequiresSpecialPermits", i1."SectorCode", i1."SectorName", i1."SectorNameFrench", i1."UpdatedAt", i3."Id", i3."CreatedAt", i3."Description", i3."IsActive", i3."IsDeleted", i3."ParentSectorId", i3."RemunerationOrderReference", i3."RemunerationOrderYear", i3."RequiresSpecialPermits", i3."SectorCode", i3."SectorName", i3."SectorNameFrench", i3."UpdatedAt", s0."Id", s0."CreatedAt", s0."EffectiveFrom", s0."EffectiveTo", s0."IsDeleted", s0."LegalReference", s0."Notes", s0."RuleCategory", s0."RuleConfig", s0."RuleName", s0."SectorId", s0."UpdatedAt"
+FROM master."IndustrySectors" AS i
+LEFT JOIN (
+    SELECT i0."Id", i0."CreatedAt", i0."Description", i0."IsActive", i0."IsDeleted", i0."ParentSectorId", i0."RemunerationOrderReference", i0."RemunerationOrderYear", i0."RequiresSpecialPermits", i0."SectorCode", i0."SectorName", i0."SectorNameFrench", i0."UpdatedAt"
+    FROM master."IndustrySectors" AS i0
+    WHERE NOT (i0."IsDeleted")
+) AS i1 ON i."ParentSectorId" = i1."Id"
+LEFT JOIN (
+    SELECT i2."Id", i2."CreatedAt", i2."Description", i2."IsActive", i2."IsDeleted", i2."ParentSectorId", i2."RemunerationOrderReference", i2."RemunerationOrderYear", i2."RequiresSpecialPermits", i2."SectorCode", i2."SectorName", i2."SectorNameFrench", i2."UpdatedAt"
+    FROM master."IndustrySectors" AS i2
+    WHERE NOT (i2."IsDeleted")
+) AS i3 ON i."Id" = i3."ParentSectorId"
+LEFT JOIN (
+    SELECT s."Id", s."CreatedAt", s."EffectiveFrom", s."EffectiveTo", s."IsDeleted", s."LegalReference", s."Notes", s."RuleCategory", s."RuleConfig", s."RuleName", s."SectorId", s."UpdatedAt"
+    FROM master."SectorComplianceRules" AS s
+    WHERE NOT (s."IsDeleted")
+) AS s0 ON i."Id" = s0."SectorId"
+WHERE NOT (i."IsDeleted") AND i."IsActive"
+ORDER BY i."SectorName", i."Id", i1."Id", i3."Id"
+2025-11-02 04:37:47.385 +00:00 [INF] [3ed3142d2f2945eba71bd8aee4adfb97] Fetched 52 sectors
+2025-11-02 04:37:47.392 +00:00 [INF] [3ed3142d2f2945eba71bd8aee4adfb97] Executing OkObjectResult, writing value of type '<>f__AnonymousType19`3[[System.Boolean, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.Collections.Generic.List`1[[HRMS.Application.DTOs.SectorDtos.IndustrySectorListDto, HRMS.Application, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]], System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.Int32, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]'.
+2025-11-02 04:37:47.420 +00:00 [INF] [3ed3142d2f2945eba71bd8aee4adfb97] Executed action HRMS.API.Controllers.SectorsController.GetAllSectors (HRMS.API) in 370.6238ms
+2025-11-02 04:37:47.421 +00:00 [INF] [3ed3142d2f2945eba71bd8aee4adfb97] Executed endpoint 'HRMS.API.Controllers.SectorsController.GetAllSectors (HRMS.API)'
+2025-11-02 04:37:47.424 +00:00 [INF] [3ed3142d2f2945eba71bd8aee4adfb97] HTTP GET /api/sectors responded 200 in 391.0674 ms
+2025-11-02 04:37:47.424 +00:00 [INF] [3ed3142d2f2945eba71bd8aee4adfb97] HTTP Response [3ed3142d2f2945eba71bd8aee4adfb97]
+Status: 200
+Duration: 391ms
+Body: [Response too large: 17178 bytes]
+
+2025-11-02 04:37:47.425 +00:00 [DBG] [3ed3142d2f2945eba71bd8aee4adfb97] Request completed with CorrelationId: 3ed3142d2f2945eba71bd8aee4adfb97
+2025-11-02 04:37:47.427 +00:00 [INF] [] Request finished HTTP/1.1 GET http://localhost:5090/api/sectors - 200 null application/json; charset=utf-8 396.9945ms
+2025-11-02 04:38:14.794 +00:00 [DBG] [] Server hrms-codespaces-eaf641:87555:bde1613f heartbeat successfully sent
+2025-11-02 04:38:40.100 +00:00 [INF] [] Request starting HTTP/1.1 GET http://localhost:5090/api/sectors - null null
+2025-11-02 04:38:40.103 +00:00 [DBG] [b8f6fe98d2b24a238fdc379ef32557e5] Request started with CorrelationId: b8f6fe98d2b24a238fdc379ef32557e5
+2025-11-02 04:38:40.104 +00:00 [INF] [b8f6fe98d2b24a238fdc379ef32557e5] HTTP Request [b8f6fe98d2b24a238fdc379ef32557e5]
+Method: GET
+Path: /api/sectors
+Protocol: HTTP/1.1
+User: Anonymous
+Headers:
+  Accept: */*
+  Host: localhost:5090
+  User-Agent: curl/8.5.0
+  Accept-Encoding: br,gzip,deflate
+
+2025-11-02 04:38:40.105 +00:00 [DBG] [b8f6fe98d2b24a238fdc379ef32557e5] No tenant context resolved for request: /api/sectors
+2025-11-02 04:38:40.105 +00:00 [INF] [b8f6fe98d2b24a238fdc379ef32557e5] Executing endpoint 'HRMS.API.Controllers.SectorsController.GetAllSectors (HRMS.API)'
+2025-11-02 04:38:40.105 +00:00 [INF] [b8f6fe98d2b24a238fdc379ef32557e5] Route matched with {action = "GetAllSectors", controller = "Sectors"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] GetAllSectors(Boolean) on controller HRMS.API.Controllers.SectorsController (HRMS.API).
+2025-11-02 04:38:40.109 +00:00 [INF] [b8f6fe98d2b24a238fdc379ef32557e5] Fetching all sectors as flat list (activeOnly: true)
+2025-11-02 04:38:40.208 +00:00 [INF] [b8f6fe98d2b24a238fdc379ef32557e5] Executed DbCommand (5ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT i."Id", i."CreatedAt", i."Description", i."IsActive", i."IsDeleted", i."ParentSectorId", i."RemunerationOrderReference", i."RemunerationOrderYear", i."RequiresSpecialPermits", i."SectorCode", i."SectorName", i."SectorNameFrench", i."UpdatedAt", i1."Id", i1."CreatedAt", i1."Description", i1."IsActive", i1."IsDeleted", i1."ParentSectorId", i1."RemunerationOrderReference", i1."RemunerationOrderYear", i1."RequiresSpecialPermits", i1."SectorCode", i1."SectorName", i1."SectorNameFrench", i1."UpdatedAt", i3."Id", i3."CreatedAt", i3."Description", i3."IsActive", i3."IsDeleted", i3."ParentSectorId", i3."RemunerationOrderReference", i3."RemunerationOrderYear", i3."RequiresSpecialPermits", i3."SectorCode", i3."SectorName", i3."SectorNameFrench", i3."UpdatedAt", s0."Id", s0."CreatedAt", s0."EffectiveFrom", s0."EffectiveTo", s0."IsDeleted", s0."LegalReference", s0."Notes", s0."RuleCategory", s0."RuleConfig", s0."RuleName", s0."SectorId", s0."UpdatedAt"
+FROM master."IndustrySectors" AS i
+LEFT JOIN (
+    SELECT i0."Id", i0."CreatedAt", i0."Description", i0."IsActive", i0."IsDeleted", i0."ParentSectorId", i0."RemunerationOrderReference", i0."RemunerationOrderYear", i0."RequiresSpecialPermits", i0."SectorCode", i0."SectorName", i0."SectorNameFrench", i0."UpdatedAt"
+    FROM master."IndustrySectors" AS i0
+    WHERE NOT (i0."IsDeleted")
+) AS i1 ON i."ParentSectorId" = i1."Id"
+LEFT JOIN (
+    SELECT i2."Id", i2."CreatedAt", i2."Description", i2."IsActive", i2."IsDeleted", i2."ParentSectorId", i2."RemunerationOrderReference", i2."RemunerationOrderYear", i2."RequiresSpecialPermits", i2."SectorCode", i2."SectorName", i2."SectorNameFrench", i2."UpdatedAt"
+    FROM master."IndustrySectors" AS i2
+    WHERE NOT (i2."IsDeleted")
+) AS i3 ON i."Id" = i3."ParentSectorId"
+LEFT JOIN (
+    SELECT s."Id", s."CreatedAt", s."EffectiveFrom", s."EffectiveTo", s."IsDeleted", s."LegalReference", s."Notes", s."RuleCategory", s."RuleConfig", s."RuleName", s."SectorId", s."UpdatedAt"
+    FROM master."SectorComplianceRules" AS s
+    WHERE NOT (s."IsDeleted")
+) AS s0 ON i."Id" = s0."SectorId"
+WHERE NOT (i."IsDeleted") AND i."IsActive"
+ORDER BY i."SectorName", i."Id", i1."Id", i3."Id"
+2025-11-02 04:38:40.222 +00:00 [INF] [b8f6fe98d2b24a238fdc379ef32557e5] Fetched 52 sectors
+2025-11-02 04:38:40.222 +00:00 [INF] [b8f6fe98d2b24a238fdc379ef32557e5] Executing OkObjectResult, writing value of type '<>f__AnonymousType19`3[[System.Boolean, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.Collections.Generic.List`1[[HRMS.Application.DTOs.SectorDtos.IndustrySectorListDto, HRMS.Application, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]], System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.Int32, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]'.
+2025-11-02 04:38:40.223 +00:00 [INF] [b8f6fe98d2b24a238fdc379ef32557e5] Executed action HRMS.API.Controllers.SectorsController.GetAllSectors (HRMS.API) in 117.8306ms
+2025-11-02 04:38:40.223 +00:00 [INF] [b8f6fe98d2b24a238fdc379ef32557e5] Executed endpoint 'HRMS.API.Controllers.SectorsController.GetAllSectors (HRMS.API)'
+2025-11-02 04:38:40.224 +00:00 [INF] [b8f6fe98d2b24a238fdc379ef32557e5] HTTP GET /api/sectors responded 200 in 119.8178 ms
+2025-11-02 04:38:40.224 +00:00 [INF] [b8f6fe98d2b24a238fdc379ef32557e5] HTTP Response [b8f6fe98d2b24a238fdc379ef32557e5]
+Status: 200
+Duration: 120ms
+Body: [Response too large: 17178 bytes]
+
+2025-11-02 04:38:40.247 +00:00 [DBG] [b8f6fe98d2b24a238fdc379ef32557e5] Request completed with CorrelationId: b8f6fe98d2b24a238fdc379ef32557e5
+2025-11-02 04:38:40.249 +00:00 [INF] [] Request finished HTTP/1.1 GET http://localhost:5090/api/sectors - 200 null application/json; charset=utf-8 149.2341ms
+2025-11-02 04:38:40.264 +00:00 [INF] [] Request starting HTTP/1.1 GET http://localhost:5090/api/sectors - null null
+2025-11-02 04:38:40.265 +00:00 [DBG] [58e1c39c637d4267bb028099a56d5960] Request started with CorrelationId: 58e1c39c637d4267bb028099a56d5960
+2025-11-02 04:38:40.265 +00:00 [INF] [58e1c39c637d4267bb028099a56d5960] HTTP Request [58e1c39c637d4267bb028099a56d5960]
+Method: GET
+Path: /api/sectors
+Protocol: HTTP/1.1
+User: Anonymous
+Headers:
+  Accept: */*
+  Host: localhost:5090
+  User-Agent: curl/8.5.0
+
+2025-11-02 04:38:40.265 +00:00 [DBG] [58e1c39c637d4267bb028099a56d5960] No tenant context resolved for request: /api/sectors
+2025-11-02 04:38:40.266 +00:00 [INF] [58e1c39c637d4267bb028099a56d5960] Executing endpoint 'HRMS.API.Controllers.SectorsController.GetAllSectors (HRMS.API)'
+2025-11-02 04:38:40.266 +00:00 [INF] [58e1c39c637d4267bb028099a56d5960] Route matched with {action = "GetAllSectors", controller = "Sectors"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] GetAllSectors(Boolean) on controller HRMS.API.Controllers.SectorsController (HRMS.API).
+2025-11-02 04:38:40.269 +00:00 [INF] [58e1c39c637d4267bb028099a56d5960] Fetching all sectors as flat list (activeOnly: true)
+2025-11-02 04:38:40.279 +00:00 [INF] [58e1c39c637d4267bb028099a56d5960] Executed DbCommand (7ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT i."Id", i."CreatedAt", i."Description", i."IsActive", i."IsDeleted", i."ParentSectorId", i."RemunerationOrderReference", i."RemunerationOrderYear", i."RequiresSpecialPermits", i."SectorCode", i."SectorName", i."SectorNameFrench", i."UpdatedAt", i1."Id", i1."CreatedAt", i1."Description", i1."IsActive", i1."IsDeleted", i1."ParentSectorId", i1."RemunerationOrderReference", i1."RemunerationOrderYear", i1."RequiresSpecialPermits", i1."SectorCode", i1."SectorName", i1."SectorNameFrench", i1."UpdatedAt", i3."Id", i3."CreatedAt", i3."Description", i3."IsActive", i3."IsDeleted", i3."ParentSectorId", i3."RemunerationOrderReference", i3."RemunerationOrderYear", i3."RequiresSpecialPermits", i3."SectorCode", i3."SectorName", i3."SectorNameFrench", i3."UpdatedAt", s0."Id", s0."CreatedAt", s0."EffectiveFrom", s0."EffectiveTo", s0."IsDeleted", s0."LegalReference", s0."Notes", s0."RuleCategory", s0."RuleConfig", s0."RuleName", s0."SectorId", s0."UpdatedAt"
+FROM master."IndustrySectors" AS i
+LEFT JOIN (
+    SELECT i0."Id", i0."CreatedAt", i0."Description", i0."IsActive", i0."IsDeleted", i0."ParentSectorId", i0."RemunerationOrderReference", i0."RemunerationOrderYear", i0."RequiresSpecialPermits", i0."SectorCode", i0."SectorName", i0."SectorNameFrench", i0."UpdatedAt"
+    FROM master."IndustrySectors" AS i0
+    WHERE NOT (i0."IsDeleted")
+) AS i1 ON i."ParentSectorId" = i1."Id"
+LEFT JOIN (
+    SELECT i2."Id", i2."CreatedAt", i2."Description", i2."IsActive", i2."IsDeleted", i2."ParentSectorId", i2."RemunerationOrderReference", i2."RemunerationOrderYear", i2."RequiresSpecialPermits", i2."SectorCode", i2."SectorName", i2."SectorNameFrench", i2."UpdatedAt"
+    FROM master."IndustrySectors" AS i2
+    WHERE NOT (i2."IsDeleted")
+) AS i3 ON i."Id" = i3."ParentSectorId"
+LEFT JOIN (
+    SELECT s."Id", s."CreatedAt", s."EffectiveFrom", s."EffectiveTo", s."IsDeleted", s."LegalReference", s."Notes", s."RuleCategory", s."RuleConfig", s."RuleName", s."SectorId", s."UpdatedAt"
+    FROM master."SectorComplianceRules" AS s
+    WHERE NOT (s."IsDeleted")
+) AS s0 ON i."Id" = s0."SectorId"
+WHERE NOT (i."IsDeleted") AND i."IsActive"
+ORDER BY i."SectorName", i."Id", i1."Id", i3."Id"
+2025-11-02 04:38:40.295 +00:00 [INF] [58e1c39c637d4267bb028099a56d5960] Fetched 52 sectors
+2025-11-02 04:38:40.296 +00:00 [INF] [58e1c39c637d4267bb028099a56d5960] Executing OkObjectResult, writing value of type '<>f__AnonymousType19`3[[System.Boolean, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.Collections.Generic.List`1[[HRMS.Application.DTOs.SectorDtos.IndustrySectorListDto, HRMS.Application, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]], System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.Int32, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]'.
+2025-11-02 04:38:40.296 +00:00 [INF] [58e1c39c637d4267bb028099a56d5960] Executed action HRMS.API.Controllers.SectorsController.GetAllSectors (HRMS.API) in 30.2566ms
+2025-11-02 04:38:40.297 +00:00 [INF] [58e1c39c637d4267bb028099a56d5960] Executed endpoint 'HRMS.API.Controllers.SectorsController.GetAllSectors (HRMS.API)'
+2025-11-02 04:38:40.297 +00:00 [INF] [58e1c39c637d4267bb028099a56d5960] HTTP GET /api/sectors responded 200 in 32.2093 ms
+2025-11-02 04:38:40.300 +00:00 [INF] [58e1c39c637d4267bb028099a56d5960] HTTP Response [58e1c39c637d4267bb028099a56d5960]
+Status: 200
+Duration: 34ms
+Body: [Response too large: 17178 bytes]
+
+2025-11-02 04:38:40.300 +00:00 [DBG] [58e1c39c637d4267bb028099a56d5960] Request completed with CorrelationId: 58e1c39c637d4267bb028099a56d5960
+2025-11-02 04:38:40.300 +00:00 [INF] [] Request finished HTTP/1.1 GET http://localhost:5090/api/sectors - 200 null application/json; charset=utf-8 35.6202ms
+2025-11-02 04:38:40.430 +00:00 [INF] [] Request starting HTTP/1.1 GET http://localhost:5090/api/sectors - null null
+2025-11-02 04:38:40.431 +00:00 [DBG] [5e54a83435ea4a23acee7dac9ab8ad9b] Request started with CorrelationId: 5e54a83435ea4a23acee7dac9ab8ad9b
+2025-11-02 04:38:40.431 +00:00 [INF] [5e54a83435ea4a23acee7dac9ab8ad9b] HTTP Request [5e54a83435ea4a23acee7dac9ab8ad9b]
+Method: GET
+Path: /api/sectors
+Protocol: HTTP/1.1
+User: Anonymous
+Headers:
+  Accept: */*
+  Host: localhost:5090
+  User-Agent: curl/8.5.0
+
+2025-11-02 04:38:40.432 +00:00 [DBG] [5e54a83435ea4a23acee7dac9ab8ad9b] No tenant context resolved for request: /api/sectors
+2025-11-02 04:38:40.433 +00:00 [INF] [5e54a83435ea4a23acee7dac9ab8ad9b] Executing endpoint 'HRMS.API.Controllers.SectorsController.GetAllSectors (HRMS.API)'
+2025-11-02 04:38:40.433 +00:00 [INF] [5e54a83435ea4a23acee7dac9ab8ad9b] Route matched with {action = "GetAllSectors", controller = "Sectors"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] GetAllSectors(Boolean) on controller HRMS.API.Controllers.SectorsController (HRMS.API).
+2025-11-02 04:38:40.433 +00:00 [INF] [5e54a83435ea4a23acee7dac9ab8ad9b] Fetching all sectors as flat list (activeOnly: true)
+2025-11-02 04:38:40.439 +00:00 [INF] [5e54a83435ea4a23acee7dac9ab8ad9b] Executed DbCommand (5ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT i."Id", i."CreatedAt", i."Description", i."IsActive", i."IsDeleted", i."ParentSectorId", i."RemunerationOrderReference", i."RemunerationOrderYear", i."RequiresSpecialPermits", i."SectorCode", i."SectorName", i."SectorNameFrench", i."UpdatedAt", i1."Id", i1."CreatedAt", i1."Description", i1."IsActive", i1."IsDeleted", i1."ParentSectorId", i1."RemunerationOrderReference", i1."RemunerationOrderYear", i1."RequiresSpecialPermits", i1."SectorCode", i1."SectorName", i1."SectorNameFrench", i1."UpdatedAt", i3."Id", i3."CreatedAt", i3."Description", i3."IsActive", i3."IsDeleted", i3."ParentSectorId", i3."RemunerationOrderReference", i3."RemunerationOrderYear", i3."RequiresSpecialPermits", i3."SectorCode", i3."SectorName", i3."SectorNameFrench", i3."UpdatedAt", s0."Id", s0."CreatedAt", s0."EffectiveFrom", s0."EffectiveTo", s0."IsDeleted", s0."LegalReference", s0."Notes", s0."RuleCategory", s0."RuleConfig", s0."RuleName", s0."SectorId", s0."UpdatedAt"
+FROM master."IndustrySectors" AS i
+LEFT JOIN (
+    SELECT i0."Id", i0."CreatedAt", i0."Description", i0."IsActive", i0."IsDeleted", i0."ParentSectorId", i0."RemunerationOrderReference", i0."RemunerationOrderYear", i0."RequiresSpecialPermits", i0."SectorCode", i0."SectorName", i0."SectorNameFrench", i0."UpdatedAt"
+    FROM master."IndustrySectors" AS i0
+    WHERE NOT (i0."IsDeleted")
+) AS i1 ON i."ParentSectorId" = i1."Id"
+LEFT JOIN (
+    SELECT i2."Id", i2."CreatedAt", i2."Description", i2."IsActive", i2."IsDeleted", i2."ParentSectorId", i2."RemunerationOrderReference", i2."RemunerationOrderYear", i2."RequiresSpecialPermits", i2."SectorCode", i2."SectorName", i2."SectorNameFrench", i2."UpdatedAt"
+    FROM master."IndustrySectors" AS i2
+    WHERE NOT (i2."IsDeleted")
+) AS i3 ON i."Id" = i3."ParentSectorId"
+LEFT JOIN (
+    SELECT s."Id", s."CreatedAt", s."EffectiveFrom", s."EffectiveTo", s."IsDeleted", s."LegalReference", s."Notes", s."RuleCategory", s."RuleConfig", s."RuleName", s."SectorId", s."UpdatedAt"
+    FROM master."SectorComplianceRules" AS s
+    WHERE NOT (s."IsDeleted")
+) AS s0 ON i."Id" = s0."SectorId"
+WHERE NOT (i."IsDeleted") AND i."IsActive"
+ORDER BY i."SectorName", i."Id", i1."Id", i3."Id"
+2025-11-02 04:38:40.445 +00:00 [INF] [5e54a83435ea4a23acee7dac9ab8ad9b] Fetched 52 sectors
+2025-11-02 04:38:40.446 +00:00 [INF] [5e54a83435ea4a23acee7dac9ab8ad9b] Executing OkObjectResult, writing value of type '<>f__AnonymousType19`3[[System.Boolean, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.Collections.Generic.List`1[[HRMS.Application.DTOs.SectorDtos.IndustrySectorListDto, HRMS.Application, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]], System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.Int32, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]'.
+2025-11-02 04:38:40.446 +00:00 [INF] [5e54a83435ea4a23acee7dac9ab8ad9b] Executed action HRMS.API.Controllers.SectorsController.GetAllSectors (HRMS.API) in 12.8865ms
+2025-11-02 04:38:40.446 +00:00 [INF] [5e54a83435ea4a23acee7dac9ab8ad9b] Executed endpoint 'HRMS.API.Controllers.SectorsController.GetAllSectors (HRMS.API)'
+2025-11-02 04:38:40.446 +00:00 [INF] [5e54a83435ea4a23acee7dac9ab8ad9b] HTTP GET /api/sectors responded 200 in 15.3120 ms
+2025-11-02 04:38:40.447 +00:00 [INF] [5e54a83435ea4a23acee7dac9ab8ad9b] HTTP Response [5e54a83435ea4a23acee7dac9ab8ad9b]
+Status: 200
+Duration: 15ms
+Body: [Response too large: 17178 bytes]
+
+2025-11-02 04:38:40.447 +00:00 [DBG] [5e54a83435ea4a23acee7dac9ab8ad9b] Request completed with CorrelationId: 5e54a83435ea4a23acee7dac9ab8ad9b
+2025-11-02 04:38:40.447 +00:00 [INF] [] Request finished HTTP/1.1 GET http://localhost:5090/api/sectors - 200 null application/json; charset=utf-8 16.6665ms
+2025-11-02 04:38:44.795 +00:00 [DBG] [] Server hrms-codespaces-eaf641:87555:bde1613f heartbeat successfully sent
+2025-11-02 04:39:14.797 +00:00 [DBG] [] Server hrms-codespaces-eaf641:87555:bde1613f heartbeat successfully sent
+2025-11-02 04:39:44.799 +00:00 [DBG] [] Server hrms-codespaces-eaf641:87555:bde1613f heartbeat successfully sent
+2025-11-02 04:40:14.801 +00:00 [DBG] [] Server hrms-codespaces-eaf641:87555:bde1613f heartbeat successfully sent
+2025-11-02 04:40:14.823 +00:00 [DBG] [] Aggregating records in 'Counter' table...
+2025-11-02 04:40:44.802 +00:00 [DBG] [] Server hrms-codespaces-eaf641:87555:bde1613f heartbeat successfully sent
+2025-11-02 04:41:14.806 +00:00 [DBG] [] Server hrms-codespaces-eaf641:87555:bde1613f heartbeat successfully sent
+2025-11-02 04:41:44.807 +00:00 [DBG] [] Server hrms-codespaces-eaf641:87555:bde1613f heartbeat successfully sent
+2025-11-02 04:42:14.809 +00:00 [DBG] [] Server hrms-codespaces-eaf641:87555:bde1613f heartbeat successfully sent
+2025-11-02 04:42:44.811 +00:00 [DBG] [] Server hrms-codespaces-eaf641:87555:bde1613f heartbeat successfully sent
+2025-11-02 04:43:14.813 +00:00 [DBG] [] Server hrms-codespaces-eaf641:87555:bde1613f heartbeat successfully sent
+2025-11-02 04:43:44.815 +00:00 [DBG] [] Server hrms-codespaces-eaf641:87555:bde1613f heartbeat successfully sent
+2025-11-02 04:44:14.816 +00:00 [DBG] [] Server hrms-codespaces-eaf641:87555:bde1613f heartbeat successfully sent
+2025-11-02 04:44:44.818 +00:00 [DBG] [] Server hrms-codespaces-eaf641:87555:bde1613f heartbeat successfully sent
+2025-11-02 04:45:14.819 +00:00 [DBG] [] Server hrms-codespaces-eaf641:87555:bde1613f heartbeat successfully sent
+2025-11-02 04:45:14.824 +00:00 [DBG] [] Aggregating records in 'Counter' table...
+2025-11-02 04:45:44.821 +00:00 [DBG] [] Server hrms-codespaces-eaf641:87555:bde1613f heartbeat successfully sent
+2025-11-02 04:46:14.823 +00:00 [DBG] [] Server hrms-codespaces-eaf641:87555:bde1613f heartbeat successfully sent
+======================================
+2025-11-02 04:45:21.381 +00:00 [INF] [] Google Secret Manager disabled - using configuration/environment variables
+2025-11-02 04:45:21.400 +00:00 [INF] [] Rate limiting configured: Login (5/15min), API (100/min, 1000/hour)
+2025-11-02 04:45:21.402 +00:00 [INF] [] Response compression enabled: Brotli (primary), Gzip (fallback) - Expected 60-80% bandwidth savings
+2025-11-02 04:45:21.410 +00:00 [INF] [] Health checks configured: PostgreSQL, Redis
+2025-11-02 04:45:21.439 +00:00 [INF] [] JSON serialization optimized: Nulls ignored, cycles handled, camelCase - Expected 30% smaller payloads
+2025-11-02 04:45:21.803 +00:00 [INF] [] Initializing master database...
+2025-11-02 04:45:22.496 +00:00 [WRN] [] Sensitive data logging is enabled. Log entries and exception messages may include sensitive application data; this mode should only be enabled during development.
+2025-11-02 04:45:23.251 +00:00 [INF] [] Executed DbCommand (72ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT CASE WHEN COUNT(*) = 0 THEN FALSE ELSE TRUE END
+FROM pg_class AS cls
+JOIN pg_namespace AS ns ON ns.oid = cls.relnamespace
+WHERE
+        cls.relkind IN ('r', 'v', 'm', 'f', 'p') AND
+        ns.nspname NOT IN ('pg_catalog', 'information_schema') AND
+        -- Exclude tables which are members of PG extensions
+        NOT EXISTS (
+            SELECT 1 FROM pg_depend WHERE
+                classid=(
+                    SELECT cls.oid
+                    FROM pg_class AS cls
+                             JOIN pg_namespace AS ns ON ns.oid = cls.relnamespace
+                    WHERE relname='pg_class' AND ns.nspname='pg_catalog'
+                ) AND
+                objid=cls.oid AND
+                deptype IN ('e', 'x')
+        )
+2025-11-02 04:45:23.339 +00:00 [INF] [] Executed DbCommand (7ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT "MigrationId", "ProductVersion"
+FROM "__EFMigrationsHistory"
+ORDER BY "MigrationId";
+2025-11-02 04:45:23.788 +00:00 [INF] [] Executed DbCommand (7ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT EXISTS (
+    SELECT 1
+    FROM master."AdminUsers" AS a
+    WHERE NOT (a."IsDeleted"))
+2025-11-02 04:45:23.814 +00:00 [INF] [] Admin users already exist. Skipping default admin creation.
+2025-11-02 04:45:23.814 +00:00 [INF] [] Database seeding completed successfully
+2025-11-02 04:45:23.837 +00:00 [INF] [] Executed DbCommand (3ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT EXISTS (
+    SELECT 1
+    FROM master."IndustrySectors" AS i
+    WHERE NOT (i."IsDeleted"))
+2025-11-02 04:45:23.850 +00:00 [INF] [] Executed DbCommand (2ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT EXISTS (
+    SELECT 1
+    FROM master."SectorComplianceRules" AS s
+    WHERE NOT (s."IsDeleted"))
+2025-11-02 04:45:23.851 +00:00 [INF] [] Master database initialized successfully
+2025-11-02 04:45:23.878 +00:00 [INF] [] Swagger UI enabled at /swagger
+2025-11-02 04:45:23.901 +00:00 [INF] [] Start installing Hangfire SQL objects...
+2025-11-02 04:45:23.920 +00:00 [INF] [] Hangfire SQL objects installed.
+2025-11-02 04:45:23.929 +00:00 [INF] [] Hangfire dashboard enabled at /hangfire
+2025-11-02 04:45:24.213 +00:00 [INF] [] Recurring jobs configured: document-expiry-alerts, absent-marking, leave-accrual
+2025-11-02 04:45:24.232 +00:00 [INF] [] Health check endpoints: /health, /health/ready, /health/detailed
+2025-11-02 04:45:24.293 +00:00 [INF] [] =================================================
+2025-11-02 04:45:24.293 +00:00 [INF] [] HRMS API Started Successfully
+2025-11-02 04:45:24.294 +00:00 [INF] [] Environment: Development
+2025-11-02 04:45:24.294 +00:00 [INF] [] HTTPS Metadata Required: false
+2025-11-02 04:45:24.295 +00:00 [INF] [] Health Checks: Enabled
+2025-11-02 04:45:24.295 +00:00 [INF] [] Hangfire Dashboard: Enabled
+2025-11-02 04:45:24.295 +00:00 [INF] [] Google Secret Manager: Disabled
+2025-11-02 04:45:24.296 +00:00 [INF] [] Multi-Tenant Architecture: Schema-per-Tenant
+2025-11-02 04:45:24.296 +00:00 [INF] [] =================================================
+2025-11-02 04:45:24.305 +00:00 [WRN] [] Storing keys in a directory '/home/codespace/.aspnet/DataProtection-Keys' that may not be persisted outside of the container. Protected data will be unavailable when container is destroyed. For more information go to https://aka.ms/aspnet/dataprotectionwarning
+2025-11-02 04:45:24.305 +00:00 [INF] [] User profile is available. Using '/home/codespace/.aspnet/DataProtection-Keys' as key repository; keys will not be encrypted at rest.
+2025-11-02 04:45:24.416 +00:00 [ERR] [] Hosting failed to start
+System.IO.IOException: Failed to bind to address http://127.0.0.1:5090: address already in use.
+ ---> Microsoft.AspNetCore.Connections.AddressInUseException: Address already in use
+ ---> System.Net.Sockets.SocketException (98): Address already in use
+   at System.Net.Sockets.Socket.DoBind(EndPoint endPointSnapshot, SocketAddress socketAddress)
+   at System.Net.Sockets.Socket.Bind(EndPoint localEP)
+   at Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets.SocketTransportOptions.CreateDefaultBoundListenSocket(EndPoint endpoint)
+   at Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets.SocketConnectionListener.Bind()
+   --- End of inner exception stack trace ---
+   at Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets.SocketConnectionListener.Bind()
+   at Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets.SocketTransportFactory.BindAsync(EndPoint endpoint, CancellationToken cancellationToken)
+   at Microsoft.AspNetCore.Server.Kestrel.Core.Internal.Infrastructure.TransportManager.BindAsync(EndPoint endPoint, ConnectionDelegate connectionDelegate, EndpointConfig endpointConfig, CancellationToken cancellationToken)
+   at Microsoft.AspNetCore.Server.Kestrel.Core.KestrelServerImpl.<>c__DisplayClass28_0`1.<<StartAsync>g__OnBind|0>d.MoveNext()
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.Server.Kestrel.Core.Internal.AddressBinder.BindEndpointAsync(ListenOptions endpoint, AddressBindContext context, CancellationToken cancellationToken)
+   --- End of inner exception stack trace ---
+   at Microsoft.AspNetCore.Server.Kestrel.Core.Internal.AddressBinder.BindEndpointAsync(ListenOptions endpoint, AddressBindContext context, CancellationToken cancellationToken)
+   at Microsoft.AspNetCore.Server.Kestrel.Core.LocalhostListenOptions.BindAsync(AddressBindContext context, CancellationToken cancellationToken)
+   at Microsoft.AspNetCore.Server.Kestrel.Core.Internal.AddressBinder.AddressesStrategy.BindAsync(AddressBindContext context, CancellationToken cancellationToken)
+   at Microsoft.AspNetCore.Server.Kestrel.Core.KestrelServerImpl.BindAsync(CancellationToken cancellationToken)
+   at Microsoft.AspNetCore.Server.Kestrel.Core.KestrelServerImpl.StartAsync[TContext](IHttpApplication`1 application, CancellationToken cancellationToken)
+   at Microsoft.AspNetCore.Hosting.GenericWebHostService.StartAsync(CancellationToken cancellationToken)
+   at Microsoft.Extensions.Hosting.Internal.Host.<StartAsync>b__14_1(IHostedService service, CancellationToken token)
+   at Microsoft.Extensions.Hosting.Internal.Host.ForeachService[T](IEnumerable`1 services, CancellationToken token, Boolean concurrent, Boolean abortOnFirstException, List`1 exceptions, Func`3 operation)
+2025-11-02 04:45:24.430 +00:00 [FTL] [] Application terminated unexpectedly
+System.IO.IOException: Failed to bind to address http://127.0.0.1:5090: address already in use.
+ ---> Microsoft.AspNetCore.Connections.AddressInUseException: Address already in use
+ ---> System.Net.Sockets.SocketException (98): Address already in use
+   at System.Net.Sockets.Socket.DoBind(EndPoint endPointSnapshot, SocketAddress socketAddress)
+   at System.Net.Sockets.Socket.Bind(EndPoint localEP)
+   at Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets.SocketTransportOptions.CreateDefaultBoundListenSocket(EndPoint endpoint)
+   at Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets.SocketConnectionListener.Bind()
+   --- End of inner exception stack trace ---
+   at Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets.SocketConnectionListener.Bind()
+   at Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets.SocketTransportFactory.BindAsync(EndPoint endpoint, CancellationToken cancellationToken)
+   at Microsoft.AspNetCore.Server.Kestrel.Core.Internal.Infrastructure.TransportManager.BindAsync(EndPoint endPoint, ConnectionDelegate connectionDelegate, EndpointConfig endpointConfig, CancellationToken cancellationToken)
+   at Microsoft.AspNetCore.Server.Kestrel.Core.KestrelServerImpl.<>c__DisplayClass28_0`1.<<StartAsync>g__OnBind|0>d.MoveNext()
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.Server.Kestrel.Core.Internal.AddressBinder.BindEndpointAsync(ListenOptions endpoint, AddressBindContext context, CancellationToken cancellationToken)
+   --- End of inner exception stack trace ---
+   at Microsoft.AspNetCore.Server.Kestrel.Core.Internal.AddressBinder.BindEndpointAsync(ListenOptions endpoint, AddressBindContext context, CancellationToken cancellationToken)
+   at Microsoft.AspNetCore.Server.Kestrel.Core.LocalhostListenOptions.BindAsync(AddressBindContext context, CancellationToken cancellationToken)
+   at Microsoft.AspNetCore.Server.Kestrel.Core.Internal.AddressBinder.AddressesStrategy.BindAsync(AddressBindContext context, CancellationToken cancellationToken)
+   at Microsoft.AspNetCore.Server.Kestrel.Core.KestrelServerImpl.BindAsync(CancellationToken cancellationToken)
+   at Microsoft.AspNetCore.Server.Kestrel.Core.KestrelServerImpl.StartAsync[TContext](IHttpApplication`1 application, CancellationToken cancellationToken)
+   at Microsoft.AspNetCore.Hosting.GenericWebHostService.StartAsync(CancellationToken cancellationToken)
+   at Microsoft.Extensions.Hosting.Internal.Host.<StartAsync>b__14_1(IHostedService service, CancellationToken token)
+   at Microsoft.Extensions.Hosting.Internal.Host.ForeachService[T](IEnumerable`1 services, CancellationToken token, Boolean concurrent, Boolean abortOnFirstException, List`1 exceptions, Func`3 operation)
+   at Microsoft.Extensions.Hosting.Internal.Host.StartAsync(CancellationToken cancellationToken)
+   at Microsoft.Extensions.Hosting.HostingAbstractionsHostExtensions.RunAsync(IHost host, CancellationToken token)
+   at Microsoft.Extensions.Hosting.HostingAbstractionsHostExtensions.RunAsync(IHost host, CancellationToken token)
+   at Microsoft.Extensions.Hosting.HostingAbstractionsHostExtensions.Run(IHost host)
+   at Program.<Main>$(String[] args) in /workspaces/HRAPP/src/HRMS.API/Program.cs:line 706
+2025-11-02 04:46:24.509 +00:00 [INF] [] =================================================
+2025-11-02 04:46:24.568 +00:00 [INF] [] HRMS API Starting - Environment: Development
+2025-11-02 04:46:24.570 +00:00 [INF] [] =================================================
+2025-11-02 04:46:24.578 +00:00 [INF] [] Google Secret Manager disabled - using configuration/environment variables
+2025-11-02 04:46:24.586 +00:00 [INF] [] Rate limiting configured: Login (5/15min), API (100/min, 1000/hour)
+2025-11-02 04:46:24.587 +00:00 [INF] [] Response compression enabled: Brotli (primary), Gzip (fallback) - Expected 60-80% bandwidth savings
+2025-11-02 04:46:24.591 +00:00 [INF] [] Health checks configured: PostgreSQL, Redis
+2025-11-02 04:46:24.602 +00:00 [INF] [] JSON serialization optimized: Nulls ignored, cycles handled, camelCase - Expected 30% smaller payloads
+2025-11-02 04:46:24.721 +00:00 [INF] [] Initializing master database...
+2025-11-02 04:46:25.135 +00:00 [WRN] [] Sensitive data logging is enabled. Log entries and exception messages may include sensitive application data; this mode should only be enabled during development.
+2025-11-02 04:46:25.606 +00:00 [INF] [] Executed DbCommand (40ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT CASE WHEN COUNT(*) = 0 THEN FALSE ELSE TRUE END
+FROM pg_class AS cls
+JOIN pg_namespace AS ns ON ns.oid = cls.relnamespace
+WHERE
+        cls.relkind IN ('r', 'v', 'm', 'f', 'p') AND
+        ns.nspname NOT IN ('pg_catalog', 'information_schema') AND
+        -- Exclude tables which are members of PG extensions
+        NOT EXISTS (
+            SELECT 1 FROM pg_depend WHERE
+                classid=(
+                    SELECT cls.oid
+                    FROM pg_class AS cls
+                             JOIN pg_namespace AS ns ON ns.oid = cls.relnamespace
+                    WHERE relname='pg_class' AND ns.nspname='pg_catalog'
+                ) AND
+                objid=cls.oid AND
+                deptype IN ('e', 'x')
+        )
+2025-11-02 04:46:25.646 +00:00 [INF] [] Executed DbCommand (5ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT "MigrationId", "ProductVersion"
+FROM "__EFMigrationsHistory"
+ORDER BY "MigrationId";
+2025-11-02 04:46:25.853 +00:00 [INF] [] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT EXISTS (
+    SELECT 1
+    FROM master."AdminUsers" AS a
+    WHERE NOT (a."IsDeleted"))
+2025-11-02 04:46:25.868 +00:00 [INF] [] Admin users already exist. Skipping default admin creation.
+2025-11-02 04:46:25.868 +00:00 [INF] [] Database seeding completed successfully
+2025-11-02 04:46:25.886 +00:00 [INF] [] Executed DbCommand (2ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT EXISTS (
+    SELECT 1
+    FROM master."IndustrySectors" AS i
+    WHERE NOT (i."IsDeleted"))
+2025-11-02 04:46:25.894 +00:00 [INF] [] Executed DbCommand (2ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT EXISTS (
+    SELECT 1
+    FROM master."SectorComplianceRules" AS s
+    WHERE NOT (s."IsDeleted"))
+2025-11-02 04:46:25.895 +00:00 [INF] [] Master database initialized successfully
+2025-11-02 04:46:25.904 +00:00 [INF] [] Swagger UI enabled at /swagger
+2025-11-02 04:46:25.919 +00:00 [INF] [] Start installing Hangfire SQL objects...
+2025-11-02 04:46:25.932 +00:00 [INF] [] Hangfire SQL objects installed.
+2025-11-02 04:46:25.939 +00:00 [INF] [] Hangfire dashboard enabled at /hangfire
+2025-11-02 04:46:26.070 +00:00 [INF] [] Recurring jobs configured: document-expiry-alerts, absent-marking, leave-accrual
+2025-11-02 04:46:26.079 +00:00 [INF] [] Health check endpoints: /health, /health/ready, /health/detailed
+2025-11-02 04:46:26.144 +00:00 [INF] [] =================================================
+2025-11-02 04:46:26.144 +00:00 [INF] [] HRMS API Started Successfully
+2025-11-02 04:46:26.144 +00:00 [INF] [] Environment: Development
+2025-11-02 04:46:26.145 +00:00 [INF] [] HTTPS Metadata Required: false
+2025-11-02 04:46:26.145 +00:00 [INF] [] Health Checks: Enabled
+2025-11-02 04:46:26.146 +00:00 [INF] [] Hangfire Dashboard: Enabled
+2025-11-02 04:46:26.146 +00:00 [INF] [] Google Secret Manager: Disabled
+2025-11-02 04:46:26.146 +00:00 [INF] [] Multi-Tenant Architecture: Schema-per-Tenant
+2025-11-02 04:46:26.147 +00:00 [INF] [] =================================================
+2025-11-02 04:46:26.155 +00:00 [WRN] [] Storing keys in a directory '/home/codespace/.aspnet/DataProtection-Keys' that may not be persisted outside of the container. Protected data will be unavailable when container is destroyed. For more information go to https://aka.ms/aspnet/dataprotectionwarning
+2025-11-02 04:46:26.155 +00:00 [INF] [] User profile is available. Using '/home/codespace/.aspnet/DataProtection-Keys' as key repository; keys will not be encrypted at rest.
+2025-11-02 04:46:26.264 +00:00 [INF] [] Now listening on: http://localhost:5090
+2025-11-02 04:46:26.268 +00:00 [INF] [] Starting Hangfire Server using job storage: 'PostgreSQL Server: Host: localhost, DB: hrms_master, Schema: hangfire'
+2025-11-02 04:46:26.268 +00:00 [INF] [] Using the following options for PostgreSQL job storage:
+2025-11-02 04:46:26.269 +00:00 [INF] []     Queue poll interval: 00:00:15.
+2025-11-02 04:46:26.269 +00:00 [INF] []     Invisibility timeout: 00:30:00.
+2025-11-02 04:46:26.269 +00:00 [INF] []     Use sliding invisibility timeout: False.
+2025-11-02 04:46:26.270 +00:00 [INF] [] Using the following options for Hangfire Server:
+    Worker count: 2
+    Listening queues: 'default'
+    Shutdown timeout: 00:00:15
+    Schedule polling interval: 00:00:15
+2025-11-02 04:46:26.278 +00:00 [INF] [] Application started. Press Ctrl+C to shut down.
+2025-11-02 04:46:26.278 +00:00 [INF] [] Hosting environment: Development
+2025-11-02 04:46:26.279 +00:00 [INF] [] Content root path: /workspaces/HRAPP/src/HRMS.API
+2025-11-02 04:46:26.283 +00:00 [DBG] [] Execution loop BackgroundServerProcess:db41a32b has started in 6.4081 ms
+2025-11-02 04:46:26.296 +00:00 [INF] [] Server hrms-codespaces-eaf641:97956:41012afc successfully announced in 10.1033 ms
+2025-11-02 04:46:26.297 +00:00 [DBG] [] Execution loop ServerHeartbeatProcess:ebc95fe8 has started in 0.7651 ms
+2025-11-02 04:46:26.298 +00:00 [INF] [] Server hrms-codespaces-eaf641:97956:41012afc is starting the registered dispatchers: ServerWatchdog, ServerJobCancellationWatcher, ExpirationManager, CountersAggregator, Worker, DelayedJobScheduler, RecurringJobScheduler...
+2025-11-02 04:46:26.298 +00:00 [DBG] [] Execution loop ServerWatchdog:a011dabb has started in 0.2707 ms
+2025-11-02 04:46:26.299 +00:00 [DBG] [] Execution loop ServerJobCancellationWatcher:28162c9d has started in 0.2215 ms
+2025-11-02 04:46:26.300 +00:00 [DBG] [] Execution loop ExpirationManager:6cab5f20 has started in 0.2955 ms
+2025-11-02 04:46:26.301 +00:00 [DBG] [] Execution loop CountersAggregator:74768603 has started in 0.1797 ms
+2025-11-02 04:46:26.301 +00:00 [DBG] [] Aggregating records in 'Counter' table...
+2025-11-02 04:46:26.303 +00:00 [DBG] [] Removing outdated records from table 'aggregatedcounter'...
+2025-11-02 04:46:26.304 +00:00 [DBG] [] Execution loop Worker:6da62bbc has started in 0.1829 ms
+2025-11-02 04:46:26.306 +00:00 [DBG] [] Execution loop Worker:95577c92 has started in 2.1776 ms
+2025-11-02 04:46:26.308 +00:00 [DBG] [] Execution loop DelayedJobScheduler:bb004732 has started in 0.2927 ms
+2025-11-02 04:46:26.309 +00:00 [DBG] [] Execution loop RecurringJobScheduler:38b6b863 has started in 0.2569 ms
+2025-11-02 04:46:26.309 +00:00 [INF] [] Server hrms-codespaces-eaf641:97956:41012afc all the dispatchers started
+2025-11-02 04:46:26.427 +00:00 [DBG] [] Removing outdated records from table 'counter'...
+2025-11-02 04:46:26.453 +00:00 [DBG] [] Removing outdated records from table 'job'...
+2025-11-02 04:46:26.464 +00:00 [DBG] [] Removing outdated records from table 'list'...
+2025-11-02 04:46:26.497 +00:00 [DBG] [] Removing outdated records from table 'set'...
+2025-11-02 04:46:26.503 +00:00 [DBG] [] Removing outdated records from table 'hash'...
+2025-11-02 04:46:56.302 +00:00 [DBG] [] Server hrms-codespaces-eaf641:97956:41012afc heartbeat successfully sent
+2025-11-02 04:47:26.305 +00:00 [DBG] [] Server hrms-codespaces-eaf641:97956:41012afc heartbeat successfully sent
+2025-11-02 04:47:56.324 +00:00 [DBG] [] Server hrms-codespaces-eaf641:97956:41012afc heartbeat successfully sent
+2025-11-02 04:48:26.327 +00:00 [DBG] [] Server hrms-codespaces-eaf641:97956:41012afc heartbeat successfully sent
+2025-11-02 04:48:56.329 +00:00 [DBG] [] Server hrms-codespaces-eaf641:97956:41012afc heartbeat successfully sent
+2025-11-02 04:49:26.331 +00:00 [DBG] [] Server hrms-codespaces-eaf641:97956:41012afc heartbeat successfully sent
+2025-11-02 04:49:56.332 +00:00 [DBG] [] Server hrms-codespaces-eaf641:97956:41012afc heartbeat successfully sent
+2025-11-02 04:50:26.429 +00:00 [DBG] [] Server hrms-codespaces-eaf641:97956:41012afc heartbeat successfully sent
+2025-11-02 04:50:56.431 +00:00 [DBG] [] Server hrms-codespaces-eaf641:97956:41012afc heartbeat successfully sent
+2025-11-02 04:51:26.313 +00:00 [INF] [] 1 servers were removed due to timeout
+2025-11-02 04:51:26.409 +00:00 [DBG] [] Aggregating records in 'Counter' table...
+2025-11-02 04:51:26.544 +00:00 [DBG] [] Server hrms-codespaces-eaf641:97956:41012afc heartbeat successfully sent
+2025-11-02 04:51:56.546 +00:00 [DBG] [] Server hrms-codespaces-eaf641:97956:41012afc heartbeat successfully sent
+2025-11-02 04:52:26.548 +00:00 [DBG] [] Server hrms-codespaces-eaf641:97956:41012afc heartbeat successfully sent
+2025-11-02 04:52:56.551 +00:00 [DBG] [] Server hrms-codespaces-eaf641:97956:41012afc heartbeat successfully sent

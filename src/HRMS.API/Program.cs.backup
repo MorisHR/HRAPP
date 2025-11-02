@@ -1,0 +1,370 @@
+using Microsoft.EntityFrameworkCore;
+using HRMS.Infrastructure.Data;
+using HRMS.Infrastructure.Services;
+using HRMS.Core.Interfaces;
+using HRMS.Application.Interfaces;
+using HRMS.API.Middleware;
+using HRMS.Core.Settings;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using Serilog;
+using Hangfire;
+using Hangfire.PostgreSql;
+using HRMS.BackgroundJobs.Jobs;
+
+var builder = WebApplication.CreateBuilder(args);
+
+// ======================
+// Serilog Configuration
+// ======================
+Log.Logger = new LoggerConfiguration()
+    .ReadFrom.Configuration(builder.Configuration)
+    .Enrich.FromLogContext()
+    .CreateLogger();
+
+builder.Host.UseSerilog();
+
+// ======================
+// Database Configuration
+// ======================
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+
+// Master DbContext (system-wide data)
+builder.Services.AddDbContext<MasterDbContext>(options =>
+    options.UseNpgsql(connectionString));
+
+// ======================
+// HTTP Context Accessor (needed for tenant resolution)
+// ======================
+builder.Services.AddHttpContextAccessor();
+
+// ======================
+// Tenant DbContext (tenant-specific data with schema-per-tenant)
+// ======================
+builder.Services.AddScoped<TenantDbContext>(serviceProvider =>
+{
+    var httpContextAccessor = serviceProvider.GetService<IHttpContextAccessor>();
+    var httpContext = httpContextAccessor?.HttpContext;
+    var tenantId = httpContext?.Items["TenantId"]?.ToString();
+
+    string tenantSchema;
+    DbContextOptionsBuilder<TenantDbContext> optionsBuilder = new();
+
+    if (string.IsNullOrEmpty(tenantId))
+    {
+        // Default schema for initial startup or non-tenant requests
+        tenantSchema = "public";
+        optionsBuilder.UseNpgsql(connectionString);
+    }
+    else
+    {
+        // Use tenant-specific schema
+        tenantSchema = $"tenant_{tenantId}";
+        optionsBuilder.UseNpgsql(connectionString, o =>
+            o.MigrationsHistoryTable("__EFMigrationsHistory", tenantSchema));
+    }
+
+    return new TenantDbContext(optionsBuilder.Options, tenantSchema);
+});
+
+// ======================
+// Multi-Tenancy Services
+// ======================
+builder.Services.AddScoped<ITenantService, TenantService>();
+
+builder.Services.AddScoped<ISchemaProvisioningService>(provider =>
+{
+    var logger = provider.GetRequiredService<ILogger<SchemaProvisioningService>>();
+    return new SchemaProvisioningService(connectionString!, logger, provider);
+});
+
+// ======================
+// JWT Configuration
+// ======================
+builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSettings"));
+
+// ======================
+// Email Configuration
+// ======================
+builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
+
+// ======================
+// Application Services
+// ======================
+builder.Services.AddScoped<IPasswordHasher, Argon2PasswordHasher>();
+builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IEmployeeService, EmployeeService>();
+builder.Services.AddScoped<ILeaveService, LeaveService>();
+builder.Services.AddScoped<ISectorService, SectorService>();
+builder.Services.AddScoped<ISectorComplianceService, SectorComplianceService>();
+builder.Services.AddScoped<IAttendanceService, AttendanceService>();
+builder.Services.AddScoped<IAttendanceMachineService, AttendanceMachineService>();
+builder.Services.AddScoped<IPayrollService, PayrollService>();
+builder.Services.AddScoped<ISalaryComponentService, SalaryComponentService>();
+builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddScoped<IReportService, ReportService>();
+builder.Services.AddScoped<IPdfService, PdfService>();
+builder.Services.AddScoped<TenantManagementService>();
+
+// ======================
+// Background Jobs Services
+// ======================
+builder.Services.AddScoped<DocumentExpiryAlertJob>();
+builder.Services.AddScoped<AbsentMarkingJob>();
+builder.Services.AddScoped<LeaveAccrualJob>();
+
+// ======================
+// JWT Authentication
+// ======================
+var jwtSettings = builder.Configuration.GetSection("JwtSettings").Get<JwtSettings>();
+var key = Encoding.UTF8.GetBytes(jwtSettings!.Secret);
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.RequireHttpsMetadata = false; // Set to true in production
+    options.SaveToken = true;
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = jwtSettings.Issuer,
+        ValidAudience = jwtSettings.Audience,
+        IssuerSigningKey = new SymmetricSecurityKey(key),
+        ClockSkew = TimeSpan.Zero
+    };
+});
+
+builder.Services.AddAuthorization();
+
+// ======================
+// Hangfire Configuration
+// ======================
+builder.Services.AddHangfire(config =>
+{
+    config.SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+          .UseSimpleAssemblyNameTypeSerializer()
+          .UseRecommendedSerializerSettings()
+          .UsePostgreSqlStorage(options =>
+          {
+              options.UseNpgsqlConnection(connectionString);
+          });
+});
+
+builder.Services.AddHangfireServer(options =>
+{
+    options.WorkerCount = 5; // Number of concurrent job workers
+    options.ServerName = "HRMS-BackgroundJobs";
+});
+
+// ======================
+// CORS Configuration
+// ======================
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAngularApp", policy =>
+    {
+        policy.WithOrigins(
+                "http://localhost:4200",
+                "https://localhost:4200")
+              .AllowAnyMethod()
+              .AllowAnyHeader()
+              .AllowCredentials();
+    });
+});
+
+// ======================
+// Controllers
+// ======================
+builder.Services.AddControllers();
+
+// ======================
+// API Documentation (Swagger)
+// ======================
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
+    {
+        Title = "HRMS API",
+        Version = "v1",
+        Description = "Multi-Tenant Human Resource Management System API with Mauritius Labour Law Compliance",
+        Contact = new Microsoft.OpenApi.Models.OpenApiContact
+        {
+            Name = "HRMS Support",
+            Email = "support@hrms.com"
+        }
+    });
+
+    // Add JWT Authentication to Swagger
+    c.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
+        Scheme = "Bearer",
+        BearerFormat = "JWT",
+        In = Microsoft.OpenApi.Models.ParameterLocation.Header,
+        Description = "Enter 'Bearer' followed by a space and your JWT token.\n\nExample: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+    });
+
+    c.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
+    {
+        {
+            new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+            {
+                Reference = new Microsoft.OpenApi.Models.OpenApiReference
+                {
+                    Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
+    });
+});
+
+var app = builder.Build();
+
+// ======================
+// Database Initialization
+// ======================
+using (var scope = app.Services.CreateScope())
+{
+    try
+    {
+        var masterContext = scope.ServiceProvider.GetRequiredService<MasterDbContext>();
+
+        // Create master database if it doesn't exist
+        await masterContext.Database.EnsureCreatedAsync();
+
+        // Apply migrations
+        await masterContext.Database.MigrateAsync();
+
+        Log.Information("Master database initialized successfully");
+
+        // Seed default data (Super Admin user)
+        var passwordHasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher>();
+        var logger = scope.ServiceProvider.GetRequiredService<ILogger<DataSeeder>>();
+        var seeder = new DataSeeder(masterContext, passwordHasher, logger);
+        await seeder.SeedAsync();
+
+        // Seed Industry Sectors and Compliance Rules
+        SectorSeedData.SeedIndustrySectors(masterContext);
+        SectorSeedData.SeedSectorComplianceRules(masterContext);
+    }
+    catch (Exception ex)
+    {
+        Log.Error(ex, "Error initializing master database");
+    }
+}
+
+// ======================
+// HTTP Request Pipeline
+// ======================
+
+// Serilog Request Logging
+app.UseSerilogRequestLogging();
+
+// Swagger (only in Development)
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "HRMS API v1");
+        c.RoutePrefix = "swagger";
+    });
+}
+
+// HTTPS Redirection
+app.UseHttpsRedirection();
+
+// CORS
+app.UseCors("AllowAngularApp");
+
+// Tenant Resolution Middleware (MUST be before authentication/authorization)
+app.UseTenantResolution();
+
+// Authentication & Authorization
+app.UseAuthentication();
+app.UseAuthorization();
+
+// ======================
+// Hangfire Dashboard
+// ======================
+app.UseHangfireDashboard("/hangfire", new DashboardOptions
+{
+    Authorization = new[] { new HangfireDashboardAuthorizationFilter() },
+    DashboardTitle = "HRMS Background Jobs",
+    StatsPollingInterval = 5000 // 5 seconds
+});
+
+// ======================
+// Configure Recurring Background Jobs
+// ======================
+RecurringJob.AddOrUpdate<DocumentExpiryAlertJob>(
+    "document-expiry-alerts",
+    job => job.ExecuteAsync(),
+    "0 9 * * *",  // Daily at 9:00 AM
+    TimeZoneInfo.FindSystemTimeZoneById("Mauritius Standard Time"));
+
+RecurringJob.AddOrUpdate<AbsentMarkingJob>(
+    "absent-marking",
+    job => job.ExecuteAsync(),
+    "0 23 * * *",  // Daily at 11:00 PM (after all shifts)
+    TimeZoneInfo.FindSystemTimeZoneById("Mauritius Standard Time"));
+
+RecurringJob.AddOrUpdate<LeaveAccrualJob>(
+    "leave-accrual",
+    job => job.ExecuteAsync(),
+    "0 1 1 * *",  // Monthly on 1st at 1:00 AM
+    TimeZoneInfo.FindSystemTimeZoneById("Mauritius Standard Time"));
+
+// Map Controllers
+app.MapControllers();
+
+// Health Check Endpoint
+app.MapGet("/health", () => new
+{
+    status = "Healthy",
+    timestamp = DateTime.UtcNow,
+    version = "1.0.0",
+    environment = app.Environment.EnvironmentName
+})
+.WithName("HealthCheck")
+.WithOpenApi();
+
+// Root endpoint
+app.MapGet("/", () => new
+{
+    name = "HRMS API - Human Resource Management System",
+    version = "1.0.0",
+    description = "Multi-Tenant HRMS with Mauritius Labour Law Compliance",
+    swagger = "/swagger",
+    health = "/health",
+    features = new[]
+    {
+        "Multi-Tenant Architecture (Schema-per-Tenant)",
+        "Employee Lifecycle Management",
+        "Mauritius Labour Law Compliance",
+        "Attendance & Biometric Integration",
+        "Payroll with Statutory Deductions",
+        "Leave Management",
+        "Reporting & Analytics"
+    }
+})
+.WithName("Root")
+.WithOpenApi();
+
+Log.Information("HRMS API Starting...");
+Log.Information("Environment: {Environment}", app.Environment.EnvironmentName);
+Log.Information("Multi-Tenant Architecture: Schema-per-Tenant");
+
+app.Run();

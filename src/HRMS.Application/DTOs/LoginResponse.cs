@@ -1,0 +1,8 @@
+namespace HRMS.Application.DTOs;
+
+public class LoginResponse
+{
+    public string Token { get; set; } = string.Empty;
+    public DateTime ExpiresAt { get; set; }
+    public AdminUserDto AdminUser { get; set; } = null!;
+}

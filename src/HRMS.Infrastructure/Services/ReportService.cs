@@ -1,0 +1,851 @@
+using HRMS.Application.DTOs.Reports;
+using HRMS.Application.Interfaces;
+using HRMS.Core.Interfaces;
+using HRMS.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using ClosedXML.Excel;
+using System.Globalization;
+
+namespace HRMS.Infrastructure.Services;
+
+public class ReportService : IReportService
+{
+    private readonly TenantDbContext _context;
+    private readonly ILogger<ReportService> _logger;
+    private readonly ITenantService _tenantService;
+
+    public ReportService(
+        TenantDbContext context,
+        ILogger<ReportService> logger,
+        ITenantService tenantService)
+    {
+        _context = context;
+        _logger = logger;
+        _tenantService = tenantService;
+    }
+
+    public async Task<DashboardSummaryDto> GetDashboardSummaryAsync()
+    {
+        var today = DateTime.UtcNow.Date;
+        var currentMonth = today.Month;
+        var currentYear = today.Year;
+
+        var totalEmployees = await _context.Employees.CountAsync(e => !e.IsDeleted);
+        var activeEmployees = totalEmployees; // All non-deleted are active
+
+        // Employees on leave today
+        var employeesOnLeave = await _context.LeaveApplications
+            .CountAsync(la => la.Status == Core.Enums.LeaveStatus.Approved &&
+                             la.StartDate.Date <= today &&
+                             la.EndDate.Date >= today &&
+                             !la.IsDeleted);
+
+        // Employees on probation (joined less than 3 months ago)
+        var threeMonthsAgo = today.AddMonths(-3);
+        var employeesOnProbation = await _context.Employees
+            .CountAsync(e => !e.IsDeleted && e.JoiningDate >= threeMonthsAgo);
+
+        // Today's attendance
+        var todayAttendance = await _context.Attendances
+            .Where(a => a.Date.Date == today)
+            .ToListAsync();
+
+        var presentToday = todayAttendance.Count(a => a.Status == Core.Enums.AttendanceStatus.Present);
+        var absentToday = todayAttendance.Count(a => a.Status == Core.Enums.AttendanceStatus.Absent);
+        var lateToday = todayAttendance.Count(a => a.LateArrivalMinutes > 0);
+
+        decimal attendancePercentage = totalEmployees > 0
+            ? (decimal)presentToday / totalEmployees * 100
+            : 0;
+
+        // Pending leave approvals
+        var pendingLeaveApprovals = await _context.LeaveApplications
+            .CountAsync(la => la.Status == Core.Enums.LeaveStatus.PendingApproval && !la.IsDeleted);
+
+        // Documents expiring this month
+        var endOfMonth = new DateTime(currentYear, currentMonth, DateTime.DaysInMonth(currentYear, currentMonth));
+        var documentsExpiringThisMonth = await _context.Employees
+            .Where(e => !e.IsDeleted)
+            .CountAsync(e => (e.PassportExpiryDate.HasValue && e.PassportExpiryDate.Value >= today && e.PassportExpiryDate.Value <= endOfMonth) ||
+                           (e.VisaExpiryDate.HasValue && e.VisaExpiryDate.Value >= today && e.VisaExpiryDate.Value <= endOfMonth) ||
+                           (e.WorkPermitExpiryDate.HasValue && e.WorkPermitExpiryDate.Value >= today && e.WorkPermitExpiryDate.Value <= endOfMonth));
+
+        // Overtime hours this month
+        var startOfMonth = new DateTime(currentYear, currentMonth, 1);
+        var totalOvertimeHours = await _context.Attendances
+            .Where(a => a.Date >= startOfMonth && a.Date <= today)
+            .SumAsync(a => a.OvertimeHours);
+
+        // Payroll cost this month
+        var currentCycle = await _context.PayrollCycles
+            .FirstOrDefaultAsync(pc => pc.Month == currentMonth && pc.Year == currentYear);
+
+        decimal totalPayrollCost = currentCycle?.TotalNetSalary ?? 0;
+
+        // New joiners and exits this month
+        var newJoinersThisMonth = await _context.Employees
+            .CountAsync(e => !e.IsDeleted && e.JoiningDate.Month == currentMonth && e.JoiningDate.Year == currentYear);
+
+        var exitsThisMonth = await _context.Employees
+            .CountAsync(e => e.IsDeleted && e.UpdatedAt.HasValue && e.UpdatedAt.Value.Month == currentMonth && e.UpdatedAt.Value.Year == currentYear);
+
+        return new DashboardSummaryDto
+        {
+            TotalEmployees = totalEmployees,
+            ActiveEmployees = activeEmployees,
+            EmployeesOnLeave = employeesOnLeave,
+            EmployeesOnProbation = employeesOnProbation,
+            TodayAttendancePercentage = Math.Round(attendancePercentage, 2),
+            PresentToday = presentToday,
+            AbsentToday = absentToday,
+            LateToday = lateToday,
+            PendingLeaveApprovals = pendingLeaveApprovals,
+            DocumentsExpiringThisMonth = documentsExpiringThisMonth,
+            TotalOvertimeHoursThisMonth = totalOvertimeHours,
+            TotalPayrollCostThisMonth = totalPayrollCost,
+            NewJoinersThisMonth = newJoinersThisMonth,
+            ExitsThisMonth = exitsThisMonth
+        };
+    }
+
+    public async Task<MonthlyPayrollSummaryDto> GetMonthlyPayrollSummaryAsync(int month, int year)
+    {
+        var payrollCycle = await _context.PayrollCycles
+            .FirstOrDefaultAsync(pc => pc.Month == month && pc.Year == year);
+
+        if (payrollCycle == null)
+        {
+            throw new Exception($"Payroll cycle not found for {month}/{year}");
+        }
+
+        var payslips = await _context.Payslips
+            .Include(p => p.Employee)
+            .ThenInclude(e => e.Department)
+            .Where(p => p.PayrollCycleId == payrollCycle.Id && !p.IsDeleted)
+            .ToListAsync();
+
+        // Department breakdown
+        var departmentBreakdown = payslips
+            .GroupBy(p => p.Employee.Department?.Name ?? "No Department")
+            .Select(g => new DepartmentPayrollCostDto
+            {
+                DepartmentName = g.Key,
+                EmployeeCount = g.Count(),
+                TotalGrossSalary = g.Sum(p => p.TotalGrossSalary),
+                TotalNetSalary = g.Sum(p => p.NetSalary)
+            })
+            .OrderByDescending(d => d.TotalGrossSalary)
+            .ToList();
+
+        return new MonthlyPayrollSummaryDto
+        {
+            Month = month,
+            Year = year,
+            MonthName = new DateTime(year, month, 1).ToString("MMMM"),
+            TotalEmployees = payslips.Count,
+            TotalGrossSalary = payrollCycle.TotalGrossSalary,
+            TotalBasicSalary = payslips.Sum(p => p.BasicSalary),
+            TotalAllowances = payslips.Sum(p => p.HousingAllowance + p.TransportAllowance + p.OtherAllowances),
+            TotalOvertimePay = payslips.Sum(p => p.OvertimePay),
+            TotalCSG_Employee = payrollCycle.TotalCSGEmployee,
+            TotalNSF_Employee = payrollCycle.TotalNSFEmployee,
+            TotalPAYE = payrollCycle.TotalPAYE,
+            TotalCSG_Employer = payrollCycle.TotalCSGEmployer,
+            TotalNSF_Employer = payrollCycle.TotalNSFEmployer,
+            TotalPRGF = payrollCycle.TotalPRGF,
+            TotalTrainingLevy = payrollCycle.TotalTrainingLevy,
+            TotalOtherDeductions = payslips.Sum(p => p.OtherDeductions),
+            TotalNetSalary = payrollCycle.TotalNetSalary,
+            DepartmentBreakdown = departmentBreakdown
+        };
+    }
+
+    public async Task<MonthlyAttendanceReportDto> GetMonthlyAttendanceReportAsync(int month, int year)
+    {
+        var startDate = new DateTime(year, month, 1);
+        var endDate = startDate.AddMonths(1).AddDays(-1);
+
+        var totalWorkingDays = Enumerable.Range(1, DateTime.DaysInMonth(year, month))
+            .Count(day =>
+            {
+                var date = new DateTime(year, month, day);
+                return date.DayOfWeek != DayOfWeek.Saturday && date.DayOfWeek != DayOfWeek.Sunday;
+            });
+
+        var employees = await _context.Employees
+            .Include(e => e.Department)
+            .Where(e => !e.IsDeleted)
+            .ToListAsync();
+
+        var attendances = await _context.Attendances
+            .Where(a => a.Date >= startDate && a.Date <= endDate)
+            .ToListAsync();
+
+        var leaveApplications = await _context.LeaveApplications
+            .Where(la => la.Status == Core.Enums.LeaveStatus.Approved &&
+                        la.StartDate <= endDate && la.EndDate >= startDate)
+            .ToListAsync();
+
+        var employeeAttendance = employees.Select(emp =>
+        {
+            var empAttendances = attendances.Where(a => a.EmployeeId == emp.Id).ToList();
+            var empLeaves = leaveApplications.Where(la => la.EmployeeId == emp.Id).ToList();
+
+            var presentDays = empAttendances.Count(a => a.Status == Core.Enums.AttendanceStatus.Present);
+            var absentDays = empAttendances.Count(a => a.Status == Core.Enums.AttendanceStatus.Absent);
+            var lateDays = empAttendances.Count(a => a.LateArrivalMinutes > 0);
+            var leaveDays = empLeaves.Sum(la =>
+            {
+                var start = la.StartDate < startDate ? startDate : la.StartDate;
+                var end = la.EndDate > endDate ? endDate : la.EndDate;
+                return (end - start).Days + 1;
+            });
+
+            var workingHours = empAttendances.Sum(a => a.WorkingHours);
+            var overtimeHours = empAttendances.Sum(a => a.OvertimeHours);
+
+            var attendancePercentage = totalWorkingDays > 0
+                ? (decimal)presentDays / totalWorkingDays * 100
+                : 0;
+
+            return new EmployeeAttendanceSummaryDto
+            {
+                EmployeeId = emp.Id,
+                EmployeeName = $"{emp.FirstName} {emp.LastName}",
+                EmployeeCode = emp.EmployeeCode,
+                Department = emp.Department?.Name ?? "",
+                PresentDays = presentDays,
+                AbsentDays = absentDays,
+                LateDays = lateDays,
+                LeaveDays = leaveDays,
+                WorkingHours = workingHours,
+                OvertimeHours = overtimeHours,
+                AttendancePercentage = Math.Round(attendancePercentage, 2)
+            };
+        }).OrderBy(e => e.EmployeeName).ToList();
+
+        return new MonthlyAttendanceReportDto
+        {
+            Month = month,
+            Year = year,
+            MonthName = new DateTime(year, month, 1).ToString("MMMM"),
+            TotalWorkingDays = totalWorkingDays,
+            TotalEmployees = employees.Count,
+            AverageAttendancePercentage = employeeAttendance.Any()
+                ? Math.Round(employeeAttendance.Average(e => e.AttendancePercentage), 2)
+                : 0,
+            TotalPresent = employeeAttendance.Sum(e => e.PresentDays),
+            TotalAbsent = employeeAttendance.Sum(e => e.AbsentDays),
+            TotalLateArrivals = employeeAttendance.Sum(e => e.LateDays),
+            TotalEarlyDepartures = 0, // Can be calculated from EarlyDepartureMinutes
+            EmployeeAttendance = employeeAttendance
+        };
+    }
+
+    public async Task<OvertimeReportDto> GetOvertimeReportAsync(int month, int year)
+    {
+        var startDate = new DateTime(year, month, 1);
+        var endDate = startDate.AddMonths(1).AddDays(-1);
+
+        var attendances = await _context.Attendances
+            .Include(a => a.Employee)
+            .ThenInclude(e => e.Department)
+            .Where(a => a.Date >= startDate && a.Date <= endDate && a.OvertimeHours > 0)
+            .ToListAsync();
+
+        var employeeOvertimes = attendances
+            .GroupBy(a => a.EmployeeId)
+            .Select(g =>
+            {
+                var employee = g.First().Employee;
+                var regularOvertimeHours = g.Where(a => !a.IsSunday && !a.IsPublicHoliday).Sum(a => a.OvertimeHours);
+                var sundayOvertimeHours = g.Where(a => a.IsSunday).Sum(a => a.OvertimeHours);
+                var publicHolidayOvertimeHours = g.Where(a => a.IsPublicHoliday).Sum(a => a.OvertimeHours);
+
+                // Calculate overtime pay (assuming hourly rate)
+                var hourlyRate = employee.BasicSalary / 173.33m; // Standard monthly hours
+                var totalOvertimePay = g.Sum(a => a.OvertimeHours * hourlyRate * (a.OvertimeRate ?? 1.5m));
+
+                return new EmployeeOvertimeDto
+                {
+                    EmployeeId = employee.Id,
+                    EmployeeName = $"{employee.FirstName} {employee.LastName}",
+                    EmployeeCode = employee.EmployeeCode,
+                    Department = employee.Department?.Name ?? "",
+                    RegularOvertimeHours = regularOvertimeHours,
+                    SundayOvertimeHours = sundayOvertimeHours,
+                    PublicHolidayOvertimeHours = publicHolidayOvertimeHours,
+                    TotalOvertimeHours = g.Sum(a => a.OvertimeHours),
+                    TotalOvertimePay = Math.Round(totalOvertimePay, 2)
+                };
+            })
+            .OrderByDescending(e => e.TotalOvertimeHours)
+            .ToList();
+
+        return new OvertimeReportDto
+        {
+            Month = month,
+            Year = year,
+            MonthName = new DateTime(year, month, 1).ToString("MMMM"),
+            TotalOvertimeHours = employeeOvertimes.Sum(e => e.TotalOvertimeHours),
+            TotalOvertimeCost = employeeOvertimes.Sum(e => e.TotalOvertimePay),
+            EmployeeOvertimes = employeeOvertimes
+        };
+    }
+
+    public async Task<LeaveBalanceReportDto> GetLeaveBalanceReportAsync(int year)
+    {
+        var employees = await _context.Employees
+            .Include(e => e.Department)
+            .Where(e => !e.IsDeleted)
+            .ToListAsync();
+
+        var leaveBalances = await _context.LeaveBalances
+            .Include(lb => lb.LeaveType)
+            .Where(lb => lb.Year == year && !lb.IsDeleted)
+            .ToListAsync();
+
+        var employeeBalances = employees.Select(emp =>
+        {
+            var empBalances = leaveBalances.Where(lb => lb.EmployeeId == emp.Id)
+                .Select(lb => new LeaveTypeBalanceDto
+                {
+                    LeaveType = lb.LeaveType?.Name ?? "",
+                    TotalEntitlement = lb.TotalEntitlement,
+                    UsedDays = lb.UsedDays,
+                    PendingDays = lb.PendingDays,
+                    AvailableDays = lb.AvailableDays,
+                    CarriedForward = lb.CarriedForward
+                })
+                .ToList();
+
+            return new EmployeeLeaveBalanceDto
+            {
+                EmployeeId = emp.Id,
+                EmployeeName = $"{emp.FirstName} {emp.LastName}",
+                EmployeeCode = emp.EmployeeCode,
+                Department = emp.Department?.Name ?? "",
+                LeaveBalances = empBalances
+            };
+        }).OrderBy(e => e.EmployeeName).ToList();
+
+        return new LeaveBalanceReportDto
+        {
+            Year = year,
+            EmployeeBalances = employeeBalances
+        };
+    }
+
+    public async Task<LeaveUtilizationReportDto> GetLeaveUtilizationReportAsync(int year)
+    {
+        var startDate = new DateTime(year, 1, 1);
+        var endDate = new DateTime(year, 12, 31);
+
+        var leaveApplications = await _context.LeaveApplications
+            .Include(la => la.LeaveType)
+            .Where(la => la.StartDate >= startDate && la.EndDate <= endDate && !la.IsDeleted)
+            .ToListAsync();
+
+        var leaveTypeUtilization = leaveApplications
+            .GroupBy(la => la.LeaveType?.Name ?? "Unknown")
+            .Select(g => new LeaveTypeUtilizationDto
+            {
+                LeaveType = g.Key,
+                TotalApplications = g.Count(),
+                ApprovedApplications = g.Count(la => la.Status == Core.Enums.LeaveStatus.Approved),
+                RejectedApplications = g.Count(la => la.Status == Core.Enums.LeaveStatus.Rejected),
+                PendingApplications = g.Count(la => la.Status == Core.Enums.LeaveStatus.PendingApproval),
+                TotalDaysApplied = g.Sum(la => (la.EndDate - la.StartDate).Days + 1),
+                TotalDaysApproved = g.Where(la => la.Status == Core.Enums.LeaveStatus.Approved)
+                    .Sum(la => (la.EndDate - la.StartDate).Days + 1)
+            })
+            .OrderByDescending(lt => lt.TotalApplications)
+            .ToList();
+
+        return new LeaveUtilizationReportDto
+        {
+            Year = year,
+            LeaveTypeUtilization = leaveTypeUtilization
+        };
+    }
+
+    public async Task<HeadcountReportDto> GetHeadcountReportAsync()
+    {
+        var employees = await _context.Employees
+            .Include(e => e.Department)
+            .Where(e => !e.IsDeleted)
+            .ToListAsync();
+
+        var departmentBreakdown = employees
+            .GroupBy(e => e.Department?.Name ?? "No Department")
+            .Select(g => new DepartmentHeadcountDto
+            {
+                DepartmentName = g.Key,
+                EmployeeCount = g.Count(),
+                MaleCount = g.Count(e => e.Gender == Core.Enums.Gender.Male),
+                FemaleCount = g.Count(e => e.Gender == Core.Enums.Gender.Female)
+            })
+            .OrderByDescending(d => d.EmployeeCount)
+            .ToList();
+
+        // Note: Designation breakdown removed as Employee entity doesn't have Designation navigation property
+        var designationBreakdown = new List<DesignationHeadcountDto>();
+
+        return new HeadcountReportDto
+        {
+            ReportDate = DateTime.UtcNow,
+            TotalEmployees = employees.Count(),
+            ActiveEmployees = employees.Count(),
+            InactiveEmployees = 0,
+            DepartmentBreakdown = departmentBreakdown,
+            DesignationBreakdown = designationBreakdown
+        };
+    }
+
+    public async Task<ExpatriateReportDto> GetExpatriateReportAsync()
+    {
+        var today = DateTime.UtcNow.Date;
+
+        var expatriates = await _context.Employees
+            .Include(e => e.Department)
+            .Where(e => !e.IsDeleted && e.Nationality != "Mauritian")
+            .Select(e => new ExpatriateEmployeeDto
+            {
+                EmployeeId = e.Id,
+                EmployeeName = $"{e.FirstName} {e.LastName}",
+                EmployeeCode = e.EmployeeCode,
+                Nationality = e.Nationality,
+                Department = e.Department != null ? e.Department.Name : "",
+                Designation = "", // Designation navigation property not available
+                PassportNumber = e.PassportNumber,
+                PassportExpiryDate = e.PassportExpiryDate,
+                PassportDaysUntilExpiry = e.PassportExpiryDate.HasValue
+                    ? (e.PassportExpiryDate.Value - today).Days
+                    : null,
+                VisaNumber = e.VisaNumber,
+                VisaExpiryDate = e.VisaExpiryDate,
+                VisaDaysUntilExpiry = e.VisaExpiryDate.HasValue
+                    ? (e.VisaExpiryDate.Value - today).Days
+                    : null,
+                WorkPermitNumber = e.WorkPermitNumber,
+                WorkPermitExpiryDate = e.WorkPermitExpiryDate,
+                WorkPermitDaysUntilExpiry = e.WorkPermitExpiryDate.HasValue
+                    ? (e.WorkPermitExpiryDate.Value - today).Days
+                    : null
+            })
+            .OrderBy(e => e.EmployeeName)
+            .ToListAsync();
+
+        return new ExpatriateReportDto
+        {
+            TotalExpatriates = expatriates.Count(),
+            Expatriates = expatriates
+        };
+    }
+
+    public async Task<TurnoverReportDto> GetTurnoverReportAsync(int month, int year)
+    {
+        var startOfMonth = new DateTime(year, month, 1);
+        var endOfMonth = startOfMonth.AddMonths(1).AddDays(-1);
+
+        var newJoiners = await _context.Employees
+            .Include(e => e.Department)
+            .Where(e => e.JoiningDate.Month == month && e.JoiningDate.Year == year)
+            .Select(e => new NewJoinerDto
+            {
+                EmployeeId = e.Id,
+                EmployeeName = $"{e.FirstName} {e.LastName}",
+                EmployeeCode = e.EmployeeCode,
+                Department = e.Department != null ? e.Department.Name : "",
+                Designation = "", // Designation navigation property not available
+                JoiningDate = e.JoiningDate
+            })
+            .OrderBy(e => e.JoiningDate)
+            .ToListAsync();
+
+        // For exits, we can use IsDeleted flag as a proxy
+        var exits = await _context.Employees
+            .Include(e => e.Department)
+            .Where(e => e.IsDeleted && e.UpdatedAt.HasValue && e.UpdatedAt.Value.Month == month && e.UpdatedAt.Value.Year == year)
+            .Select(e => new ExitDto
+            {
+                EmployeeId = e.Id,
+                EmployeeName = $"{e.FirstName} {e.LastName}",
+                EmployeeCode = e.EmployeeCode,
+                Department = e.Department != null ? e.Department.Name : "",
+                Designation = "", // Designation navigation property not available
+                ExitDate = e.UpdatedAt,
+                ExitReason = null // Add exit reason field to Employee entity if needed
+            })
+            .OrderBy(e => e.ExitDate)
+            .ToListAsync();
+
+        var totalEmployees = await _context.Employees.CountAsync(e => !e.IsDeleted);
+        decimal turnoverRate = totalEmployees > 0
+            ? (decimal)exits.Count() / totalEmployees * 100
+            : 0;
+
+        return new TurnoverReportDto
+        {
+            Month = month,
+            Year = year,
+            MonthName = new DateTime(year, month, 1).ToString("MMMM"),
+            StartingHeadcount = totalEmployees - newJoiners.Count() + exits.Count(),
+            NewJoiners = newJoiners.Count(),
+            Exits = exits.Count(),
+            EndingHeadcount = totalEmployees,
+            TurnoverRate = Math.Round(turnoverRate, 2),
+            NewJoinersList = newJoiners,
+            ExitsList = exits
+        };
+    }
+
+    // Excel export methods (continued in next part due to size)
+    public async Task<byte[]> ExportMonthlyPayrollToExcelAsync(int month, int year)
+    {
+        var report = await GetMonthlyPayrollSummaryAsync(month, year);
+
+        using var workbook = new XLWorkbook();
+        var worksheet = workbook.Worksheets.Add("Payroll Summary");
+
+        // Header
+        worksheet.Cell(1, 1).Value = "Monthly Payroll Summary";
+        worksheet.Cell(2, 1).Value = $"{report.MonthName} {report.Year}";
+
+        // Summary section
+        worksheet.Cell(4, 1).Value = "Summary";
+        worksheet.Cell(5, 1).Value = "Total Employees:";
+        worksheet.Cell(5, 2).Value = report.TotalEmployees;
+        worksheet.Cell(6, 1).Value = "Total Gross Salary:";
+        worksheet.Cell(6, 2).Value = report.TotalGrossSalary;
+        worksheet.Cell(7, 1).Value = "Total Net Salary:";
+        worksheet.Cell(7, 2).Value = report.TotalNetSalary;
+
+        // Department breakdown
+        worksheet.Cell(9, 1).Value = "Department";
+        worksheet.Cell(9, 2).Value = "Employee Count";
+        worksheet.Cell(9, 3).Value = "Gross Salary";
+        worksheet.Cell(9, 4).Value = "Net Salary";
+
+        int row = 10;
+        foreach (var dept in report.DepartmentBreakdown)
+        {
+            worksheet.Cell(row, 1).Value = dept.DepartmentName;
+            worksheet.Cell(row, 2).Value = dept.EmployeeCount;
+            worksheet.Cell(row, 3).Value = dept.TotalGrossSalary;
+            worksheet.Cell(row, 4).Value = dept.TotalNetSalary;
+            row++;
+        }
+
+        // Auto-fit columns
+        worksheet.Columns().AdjustToContents();
+
+        using var stream = new MemoryStream();
+        workbook.SaveAs(stream);
+        return stream.ToArray();
+    }
+
+    public async Task<byte[]> ExportStatutoryDeductionsToExcelAsync(int month, int year)
+    {
+        var report = await GetMonthlyPayrollSummaryAsync(month, year);
+
+        using var workbook = new XLWorkbook();
+        var worksheet = workbook.Worksheets.Add("Statutory Deductions");
+
+        worksheet.Cell(1, 1).Value = "Statutory Deductions Report";
+        worksheet.Cell(2, 1).Value = $"{report.MonthName} {report.Year}";
+
+        worksheet.Cell(4, 1).Value = "Employee Deductions";
+        worksheet.Cell(5, 1).Value = "CSG (Employee):";
+        worksheet.Cell(5, 2).Value = report.TotalCSG_Employee;
+        worksheet.Cell(6, 1).Value = "NSF (Employee):";
+        worksheet.Cell(6, 2).Value = report.TotalNSF_Employee;
+        worksheet.Cell(7, 1).Value = "PAYE:";
+        worksheet.Cell(7, 2).Value = report.TotalPAYE;
+
+        worksheet.Cell(9, 1).Value = "Employer Contributions";
+        worksheet.Cell(10, 1).Value = "CSG (Employer):";
+        worksheet.Cell(10, 2).Value = report.TotalCSG_Employer;
+        worksheet.Cell(11, 1).Value = "NSF (Employer):";
+        worksheet.Cell(11, 2).Value = report.TotalNSF_Employer;
+        worksheet.Cell(12, 1).Value = "PRGF:";
+        worksheet.Cell(12, 2).Value = report.TotalPRGF;
+        worksheet.Cell(13, 1).Value = "Training Levy:";
+        worksheet.Cell(13, 2).Value = report.TotalTrainingLevy;
+
+        worksheet.Columns().AdjustToContents();
+
+        using var stream = new MemoryStream();
+        workbook.SaveAs(stream);
+        return stream.ToArray();
+    }
+
+    public async Task<byte[]> ExportBankTransferListToExcelAsync(int month, int year)
+    {
+        var payrollCycle = await _context.PayrollCycles
+            .FirstOrDefaultAsync(pc => pc.Month == month && pc.Year == year);
+
+        if (payrollCycle == null)
+        {
+            throw new Exception($"Payroll cycle not found for {month}/{year}");
+        }
+
+        var payslips = await _context.Payslips
+            .Include(p => p.Employee)
+            .Where(p => p.PayrollCycleId == payrollCycle.Id && !p.IsDeleted)
+            .OrderBy(p => p.Employee.FirstName)
+            .ToListAsync();
+
+        using var workbook = new XLWorkbook();
+        var worksheet = workbook.Worksheets.Add("Bank Transfer List");
+
+        worksheet.Cell(1, 1).Value = "Employee Code";
+        worksheet.Cell(1, 2).Value = "Employee Name";
+        worksheet.Cell(1, 3).Value = "Bank Name";
+        worksheet.Cell(1, 4).Value = "Account Number";
+        worksheet.Cell(1, 5).Value = "Net Salary";
+
+        int row = 2;
+        foreach (var payslip in payslips)
+        {
+            worksheet.Cell(row, 1).Value = payslip.Employee.EmployeeCode;
+            worksheet.Cell(row, 2).Value = $"{payslip.Employee.FirstName} {payslip.Employee.LastName}";
+            worksheet.Cell(row, 3).Value = payslip.Employee.BankName ?? "";
+            worksheet.Cell(row, 4).Value = payslip.Employee.BankAccountNumber ?? "";
+            worksheet.Cell(row, 5).Value = payslip.NetSalary;
+            row++;
+        }
+
+        worksheet.Cell(row, 4).Value = "TOTAL:";
+        worksheet.Cell(row, 5).Value = payslips.Sum(p => p.NetSalary);
+
+        worksheet.Columns().AdjustToContents();
+
+        using var stream = new MemoryStream();
+        workbook.SaveAs(stream);
+        return stream.ToArray();
+    }
+
+    public async Task<byte[]> ExportAttendanceRegisterToExcelAsync(int month, int year)
+    {
+        var report = await GetMonthlyAttendanceReportAsync(month, year);
+
+        using var workbook = new XLWorkbook();
+        var worksheet = workbook.Worksheets.Add("Attendance Register");
+
+        worksheet.Cell(1, 1).Value = "Employee Code";
+        worksheet.Cell(1, 2).Value = "Employee Name";
+        worksheet.Cell(1, 3).Value = "Department";
+        worksheet.Cell(1, 4).Value = "Present Days";
+        worksheet.Cell(1, 5).Value = "Absent Days";
+        worksheet.Cell(1, 6).Value = "Late Days";
+        worksheet.Cell(1, 7).Value = "Leave Days";
+        worksheet.Cell(1, 8).Value = "Working Hours";
+        worksheet.Cell(1, 9).Value = "Overtime Hours";
+        worksheet.Cell(1, 10).Value = "Attendance %";
+
+        int row = 2;
+        foreach (var emp in report.EmployeeAttendance)
+        {
+            worksheet.Cell(row, 1).Value = emp.EmployeeCode;
+            worksheet.Cell(row, 2).Value = emp.EmployeeName;
+            worksheet.Cell(row, 3).Value = emp.Department;
+            worksheet.Cell(row, 4).Value = emp.PresentDays;
+            worksheet.Cell(row, 5).Value = emp.AbsentDays;
+            worksheet.Cell(row, 6).Value = emp.LateDays;
+            worksheet.Cell(row, 7).Value = emp.LeaveDays;
+            worksheet.Cell(row, 8).Value = emp.WorkingHours;
+            worksheet.Cell(row, 9).Value = emp.OvertimeHours;
+            worksheet.Cell(row, 10).Value = emp.AttendancePercentage;
+            row++;
+        }
+
+        worksheet.Columns().AdjustToContents();
+
+        using var stream = new MemoryStream();
+        workbook.SaveAs(stream);
+        return stream.ToArray();
+    }
+
+    public async Task<byte[]> ExportOvertimeReportToExcelAsync(int month, int year)
+    {
+        var report = await GetOvertimeReportAsync(month, year);
+
+        using var workbook = new XLWorkbook();
+        var worksheet = workbook.Worksheets.Add("Overtime Report");
+
+        worksheet.Cell(1, 1).Value = "Employee Code";
+        worksheet.Cell(1, 2).Value = "Employee Name";
+        worksheet.Cell(1, 3).Value = "Department";
+        worksheet.Cell(1, 4).Value = "Regular OT Hours";
+        worksheet.Cell(1, 5).Value = "Sunday OT Hours";
+        worksheet.Cell(1, 6).Value = "Public Holiday OT Hours";
+        worksheet.Cell(1, 7).Value = "Total OT Hours";
+        worksheet.Cell(1, 8).Value = "Total OT Pay";
+
+        int row = 2;
+        foreach (var emp in report.EmployeeOvertimes)
+        {
+            worksheet.Cell(row, 1).Value = emp.EmployeeCode;
+            worksheet.Cell(row, 2).Value = emp.EmployeeName;
+            worksheet.Cell(row, 3).Value = emp.Department;
+            worksheet.Cell(row, 4).Value = emp.RegularOvertimeHours;
+            worksheet.Cell(row, 5).Value = emp.SundayOvertimeHours;
+            worksheet.Cell(row, 6).Value = emp.PublicHolidayOvertimeHours;
+            worksheet.Cell(row, 7).Value = emp.TotalOvertimeHours;
+            worksheet.Cell(row, 8).Value = emp.TotalOvertimePay;
+            row++;
+        }
+
+        worksheet.Cell(row, 7).Value = report.TotalOvertimeHours;
+        worksheet.Cell(row, 8).Value = report.TotalOvertimeCost;
+
+        worksheet.Columns().AdjustToContents();
+
+        using var stream = new MemoryStream();
+        workbook.SaveAs(stream);
+        return stream.ToArray();
+    }
+
+    public async Task<byte[]> ExportLeaveBalanceToExcelAsync(int year)
+    {
+        var report = await GetLeaveBalanceReportAsync(year);
+
+        using var workbook = new XLWorkbook();
+        var worksheet = workbook.Worksheets.Add("Leave Balances");
+
+        worksheet.Cell(1, 1).Value = "Employee Code";
+        worksheet.Cell(1, 2).Value = "Employee Name";
+        worksheet.Cell(1, 3).Value = "Department";
+        worksheet.Cell(1, 4).Value = "Leave Type";
+        worksheet.Cell(1, 5).Value = "Total Entitlement";
+        worksheet.Cell(1, 6).Value = "Used Days";
+        worksheet.Cell(1, 7).Value = "Pending Days";
+        worksheet.Cell(1, 8).Value = "Available Days";
+        worksheet.Cell(1, 9).Value = "Carried Forward";
+
+        int row = 2;
+        foreach (var emp in report.EmployeeBalances)
+        {
+            foreach (var balance in emp.LeaveBalances)
+            {
+                worksheet.Cell(row, 1).Value = emp.EmployeeCode;
+                worksheet.Cell(row, 2).Value = emp.EmployeeName;
+                worksheet.Cell(row, 3).Value = emp.Department;
+                worksheet.Cell(row, 4).Value = balance.LeaveType;
+                worksheet.Cell(row, 5).Value = balance.TotalEntitlement;
+                worksheet.Cell(row, 6).Value = balance.UsedDays;
+                worksheet.Cell(row, 7).Value = balance.PendingDays;
+                worksheet.Cell(row, 8).Value = balance.AvailableDays;
+                worksheet.Cell(row, 9).Value = balance.CarriedForward;
+                row++;
+            }
+        }
+
+        worksheet.Columns().AdjustToContents();
+
+        using var stream = new MemoryStream();
+        workbook.SaveAs(stream);
+        return stream.ToArray();
+    }
+
+    public async Task<byte[]> ExportHeadcountToExcelAsync()
+    {
+        var report = await GetHeadcountReportAsync();
+
+        using var workbook = new XLWorkbook();
+        var worksheet = workbook.Worksheets.Add("Headcount Report");
+
+        worksheet.Cell(1, 1).Value = "Headcount Report";
+        worksheet.Cell(2, 1).Value = $"As of {report.ReportDate:yyyy-MM-dd}";
+
+        worksheet.Cell(4, 1).Value = "Total Employees:";
+        worksheet.Cell(4, 2).Value = report.TotalEmployees;
+
+        worksheet.Cell(6, 1).Value = "Department Breakdown";
+        worksheet.Cell(7, 1).Value = "Department";
+        worksheet.Cell(7, 2).Value = "Employee Count";
+        worksheet.Cell(7, 3).Value = "Male";
+        worksheet.Cell(7, 4).Value = "Female";
+
+        int row = 8;
+        foreach (var dept in report.DepartmentBreakdown)
+        {
+            worksheet.Cell(row, 1).Value = dept.DepartmentName;
+            worksheet.Cell(row, 2).Value = dept.EmployeeCount;
+            worksheet.Cell(row, 3).Value = dept.MaleCount;
+            worksheet.Cell(row, 4).Value = dept.FemaleCount;
+            row++;
+        }
+
+        row += 2;
+        worksheet.Cell(row, 1).Value = "Designation Breakdown";
+        row++;
+        worksheet.Cell(row, 1).Value = "Designation";
+        worksheet.Cell(row, 2).Value = "Employee Count";
+        row++;
+
+        foreach (var desig in report.DesignationBreakdown)
+        {
+            worksheet.Cell(row, 1).Value = desig.DesignationName;
+            worksheet.Cell(row, 2).Value = desig.EmployeeCount;
+            row++;
+        }
+
+        worksheet.Columns().AdjustToContents();
+
+        using var stream = new MemoryStream();
+        workbook.SaveAs(stream);
+        return stream.ToArray();
+    }
+
+    public async Task<byte[]> ExportExpatriatesToExcelAsync()
+    {
+        var report = await GetExpatriateReportAsync();
+
+        using var workbook = new XLWorkbook();
+        var worksheet = workbook.Worksheets.Add("Expatriates");
+
+        worksheet.Cell(1, 1).Value = "Employee Code";
+        worksheet.Cell(1, 2).Value = "Employee Name";
+        worksheet.Cell(1, 3).Value = "Nationality";
+        worksheet.Cell(1, 4).Value = "Department";
+        worksheet.Cell(1, 5).Value = "Designation";
+        worksheet.Cell(1, 6).Value = "Passport Number";
+        worksheet.Cell(1, 7).Value = "Passport Expiry";
+        worksheet.Cell(1, 8).Value = "Passport Days Left";
+        worksheet.Cell(1, 9).Value = "Visa Number";
+        worksheet.Cell(1, 10).Value = "Visa Expiry";
+        worksheet.Cell(1, 11).Value = "Visa Days Left";
+        worksheet.Cell(1, 12).Value = "Work Permit Number";
+        worksheet.Cell(1, 13).Value = "Work Permit Expiry";
+        worksheet.Cell(1, 14).Value = "Work Permit Days Left";
+
+        int row = 2;
+        foreach (var exp in report.Expatriates)
+        {
+            worksheet.Cell(row, 1).Value = exp.EmployeeCode;
+            worksheet.Cell(row, 2).Value = exp.EmployeeName;
+            worksheet.Cell(row, 3).Value = exp.Nationality;
+            worksheet.Cell(row, 4).Value = exp.Department;
+            worksheet.Cell(row, 5).Value = exp.Designation;
+            worksheet.Cell(row, 6).Value = exp.PassportNumber ?? "";
+            worksheet.Cell(row, 7).Value = exp.PassportExpiryDate?.ToString("yyyy-MM-dd") ?? "";
+            worksheet.Cell(row, 8).Value = exp.PassportDaysUntilExpiry?.ToString() ?? "";
+            worksheet.Cell(row, 9).Value = exp.VisaNumber ?? "";
+            worksheet.Cell(row, 10).Value = exp.VisaExpiryDate?.ToString("yyyy-MM-dd") ?? "";
+            worksheet.Cell(row, 11).Value = exp.VisaDaysUntilExpiry?.ToString() ?? "";
+            worksheet.Cell(row, 12).Value = exp.WorkPermitNumber ?? "";
+            worksheet.Cell(row, 13).Value = exp.WorkPermitExpiryDate?.ToString("yyyy-MM-dd") ?? "";
+            worksheet.Cell(row, 14).Value = exp.WorkPermitDaysUntilExpiry?.ToString() ?? "";
+            row++;
+        }
+
+        worksheet.Columns().AdjustToContents();
+
+        using var stream = new MemoryStream();
+        workbook.SaveAs(stream);
+        return stream.ToArray();
+    }
+}

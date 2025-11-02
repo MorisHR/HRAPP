@@ -1,0 +1,12 @@
+/workspaces/HRAPP/src/HRMS.Core/bin/Release/net9.0/HRMS.Core.deps.json
+/workspaces/HRAPP/src/HRMS.Core/bin/Release/net9.0/HRMS.Core.dll
+/workspaces/HRAPP/src/HRMS.Core/bin/Release/net9.0/HRMS.Core.pdb
+/workspaces/HRAPP/src/HRMS.Core/obj/Release/net9.0/HRMS.Core.GeneratedMSBuildEditorConfig.editorconfig
+/workspaces/HRAPP/src/HRMS.Core/obj/Release/net9.0/HRMS.Core.AssemblyInfoInputs.cache
+/workspaces/HRAPP/src/HRMS.Core/obj/Release/net9.0/HRMS.Core.AssemblyInfo.cs
+/workspaces/HRAPP/src/HRMS.Core/obj/Release/net9.0/HRMS.Core.csproj.CoreCompileInputs.cache
+/workspaces/HRAPP/src/HRMS.Core/obj/Release/net9.0/HRMS.Core.sourcelink.json
+/workspaces/HRAPP/src/HRMS.Core/obj/Release/net9.0/HRMS.Core.dll
+/workspaces/HRAPP/src/HRMS.Core/obj/Release/net9.0/refint/HRMS.Core.dll
+/workspaces/HRAPP/src/HRMS.Core/obj/Release/net9.0/HRMS.Core.pdb
+/workspaces/HRAPP/src/HRMS.Core/obj/Release/net9.0/ref/HRMS.Core.dll
