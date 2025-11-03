@@ -61,17 +61,18 @@ public class TenantManagementService
                 ContactEmail = request.ContactEmail,
                 ContactPhone = request.ContactPhone,
                 Status = TenantStatus.Active,
-                SubscriptionPlan = request.SubscriptionPlan,
+                EmployeeTier = request.EmployeeTier,
+                MonthlyPrice = request.MonthlyPrice,
                 MaxUsers = request.MaxUsers,
-                MaxStorageBytes = request.MaxStorageBytes,
-                MaxApiCallsPerHour = request.MaxApiCallsPerHour,
+                MaxStorageGB = request.MaxStorageGB,
+                ApiCallsPerMonth = request.ApiCallsPerMonth,
                 SubscriptionStartDate = DateTime.UtcNow,
                 AdminUserName = request.AdminUserName,
                 AdminEmail = request.AdminEmail,
                 CreatedAt = DateTime.UtcNow,
                 CreatedBy = createdBy,
                 CurrentUserCount = 0,
-                CurrentStorageBytes = 0
+                CurrentStorageGB = 0
             };
 
             // Add tenant to master database
@@ -254,32 +255,34 @@ public class TenantManagementService
     }
 
     /// <summary>
-    /// Update tenant subscription plan
+    /// Update tenant employee tier and pricing
     /// </summary>
-    public async Task<(bool Success, string Message)> UpdateSubscriptionPlanAsync(
+    public async Task<(bool Success, string Message)> UpdateEmployeeTierAsync(
         Guid tenantId,
-        SubscriptionPlan newPlan,
+        EmployeeTier newTier,
         int maxUsers,
-        long maxStorageBytes,
-        int maxApiCallsPerHour,
+        int maxStorageGB,
+        int apiCallsPerMonth,
+        decimal monthlyPrice,
         string updatedBy)
     {
         var tenant = await _masterDbContext.Tenants.FindAsync(tenantId);
         if (tenant == null)
             return (false, "Tenant not found");
 
-        tenant.SubscriptionPlan = newPlan;
+        tenant.EmployeeTier = newTier;
+        tenant.MonthlyPrice = monthlyPrice;
         tenant.MaxUsers = maxUsers;
-        tenant.MaxStorageBytes = maxStorageBytes;
-        tenant.MaxApiCallsPerHour = maxApiCallsPerHour;
+        tenant.MaxStorageGB = maxStorageGB;
+        tenant.ApiCallsPerMonth = apiCallsPerMonth;
         tenant.UpdatedAt = DateTime.UtcNow;
         tenant.UpdatedBy = updatedBy;
 
         await _masterDbContext.SaveChangesAsync();
 
-        _logger.LogInformation("Tenant subscription updated: {TenantId}, New Plan: {Plan}", tenantId, newPlan);
+        _logger.LogInformation("Tenant employee tier updated: {TenantId}, New Tier: {Tier}", tenantId, newTier);
 
-        return (true, "Subscription plan updated successfully");
+        return (true, "Employee tier updated successfully");
     }
 
     private TenantDto MapToDto(Tenant tenant)
@@ -294,13 +297,14 @@ public class TenantManagementService
             ContactPhone = tenant.ContactPhone,
             Status = tenant.Status,
             StatusDisplay = tenant.Status.ToString(),
-            SubscriptionPlan = tenant.SubscriptionPlan,
-            SubscriptionPlanDisplay = tenant.SubscriptionPlan.ToString(),
+            EmployeeTier = tenant.EmployeeTier,
+            EmployeeTierDisplay = GetTierDisplayName(tenant.EmployeeTier),
+            MonthlyPrice = tenant.MonthlyPrice,
             MaxUsers = tenant.MaxUsers,
             CurrentUserCount = tenant.CurrentUserCount,
-            MaxStorageBytes = tenant.MaxStorageBytes,
-            CurrentStorageBytes = tenant.CurrentStorageBytes,
-            MaxApiCallsPerHour = tenant.MaxApiCallsPerHour,
+            MaxStorageGB = tenant.MaxStorageGB,
+            CurrentStorageGB = tenant.CurrentStorageGB,
+            ApiCallsPerMonth = tenant.ApiCallsPerMonth,
             CreatedAt = tenant.CreatedAt,
             SubscriptionStartDate = tenant.SubscriptionStartDate,
             SubscriptionEndDate = tenant.SubscriptionEndDate,
@@ -312,6 +316,20 @@ public class TenantManagementService
             DaysUntilHardDelete = tenant.DaysUntilHardDelete(),
             AdminUserName = tenant.AdminUserName,
             AdminEmail = tenant.AdminEmail
+        };
+    }
+
+    private string GetTierDisplayName(EmployeeTier tier)
+    {
+        return tier switch
+        {
+            EmployeeTier.Tier1 => "1-50 Employees",
+            EmployeeTier.Tier2 => "51-100 Employees",
+            EmployeeTier.Tier3 => "101-200 Employees",
+            EmployeeTier.Tier4 => "201-500 Employees",
+            EmployeeTier.Tier5 => "501-1000 Employees",
+            EmployeeTier.Custom => "1000+ Employees (Custom)",
+            _ => tier.ToString()
         };
     }
 }

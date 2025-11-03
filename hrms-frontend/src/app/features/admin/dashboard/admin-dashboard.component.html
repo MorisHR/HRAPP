@@ -6,9 +6,13 @@
     @if (user()) {
       <span class="user-name">{{ user()?.firstName }} {{ user()?.lastName }}</span>
     }
-    <button mat-icon-button (click)="toggleTheme()" [attr.aria-label]="'Toggle theme'">
+
+    <!-- Dark Mode Toggle -->
+    <button mat-icon-button (click)="toggleTheme()" [attr.aria-label]="'Toggle dark mode'">
       <mat-icon>{{ isDark() ? 'light_mode' : 'dark_mode' }}</mat-icon>
     </button>
+
+    <!-- Logout -->
     <button mat-icon-button (click)="logout()" [attr.aria-label]="'Logout'">
       <mat-icon>logout</mat-icon>
     </button>
@@ -22,48 +26,48 @@
     <div class="stats-grid">
       <mat-card class="stat-card">
         <mat-card-content>
-          <div class="stat-icon">
-            <mat-icon color="primary">business</mat-icon>
-          </div>
           <div class="stat-info">
-            <h3 class="stat-value">{{ stats().totalTenants }}</h3>
             <p class="stat-label">Total Tenants</p>
+            <h3 class="stat-value">{{ stats().totalTenants }}</h3>
+          </div>
+          <div class="stat-icon">
+            <mat-icon>business</mat-icon>
           </div>
         </mat-card-content>
       </mat-card>
 
       <mat-card class="stat-card">
         <mat-card-content>
-          <div class="stat-icon">
-            <mat-icon color="accent">check_circle</mat-icon>
-          </div>
           <div class="stat-info">
-            <h3 class="stat-value">{{ stats().activeTenants }}</h3>
             <p class="stat-label">Active Tenants</p>
+            <h3 class="stat-value">{{ stats().activeTenants }}</h3>
+          </div>
+          <div class="stat-icon">
+            <mat-icon>check_circle</mat-icon>
           </div>
         </mat-card-content>
       </mat-card>
 
       <mat-card class="stat-card">
         <mat-card-content>
-          <div class="stat-icon">
-            <mat-icon color="primary">people</mat-icon>
-          </div>
           <div class="stat-info">
-            <h3 class="stat-value">{{ stats().totalEmployees }}</h3>
             <p class="stat-label">Total Employees</p>
+            <h3 class="stat-value">{{ stats().totalEmployees }}</h3>
+          </div>
+          <div class="stat-icon">
+            <mat-icon>people</mat-icon>
           </div>
         </mat-card-content>
       </mat-card>
 
       <mat-card class="stat-card">
         <mat-card-content>
-          <div class="stat-icon">
-            <mat-icon color="accent">attach_money</mat-icon>
-          </div>
           <div class="stat-info">
-            <h3 class="stat-value">${{ stats().monthlyRevenue }}</h3>
             <p class="stat-label">Monthly Revenue</p>
+            <h3 class="stat-value">${{ stats().monthlyRevenue }}</h3>
+          </div>
+          <div class="stat-icon">
+            <mat-icon>payments</mat-icon>
           </div>
         </mat-card-content>
       </mat-card>
@@ -75,7 +79,9 @@
       <div class="actions-grid">
         <mat-card class="action-card" routerLink="/admin/tenants">
           <mat-card-content>
-            <mat-icon>business_center</mat-icon>
+            <div class="icon-wrapper">
+              <mat-icon>business_center</mat-icon>
+            </div>
             <h3>Manage Tenants</h3>
             <p>View, create, and manage tenant organizations</p>
           </mat-card-content>
@@ -83,7 +89,9 @@
 
         <mat-card class="action-card" routerLink="/admin/tenants/new">
           <mat-card-content>
-            <mat-icon>add_business</mat-icon>
+            <div class="icon-wrapper">
+              <mat-icon>add_business</mat-icon>
+            </div>
             <h3>Create Tenant</h3>
             <p>Onboard a new tenant organization</p>
           </mat-card-content>
@@ -91,7 +99,9 @@
 
         <mat-card class="action-card">
           <mat-card-content>
-            <mat-icon>analytics</mat-icon>
+            <div class="icon-wrapper">
+              <mat-icon>analytics</mat-icon>
+            </div>
             <h3>View Reports</h3>
             <p>Access analytics and reports</p>
           </mat-card-content>
@@ -99,7 +109,9 @@
 
         <mat-card class="action-card">
           <mat-card-content>
-            <mat-icon>settings</mat-icon>
+            <div class="icon-wrapper">
+              <mat-icon>settings</mat-icon>
+            </div>
             <h3>Settings</h3>
             <p>Configure system settings</p>
           </mat-card-content>

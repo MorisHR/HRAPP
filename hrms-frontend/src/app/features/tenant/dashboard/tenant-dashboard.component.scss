@@ -1,42 +1,63 @@
+// ═══════════════════════════════════════════════════════════════
+// TENANT DASHBOARD - EXECUTIVE THEME
+// Clean, professional, minimal
+// ═══════════════════════════════════════════════════════════════
+
 .tenant-container {
   height: 100vh;
 }
 
+// ───────────────────────────────────────────────────────────────
+// SIDENAV
+// ───────────────────────────────────────────────────────────────
+
 .sidenav {
   width: 260px;
-  background-color: var(--mat-sys-surface-container);
-  border-right: 1px solid var(--mat-sys-outline-variant);
+  background-color: var(--color-card);
+  border-right: 1px solid var(--color-border);
 
   .sidenav-header {
-    padding: 24px 16px;
-    border-bottom: 1px solid var(--mat-sys-outline-variant);
+    padding: var(--spacing-xl) var(--spacing-md);
+    border-bottom: 1px solid var(--color-border);
 
     h2 {
       margin: 0;
       font-size: 24px;
-      font-weight: 500;
+      font-weight: 600;
+      color: var(--color-text-primary);
     }
 
     .tenant-name {
       margin: 4px 0 0 0;
       font-size: 12px;
-      color: rgba(0, 0, 0, 0.6);
+      color: var(--color-text-secondary);
     }
   }
 
   mat-nav-list {
-    padding-top: 8px;
+    padding-top: var(--spacing-sm);
 
     a.active {
-      background-color: var(--mat-sys-primary-container);
-      color: var(--mat-sys-on-primary-container);
+      background-color: var(--color-surface);
+      color: var(--color-primary);
+      border-left: 3px solid var(--color-accent);
     }
   }
 }
 
+// ───────────────────────────────────────────────────────────────
+// TOOLBAR
+// ───────────────────────────────────────────────────────────────
+
 mat-toolbar {
+  background: var(--color-card) !important;
+  border-bottom: 1px solid var(--color-border);
+  box-shadow: var(--shadow-sm);
+
   .toolbar-title {
     font-size: 20px;
+    font-weight: 600;
+    color: var(--color-text-primary);
   }
 
   .toolbar-spacer {
@@ -44,107 +65,167 @@ mat-toolbar {
   }
 
   .user-name {
-    margin-right: 16px;
+    margin-right: var(--spacing-md);
     font-size: 14px;
+    color: var(--color-text-secondary);
   }
 }
 
+// ───────────────────────────────────────────────────────────────
+// DASHBOARD CONTENT
+// ───────────────────────────────────────────────────────────────
+
 .dashboard-content {
-  padding: 32px 24px;
+  padding: var(--spacing-2xl);
+  background: var(--color-background);
 
   h1 {
     font-size: 32px;
-    font-weight: 400;
-    margin-bottom: 32px;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    margin-bottom: var(--spacing-2xl);
+    letter-spacing: -0.01em;
+  }
+
+  @media (max-width: 768px) {
+    padding: var(--spacing-md);
+
+    h1 {
+      font-size: 24px;
+      margin-bottom: var(--spacing-lg);
+    }
   }
 }
+
+// ───────────────────────────────────────────────────────────────
+// STAT CARDS - EXECUTIVE STYLING
+// ───────────────────────────────────────────────────────────────
 
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 24px;
-  margin-bottom: 48px;
+  gap: var(--spacing-lg);
+  margin-bottom: var(--spacing-3xl);
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
 }
 
 .stat-card {
+  background: var(--color-card) !important;
+  border: 1px solid var(--color-border) !important;
+  border-radius: var(--radius-md) !important;
+  box-shadow: var(--shadow-sm) !important;
+  transition: all var(--transition-normal);
+
+  &:hover {
+    box-shadow: var(--shadow-md) !important;
+    transform: translateY(-2px);
+    border-color: var(--color-accent);
+  }
+
   mat-card-content {
     display: flex;
     align-items: center;
-    gap: 16px;
-    padding: 24px !important;
+    gap: var(--spacing-md);
+    padding: var(--spacing-xl) !important;
 
-    .stat-icon mat-icon {
-      font-size: 48px;
-      width: 48px;
-      height: 48px;
+    .stat-icon {
+      width: 64px;
+      height: 64px;
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      mat-icon {
+        font-size: 32px;
+        width: 32px;
+        height: 32px;
+        color: var(--color-accent);
+      }
     }
 
     .stat-info {
+      flex: 1;
+
       h3 {
         font-size: 32px;
-        font-weight: 500;
+        font-weight: 700;
+        color: var(--color-primary);
         margin: 0 0 4px 0;
+        letter-spacing: -0.02em;
       }
 
       p {
         font-size: 14px;
-        color: rgba(0, 0, 0, 0.6);
+        color: var(--color-text-secondary);
         margin: 0;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
       }
     }
   }
 }
 
+// ───────────────────────────────────────────────────────────────
+// QUICK ACTIONS
+// ───────────────────────────────────────────────────────────────
+
 .quick-actions {
   h2 {
     font-size: 24px;
-    font-weight: 400;
-    margin-bottom: 24px;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    margin-bottom: var(--spacing-lg);
+    letter-spacing: -0.01em;
   }
 }
 
 .actions-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 24px;
+  gap: var(--spacing-lg);
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
 }
 
 .action-card {
+  background: var(--color-card) !important;
+  border: 1px solid var(--color-border) !important;
+  border-radius: var(--radius-md) !important;
+  box-shadow: var(--shadow-sm) !important;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all var(--transition-normal);
 
   &:hover {
     transform: translateY(-4px);
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+    box-shadow: var(--shadow-lg) !important;
+    border-color: var(--color-accent);
   }
 
   mat-card-content {
-    padding: 24px !important;
+    padding: var(--spacing-xl) !important;
     text-align: center;
 
     mat-icon {
       font-size: 48px;
       width: 48px;
       height: 48px;
-      color: var(--mat-sys-primary);
-      margin-bottom: 12px;
+      color: var(--color-accent);
+      margin-bottom: var(--spacing-md);
     }
 
     h3 {
       font-size: 16px;
-      font-weight: 500;
+      font-weight: 600;
+      color: var(--color-text-primary);
       margin: 0;
     }
-  }
-}
-
-// Dark theme
-html.dark-theme {
-  .sidenav .sidenav-header .tenant-name {
-    color: rgba(255, 255, 255, 0.6);
-  }
-
-  .stat-card mat-card-content .stat-info p {
-    color: rgba(255, 255, 255, 0.6);
   }
 }

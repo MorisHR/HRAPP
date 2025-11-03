@@ -14,12 +14,15 @@ public class Tenant : BaseEntity
     public string ContactEmail { get; set; } = string.Empty;
     public string ContactPhone { get; set; } = string.Empty;
     public TenantStatus Status { get; set; }
-    public SubscriptionPlan SubscriptionPlan { get; set; }
 
-    // Resource Limits
+    // Employee-based Tier (replaces SubscriptionPlan)
+    public EmployeeTier EmployeeTier { get; set; }
+    public decimal MonthlyPrice { get; set; }
+
+    // Resource Limits (simplified for easier understanding)
     public int MaxUsers { get; set; }
-    public long MaxStorageBytes { get; set; }
-    public int MaxApiCallsPerHour { get; set; }
+    public int MaxStorageGB { get; set; }
+    public int ApiCallsPerMonth { get; set; }
 
     // Suspension/Deletion tracking
     public string? SuspensionReason { get; set; }
@@ -39,7 +42,7 @@ public class Tenant : BaseEntity
 
     // Usage tracking
     public int CurrentUserCount { get; set; }
-    public long CurrentStorageBytes { get; set; }
+    public int CurrentStorageGB { get; set; }
 
     // Industry Sector (references master.IndustrySectors)
     public int? SectorId { get; set; }

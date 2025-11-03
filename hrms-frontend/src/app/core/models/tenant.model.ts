@@ -1,16 +1,32 @@
 export interface Tenant {
   id: string;
-  name: string;
-  domain: string;
+  companyName: string;
+  subdomain: string;
+  schemaName: string;
   contactEmail: string;
   contactPhone: string;
-  industry: IndustrySector;
   status: TenantStatus;
-  subscriptionPlan: SubscriptionPlan;
-  employeeCount: number;
+  statusDisplay: string;
+  employeeTier: string;
+  employeeTierDisplay: string;
+  monthlyPrice: number;
+  maxUsers: number;
+  currentUserCount: number;
+  maxStorageGB: number;
+  currentStorageGB: number;
+  apiCallsPerMonth: number;
+  employeeCount: number; // derived from currentUserCount
   createdAt: string;
-  updatedAt: string;
-  settings?: TenantSettings;
+  subscriptionStartDate: string;
+  subscriptionEndDate?: string;
+  trialEndDate?: string;
+  suspensionReason?: string;
+  suspensionDate?: string;
+  softDeleteDate?: string;
+  deletionReason?: string;
+  daysUntilHardDelete?: number;
+  adminUserName: string;
+  adminEmail: string;
 }
 
 export enum IndustrySector {
@@ -53,12 +69,6 @@ export enum TenantStatus {
   Expired = 'Expired'
 }
 
-export enum SubscriptionPlan {
-  Basic = 'Basic',
-  Professional = 'Professional',
-  Enterprise = 'Enterprise'
-}
-
 export interface TenantSettings {
   timezone: string;
   dateFormat: string;
@@ -69,10 +79,16 @@ export interface TenantSettings {
 }
 
 export interface CreateTenantRequest {
-  name: string;
-  domain: string;
+  companyName: string;
+  subdomain: string;
   contactEmail: string;
   contactPhone: string;
-  industry: IndustrySector;
-  subscriptionPlan: SubscriptionPlan;
+  employeeTier: string;
+  maxUsers: number;
+  maxStorageGB: number;
+  apiCallsPerMonth: number;
+  monthlyPrice: number;
+  adminUserName: string;
+  adminEmail: string;
+  adminPassword: string;
 }

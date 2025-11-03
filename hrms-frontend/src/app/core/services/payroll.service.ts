@@ -2,13 +2,14 @@ import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
 import { Payroll, Payslip, PayrollCycle } from '../models/payroll.model';
+import { environment } from '../../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class PayrollService {
   private http = inject(HttpClient);
-  private apiUrl = 'http://localhost:5000/api/payroll';
+  private apiUrl = `${environment.apiUrl}/payroll`;
 
   // Signals for reactive state
   private payrollsSignal = signal<Payroll[]>([]);

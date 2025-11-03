@@ -92,11 +92,11 @@ public class CreateTenantRequestValidator : AbstractValidator<CreateTenantReques
             .WithMessage("Please provide a valid phone number in E.164 format (e.g., +230XXXXXXXX)")
             .WithName("Contact Phone");
 
-        // Subscription Plan Validation
-        RuleFor(x => x.SubscriptionPlan)
+        // Employee Tier Validation
+        RuleFor(x => x.EmployeeTier)
             .IsInEnum()
-            .WithMessage("Invalid subscription plan selected")
-            .WithName("Subscription Plan");
+            .WithMessage("Invalid employee tier selected")
+            .WithName("Employee Tier");
 
         // Resource Limits Validation
         RuleFor(x => x.MaxUsers)
@@ -106,19 +106,27 @@ public class CreateTenantRequestValidator : AbstractValidator<CreateTenantReques
             .WithMessage("Maximum users cannot exceed 10,000 (contact support for enterprise plans)")
             .WithName("Maximum Users");
 
-        RuleFor(x => x.MaxStorageBytes)
+        RuleFor(x => x.MaxStorageGB)
             .GreaterThan(0)
             .WithMessage("Maximum storage must be greater than 0")
-            .LessThanOrEqualTo(1099511627776) // 1 TB
-            .WithMessage("Maximum storage cannot exceed 1 TB (contact support for enterprise plans)")
+            .LessThanOrEqualTo(1000) // 1 TB
+            .WithMessage("Maximum storage cannot exceed 1,000 GB (contact support for enterprise plans)")
             .WithName("Maximum Storage");
 
-        RuleFor(x => x.MaxApiCallsPerHour)
+        RuleFor(x => x.ApiCallsPerMonth)
             .GreaterThan(0)
-            .WithMessage("Maximum API calls per hour must be greater than 0")
-            .LessThanOrEqualTo(1000000)
-            .WithMessage("Maximum API calls per hour cannot exceed 1,000,000")
-            .WithName("Maximum API Calls Per Hour");
+            .WithMessage("Maximum API calls per month must be greater than 0")
+            .LessThanOrEqualTo(10000000)
+            .WithMessage("Maximum API calls per month cannot exceed 10,000,000")
+            .WithName("Maximum API Calls Per Month");
+
+        // Monthly Price Validation
+        RuleFor(x => x.MonthlyPrice)
+            .GreaterThanOrEqualTo(0)
+            .WithMessage("Monthly price must be zero or greater")
+            .LessThanOrEqualTo(100000)
+            .WithMessage("Monthly price cannot exceed $100,000")
+            .WithName("Monthly Price");
 
         // Admin User Name Validation
         RuleFor(x => x.AdminUserName)

@@ -1,0 +1,229 @@
+<div class="tenant-form-container">
+  <mat-toolbar color="primary">
+    <button mat-icon-button routerLink="/admin/tenants">
+      <mat-icon>arrow_back</mat-icon>
+    </button>
+    <span>Create New Tenant</span>
+  </mat-toolbar>
+
+  <div class="form-content">
+    <form [formGroup]="tenantForm" (ngSubmit)="onSubmit()">
+
+      <!-- Company Information Section -->
+      <mat-card class="form-section">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>business</mat-icon>
+            Company Information
+          </mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Company Name</mat-label>
+              <input matInput formControlName="companyName" placeholder="e.g., Acme Corporation">
+              <mat-icon matPrefix>business</mat-icon>
+              @if (tenantForm.get('companyName')?.invalid && tenantForm.get('companyName')?.touched) {
+                <mat-error>{{ getErrorMessage('companyName') }}</mat-error>
+              }
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Subdomain</mat-label>
+              <input matInput formControlName="subdomain" placeholder="e.g., acme">
+              <mat-icon matPrefix>link</mat-icon>
+              <mat-hint>Lowercase letters, numbers, and hyphens only. This will be: subdomain.hrms.com</mat-hint>
+              @if (tenantForm.get('subdomain')?.invalid && tenantForm.get('subdomain')?.touched) {
+                <mat-error>{{ getErrorMessage('subdomain') }}</mat-error>
+              }
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="half-width">
+              <mat-label>Contact Email</mat-label>
+              <input matInput type="email" formControlName="contactEmail" placeholder="contact@company.com">
+              <mat-icon matPrefix>email</mat-icon>
+              @if (tenantForm.get('contactEmail')?.invalid && tenantForm.get('contactEmail')?.touched) {
+                <mat-error>{{ getErrorMessage('contactEmail') }}</mat-error>
+              }
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="half-width">
+              <mat-label>Contact Phone</mat-label>
+              <input matInput type="tel" formControlName="contactPhone" placeholder="+1234567890">
+              <mat-icon matPrefix>phone</mat-icon>
+              @if (tenantForm.get('contactPhone')?.invalid && tenantForm.get('contactPhone')?.touched) {
+                <mat-error>{{ getErrorMessage('contactPhone') }}</mat-error>
+              }
+            </mat-form-field>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Employee Tier & Pricing Section -->
+      <mat-card class="form-section">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>credit_card</mat-icon>
+            Subscription Plan
+          </mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Select Employee Tier</mat-label>
+              <mat-select formControlName="employeeTier" required>
+                @for (tier of pricingTiers; track tier.id) {
+                  <mat-option [value]="tier.id">
+                    <div class="tier-option">
+                      <div class="tier-header">
+                        <span class="tier-name">{{ tier.name }}</span>
+                        <span class="tier-price">{{ pricingService.formatPrice(tier.price) }}/mo</span>
+                      </div>
+                      <div class="tier-limits">
+                        {{ pricingService.formatStorage(tier.storageGB) }} Storage •
+                        {{ pricingService.formatApiCalls(tier.apiCallsMonth) }} API calls/month
+                      </div>
+                    </div>
+                  </mat-option>
+                }
+              </mat-select>
+              <mat-icon matPrefix>groups</mat-icon>
+              @if (tenantForm.get('employeeTier')?.invalid && tenantForm.get('employeeTier')?.touched) {
+                <mat-error>Please select an employee tier</mat-error>
+              }
+            </mat-form-field>
+          </div>
+
+          <!-- Pricing Summary Card (appears after tier selection) -->
+          @if (selectedTier()) {
+            <div class="pricing-summary-card">
+              <div class="summary-header">
+                <mat-icon>receipt</mat-icon>
+                <h3>Subscription Summary</h3>
+              </div>
+
+              <div class="summary-pricing">
+                <div class="price-amount">
+                  {{ getTierPrice() }}
+                  <span class="price-period">/month</span>
+                </div>
+                <div class="price-tier">{{ selectedTier()?.name }}</div>
+              </div>
+
+              <div class="summary-limits">
+                <div class="limit-item">
+                  <div class="limit-icon">
+                    <mat-icon>group</mat-icon>
+                  </div>
+                  <div class="limit-text">
+                    <span class="limit-label">Maximum Users</span>
+                    <span class="limit-value">{{ getTierMaxUsers() }}</span>
+                  </div>
+                </div>
+
+                <div class="limit-item">
+                  <div class="limit-icon">
+                    <mat-icon>storage</mat-icon>
+                  </div>
+                  <div class="limit-text">
+                    <span class="limit-label">Storage Limit</span>
+                    <span class="limit-value">{{ getTierStorage() }}</span>
+                  </div>
+                </div>
+
+                <div class="limit-item">
+                  <div class="limit-icon">
+                    <mat-icon>api</mat-icon>
+                  </div>
+                  <div class="limit-text">
+                    <span class="limit-label">API Calls</span>
+                    <span class="limit-value">{{ getTierApiCalls() }}/month</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="summary-features">
+                <h4>All Enterprise Features Included:</h4>
+                <ul class="features-list">
+                  @for (feature of enterpriseFeatures; track feature) {
+                    <li><mat-icon>check_circle</mat-icon> {{ feature }}</li>
+                  }
+                </ul>
+              </div>
+
+              <div class="summary-note">
+                <mat-icon>info</mat-icon>
+                <span>Need higher limits? You can upgrade anytime or contact us for custom enterprise pricing.</span>
+              </div>
+            </div>
+          }
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Admin User Section -->
+      <mat-card class="form-section">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>admin_panel_settings</mat-icon>
+            Admin User Account
+          </mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Admin User Name</mat-label>
+              <input matInput formControlName="adminUserName" placeholder="John Doe">
+              <mat-icon matPrefix>person</mat-icon>
+              @if (tenantForm.get('adminUserName')?.invalid && tenantForm.get('adminUserName')?.touched) {
+                <mat-error>{{ getErrorMessage('adminUserName') }}</mat-error>
+              }
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Admin Email</mat-label>
+              <input matInput type="email" formControlName="adminEmail" placeholder="admin@company.com">
+              <mat-icon matPrefix>email</mat-icon>
+              @if (tenantForm.get('adminEmail')?.invalid && tenantForm.get('adminEmail')?.touched) {
+                <mat-error>{{ getErrorMessage('adminEmail') }}</mat-error>
+              }
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Admin Password</mat-label>
+              <input matInput type="password" formControlName="adminPassword" placeholder="Enter secure password">
+              <mat-icon matPrefix>lock</mat-icon>
+              <mat-hint>Minimum 8 characters with uppercase, lowercase, number, and special character</mat-hint>
+              @if (tenantForm.get('adminPassword')?.invalid && tenantForm.get('adminPassword')?.touched) {
+                <mat-error>{{ getErrorMessage('adminPassword') }}</mat-error>
+              }
+            </mat-form-field>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Actions -->
+      <div class="form-actions">
+        <button mat-raised-button type="button" (click)="onCancel()" [disabled]="loading()">
+          Cancel
+        </button>
+        <button mat-raised-button color="primary" type="submit" [disabled]="loading() || tenantForm.invalid">
+          @if (loading()) {
+            <mat-spinner diameter="20" class="button-spinner"></mat-spinner>
+            <span>Creating...</span>
+          } @else {
+            <mat-icon>add_business</mat-icon>
+            <span>Create Tenant</span>
+          }
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

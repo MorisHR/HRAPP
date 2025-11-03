@@ -1,8 +1,9 @@
 import { Injectable, signal, computed, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { Observable, tap, BehaviorSubject } from 'rxjs';
+import { Observable, tap, map, catchError, throwError } from 'rxjs';
 import { User, LoginRequest, LoginResponse, UserRole } from '../models/user.model';
+import { environment } from '../../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
@@ -11,8 +12,8 @@ export class AuthService {
   private http = inject(HttpClient);
   private router = inject(Router);
 
-  // API URL - should be from environment
-  private apiUrl = 'http://localhost:5000/api';
+  // API URL from environment configuration
+  private apiUrl = environment.apiUrl;
 
   // Signals for reactive state management (Angular 20)
   private userSignal = signal<User | null>(null);
@@ -56,13 +57,47 @@ export class AuthService {
     // Determine endpoint based on user type
     const endpoint = credentials.tenantId
       ? `${this.apiUrl}/auth/tenant/login`
-      : `${this.apiUrl}/auth/admin/login`;
+      : `${this.apiUrl}/auth/login`;
 
-    return this.http.post<LoginResponse>(endpoint, credentials).pipe(
+    return this.http.post<any>(endpoint, credentials).pipe(
+      map(apiResponse => {
+        // Backend returns: { success, data: { token, expiresAt, adminUser }, message }
+        // Transform to frontend format: { token, refreshToken, user, expiresIn }
+        if (!apiResponse.success || !apiResponse.data) {
+          throw new Error(apiResponse.message || 'Login failed');
+        }
+
+        const backendData = apiResponse.data;
+        const adminUser = backendData.adminUser;
+
+        // Map adminUser to User interface
+        const user: User = {
+          id: adminUser.id,
+          email: adminUser.email,
+          firstName: adminUser.userName?.split(' ')[0] || 'Admin',
+          lastName: adminUser.userName?.split(' ').slice(1).join(' ') || 'User',
+          role: UserRole.SuperAdmin,
+          avatarUrl: undefined
+        };
+
+        const response: LoginResponse = {
+          token: backendData.token,
+          refreshToken: backendData.token, // Backend doesn't return separate refresh token yet
+          user: user,
+          expiresIn: 480 * 60 // 480 minutes in seconds (from backend config)
+        };
+
+        return response;
+      }),
       tap(response => {
         this.setAuthState(response);
         this.navigateBasedOnRole(response.user.role);
         this.loadingSignal.set(false);
+      }),
+      catchError(error => {
+        this.loadingSignal.set(false);
+        console.error('Login error:', error);
+        return throwError(() => new Error(error.error?.message || 'Login failed'));
       })
     );
   }

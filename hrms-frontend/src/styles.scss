@@ -5,28 +5,31 @@
 // Include the common styles for Angular Material
 @include mat.core();
 
-// Create the light theme using Material 3
+// Import Premium Themes (custom CSS variables)
+@import 'themes.scss';
+
+// ═══════════════════════════════════════════════════════════════════
+// DEFAULT MATERIAL THEME
+// ═══════════════════════════════════════════════════════════════════
+
+// Use a single default Material theme - colors will be overridden by CSS variables
 $light-theme: mat.define-theme((
   color: (
     theme-type: light,
-    primary: mat.$violet-palette,
   ),
 ));
 
-// Create the dark theme using Material 3
 $dark-theme: mat.define-theme((
   color: (
     theme-type: dark,
-    primary: mat.$violet-palette,
   ),
 ));
 
-// Apply the light theme by default
+// Apply base theme
 html {
   @include mat.all-component-themes($light-theme);
 }
 
-// Apply dark theme when dark-theme class is present
 html.dark-theme {
   @include mat.all-component-colors($dark-theme);
 }

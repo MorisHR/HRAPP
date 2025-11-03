@@ -1,14 +1,15 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, tap } from 'rxjs';
+import { Observable, tap, map } from 'rxjs';
 import { Tenant, CreateTenantRequest } from '../models/tenant.model';
+import { environment } from '../../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class TenantService {
   private http = inject(HttpClient);
-  private apiUrl = 'http://localhost:5000/api/tenants';
+  private apiUrl = `${environment.apiUrl}/tenants`;
 
   // Signals for reactive state
   private tenantsSignal = signal<Tenant[]>([]);
@@ -19,7 +20,8 @@ export class TenantService {
 
   getTenants(): Observable<Tenant[]> {
     this.loadingSignal.set(true);
-    return this.http.get<Tenant[]>(this.apiUrl).pipe(
+    return this.http.get<any>(this.apiUrl).pipe(
+      map(response => response.data || response),
       tap(tenants => {
         this.tenantsSignal.set(tenants);
         this.loadingSignal.set(false);
@@ -28,11 +30,14 @@ export class TenantService {
   }
 
   getTenantById(id: string): Observable<Tenant> {
-    return this.http.get<Tenant>(`${this.apiUrl}/${id}`);
+    return this.http.get<any>(`${this.apiUrl}/${id}`).pipe(
+      map(response => response.data || response)
+    );
   }
 
   createTenant(request: CreateTenantRequest): Observable<Tenant> {
-    return this.http.post<Tenant>(this.apiUrl, request).pipe(
+    return this.http.post<any>(this.apiUrl, request).pipe(
+      map(response => response.data || response),
       tap(tenant => {
         this.tenantsSignal.update(tenants => [...tenants, tenant]);
       })

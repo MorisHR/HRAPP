@@ -2,13 +2,14 @@ import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
 import { Leave, LeaveBalance, ApplyLeaveRequest } from '../models/leave.model';
+import { environment } from '../../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class LeaveService {
   private http = inject(HttpClient);
-  private apiUrl = 'http://localhost:5000/api/leaves';
+  private apiUrl = `${environment.apiUrl}/leaves`;
 
   // Signals for reactive state
   private leavesSignal = signal<Leave[]>([]);

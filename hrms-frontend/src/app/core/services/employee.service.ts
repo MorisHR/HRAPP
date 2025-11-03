@@ -2,13 +2,14 @@ import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
 import { Employee, CreateEmployeeRequest } from '../models/employee.model';
+import { environment } from '../../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class EmployeeService {
   private http = inject(HttpClient);
-  private apiUrl = 'http://localhost:5000/api/employees';
+  private apiUrl = `${environment.apiUrl}/employees`;
 
   // Signals for reactive state
   private employeesSignal = signal<Employee[]>([]);

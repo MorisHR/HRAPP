@@ -15,15 +15,21 @@ public class TenantDto
     public string ContactPhone { get; set; } = string.Empty;
     public TenantStatus Status { get; set; }
     public string StatusDisplay { get; set; } = string.Empty;
-    public SubscriptionPlan SubscriptionPlan { get; set; }
-    public string SubscriptionPlanDisplay { get; set; } = string.Empty;
+
+    // Employee Tier (replaces SubscriptionPlan)
+    public EmployeeTier EmployeeTier { get; set; }
+    public string EmployeeTierDisplay { get; set; } = string.Empty;
+    public decimal MonthlyPrice { get; set; }
 
     // Resource Limits and Usage
     public int MaxUsers { get; set; }
     public int CurrentUserCount { get; set; }
-    public long MaxStorageBytes { get; set; }
-    public long CurrentStorageBytes { get; set; }
-    public int MaxApiCallsPerHour { get; set; }
+    public int MaxStorageGB { get; set; }
+    public int CurrentStorageGB { get; set; }
+    public int ApiCallsPerMonth { get; set; }
+
+    // Computed property for employee count (derived from CurrentUserCount)
+    public int EmployeeCount => CurrentUserCount;
 
     // Dates
     public DateTime CreatedAt { get; set; }

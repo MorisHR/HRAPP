@@ -1,42 +1,41 @@
 import { Injectable, signal, effect } from '@angular/core';
 
-export type Theme = 'light' | 'dark';
+export type ColorMode = 'light' | 'dark';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ThemeService {
-  private readonly THEME_KEY = 'app-theme';
+  private readonly COLOR_MODE_KEY = 'hrms-color-mode';
 
-  // Signal for reactive theme state
-  private themeSignal = signal<Theme>(this.getInitialTheme());
+  // Signal for reactive color mode state
+  private colorModeSignal = signal<ColorMode>(this.getInitialColorMode());
 
-  readonly theme = this.themeSignal.asReadonly();
-  readonly isDark = () => this.themeSignal() === 'dark';
+  // Readonly computed signal for dark mode check
+  readonly isDark = () => this.colorModeSignal() === 'dark';
 
   constructor() {
-    // Effect to apply theme changes to DOM
+    // Effect to apply theme changes
     effect(() => {
-      const theme = this.themeSignal();
-      this.applyTheme(theme);
+      const mode = this.colorModeSignal();
+      console.log('🎨 Color mode changing to:', mode);
+      this.applyColorMode(mode);
     });
   }
 
-  private getInitialTheme(): Theme {
-    const savedTheme = localStorage.getItem(this.THEME_KEY) as Theme;
-    if (savedTheme) {
-      return savedTheme;
+  private getInitialColorMode(): ColorMode {
+    const saved = localStorage.getItem(this.COLOR_MODE_KEY) as ColorMode;
+    if (saved && ['light', 'dark'].includes(saved)) {
+      return saved;
     }
-
-    // Check system preference
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     return prefersDark ? 'dark' : 'light';
   }
 
-  private applyTheme(theme: Theme): void {
+  private applyColorMode(mode: ColorMode): void {
     const htmlElement = document.documentElement;
 
-    if (theme === 'dark') {
+    if (mode === 'dark') {
       htmlElement.classList.add('dark-theme');
       htmlElement.classList.remove('light-theme');
     } else {
@@ -44,15 +43,19 @@ export class ThemeService {
       htmlElement.classList.remove('dark-theme');
     }
 
-    localStorage.setItem(this.THEME_KEY, theme);
+    localStorage.setItem(this.COLOR_MODE_KEY, mode);
   }
 
-  toggleTheme(): void {
-    const newTheme: Theme = this.themeSignal() === 'light' ? 'dark' : 'light';
-    this.themeSignal.set(newTheme);
+  public toggleTheme(): void {
+    const newMode = this.colorModeSignal() === 'light' ? 'dark' : 'light';
+    this.colorModeSignal.set(newMode);
   }
 
-  setTheme(theme: Theme): void {
-    this.themeSignal.set(theme);
+  public setColorMode(mode: ColorMode): void {
+    this.colorModeSignal.set(mode);
+  }
+
+  public isDarkMode(): boolean {
+    return this.colorModeSignal() === 'dark';
   }
 }

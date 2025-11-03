@@ -375,14 +375,33 @@ builder.Services.AddCors(options =>
                   .AllowAnyMethod()
                   .AllowAnyHeader()
                   .AllowCredentials();
+
+            Log.Information("CORS configured with allowed origins: {AllowedOrigins}", string.Join(", ", allowedOrigins));
         }
         else if (builder.Environment.IsDevelopment())
         {
-            // Development fallback
-            policy.WithOrigins("http://localhost:4200", "https://localhost:4200")
-                  .AllowAnyMethod()
-                  .AllowAnyHeader()
-                  .AllowCredentials();
+            // Development fallback - Allow localhost and GitHub Codespaces
+            policy.SetIsOriginAllowed(origin =>
+            {
+                // Allow localhost
+                if (origin.StartsWith("http://localhost") || origin.StartsWith("https://localhost"))
+                    return true;
+
+                // Allow GitHub Codespaces domains
+                if (origin.Contains(".app.github.dev"))
+                    return true;
+
+                // Allow Gitpod domains
+                if (origin.Contains(".gitpod.io"))
+                    return true;
+
+                return false;
+            })
+            .AllowAnyMethod()
+            .AllowAnyHeader()
+            .AllowCredentials();
+
+            Log.Information("CORS enabled for development: localhost and cloud development environments");
         }
         else
         {
@@ -622,8 +641,20 @@ if (!app.Environment.IsProduction())
 // HTTPS Redirection
 app.UseHttpsRedirection();
 
-// CORS
+// CORS - Must be before authentication and all other middleware
 app.UseCors("ProductionCorsPolicy");
+
+// Handle OPTIONS requests early (CORS preflight)
+app.Use(async (context, next) =>
+{
+    if (context.Request.Method == "OPTIONS")
+    {
+        context.Response.StatusCode = 200;
+        await context.Response.CompleteAsync();
+        return;
+    }
+    await next();
+});
 
 // SECURITY FIX: Rate Limiting (prevents brute force attacks)
 app.UseIpRateLimiting();

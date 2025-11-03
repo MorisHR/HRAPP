@@ -8,7 +8,7 @@ namespace HRMS.API.Controllers;
 /// Authentication API for Super Admin login
 /// </summary>
 [ApiController]
-[Route("api/admin/[controller]")]
+[Route("api/[controller]")]
 public class AuthController : ControllerBase
 {
     private readonly IAuthService _authService;

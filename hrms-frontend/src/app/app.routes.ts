@@ -33,6 +33,10 @@ export const routes: Routes = [
       {
         path: 'tenants',
         loadComponent: () => import('./features/admin/tenant-management/tenant-list.component').then(m => m.TenantListComponent)
+      },
+      {
+        path: 'tenants/new',
+        loadComponent: () => import('./features/admin/tenant-management/tenant-form.component').then(m => m.TenantFormComponent)
       }
     ]
   },

@@ -199,20 +199,21 @@ public class TenantsController : ControllerBase
     }
 
     /// <summary>
-    /// Update tenant subscription plan
+    /// Update tenant employee tier and pricing
     /// </summary>
-    [HttpPut("{id}/subscription")]
-    public async Task<IActionResult> UpdateSubscription(Guid id, [FromBody] UpdateSubscriptionRequest request)
+    [HttpPut("{id}/tier")]
+    public async Task<IActionResult> UpdateEmployeeTier(Guid id, [FromBody] UpdateEmployeeTierRequest request)
     {
         try
         {
             var updatedBy = "SuperAdmin"; // TODO: Get from authenticated user
-            var (success, message) = await _tenantManagementService.UpdateSubscriptionPlanAsync(
+            var (success, message) = await _tenantManagementService.UpdateEmployeeTierAsync(
                 id,
-                request.SubscriptionPlan,
+                request.EmployeeTier,
                 request.MaxUsers,
-                request.MaxStorageBytes,
-                request.MaxApiCallsPerHour,
+                request.MaxStorageGB,
+                request.ApiCallsPerMonth,
+                request.MonthlyPrice,
                 updatedBy);
 
             if (!success)
@@ -222,8 +223,8 @@ public class TenantsController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error updating subscription for tenant: {TenantId}", id);
-            return StatusCode(500, new { success = false, message = "Error updating subscription" });
+            _logger.LogError(ex, "Error updating employee tier for tenant: {TenantId}", id);
+            return StatusCode(500, new { success = false, message = "Error updating employee tier" });
         }
     }
 }
@@ -244,10 +245,11 @@ public class HardDeleteTenantRequest
     public string ConfirmationName { get; set; } = string.Empty;
 }
 
-public class UpdateSubscriptionRequest
+public class UpdateEmployeeTierRequest
 {
-    public SubscriptionPlan SubscriptionPlan { get; set; }
+    public EmployeeTier EmployeeTier { get; set; }
     public int MaxUsers { get; set; }
-    public long MaxStorageBytes { get; set; }
-    public int MaxApiCallsPerHour { get; set; }
+    public int MaxStorageGB { get; set; }
+    public int ApiCallsPerMonth { get; set; }
+    public decimal MonthlyPrice { get; set; }
 }

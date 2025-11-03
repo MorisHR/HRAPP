@@ -2,13 +2,14 @@ import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
 import { Attendance, AttendanceStats } from '../models/attendance.model';
+import { environment } from '../../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AttendanceService {
   private http = inject(HttpClient);
-  private apiUrl = 'http://localhost:5000/api/attendance';
+  private apiUrl = `${environment.apiUrl}/attendance`;
 
   // Signals for reactive state
   private attendanceRecordsSignal = signal<Attendance[]>([]);
