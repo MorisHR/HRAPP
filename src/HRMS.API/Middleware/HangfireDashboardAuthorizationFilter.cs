@@ -4,7 +4,7 @@ namespace HRMS.API.Middleware;
 
 /// <summary>
 /// Authorization filter for Hangfire dashboard
-/// In production, implement proper authentication
+/// SECURITY: Requires authenticated SuperAdmin user
 /// </summary>
 public class HangfireDashboardAuthorizationFilter : IDashboardAuthorizationFilter
 {
@@ -12,12 +12,10 @@ public class HangfireDashboardAuthorizationFilter : IDashboardAuthorizationFilte
     {
         var httpContext = context.GetHttpContext();
 
-        // For development: Allow all
-        // TODO: In production, implement proper authentication
-        // Example: Check if user has admin role
-        // return httpContext.User.Identity?.IsAuthenticated == true &&
-        //        httpContext.User.IsInRole("Admin");
+        // PRODUCTION SECURITY: Only authenticated SuperAdmin users can access Hangfire dashboard
+        var isAuthenticated = httpContext.User.Identity?.IsAuthenticated == true;
+        var isSuperAdmin = httpContext.User.IsInRole("SuperAdmin");
 
-        return true; // Allow all in development
+        return isAuthenticated && isSuperAdmin;
     }
 }

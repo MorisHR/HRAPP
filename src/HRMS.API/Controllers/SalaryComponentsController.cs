@@ -74,15 +74,33 @@ public class SalaryComponentsController : ControllerBase
 
     /// <summary>
     /// Retrieves all salary components for a specific employee
+    /// SECURITY: Only Admin, HR, and Manager roles can access any employee's components
+    /// Regular employees can only access their own (requires EmployeeId claim in JWT)
     /// </summary>
     [HttpGet("employee/{employeeId}")]
+    [Authorize(Roles = "Admin,HR,Manager")]
     public async Task<ActionResult<List<SalaryComponentDto>>> GetEmployeeComponents(
         Guid employeeId,
         [FromQuery] bool activeOnly = true)
     {
         try
         {
-            // TODO: Verify authorization - employees can only see their own components
+            // SECURITY FIX: This endpoint now requires Admin, HR, or Manager role
+            // to prevent unauthorized access to other employees' salary information.
+            //
+            // TODO (Future Enhancement): For employee self-service access, implement:
+            // 1. Add EmployeeId claim to JWT token during tenant employee authentication
+            // 2. Check if user has Admin/HR/Manager role OR if employeeId matches JWT claim
+            // Example:
+            // var userEmployeeId = User.FindFirst("EmployeeId")?.Value;
+            // if (!User.IsInRole("Admin") && !User.IsInRole("HR") && !User.IsInRole("Manager"))
+            // {
+            //     if (string.IsNullOrEmpty(userEmployeeId) || Guid.Parse(userEmployeeId) != employeeId)
+            //     {
+            //         return Forbid();
+            //     }
+            // }
+
             var components = await _salaryComponentService.GetEmployeeComponentsAsync(employeeId, activeOnly);
             return Ok(components);
         }

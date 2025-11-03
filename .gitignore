@@ -1,0 +1,301 @@
+# ============================================
+# .NET HRMS PROJECT - PRODUCTION-GRADE .gitignore
+# ============================================
+
+# Build Results
+# ============================================
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+[Ww][Ii][Nn]32/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+bld/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+
+# Visual Studio Cache/Options
+# ============================================
+.vs/
+.vscode/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.userprefs
+.idea/
+
+# Rider
+# ============================================
+.idea/
+*.sln.iml
+
+# User-specific files
+# ============================================
+*.rsuser
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Mono Auto Generated Files
+# ============================================
+mono_crash.*
+
+# Windows image file caches
+# ============================================
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+
+# macOS
+# ============================================
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Files that might appear in the root of a volume
+# ============================================
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+
+# NuGet Packages
+# ============================================
+*.nupkg
+*.snupkg
+**/packages/*
+!**/packages/build/
+*.nuget.props
+*.nuget.targets
+
+# Node Modules (Frontend)
+# ============================================
+node_modules/
+npm-debug.log
+yarn-error.log
+package-lock.json
+yarn.lock
+
+# Angular
+# ============================================
+frontend/dist/
+frontend/.angular/
+frontend/out-tsc/
+frontend/tmp/
+hrms-frontend/dist/
+hrms-frontend/.angular/
+hrms-frontend/out-tsc/
+hrms-frontend/tmp/
+
+# ============================================
+# PRODUCTION SECRETS - CRITICAL!!!
+# ============================================
+# DO NOT COMMIT THESE FILES
+*.pfx
+*.p12
+*.key
+*.pem
+appsettings.Production.json
+appsettings.Staging.json
+secrets.json
+credentials.json
+
+# Environment Files
+# ============================================
+.env
+.env.local
+.env.production
+.env.staging
+.env.development.local
+.env.test.local
+.env.production.local
+
+# ============================================
+# UPLOADED FILES & LOGS - DATA LOSS RISK
+# ============================================
+# These contain user data and should NOT be in Git
+uploads/
+Logs/
+logs/
+*.log
+*.log.*
+
+# HRMS-specific log files
+src/HRMS.API/Logs/
+hrms-*.log
+
+# ============================================
+# CERTIFICATES & KEYS
+# ============================================
+*.pfx
+*.p12
+*.cer
+*.crt
+*.key
+*.pem
+*.keystore
+*.jks
+
+# ============================================
+# DATABASE FILES (if SQLite used for dev)
+# ============================================
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+
+# ============================================
+# RESHARPER
+# ============================================
+_ReSharper*/
+*.[Rr]e[Ss]harper
+*.DotSettings.user
+
+# ============================================
+# TEAM FOUNDATION
+# ============================================
+$tf/
+
+# ============================================
+# AZURE & DEPLOYMENT
+# ============================================
+PublishProfiles/
+*.pubxml
+*.PublishSettings
+
+# ============================================
+# SQL SERVER FILES
+# ============================================
+*.mdf
+*.ldf
+*.ndf
+
+# ============================================
+# BUSINESS INTELLIGENCE PROJECTS
+# ============================================
+*.rdl.data
+*.bim.layout
+*.bim_*.settings
+*.rptproj.rsuser
+*- [Bb]ackup.rdl
+*- [Bb]ackup ([0-9]).rdl
+*- [Bb]ackup ([0-9][0-9]).rdl
+
+# ============================================
+# MICROSOFT FAKES
+# ============================================
+FakesAssemblies/
+
+# ============================================
+# GITHUB ACTIONS
+# ============================================
+.github/workflows/*.yml.bak
+
+# ============================================
+# DOCKER
+# ============================================
+docker-compose.override.yml
+.dockerignore
+
+# ============================================
+# TEMPORARY FILES
+# ============================================
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+.*.swp
+.*.swo
+
+# ============================================
+# COVERAGE REPORTS
+# ============================================
+coverage/
+*.coverage
+*.coveragexml
+TestResults/
+
+# ============================================
+# WEBPACK (if used)
+# ============================================
+.cache/
+dist-ssr/
+*.local
+
+# ============================================
+# EDITOR DIRECTORIES AND FILES
+# ============================================
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+.idea
+*.swp
+*.swo
+*~
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+
+# ============================================
+# MISCELLANEOUS
+# ============================================
+*.bak
+*.cache
+*.ilk
+*.log
+*.obj
+*.pch
+*.pdb
+*.pgc
+*.pgd
+*.rsp
+*.sbr
+*.tlb
+*.tli
+*.tlh
+*.tmp
+*.tmp_proj
+*_wpftmp.csproj
+*.vspscc
+*.vssscc
+.builds
+*.pidb
+*.svclog
+*.scc
+
+# ============================================
+# PYTHON (if any Python tools used)
+# ============================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+ENV/
+env/
+
+# ============================================
+# END OF .gitignore
+# ============================================
+# Last updated: November 2025
+# Project: HRMS Multi-Tenant System
+# Security: Never commit secrets, uploads, or logs
