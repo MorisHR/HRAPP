@@ -1,0 +1,74 @@
+.tenant-list-container {
+  min-height: 100vh;
+  background-color: var(--mat-sys-surface);
+}
+
+mat-toolbar {
+  .toolbar-spacer {
+    flex: 1 1 auto;
+  }
+}
+
+.content {
+  padding: 24px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.search-field {
+  width: 100%;
+  max-width: 400px;
+  margin-bottom: 24px;
+}
+
+.table-container {
+  background: var(--mat-sys-surface-container);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.tenants-table {
+  width: 100%;
+
+  th {
+    background-color: var(--mat-sys-surface-variant);
+    font-weight: 600;
+  }
+
+  td, th {
+    padding: 16px;
+  }
+
+  tr.mat-row:hover {
+    background-color: var(--mat-sys-surface-variant);
+  }
+}
+
+.no-data {
+  text-align: center;
+  padding: 48px 24px;
+  color: rgba(0, 0, 0, 0.6);
+}
+
+.delete-action {
+  color: var(--mat-sys-error);
+}
+
+// Dark theme adjustments
+html.dark-theme {
+  .no-data {
+    color: rgba(255, 255, 255, 0.6);
+  }
+}
+
+// Responsive design
+@media (max-width: 768px) {
+  .table-container {
+    overflow-x: auto;
+  }
+
+  .tenants-table {
+    min-width: 800px;
+  }
+}

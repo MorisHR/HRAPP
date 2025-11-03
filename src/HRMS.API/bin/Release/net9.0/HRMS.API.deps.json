@@ -24,6 +24,7 @@
           "Microsoft.AspNetCore.Authentication.JwtBearer": "9.0.10",
           "Microsoft.AspNetCore.OpenApi": "9.0.10",
           "Microsoft.EntityFrameworkCore.Design": "9.0.10",
+          "Microsoft.Extensions.Caching.StackExchangeRedis": "9.0.10",
           "Polly": "8.6.4",
           "Serilog.AspNetCore": "9.0.0",
           "Serilog.Enrichers.Environment": "3.0.1",
@@ -243,6 +244,19 @@
           }
         }
       },
+      "Google.Api.Gax.Rest/4.9.0": {
+        "dependencies": {
+          "Google.Api.Gax": "4.11.0",
+          "Google.Apis.Auth": "1.69.0",
+          "Microsoft.Extensions.DependencyInjection.Abstractions": "9.0.10"
+        },
+        "runtime": {
+          "lib/netstandard2.0/Google.Api.Gax.Rest.dll": {
+            "assemblyVersion": "4.9.0.0",
+            "fileVersion": "4.9.0.0"
+          }
+        }
+      },
       "Google.Apis/1.69.0": {
         "dependencies": {
           "Google.Apis.Core": "1.69.0"
@@ -275,6 +289,18 @@
           "lib/net6.0/Google.Apis.Core.dll": {
             "assemblyVersion": "1.69.0.0",
             "fileVersion": "1.69.0.0"
+          }
+        }
+      },
+      "Google.Apis.Storage.v1/1.69.0.3707": {
+        "dependencies": {
+          "Google.Apis": "1.69.0",
+          "Google.Apis.Auth": "1.69.0"
+        },
+        "runtime": {
+          "lib/net6.0/Google.Apis.Storage.v1.dll": {
+            "assemblyVersion": "1.69.0.3707",
+            "fileVersion": "1.69.0.3707"
           }
         }
       },
@@ -364,6 +390,18 @@
           "lib/netstandard2.0/Google.Cloud.SecretManager.V1.dll": {
             "assemblyVersion": "2.6.0.0",
             "fileVersion": "2.6.0.0"
+          }
+        }
+      },
+      "Google.Cloud.Storage.V1/4.13.0": {
+        "dependencies": {
+          "Google.Api.Gax.Rest": "4.9.0",
+          "Google.Apis.Storage.v1": "1.69.0.3707"
+        },
+        "runtime": {
+          "lib/netstandard2.0/Google.Cloud.Storage.V1.dll": {
+            "assemblyVersion": "4.13.0.0",
+            "fileVersion": "4.13.0.0"
           }
         }
       },
@@ -1063,6 +1101,20 @@
           "lib/net9.0/Microsoft.Extensions.Caching.Memory.dll": {
             "assemblyVersion": "9.0.0.0",
             "fileVersion": "9.0.1025.47515"
+          }
+        }
+      },
+      "Microsoft.Extensions.Caching.StackExchangeRedis/9.0.10": {
+        "dependencies": {
+          "Microsoft.Extensions.Caching.Abstractions": "9.0.10",
+          "Microsoft.Extensions.Logging.Abstractions": "9.0.10",
+          "Microsoft.Extensions.Options": "9.0.10",
+          "StackExchange.Redis": "2.9.32"
+        },
+        "runtime": {
+          "lib/net9.0/Microsoft.Extensions.Caching.StackExchangeRedis.dll": {
+            "assemblyVersion": "9.0.10.0",
+            "fileVersion": "9.0.1025.47517"
           }
         }
       },
@@ -1969,6 +2021,7 @@
         "dependencies": {
           "ClosedXML": "0.105.0",
           "Google.Cloud.SecretManager.V1": "2.6.0",
+          "Google.Cloud.Storage.V1": "4.13.0",
           "HRMS.Application": "1.0.0",
           "HRMS.Core": "1.0.0",
           "Konscious.Security.Cryptography.Argon2": "1.3.1",
@@ -2121,6 +2174,13 @@
       "path": "google.api.gax.grpc.grpccore/3.6.0",
       "hashPath": "google.api.gax.grpc.grpccore.3.6.0.nupkg.sha512"
     },
+    "Google.Api.Gax.Rest/4.9.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-xzHvOe8WzmSWVurtRFG+uSMWIKPHAAyhGdnGfBNSr4xSBzHsx7G5rWjjZhGcyeCYc0ZdaKEVyidtQS7A2OD2mg==",
+      "path": "google.api.gax.rest/4.9.0",
+      "hashPath": "google.api.gax.rest.4.9.0.nupkg.sha512"
+    },
     "Google.Apis/1.69.0": {
       "type": "package",
       "serviceable": true,
@@ -2141,6 +2201,13 @@
       "sha512": "sha512-SXUcurNUPxYMtOnawvB2Av18VrPBC9W7So9q9ikmXIXLGiv4RX7Zbu4kc+8PbwTdd8wLt54r0PBGOT5RaKoTjQ==",
       "path": "google.apis.core/1.69.0",
       "hashPath": "google.apis.core.1.69.0.nupkg.sha512"
+    },
+    "Google.Apis.Storage.v1/1.69.0.3707": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-XzNH0Xx4w+11o9rR71tVpVq3Ji+BFB9621PtNOScrm4f3I8pU3/vKRaKo2JAKRiX6fi1TpJgI5nfHbYJtc88BQ==",
+      "path": "google.apis.storage.v1/1.69.0.3707",
+      "hashPath": "google.apis.storage.v1.1.69.0.3707.nupkg.sha512"
     },
     "Google.Cloud.Diagnostics.AspNetCore/4.4.0": {
       "type": "package",
@@ -2190,6 +2257,13 @@
       "sha512": "sha512-HGsz1+H4Q9K7SpJK945QGRu4d94s/AHNpFjlCywEPY/H3JR5UC4jth92lvdKjELwA965SqLYgrEQtFDVdZlOXw==",
       "path": "google.cloud.secretmanager.v1/2.6.0",
       "hashPath": "google.cloud.secretmanager.v1.2.6.0.nupkg.sha512"
+    },
+    "Google.Cloud.Storage.V1/4.13.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-TMHPYZM3o9YtwkvdNqMciECtXzgptFCJUGa8r4MQuY8Y+uBKLvv3/PfijJhATESJw7dQdFcMGm+TOKJfKBfeWA==",
+      "path": "google.cloud.storage.v1/4.13.0",
+      "hashPath": "google.cloud.storage.v1.4.13.0.nupkg.sha512"
     },
     "Google.Cloud.Trace.V1/2.3.0": {
       "type": "package",
@@ -2491,6 +2565,13 @@
       "sha512": "sha512-2iuzwIoCoqZJfH2VLk1xvlQS4PQDEuhj4dWiGb+Qpt1vHFHyffp497cTO6ucsV54W/h4JmM1vzDBv8pVAFazZg==",
       "path": "microsoft.extensions.caching.memory/9.0.10",
       "hashPath": "microsoft.extensions.caching.memory.9.0.10.nupkg.sha512"
+    },
+    "Microsoft.Extensions.Caching.StackExchangeRedis/9.0.10": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-JpkKHx2DFGLFvWblkIMk02SvhRkijnQyrGhbfV/lhxN/xYYLRQhwvchxNK4bbEGBm3VOYRlPkt8LispTNcUVcg==",
+      "path": "microsoft.extensions.caching.stackexchangeredis/9.0.10",
+      "hashPath": "microsoft.extensions.caching.stackexchangeredis.9.0.10.nupkg.sha512"
     },
     "Microsoft.Extensions.Configuration/9.0.10": {
       "type": "package",

@@ -1,0 +1,126 @@
+<mat-sidenav-container class="tenant-container">
+  <!-- Sidebar -->
+  <mat-sidenav mode="side" opened class="sidenav">
+    <div class="sidenav-header">
+      <h2>HRMS</h2>
+      @if (user()) {
+        <p class="tenant-name">{{ user()?.tenantName }}</p>
+      }
+    </div>
+
+    <mat-nav-list>
+      @for (item of menuItems; track item.route) {
+        <a mat-list-item [routerLink]="item.route" routerLinkActive="active">
+          <mat-icon matListItemIcon>{{ item.icon }}</mat-icon>
+          <span matListItemTitle>{{ item.label }}</span>
+        </a>
+      }
+    </mat-nav-list>
+  </mat-sidenav>
+
+  <!-- Main Content -->
+  <mat-sidenav-content>
+    <mat-toolbar color="primary">
+      <span class="toolbar-title">HR Dashboard</span>
+      <span class="toolbar-spacer"></span>
+      @if (user()) {
+        <span class="user-name">{{ user()?.firstName }} {{ user()?.lastName }}</span>
+      }
+      <button mat-icon-button (click)="toggleTheme()">
+        <mat-icon>{{ isDark() ? 'light_mode' : 'dark_mode' }}</mat-icon>
+      </button>
+      <button mat-icon-button (click)="logout()">
+        <mat-icon>logout</mat-icon>
+      </button>
+    </mat-toolbar>
+
+    <div class="dashboard-content">
+      <h1>Welcome to HR Portal</h1>
+
+      <!-- Stats Cards -->
+      <div class="stats-grid">
+        <mat-card class="stat-card">
+          <mat-card-content>
+            <div class="stat-icon">
+              <mat-icon color="primary">people</mat-icon>
+            </div>
+            <div class="stat-info">
+              <h3>{{ stats().totalEmployees }}</h3>
+              <p>Total Employees</p>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <mat-card class="stat-card">
+          <mat-card-content>
+            <div class="stat-icon">
+              <mat-icon color="accent">check_circle</mat-icon>
+            </div>
+            <div class="stat-info">
+              <h3>{{ stats().presentToday }}</h3>
+              <p>Present Today</p>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <mat-card class="stat-card">
+          <mat-card-content>
+            <div class="stat-icon">
+              <mat-icon color="warn">pending_actions</mat-icon>
+            </div>
+            <div class="stat-info">
+              <h3>{{ stats().pendingLeaves }}</h3>
+              <p>Pending Leaves</p>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <mat-card class="stat-card">
+          <mat-card-content>
+            <div class="stat-icon">
+              <mat-icon color="primary">payments</mat-icon>
+            </div>
+            <div class="stat-info">
+              <h3>{{ stats().activePayrollCycles }}</h3>
+              <p>Active Payroll</p>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="quick-actions">
+        <h2>Quick Actions</h2>
+        <div class="actions-grid">
+          <mat-card class="action-card" routerLink="/tenant/employees/new">
+            <mat-card-content>
+              <mat-icon>person_add</mat-icon>
+              <h3>Add Employee</h3>
+            </mat-card-content>
+          </mat-card>
+
+          <mat-card class="action-card" routerLink="/tenant/leave">
+            <mat-card-content>
+              <mat-icon>approval</mat-icon>
+              <h3>Approve Leaves</h3>
+            </mat-card-content>
+          </mat-card>
+
+          <mat-card class="action-card" routerLink="/tenant/payroll">
+            <mat-card-content>
+              <mat-icon>account_balance</mat-icon>
+              <h3>Process Payroll</h3>
+            </mat-card-content>
+          </mat-card>
+
+          <mat-card class="action-card" routerLink="/tenant/reports">
+            <mat-card-content>
+              <mat-icon>summarize</mat-icon>
+              <h3>View Reports</h3>
+            </mat-card-content>
+          </mat-card>
+        </div>
+      </div>
+    </div>
+  </mat-sidenav-content>
+</mat-sidenav-container>

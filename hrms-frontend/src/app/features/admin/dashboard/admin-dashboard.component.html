@@ -1,0 +1,110 @@
+<div class="admin-dashboard">
+  <!-- Toolbar -->
+  <mat-toolbar color="primary" class="dashboard-toolbar">
+    <span class="toolbar-title">HRMS Admin Portal</span>
+    <span class="toolbar-spacer"></span>
+    @if (user()) {
+      <span class="user-name">{{ user()?.firstName }} {{ user()?.lastName }}</span>
+    }
+    <button mat-icon-button (click)="toggleTheme()" [attr.aria-label]="'Toggle theme'">
+      <mat-icon>{{ isDark() ? 'light_mode' : 'dark_mode' }}</mat-icon>
+    </button>
+    <button mat-icon-button (click)="logout()" [attr.aria-label]="'Logout'">
+      <mat-icon>logout</mat-icon>
+    </button>
+  </mat-toolbar>
+
+  <!-- Main Content -->
+  <div class="dashboard-content container">
+    <h1 class="dashboard-title">Dashboard</h1>
+
+    <!-- Stats Cards -->
+    <div class="stats-grid">
+      <mat-card class="stat-card">
+        <mat-card-content>
+          <div class="stat-icon">
+            <mat-icon color="primary">business</mat-icon>
+          </div>
+          <div class="stat-info">
+            <h3 class="stat-value">{{ stats().totalTenants }}</h3>
+            <p class="stat-label">Total Tenants</p>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="stat-card">
+        <mat-card-content>
+          <div class="stat-icon">
+            <mat-icon color="accent">check_circle</mat-icon>
+          </div>
+          <div class="stat-info">
+            <h3 class="stat-value">{{ stats().activeTenants }}</h3>
+            <p class="stat-label">Active Tenants</p>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="stat-card">
+        <mat-card-content>
+          <div class="stat-icon">
+            <mat-icon color="primary">people</mat-icon>
+          </div>
+          <div class="stat-info">
+            <h3 class="stat-value">{{ stats().totalEmployees }}</h3>
+            <p class="stat-label">Total Employees</p>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="stat-card">
+        <mat-card-content>
+          <div class="stat-icon">
+            <mat-icon color="accent">attach_money</mat-icon>
+          </div>
+          <div class="stat-info">
+            <h3 class="stat-value">${{ stats().monthlyRevenue }}</h3>
+            <p class="stat-label">Monthly Revenue</p>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="quick-actions">
+      <h2>Quick Actions</h2>
+      <div class="actions-grid">
+        <mat-card class="action-card" routerLink="/admin/tenants">
+          <mat-card-content>
+            <mat-icon>business_center</mat-icon>
+            <h3>Manage Tenants</h3>
+            <p>View, create, and manage tenant organizations</p>
+          </mat-card-content>
+        </mat-card>
+
+        <mat-card class="action-card" routerLink="/admin/tenants/new">
+          <mat-card-content>
+            <mat-icon>add_business</mat-icon>
+            <h3>Create Tenant</h3>
+            <p>Onboard a new tenant organization</p>
+          </mat-card-content>
+        </mat-card>
+
+        <mat-card class="action-card">
+          <mat-card-content>
+            <mat-icon>analytics</mat-icon>
+            <h3>View Reports</h3>
+            <p>Access analytics and reports</p>
+          </mat-card-content>
+        </mat-card>
+
+        <mat-card class="action-card">
+          <mat-card-content>
+            <mat-icon>settings</mat-icon>
+            <h3>Settings</h3>
+            <p>Configure system settings</p>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </div>
+  </div>
+</div>

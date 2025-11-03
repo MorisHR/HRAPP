@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "XNiloWyY5TM=",
+  "dgSpecHash": "bUnNvvRRjJ4=",
   "success": true,
   "projectFilePath": "/workspaces/HRAPP/src/HRMS.BackgroundJobs/HRMS.BackgroundJobs.csproj",
   "expectedPackageFiles": [
@@ -15,12 +15,15 @@
     "/home/codespace/.nuget/packages/google.api.commonprotos/2.17.0/google.api.commonprotos.2.17.0.nupkg.sha512",
     "/home/codespace/.nuget/packages/google.api.gax/4.11.0/google.api.gax.4.11.0.nupkg.sha512",
     "/home/codespace/.nuget/packages/google.api.gax.grpc/4.11.0/google.api.gax.grpc.4.11.0.nupkg.sha512",
+    "/home/codespace/.nuget/packages/google.api.gax.rest/4.9.0/google.api.gax.rest.4.9.0.nupkg.sha512",
     "/home/codespace/.nuget/packages/google.apis/1.69.0/google.apis.1.69.0.nupkg.sha512",
     "/home/codespace/.nuget/packages/google.apis.auth/1.69.0/google.apis.auth.1.69.0.nupkg.sha512",
     "/home/codespace/.nuget/packages/google.apis.core/1.69.0/google.apis.core.1.69.0.nupkg.sha512",
+    "/home/codespace/.nuget/packages/google.apis.storage.v1/1.69.0.3707/google.apis.storage.v1.1.69.0.3707.nupkg.sha512",
     "/home/codespace/.nuget/packages/google.cloud.iam.v1/3.2.0/google.cloud.iam.v1.3.2.0.nupkg.sha512",
     "/home/codespace/.nuget/packages/google.cloud.location/2.2.0/google.cloud.location.2.2.0.nupkg.sha512",
     "/home/codespace/.nuget/packages/google.cloud.secretmanager.v1/2.6.0/google.cloud.secretmanager.v1.2.6.0.nupkg.sha512",
+    "/home/codespace/.nuget/packages/google.cloud.storage.v1/4.13.0/google.cloud.storage.v1.4.13.0.nupkg.sha512",
     "/home/codespace/.nuget/packages/google.protobuf/3.31.1/google.protobuf.3.31.1.nupkg.sha512",
     "/home/codespace/.nuget/packages/grpc.auth/2.71.0/grpc.auth.2.71.0.nupkg.sha512",
     "/home/codespace/.nuget/packages/grpc.core.api/2.71.0/grpc.core.api.2.71.0.nupkg.sha512",

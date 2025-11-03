@@ -212,6 +212,10 @@ builder.Services.AddScoped<IReportService, ReportService>();
 builder.Services.AddScoped<IPdfService, PdfService>();
 builder.Services.AddScoped<TenantManagementService>();
 
+// PRODUCTION FIX #1: Cloud Storage Service for file uploads
+builder.Services.AddSingleton<IFileStorageService, GoogleCloudStorageService>();
+Log.Information("Google Cloud Storage service registered for file uploads");
+
 // ======================
 // BACKGROUND JOBS SERVICES
 // ======================
@@ -269,17 +273,50 @@ builder.Services.AddAuthorization();
 // Required for IP-based rate limiting
 builder.Services.AddMemoryCache();
 
+// Add distributed cache for production (Redis)
+if (builder.Environment.IsProduction())
+{
+    var redisConnectionString = builder.Configuration.GetSection("Redis:ConnectionString").Get<string>();
+    if (!string.IsNullOrEmpty(redisConnectionString))
+    {
+        builder.Services.AddStackExchangeRedisCache(options =>
+        {
+            options.Configuration = redisConnectionString;
+            options.InstanceName = builder.Configuration.GetSection("Redis:InstanceName").Get<string>() ?? "HRMS_";
+        });
+        Log.Information("Redis distributed cache configured: {ConnectionString}", redisConnectionString.Split('@').LastOrDefault() ?? "configured");
+    }
+    else
+    {
+        Log.Warning("Redis connection string not configured - rate limiting will fall back to memory cache");
+    }
+}
+
 // Configure IP Rate Limiting
 builder.Services.Configure<AspNetCoreRateLimit.IpRateLimitOptions>(builder.Configuration.GetSection("IpRateLimiting"));
 builder.Services.Configure<AspNetCoreRateLimit.IpRateLimitPolicies>(builder.Configuration.GetSection("IpRateLimitPolicies"));
 
-// Inject Counter and IP Policy Stores
-builder.Services.AddSingleton<AspNetCoreRateLimit.IIpPolicyStore, AspNetCoreRateLimit.MemoryCacheIpPolicyStore>();
-builder.Services.AddSingleton<AspNetCoreRateLimit.IRateLimitCounterStore, AspNetCoreRateLimit.MemoryCacheRateLimitCounterStore>();
+// PRODUCTION FIX #2: Configure rate limiting stores based on environment
+if (builder.Environment.IsProduction())
+{
+    // Production: Use Redis-backed distributed cache for multi-instance deployment
+    // This ensures rate limits work correctly across multiple application instances
+    builder.Services.AddSingleton<AspNetCoreRateLimit.IIpPolicyStore, AspNetCoreRateLimit.DistributedCacheIpPolicyStore>();
+    builder.Services.AddSingleton<AspNetCoreRateLimit.IRateLimitCounterStore, AspNetCoreRateLimit.DistributedCacheRateLimitCounterStore>();
+    Log.Information("Rate limiting configured with Redis distributed cache for multi-instance deployment");
+}
+else
+{
+    // Development: Use memory cache (simpler, no Redis dependency)
+    builder.Services.AddSingleton<AspNetCoreRateLimit.IIpPolicyStore, AspNetCoreRateLimit.MemoryCacheIpPolicyStore>();
+    builder.Services.AddSingleton<AspNetCoreRateLimit.IRateLimitCounterStore, AspNetCoreRateLimit.MemoryCacheRateLimitCounterStore>();
+    Log.Information("Rate limiting configured with memory cache (development mode)");
+}
+
 builder.Services.AddSingleton<AspNetCoreRateLimit.IRateLimitConfiguration, AspNetCoreRateLimit.RateLimitConfiguration>();
 builder.Services.AddSingleton<AspNetCoreRateLimit.IProcessingStrategy, AspNetCoreRateLimit.AsyncKeyLockProcessingStrategy>();
 
-Log.Information("Rate limiting configured: Login (5/15min), API (100/min, 1000/hour)");
+Log.Information("Rate limiting enabled: Login (5/15min), API (100/min, 1000/hour)");
 
 // ======================
 // RESPONSE COMPRESSION (COST OPTIMIZATION - 60-80% bandwidth reduction)
@@ -472,35 +509,66 @@ using (var scope = app.Services.CreateScope())
     {
         var masterContext = scope.ServiceProvider.GetRequiredService<MasterDbContext>();
 
-        Log.Information("Initializing master database...");
-
-        // Create database if it doesn't exist
-        await masterContext.Database.EnsureCreatedAsync();
-
-        // Apply pending migrations
-        var pendingMigrations = await masterContext.Database.GetPendingMigrationsAsync();
-        if (pendingMigrations.Any())
+        // PRODUCTION FIX #3: Different database initialization strategy per environment
+        if (app.Environment.IsDevelopment())
         {
-            Log.Information("Applying {Count} pending migrations", pendingMigrations.Count());
-            await masterContext.Database.MigrateAsync();
-            Log.Information("Migrations applied successfully");
+            // Development: Auto-migrate and seed data for rapid development
+            Log.Information("Development environment: Initializing master database with auto-migrations...");
+
+            // Create database if it doesn't exist
+            await masterContext.Database.EnsureCreatedAsync();
+
+            // Apply pending migrations
+            var pendingMigrations = await masterContext.Database.GetPendingMigrationsAsync();
+            if (pendingMigrations.Any())
+            {
+                Log.Information("Applying {Count} pending migrations", pendingMigrations.Count());
+                await masterContext.Database.MigrateAsync();
+                Log.Information("Migrations applied successfully");
+            }
+
+            // Seed default data (development only)
+            var passwordHasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher>();
+            var logger = scope.ServiceProvider.GetRequiredService<ILogger<DataSeeder>>();
+            var seeder = new DataSeeder(masterContext, passwordHasher, logger);
+            await seeder.SeedAsync();
+
+            // Seed industry sectors
+            SectorSeedData.SeedIndustrySectors(masterContext);
+            SectorSeedData.SeedSectorComplianceRules(masterContext);
+
+            Log.Information("Master database initialized successfully");
         }
+        else
+        {
+            // Production: Only verify database connectivity, don't auto-migrate
+            // Migrations must be run manually using: dotnet ef database update
+            Log.Information("Production environment: Verifying database connectivity...");
 
-        // Seed default data
-        var passwordHasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher>();
-        var logger = scope.ServiceProvider.GetRequiredService<ILogger<DataSeeder>>();
-        var seeder = new DataSeeder(masterContext, passwordHasher, logger);
-        await seeder.SeedAsync();
+            var canConnect = await masterContext.Database.CanConnectAsync();
+            if (!canConnect)
+            {
+                throw new InvalidOperationException("Cannot connect to database. Check connection string and database availability.");
+            }
 
-        // Seed industry sectors
-        SectorSeedData.SeedIndustrySectors(masterContext);
-        SectorSeedData.SeedSectorComplianceRules(masterContext);
+            Log.Information("Database connectivity verified");
 
-        Log.Information("Master database initialized successfully");
+            // Check for pending migrations and warn if found
+            var pendingMigrations = await masterContext.Database.GetPendingMigrationsAsync();
+            if (pendingMigrations.Any())
+            {
+                Log.Warning("PRODUCTION WARNING: {Count} pending migrations detected. Run migrations manually: dotnet ef database update", pendingMigrations.Count());
+                Log.Warning("Pending migrations: {Migrations}", string.Join(", ", pendingMigrations));
+            }
+            else
+            {
+                Log.Information("No pending migrations - database schema is up to date");
+            }
+        }
     }
     catch (Exception ex)
     {
-        Log.Fatal(ex, "FATAL: Master database initialization failed");
+        Log.Fatal(ex, "FATAL: Database initialization/verification failed");
         throw;
     }
 }

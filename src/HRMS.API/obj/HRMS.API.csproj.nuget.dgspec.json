@@ -108,6 +108,10 @@
               "target": "Package",
               "version": "[9.0.10, )"
             },
+            "Microsoft.Extensions.Caching.StackExchangeRedis": {
+              "target": "Package",
+              "version": "[9.0.10, )"
+            },
             "Polly": {
               "target": "Package",
               "version": "[8.6.4, )"
@@ -437,6 +441,10 @@
             "Google.Cloud.SecretManager.V1": {
               "target": "Package",
               "version": "[2.6.0, )"
+            },
+            "Google.Cloud.Storage.V1": {
+              "target": "Package",
+              "version": "[4.13.0, )"
             },
             "Konscious.Security.Cryptography.Argon2": {
               "target": "Package",

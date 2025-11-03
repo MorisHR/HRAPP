@@ -12,11 +12,16 @@ public class LeaveService : ILeaveService
 {
     private readonly TenantDbContext _context;
     private readonly ILogger<LeaveService> _logger;
+    private readonly IFileStorageService _fileStorageService;
 
-    public LeaveService(TenantDbContext context, ILogger<LeaveService> logger)
+    public LeaveService(
+        TenantDbContext context,
+        ILogger<LeaveService> logger,
+        IFileStorageService fileStorageService)
     {
         _context = context;
         _logger = logger;
+        _fileStorageService = fileStorageService;
     }
 
     #region Leave Application
@@ -806,18 +811,33 @@ public class LeaveService : ILeaveService
 
     private async Task<string> SaveAttachmentAsync(string base64Content, string fileName, Guid employeeId)
     {
-        // Simplified file save - in production, use blob storage
-        var uploadsFolder = Path.Combine("uploads", "leave-attachments", employeeId.ToString());
-        Directory.CreateDirectory(uploadsFolder);
+        // PRODUCTION-READY: Use Google Cloud Storage for file persistence
+        // Files are stored in cloud bucket and survive container restarts/scaling
 
-        var fileExtension = Path.GetExtension(fileName);
-        var uniqueFileName = $"{Guid.NewGuid()}{fileExtension}";
-        var filePath = Path.Combine(uploadsFolder, uniqueFileName);
+        try
+        {
+            // Convert base64 to stream
+            var bytes = Convert.FromBase64String(base64Content);
+            using var memoryStream = new MemoryStream(bytes);
 
-        var bytes = Convert.FromBase64String(base64Content);
-        await File.WriteAllBytesAsync(filePath, bytes);
+            // Upload to cloud storage
+            // Folder structure: leave-attachments/{employeeId}/
+            var folder = $"leave-attachments/{employeeId}";
 
-        return filePath;
+            var cloudStoragePath = await _fileStorageService.UploadFileAsync(
+                fileStream: memoryStream,
+                fileName: fileName,
+                folder: folder);
+
+            _logger.LogInformation("Leave attachment uploaded to cloud storage: {Path}", cloudStoragePath);
+
+            return cloudStoragePath;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to upload leave attachment for employee {EmployeeId}", employeeId);
+            throw new InvalidOperationException("Failed to upload leave attachment. Please try again.", ex);
+        }
     }
 
     private LeaveApplicationDto MapToLeaveApplicationDto(LeaveApplication application)

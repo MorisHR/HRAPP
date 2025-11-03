@@ -1,0 +1,150 @@
+.tenant-container {
+  height: 100vh;
+}
+
+.sidenav {
+  width: 260px;
+  background-color: var(--mat-sys-surface-container);
+  border-right: 1px solid var(--mat-sys-outline-variant);
+
+  .sidenav-header {
+    padding: 24px 16px;
+    border-bottom: 1px solid var(--mat-sys-outline-variant);
+
+    h2 {
+      margin: 0;
+      font-size: 24px;
+      font-weight: 500;
+    }
+
+    .tenant-name {
+      margin: 4px 0 0 0;
+      font-size: 12px;
+      color: rgba(0, 0, 0, 0.6);
+    }
+  }
+
+  mat-nav-list {
+    padding-top: 8px;
+
+    a.active {
+      background-color: var(--mat-sys-primary-container);
+      color: var(--mat-sys-on-primary-container);
+    }
+  }
+}
+
+mat-toolbar {
+  .toolbar-title {
+    font-size: 20px;
+  }
+
+  .toolbar-spacer {
+    flex: 1 1 auto;
+  }
+
+  .user-name {
+    margin-right: 16px;
+    font-size: 14px;
+  }
+}
+
+.dashboard-content {
+  padding: 32px 24px;
+
+  h1 {
+    font-size: 32px;
+    font-weight: 400;
+    margin-bottom: 32px;
+  }
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 24px;
+  margin-bottom: 48px;
+}
+
+.stat-card {
+  mat-card-content {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 24px !important;
+
+    .stat-icon mat-icon {
+      font-size: 48px;
+      width: 48px;
+      height: 48px;
+    }
+
+    .stat-info {
+      h3 {
+        font-size: 32px;
+        font-weight: 500;
+        margin: 0 0 4px 0;
+      }
+
+      p {
+        font-size: 14px;
+        color: rgba(0, 0, 0, 0.6);
+        margin: 0;
+      }
+    }
+  }
+}
+
+.quick-actions {
+  h2 {
+    font-size: 24px;
+    font-weight: 400;
+    margin-bottom: 24px;
+  }
+}
+
+.actions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 24px;
+}
+
+.action-card {
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+  }
+
+  mat-card-content {
+    padding: 24px !important;
+    text-align: center;
+
+    mat-icon {
+      font-size: 48px;
+      width: 48px;
+      height: 48px;
+      color: var(--mat-sys-primary);
+      margin-bottom: 12px;
+    }
+
+    h3 {
+      font-size: 16px;
+      font-weight: 500;
+      margin: 0;
+    }
+  }
+}
+
+// Dark theme
+html.dark-theme {
+  .sidenav .sidenav-header .tenant-name {
+    color: rgba(255, 255, 255, 0.6);
+  }
+
+  .stat-card mat-card-content .stat-info p {
+    color: rgba(255, 255, 255, 0.6);
+  }
+}

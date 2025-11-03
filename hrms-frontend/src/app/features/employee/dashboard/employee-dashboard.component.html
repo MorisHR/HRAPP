@@ -1,0 +1,86 @@
+<div class="employee-dashboard">
+  <mat-toolbar color="primary">
+    <span>Employee Portal</span>
+    <span class="toolbar-spacer"></span>
+    @if (user()) {
+      <span class="user-name">{{ user()?.firstName }} {{ user()?.lastName }}</span>
+    }
+    <button mat-icon-button (click)="toggleTheme()">
+      <mat-icon>{{ isDark() ? 'light_mode' : 'dark_mode' }}</mat-icon>
+    </button>
+    <button mat-icon-button (click)="logout()">
+      <mat-icon>logout</mat-icon>
+    </button>
+  </mat-toolbar>
+
+  <div class="dashboard-content container">
+    <h1>Welcome Back!</h1>
+
+    <div class="stats-grid">
+      <mat-card class="stat-card">
+        <mat-card-content>
+          <mat-icon color="primary">event_available</mat-icon>
+          <h3>{{ stats().attendanceRate }}%</h3>
+          <p>Attendance Rate</p>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="stat-card">
+        <mat-card-content>
+          <mat-icon color="accent">beach_access</mat-icon>
+          <h3>{{ stats().leaveBalance }}</h3>
+          <p>Leave Balance</p>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="stat-card">
+        <mat-card-content>
+          <mat-icon color="warn">pending</mat-icon>
+          <h3>{{ stats().pendingLeaves }}</h3>
+          <p>Pending Requests</p>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="stat-card">
+        <mat-card-content>
+          <mat-icon color="primary">receipt</mat-icon>
+          <h3>{{ stats().lastPayslip }}</h3>
+          <p>Last Payslip</p>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <div class="quick-actions">
+      <h2>Quick Actions</h2>
+      <div class="actions-grid">
+        <mat-card class="action-card" routerLink="/employee/attendance">
+          <mat-card-content>
+            <mat-icon>schedule</mat-icon>
+            <h3>Mark Attendance</h3>
+          </mat-card-content>
+        </mat-card>
+
+        <mat-card class="action-card" routerLink="/employee/leave">
+          <mat-card-content>
+            <mat-icon>event</mat-icon>
+            <h3>Apply Leave</h3>
+          </mat-card-content>
+        </mat-card>
+
+        <mat-card class="action-card" routerLink="/employee/payslips">
+          <mat-card-content>
+            <mat-icon>description</mat-icon>
+            <h3>View Payslips</h3>
+          </mat-card-content>
+        </mat-card>
+
+        <mat-card class="action-card">
+          <mat-card-content>
+            <mat-icon>person</mat-icon>
+            <h3>My Profile</h3>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </div>
+  </div>
+</div>
