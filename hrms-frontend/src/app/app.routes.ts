@@ -1,19 +1,41 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
 import { superAdminGuard, hrGuard } from './core/guards/role.guard';
+import { subdomainGuard } from './core/guards/subdomain.guard';
 
 export const routes: Routes = [
-  // Default route
+  // Default route - redirect to subdomain entry
   {
     path: '',
-    redirectTo: '/login',
+    redirectTo: '/auth/subdomain',
     pathMatch: 'full'
   },
 
-  // Login route
+  // Authentication routes
+  {
+    path: 'auth',
+    children: [
+      {
+        path: 'subdomain',
+        loadComponent: () => import('./features/auth/subdomain/subdomain.component').then(m => m.SubdomainComponent)
+      },
+      {
+        path: 'login',
+        canActivate: [subdomainGuard],
+        loadComponent: () => import('./features/auth/login/tenant-login.component').then(m => m.TenantLoginComponent)
+      },
+      {
+        path: 'superadmin',
+        loadComponent: () => import('./features/auth/superadmin/superadmin-login.component').then(m => m.SuperAdminLoginComponent)
+      }
+    ]
+  },
+
+  // Legacy login route (kept for backward compatibility)
   {
     path: 'login',
-    loadComponent: () => import('./features/admin/login/login.component').then(m => m.LoginComponent)
+    redirectTo: '/auth/subdomain',
+    pathMatch: 'full'
   },
 
   // Admin Portal Routes
@@ -41,10 +63,11 @@ export const routes: Routes = [
     ]
   },
 
-  // Tenant Portal Routes
+  // Tenant Portal Routes - ALL WRAPPED IN SHARED LAYOUT
   {
     path: 'tenant',
     canActivate: [hrGuard],
+    loadComponent: () => import('./shared/layouts/tenant-layout.component').then(m => m.TenantLayoutComponent),
     children: [
       {
         path: '',
@@ -55,7 +78,19 @@ export const routes: Routes = [
         path: 'dashboard',
         loadComponent: () => import('./features/tenant/dashboard/tenant-dashboard.component').then(m => m.TenantDashboardComponent)
       },
-      // Add more tenant routes here (employees, attendance, leave, payroll, reports)
+      {
+        path: 'employees',
+        loadComponent: () => import('./features/tenant/employees/employee-list.component').then(m => m.EmployeeListComponent)
+      },
+      {
+        path: 'employees/new',
+        loadComponent: () => import('./features/tenant/employees/comprehensive-employee-form.component').then(m => m.ComprehensiveEmployeeFormComponent)
+      },
+      {
+        path: 'employees/:id',
+        loadComponent: () => import('./features/tenant/employees/comprehensive-employee-form.component').then(m => m.ComprehensiveEmployeeFormComponent)
+      },
+      // TODO: Add more tenant routes (attendance, leave, payroll, reports)
     ]
   },
 
@@ -79,6 +114,6 @@ export const routes: Routes = [
   // Wildcard route
   {
     path: '**',
-    redirectTo: '/login'
+    redirectTo: '/auth/subdomain'
   }
 ];

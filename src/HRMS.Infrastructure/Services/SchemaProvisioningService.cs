@@ -45,7 +45,9 @@ public class SchemaProvisioningService : ISchemaProvisioningService
 
             // Step 2: Apply migrations to the new schema
             var optionsBuilder = new DbContextOptionsBuilder<TenantDbContext>();
-            optionsBuilder.UseNpgsql(_connectionString);
+            optionsBuilder.UseNpgsql(_connectionString)
+                .ConfigureWarnings(warnings =>
+                    warnings.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning));
 
             await using var tenantContext = new TenantDbContext(optionsBuilder.Options, schemaName);
 
@@ -120,7 +122,9 @@ public class SchemaProvisioningService : ISchemaProvisioningService
             _logger.LogInformation("Seeding initial data for tenant schema: {SchemaName}", schemaName);
 
             var optionsBuilder = new DbContextOptionsBuilder<TenantDbContext>();
-            optionsBuilder.UseNpgsql(_connectionString);
+            optionsBuilder.UseNpgsql(_connectionString)
+                .ConfigureWarnings(warnings =>
+                    warnings.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning));
 
             await using var tenantContext = new TenantDbContext(optionsBuilder.Options, schemaName);
 

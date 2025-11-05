@@ -34,6 +34,19 @@
         }
       </mat-form-field>
 
+      <!-- Subdomain Field (Optional for Tenant Login) -->
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Tenant Subdomain (optional)</mat-label>
+        <input
+          matInput
+          type="text"
+          formControlName="subdomain"
+          placeholder="e.g., siraaj"
+          autocomplete="off">
+        <mat-icon matPrefix>business</mat-icon>
+        <mat-hint>Leave empty for SuperAdmin login</mat-hint>
+      </mat-form-field>
+
       <!-- Password Field -->
       <mat-form-field appearance="outline" class="full-width">
         <mat-label>Password</mat-label>

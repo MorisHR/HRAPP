@@ -1,24 +1,28 @@
 using Microsoft.AspNetCore.Mvc;
 using HRMS.Application.DTOs;
 using HRMS.Core.Interfaces;
+using HRMS.Infrastructure.Services;
 
 namespace HRMS.API.Controllers;
 
 /// <summary>
-/// Authentication API for Super Admin login
+/// Authentication API for Super Admin and Tenant Employee login
 /// </summary>
 [ApiController]
 [Route("api/[controller]")]
 public class AuthController : ControllerBase
 {
     private readonly IAuthService _authService;
+    private readonly TenantAuthService _tenantAuthService;
     private readonly ILogger<AuthController> _logger;
 
     public AuthController(
         IAuthService authService,
+        TenantAuthService tenantAuthService,
         ILogger<AuthController> logger)
     {
         _authService = authService;
+        _tenantAuthService = tenantAuthService;
         _logger = logger;
     }
 
@@ -96,6 +100,93 @@ public class AuthController : ControllerBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error during login for email: {Email}", request.Email);
+            return StatusCode(500, new
+            {
+                success = false,
+                message = "An error occurred during login"
+            });
+        }
+    }
+
+    /// <summary>
+    /// Tenant Employee Login - Generates JWT token with tenant context
+    /// </summary>
+    /// <param name="request">Tenant login credentials with subdomain</param>
+    /// <returns>JWT token and employee details</returns>
+    [HttpPost("tenant/login")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> TenantLogin([FromBody] TenantLoginRequest request)
+    {
+        try
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    message = "Invalid request data",
+                    errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage))
+                });
+            }
+
+            var result = await _tenantAuthService.LoginAsync(request.Email, request.Password, request.Subdomain);
+
+            if (result == null)
+            {
+                _logger.LogWarning("Failed tenant login attempt for email: {Email}, subdomain: {Subdomain}",
+                    request.Email, request.Subdomain);
+                return Unauthorized(new
+                {
+                    success = false,
+                    message = "Invalid email, password, or tenant"
+                });
+            }
+
+            _logger.LogInformation("Successful tenant login for employee: {Email}, tenant: {Subdomain}",
+                request.Email, request.Subdomain);
+
+            var response = new
+            {
+                Token = result.Value.Token,
+                ExpiresAt = result.Value.ExpiresAt,
+                Employee = new
+                {
+                    Id = result.Value.User.Id,
+                    EmployeeCode = result.Value.User.EmployeeCode,
+                    FullName = result.Value.User.FullName,
+                    Email = result.Value.User.Email,
+                    JobTitle = result.Value.User.JobTitle,
+                    DepartmentName = result.Value.User.Department?.Name,
+                    IsActive = result.Value.User.IsActive
+                },
+                TenantId = result.Value.TenantId,
+                Subdomain = request.Subdomain
+            };
+
+            return Ok(new
+            {
+                success = true,
+                data = response,
+                message = "Login successful"
+            });
+        }
+        catch (InvalidOperationException ex)
+        {
+            // Account lockout or tenant inactive exception
+            _logger.LogWarning(ex, "Tenant login error for email: {Email}", request.Email);
+            return StatusCode(423, new // 423 Locked
+            {
+                success = false,
+                message = ex.Message,
+                locked = true
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error during tenant login for email: {Email}, subdomain: {Subdomain}",
+                request.Email, request.Subdomain);
             return StatusCode(500, new
             {
                 success = false,

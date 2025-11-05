@@ -94,14 +94,14 @@ export class TenantFormComponent {
     this.selectedTier.set(tier);
 
     // Auto-populate limits based on selected tier
-    if (tier && tierId !== 'custom') {
+    if (tier && tierId !== 'Custom') {
       this.tenantForm.patchValue({
         maxUsers: tier.maxUsers,
         maxStorageGB: tier.storageGB,
         apiCallsPerMonth: tier.apiCallsMonth,
         monthlyPrice: tier.price
       }, { emitEvent: false });
-    } else if (tierId === 'custom') {
+    } else if (tierId === 'Custom') {
       // For custom tier, use high defaults
       this.tenantForm.patchValue({
         maxUsers: 5000,

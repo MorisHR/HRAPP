@@ -1,0 +1,110 @@
+<div class="login-container">
+  <div class="login-card">
+    <!-- SuperAdmin Header -->
+    <div class="header">
+      <h1 class="title">SuperAdmin Access</h1>
+      <p class="subtitle">MorisHR Administrator Panel</p>
+    </div>
+
+    <!-- Login Form -->
+    <div class="form-container">
+      <form (ngSubmit)="onSubmit()" class="login-form">
+        <!-- Email Input -->
+        <div class="input-group">
+          <label for="email" class="input-label">Email address</label>
+          <input
+            type="email"
+            id="email"
+            class="form-input"
+            placeholder="admin@morishr.com"
+            [value]="email()"
+            (input)="email.set($any($event.target).value)"
+            [disabled]="isLoading()"
+            autocomplete="email"
+            required
+            aria-label="Email address"
+            aria-required="true"
+          />
+        </div>
+
+        <!-- Password Input -->
+        <div class="input-group">
+          <label for="password" class="input-label">Password</label>
+          <div class="password-wrapper">
+            <input
+              [type]="hidePassword() ? 'password' : 'text'"
+              id="password"
+              class="form-input password-input"
+              placeholder="Enter your password"
+              [value]="password()"
+              (input)="password.set($any($event.target).value)"
+              [disabled]="isLoading()"
+              autocomplete="current-password"
+              required
+              aria-label="Password"
+              aria-required="true"
+            />
+            <button
+              type="button"
+              class="password-toggle"
+              (click)="togglePasswordVisibility()"
+              [attr.aria-label]="hidePassword() ? 'Show password' : 'Hide password'"
+            >
+              <svg *ngIf="hidePassword()" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+              </svg>
+              <svg *ngIf="!hidePassword()" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                <line x1="1" y1="1" x2="23" y2="23"></line>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Error Message -->
+        @if (errorMessage()) {
+          <div class="error-message" role="alert">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            <span>{{ errorMessage() }}</span>
+          </div>
+        }
+
+        <!-- Submit Button -->
+        <button
+          type="submit"
+          class="submit-button"
+          [disabled]="!isValidForm() || isLoading()"
+          aria-label="Sign in as SuperAdmin"
+        >
+          @if (isLoading()) {
+            <span class="loading-spinner"></span>
+            <span>Authenticating...</span>
+          } @else {
+            <span>Sign in as SuperAdmin</span>
+          }
+        </button>
+      </form>
+
+      <!-- Back Link -->
+      <div class="back-link-container">
+        <a href="/auth/subdomain" class="back-link">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+          </svg>
+          <span>Back to employee login</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="login-footer">
+      <p class="footer-text">© 2025 MorisHR · Administrator Access</p>
+    </div>
+  </div>
+</div>

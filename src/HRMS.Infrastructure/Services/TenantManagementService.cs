@@ -29,29 +29,51 @@ public class TenantManagementService
 
     /// <summary>
     /// Create a new tenant with automatic schema creation
+    /// Uses database transactions to ensure data integrity
     /// </summary>
     public async Task<(bool Success, string Message, TenantDto? Tenant)> CreateTenantAsync(CreateTenantRequest request, string createdBy)
     {
-        try
+        // Use execution strategy to handle retries and transactions together
+        var strategy = _masterDbContext.Database.CreateExecutionStrategy();
+
+        return await strategy.ExecuteAsync(async () =>
         {
-            _logger.LogInformation("Creating new tenant: {CompanyName}, Subdomain: {Subdomain}", request.CompanyName, request.Subdomain);
+            // Start database transaction for atomicity
+            await using var transaction = await _masterDbContext.Database.BeginTransactionAsync();
+
+            try
+            {
+            _logger.LogInformation("✓ Step 1/5: Starting tenant creation for subdomain: {Subdomain}", request.Subdomain);
 
             // Validate subdomain uniqueness
             if (await _masterDbContext.Tenants.AnyAsync(t => t.Subdomain == request.Subdomain.ToLower()))
             {
-                return (false, "Subdomain already exists", null);
+                _logger.LogWarning("Tenant creation failed: Subdomain '{Subdomain}' already exists", request.Subdomain);
+                return (false, $"A tenant with subdomain '{request.Subdomain}' already exists. Please choose a different subdomain.", null);
             }
 
             // Generate schema name
             var schemaName = $"tenant_{request.Subdomain.ToLower()}";
 
-            // Check if schema already exists
+            // Check if schema already exists (orphaned from previous failed attempt)
+            _logger.LogInformation("✓ Step 2/5: Checking for orphaned schemas...");
             if (await _schemaProvisioningService.SchemaExistsAsync(schemaName))
             {
-                return (false, "Schema already exists", null);
+                _logger.LogWarning("Orphaned schema '{SchemaName}' found. Cleaning up before proceeding...", schemaName);
+
+                // Drop orphaned schema
+                var dropped = await _schemaProvisioningService.DropTenantSchemaAsync(schemaName);
+                if (!dropped)
+                {
+                    _logger.LogError("Failed to drop orphaned schema: {SchemaName}", schemaName);
+                    return (false, "Failed to clean up orphaned data. Please contact support.", null);
+                }
+
+                _logger.LogInformation("Orphaned schema cleaned up successfully");
             }
 
             // Create tenant entity
+            _logger.LogInformation("✓ Step 3/5: Creating tenant record in master database...");
             var tenant = new Tenant
             {
                 Id = Guid.NewGuid(),
@@ -79,32 +101,63 @@ public class TenantManagementService
             await _masterDbContext.Tenants.AddAsync(tenant);
             await _masterDbContext.SaveChangesAsync();
 
-            _logger.LogInformation("Tenant record created in master schema: {TenantId}", tenant.Id);
+            _logger.LogInformation("Tenant record created: TenantId={TenantId}", tenant.Id);
 
             // Create tenant schema and apply migrations
+            _logger.LogInformation("✓ Step 4/5: Creating tenant database schema '{SchemaName}'...", schemaName);
             var schemaCreated = await _schemaProvisioningService.CreateTenantSchemaAsync(schemaName);
 
             if (!schemaCreated)
             {
-                _logger.LogError("Failed to create schema for tenant: {TenantId}", tenant.Id);
-                // Rollback tenant creation
-                _masterDbContext.Tenants.Remove(tenant);
-                await _masterDbContext.SaveChangesAsync();
-                return (false, "Failed to create tenant schema", null);
+                _logger.LogError("❌ Schema creation failed for tenant: {TenantId}. Rolling back transaction...", tenant.Id);
+
+                // Transaction will auto-rollback tenant record
+                await transaction.RollbackAsync();
+
+                // Manually drop schema if it was partially created
+                await _schemaProvisioningService.DropTenantSchemaAsync(schemaName);
+
+                return (false, "Failed to create tenant database. The operation has been rolled back. Please try again.", null);
             }
 
-            _logger.LogInformation("Tenant created successfully: {TenantId}, Schema: {SchemaName}", tenant.Id, schemaName);
+            _logger.LogInformation("Schema created and migrations applied successfully");
+
+            // Commit transaction - all or nothing
+            _logger.LogInformation("✓ Step 5/5: Committing transaction...");
+            await transaction.CommitAsync();
+
+            _logger.LogInformation("✅ SUCCESS: Tenant '{CompanyName}' created successfully! Subdomain: {Subdomain}",
+                request.CompanyName, request.Subdomain);
 
             // TODO: Send welcome email with login credentials
 
             var tenantDto = MapToDto(tenant);
-            return (true, "Tenant created successfully", tenantDto);
+            return (true, $"Tenant created successfully! Login URL: https://{request.Subdomain}.hrms.com", tenantDto);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error creating tenant: {CompanyName}", request.CompanyName);
-            return (false, $"Error creating tenant: {ex.Message}", null);
+            _logger.LogError(ex, "❌ FAILED: Error during tenant creation for '{CompanyName}'. Rolling back all changes...", request.CompanyName);
+
+            // Rollback transaction
+            await transaction.RollbackAsync();
+
+            // Try to clean up any partially created schema
+            var schemaName = $"tenant_{request.Subdomain.ToLower()}";
+            try
+            {
+                await _schemaProvisioningService.DropTenantSchemaAsync(schemaName);
+                _logger.LogInformation("Cleaned up partially created schema during rollback");
+            }
+            catch (Exception cleanupEx)
+            {
+                _logger.LogWarning(cleanupEx, "Failed to clean up schema during rollback (this is non-critical)");
+            }
+
+            // Return user-friendly error message
+            var errorMessage = ex.InnerException?.Message ?? ex.Message;
+            return (false, $"Tenant creation failed: {errorMessage}. All changes have been rolled back. Please try again or contact support if the problem persists.", null);
         }
+        });
     }
 
     /// <summary>

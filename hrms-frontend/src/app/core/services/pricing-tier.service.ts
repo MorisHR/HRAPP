@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 
-export type TierType = 'tier1' | 'tier2' | 'tier3' | 'tier4' | 'tier5' | 'custom';
+export type TierType = 'Tier1' | 'Tier2' | 'Tier3' | 'Tier4' | 'Tier5' | 'Custom';
 
 export interface PricingTier {
   id: TierType;
@@ -19,8 +19,8 @@ export interface PricingTier {
 export class PricingTierService {
 
   private readonly tiers: Record<TierType, PricingTier> = {
-    tier1: {
-      id: 'tier1',
+    Tier1: {
+      id: 'Tier1',
       name: '1-50 Employees',
       employeeRange: '1-50',
       price: 99,
@@ -29,8 +29,8 @@ export class PricingTierService {
       apiCallsMonth: 50000,
       features: ['All Enterprise Features']
     },
-    tier2: {
-      id: 'tier2',
+    Tier2: {
+      id: 'Tier2',
       name: '51-100 Employees',
       employeeRange: '51-100',
       price: 199,
@@ -39,8 +39,8 @@ export class PricingTierService {
       apiCallsMonth: 100000,
       features: ['All Enterprise Features']
     },
-    tier3: {
-      id: 'tier3',
+    Tier3: {
+      id: 'Tier3',
       name: '101-200 Employees',
       employeeRange: '101-200',
       price: 349,
@@ -49,8 +49,8 @@ export class PricingTierService {
       apiCallsMonth: 250000,
       features: ['All Enterprise Features']
     },
-    tier4: {
-      id: 'tier4',
+    Tier4: {
+      id: 'Tier4',
       name: '201-500 Employees',
       employeeRange: '201-500',
       price: 699,
@@ -59,8 +59,8 @@ export class PricingTierService {
       apiCallsMonth: 500000,
       features: ['All Enterprise Features']
     },
-    tier5: {
-      id: 'tier5',
+    Tier5: {
+      id: 'Tier5',
       name: '501-1000 Employees',
       employeeRange: '501-1000',
       price: 1299,
@@ -69,8 +69,8 @@ export class PricingTierService {
       apiCallsMonth: 1000000,
       features: ['All Enterprise Features']
     },
-    custom: {
-      id: 'custom',
+    Custom: {
+      id: 'Custom',
       name: '1000+ Employees',
       employeeRange: '1000+',
       price: 'Custom',

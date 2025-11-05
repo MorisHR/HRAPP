@@ -1,0 +1,122 @@
+<div class="subdomain-container">
+  <div class="subdomain-card">
+    <!-- Header -->
+    <div class="header">
+      <h1 class="title">Welcome to MorisHR</h1>
+      <p class="subtitle">Enter your company's domain to continue</p>
+    </div>
+
+    <!-- Subdomain Input Form -->
+    <div class="form-container">
+      <div class="input-group">
+        <label for="subdomain" class="input-label">Company Domain</label>
+        <div class="domain-input-wrapper">
+          <input
+            type="text"
+            id="subdomain"
+            class="domain-input"
+            placeholder="yourcompany"
+            [value]="subdomain()"
+            (input)="onSubdomainInput($event)"
+            [disabled]="isLoading()"
+            maxlength="63"
+            aria-label="Company subdomain"
+            aria-describedby="subdomain-hint subdomain-error"
+          />
+          <span class="domain-suffix">.morishr.com</span>
+        </div>
+        <p id="subdomain-hint" class="input-hint">
+          Enter your company's unique domain name
+        </p>
+        @if (errorMessage()) {
+          <p id="subdomain-error" class="error-message" role="alert">
+            {{ errorMessage() }}
+          </p>
+        }
+      </div>
+
+      <!-- Continue Button -->
+      <button
+        type="button"
+        class="continue-button"
+        [disabled]="!isValidSubdomain() || isLoading()"
+        (click)="onContinue()"
+        aria-label="Continue to login"
+      >
+        @if (isLoading()) {
+          <span class="loading-spinner"></span>
+          <span>Verifying...</span>
+        } @else {
+          <span>Continue</span>
+        }
+      </button>
+
+      <!-- Help Link -->
+      <div class="help-container">
+        <button
+          type="button"
+          class="help-link"
+          (click)="openModal()"
+          aria-label="What is my domain?"
+        >
+          What's my domain?
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal -->
+@if (showModal()) {
+  <div class="modal-overlay" (click)="closeModal()" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2 id="modal-title" class="modal-title">What's my domain?</h2>
+        <button
+          type="button"
+          class="modal-close"
+          (click)="closeModal()"
+          aria-label="Close dialog"
+        >
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-text">
+          Your company domain is the unique identifier for your organization on MorisHR.
+        </p>
+        <p class="modal-text">
+          <strong>Examples:</strong>
+        </p>
+        <ul class="modal-list">
+          <li>If your company is "Acme Corp", your domain might be: <strong>acme.morishr.com</strong></li>
+          <li>If your company is "Smith & Associates", your domain might be: <strong>smith.morishr.com</strong></li>
+          <li>If your company is "Tech Solutions", your domain might be: <strong>techsolutions.morishr.com</strong></li>
+        </ul>
+        <p class="modal-text">
+          <strong>How to find your domain:</strong>
+        </p>
+        <ul class="modal-list">
+          <li>Check the welcome email you received when your account was set up</li>
+          <li>Contact your HR administrator or IT department</li>
+          <li>Look at the address bar when you access MorisHR - it will show your domain</li>
+        </ul>
+        <p class="modal-text">
+          If you're still having trouble, please contact your company's HR administrator for assistance.
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button
+          type="button"
+          class="modal-button"
+          (click)="closeModal()"
+        >
+          Got it
+        </button>
+      </div>
+    </div>
+  </div>
+}

@@ -1,0 +1,16 @@
+/workspaces/HRAPP/src/HRMS.Application/bin/Debug/net9.0/HRMS.Application.deps.json
+/workspaces/HRAPP/src/HRMS.Application/bin/Debug/net9.0/HRMS.Application.dll
+/workspaces/HRAPP/src/HRMS.Application/bin/Debug/net9.0/HRMS.Application.pdb
+/workspaces/HRAPP/src/HRMS.Application/bin/Debug/net9.0/HRMS.Core.dll
+/workspaces/HRAPP/src/HRMS.Application/bin/Debug/net9.0/HRMS.Core.pdb
+/workspaces/HRAPP/src/HRMS.Application/obj/Debug/net9.0/HRMS.Application.csproj.AssemblyReference.cache
+/workspaces/HRAPP/src/HRMS.Application/obj/Debug/net9.0/HRMS.Application.GeneratedMSBuildEditorConfig.editorconfig
+/workspaces/HRAPP/src/HRMS.Application/obj/Debug/net9.0/HRMS.Application.AssemblyInfoInputs.cache
+/workspaces/HRAPP/src/HRMS.Application/obj/Debug/net9.0/HRMS.Application.AssemblyInfo.cs
+/workspaces/HRAPP/src/HRMS.Application/obj/Debug/net9.0/HRMS.Application.csproj.CoreCompileInputs.cache
+/workspaces/HRAPP/src/HRMS.Application/obj/Debug/net9.0/HRMS.Application.sourcelink.json
+/workspaces/HRAPP/src/HRMS.Application/obj/Debug/net9.0/HRMS.App.83A5D7FA.Up2Date
+/workspaces/HRAPP/src/HRMS.Application/obj/Debug/net9.0/HRMS.Application.dll
+/workspaces/HRAPP/src/HRMS.Application/obj/Debug/net9.0/refint/HRMS.Application.dll
+/workspaces/HRAPP/src/HRMS.Application/obj/Debug/net9.0/HRMS.Application.pdb
+/workspaces/HRAPP/src/HRMS.Application/obj/Debug/net9.0/ref/HRMS.Application.dll

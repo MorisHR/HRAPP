@@ -26,6 +26,7 @@ public class Employee : BaseEntity
     public string Address { get; set; } = string.Empty;
     public string? City { get; set; }
     public string? PostalCode { get; set; }
+    public string? BloodGroup { get; set; }
 
     // ==========================================
     // EMPLOYEE TYPE & NATIONALITY
@@ -131,6 +132,11 @@ public class Employee : BaseEntity
     public string? TaxIdNumber { get; set; }
 
     /// <summary>
+    /// CSG (Contribution Sociale Généralisée) Number
+    /// </summary>
+    public string? CSGNumber { get; set; }
+
+    /// <summary>
     /// NPF (National Pensions Fund) Number
     /// May not apply to all expatriates
     /// </summary>
@@ -162,12 +168,34 @@ public class Employee : BaseEntity
     // EMPLOYMENT DETAILS
     // ==========================================
 
+    /// <summary>
+    /// Employment Type: Permanent, Contract, Temporary, PartTime
+    /// </summary>
+    public string EmploymentContractType { get; set; } = "Permanent";
+
+    /// <summary>
+    /// Employment Status: Active, Probation, Terminated, Resigned
+    /// </summary>
+    public string EmploymentStatus { get; set; } = "Active";
+
+    /// <summary>
+    /// Industry Sector (inherited from tenant, can be overridden)
+    /// </summary>
+    public string IndustrySector { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Designation/Position
+    /// </summary>
+    public string Designation { get; set; } = string.Empty;
+
     public string JobTitle { get; set; } = string.Empty;
     public Guid DepartmentId { get; set; }
     public Department? Department { get; set; }
     public Guid? ManagerId { get; set; }
     public Employee? Manager { get; set; }
+    public string? WorkLocation { get; set; }
     public DateTime JoiningDate { get; set; }
+    public int? ProbationPeriodMonths { get; set; }
     public DateTime? ProbationEndDate { get; set; }
     public DateTime? ConfirmationDate { get; set; }
     public DateTime? ResignationDate { get; set; }
@@ -185,6 +213,7 @@ public class Employee : BaseEntity
     // ==========================================
 
     public decimal BasicSalary { get; set; }
+    public string? PaymentFrequency { get; set; } = "Monthly";
     public string? BankName { get; set; }
     public string? BankAccountNumber { get; set; }
     public string? BankBranch { get; set; }
@@ -197,6 +226,14 @@ public class Employee : BaseEntity
     public string SalaryCurrency { get; set; } = "MUR";
 
     // ==========================================
+    // ALLOWANCES
+    // ==========================================
+
+    public decimal? TransportAllowance { get; set; }
+    public decimal? HousingAllowance { get; set; }
+    public decimal? MealAllowance { get; set; }
+
+    // ==========================================
     // EMERGENCY CONTACTS
     // ==========================================
 
@@ -207,12 +244,40 @@ public class Employee : BaseEntity
     public virtual ICollection<EmergencyContact> EmergencyContacts { get; set; } = new List<EmergencyContact>();
 
     // ==========================================
-    // LEAVE BALANCES
+    // LEAVE BALANCES & ENTITLEMENTS
     // ==========================================
 
+    public int AnnualLeaveDays { get; set; } = 20;
+    public int SickLeaveDays { get; set; } = 15;
+    public int CasualLeaveDays { get; set; } = 5;
+    public bool CarryForwardAllowed { get; set; } = true;
     public decimal AnnualLeaveBalance { get; set; }
     public decimal SickLeaveBalance { get; set; }
     public decimal CasualLeaveBalance { get; set; }
+
+    // ==========================================
+    // QUALIFICATIONS & SKILLS
+    // ==========================================
+
+    public string? HighestQualification { get; set; }
+    public string? University { get; set; }
+    public string? Skills { get; set; }
+    public string? Languages { get; set; }
+
+    // ==========================================
+    // DOCUMENTS & FILE PATHS
+    // ==========================================
+
+    public string? ResumeFilePath { get; set; }
+    public string? IdCopyFilePath { get; set; }
+    public string? CertificatesFilePath { get; set; }
+    public string? ContractFilePath { get; set; }
+
+    // ==========================================
+    // ADDITIONAL INFORMATION
+    // ==========================================
+
+    public string? Notes { get; set; }
 
     // ==========================================
     // DOCUMENT EXPIRY TRACKING
@@ -321,8 +386,15 @@ public class Employee : BaseEntity
     public bool IsExpatriate => EmployeeType == EmployeeType.Expatriate;
 
     // ==============================================
-    // SECURITY: Account Lockout Fields
+    // SECURITY: Authentication & Account Lockout Fields
     // ==============================================
+
+    /// <summary>
+    /// Argon2 hashed password for employee login authentication
+    /// Required for all employees who need system access
+    /// </summary>
+    public string? PasswordHash { get; set; }
+
     public bool LockoutEnabled { get; set; } = true;
     public DateTime? LockoutEnd { get; set; }
     public int AccessFailedCount { get; set; } = 0;

@@ -18,6 +18,7 @@ public class TenantDbContext : DbContext
     }
 
     public DbSet<Employee> Employees { get; set; }
+    public DbSet<EmployeeDraft> EmployeeDrafts { get; set; }
     public DbSet<Department> Departments { get; set; }
     public DbSet<EmergencyContact> EmergencyContacts { get; set; }
 

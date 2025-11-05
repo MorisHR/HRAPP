@@ -20,7 +20,7 @@ export enum UserRole {
 export interface LoginRequest {
   email: string;
   password: string;
-  tenantId?: string;
+  subdomain?: string; // For tenant employee login
 }
 
 export interface LoginResponse {

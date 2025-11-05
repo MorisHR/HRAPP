@@ -199,7 +199,9 @@ var key = Encoding.UTF8.GetBytes(jwtSecret);
 // ======================
 builder.Services.AddScoped<IPasswordHasher, Argon2PasswordHasher>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<TenantAuthService>();  // Tenant employee authentication
 builder.Services.AddScoped<IEmployeeService, EmployeeService>();
+builder.Services.AddScoped<IEmployeeDraftService, EmployeeDraftService>();  // Employee draft management
 builder.Services.AddScoped<ILeaveService, LeaveService>();
 builder.Services.AddScoped<ISectorService, SectorService>();
 builder.Services.AddScoped<ISectorComplianceService, SectorComplianceService>();
@@ -222,6 +224,7 @@ Log.Information("Google Cloud Storage service registered for file uploads");
 builder.Services.AddScoped<DocumentExpiryAlertJob>();
 builder.Services.AddScoped<AbsentMarkingJob>();
 builder.Services.AddScoped<LeaveAccrualJob>();
+builder.Services.AddScoped<DeleteExpiredDraftsJob>();
 
 // ======================
 // JWT AUTHENTICATION (PRODUCTION-GRADE)
@@ -465,6 +468,10 @@ builder.Services.AddControllers()
 
         // Performance: Don't write indented in production
         options.JsonSerializerOptions.WriteIndented = false;
+
+        // Enable string-based enum serialization/deserialization
+        options.JsonSerializerOptions.Converters.Add(
+            new System.Text.Json.Serialization.JsonStringEnumConverter());
 
         // Use faster number handling
         options.JsonSerializerOptions.NumberHandling =
@@ -719,7 +726,16 @@ RecurringJob.AddOrUpdate<LeaveAccrualJob>(
         TimeZone = mauritiusTimeZone
     });
 
-Log.Information("Recurring jobs configured: document-expiry-alerts, absent-marking, leave-accrual");
+RecurringJob.AddOrUpdate<DeleteExpiredDraftsJob>(
+    "delete-expired-drafts",
+    job => job.ExecuteAsync(),
+    "0 2 * * *",  // 2:00 AM daily
+    new RecurringJobOptions
+    {
+        TimeZone = mauritiusTimeZone
+    });
+
+Log.Information("Recurring jobs configured: document-expiry-alerts, absent-marking, leave-accrual, delete-expired-drafts");
 
 // ======================
 // HEALTH CHECK ENDPOINTS (Production-Grade)

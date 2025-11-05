@@ -417,6 +417,9 @@ namespace HRMS.Infrastructure.Data.Migrations.Tenant
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<int>("AccessFailedCount")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Address")
                         .IsRequired()
                         .HasMaxLength(500)
@@ -424,6 +427,9 @@ namespace HRMS.Infrastructure.Data.Migrations.Tenant
 
                     b.Property<decimal>("AnnualLeaveBalance")
                         .HasColumnType("decimal(10,2)");
+
+                    b.Property<int>("AnnualLeaveDays")
+                        .HasColumnType("integer");
 
                     b.Property<string>("BankAccountNumber")
                         .HasMaxLength(100)
@@ -444,8 +450,23 @@ namespace HRMS.Infrastructure.Data.Migrations.Tenant
                     b.Property<decimal>("BasicSalary")
                         .HasColumnType("decimal(18,2)");
 
+                    b.Property<string>("BloodGroup")
+                        .HasColumnType("text");
+
+                    b.Property<string>("CSGNumber")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("CarryForwardAllowed")
+                        .HasColumnType("boolean");
+
                     b.Property<decimal>("CasualLeaveBalance")
                         .HasColumnType("decimal(10,2)");
+
+                    b.Property<int>("CasualLeaveDays")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("CertificatesFilePath")
+                        .HasColumnType("text");
 
                     b.Property<string>("City")
                         .HasMaxLength(100)
@@ -456,6 +477,9 @@ namespace HRMS.Infrastructure.Data.Migrations.Tenant
 
                     b.Property<DateTime?>("ContractEndDate")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ContractFilePath")
+                        .HasColumnType("text");
 
                     b.Property<string>("CountryOfOrigin")
                         .HasMaxLength(100)
@@ -479,6 +503,10 @@ namespace HRMS.Infrastructure.Data.Migrations.Tenant
                     b.Property<Guid>("DepartmentId")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("Designation")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -492,6 +520,14 @@ namespace HRMS.Infrastructure.Data.Migrations.Tenant
                     b.Property<int>("EmployeeType")
                         .HasColumnType("integer");
 
+                    b.Property<string>("EmploymentContractType")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("EmploymentStatus")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<string>("FirstName")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -499,6 +535,19 @@ namespace HRMS.Infrastructure.Data.Migrations.Tenant
 
                     b.Property<int>("Gender")
                         .HasColumnType("integer");
+
+                    b.Property<string>("HighestQualification")
+                        .HasColumnType("text");
+
+                    b.Property<decimal?>("HousingAllowance")
+                        .HasColumnType("numeric");
+
+                    b.Property<string>("IdCopyFilePath")
+                        .HasColumnType("text");
+
+                    b.Property<string>("IndustrySector")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
@@ -523,6 +572,9 @@ namespace HRMS.Infrastructure.Data.Migrations.Tenant
                     b.Property<DateTime>("JoiningDate")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("Languages")
+                        .HasColumnType("text");
+
                     b.Property<string>("LastName")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -531,11 +583,20 @@ namespace HRMS.Infrastructure.Data.Migrations.Tenant
                     b.Property<DateTime?>("LastWorkingDate")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<bool>("LockoutEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("LockoutEnd")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<Guid?>("ManagerId")
                         .HasColumnType("uuid");
 
                     b.Property<int>("MaritalStatus")
                         .HasColumnType("integer");
+
+                    b.Property<decimal?>("MealAllowance")
+                        .HasColumnType("numeric");
 
                     b.Property<string>("MiddleName")
                         .IsRequired()
@@ -558,6 +619,9 @@ namespace HRMS.Infrastructure.Data.Migrations.Tenant
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
+
+                    b.Property<string>("Notes")
+                        .HasColumnType("text");
 
                     b.Property<DateTime?>("OffboardingDate")
                         .HasColumnType("timestamp with time zone");
@@ -584,6 +648,12 @@ namespace HRMS.Infrastructure.Data.Migrations.Tenant
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
+                    b.Property<string>("PasswordHash")
+                        .HasColumnType("text");
+
+                    b.Property<string>("PaymentFrequency")
+                        .HasColumnType("text");
+
                     b.Property<string>("PersonalEmail")
                         .HasColumnType("text");
 
@@ -599,8 +669,14 @@ namespace HRMS.Infrastructure.Data.Migrations.Tenant
                     b.Property<DateTime?>("ProbationEndDate")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<int?>("ProbationPeriodMonths")
+                        .HasColumnType("integer");
+
                     b.Property<DateTime?>("ResignationDate")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ResumeFilePath")
+                        .HasColumnType("text");
 
                     b.Property<string>("SalaryCurrency")
                         .IsRequired()
@@ -610,12 +686,24 @@ namespace HRMS.Infrastructure.Data.Migrations.Tenant
                     b.Property<decimal>("SickLeaveBalance")
                         .HasColumnType("decimal(10,2)");
 
+                    b.Property<int>("SickLeaveDays")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Skills")
+                        .HasColumnType("text");
+
                     b.Property<string>("TaxIdNumber")
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
                     b.Property<int>("TaxResidentStatus")
                         .HasColumnType("integer");
+
+                    b.Property<decimal?>("TransportAllowance")
+                        .HasColumnType("numeric");
+
+                    b.Property<string>("University")
+                        .HasColumnType("text");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -635,6 +723,9 @@ namespace HRMS.Infrastructure.Data.Migrations.Tenant
 
                     b.Property<int?>("VisaType")
                         .HasColumnType("integer");
+
+                    b.Property<string>("WorkLocation")
+                        .HasColumnType("text");
 
                     b.Property<DateTime?>("WorkPermitExpiryDate")
                         .HasColumnType("timestamp with time zone");
@@ -660,6 +751,65 @@ namespace HRMS.Infrastructure.Data.Migrations.Tenant
                     b.HasIndex("PassportNumber");
 
                     b.ToTable("Employees", "tenant_default");
+                });
+
+            modelBuilder.Entity("HRMS.Core.Entities.Tenant.EmployeeDraft", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("CompletionPercentage")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("CreatedByName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DeletedBy")
+                        .HasColumnType("text");
+
+                    b.Property<string>("DraftName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("FormDataJson")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime>("LastEditedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("LastEditedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("LastEditedByName")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("EmployeeDrafts", "tenant_default");
                 });
 
             modelBuilder.Entity("HRMS.Core.Entities.Tenant.LeaveApplication", b =>

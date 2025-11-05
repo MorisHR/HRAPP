@@ -35,92 +35,323 @@
     </mat-toolbar>
 
     <div class="dashboard-content">
-      <h1>Welcome to HR Portal</h1>
-
-      <!-- Stats Cards -->
-      <div class="stats-grid">
-        <mat-card class="stat-card">
-          <mat-card-content>
-            <div class="stat-icon">
-              <mat-icon color="primary">people</mat-icon>
-            </div>
-            <div class="stat-info">
-              <h3>{{ stats().totalEmployees }}</h3>
-              <p>Total Employees</p>
-            </div>
-          </mat-card-content>
-        </mat-card>
-
-        <mat-card class="stat-card">
-          <mat-card-content>
-            <div class="stat-icon">
-              <mat-icon color="accent">check_circle</mat-icon>
-            </div>
-            <div class="stat-info">
-              <h3>{{ stats().presentToday }}</h3>
-              <p>Present Today</p>
-            </div>
-          </mat-card-content>
-        </mat-card>
-
-        <mat-card class="stat-card">
-          <mat-card-content>
-            <div class="stat-icon">
-              <mat-icon color="warn">pending_actions</mat-icon>
-            </div>
-            <div class="stat-info">
-              <h3>{{ stats().pendingLeaves }}</h3>
-              <p>Pending Leaves</p>
-            </div>
-          </mat-card-content>
-        </mat-card>
-
-        <mat-card class="stat-card">
-          <mat-card-content>
-            <div class="stat-icon">
-              <mat-icon color="primary">payments</mat-icon>
-            </div>
-            <div class="stat-info">
-              <h3>{{ stats().activePayrollCycles }}</h3>
-              <p>Active Payroll</p>
-            </div>
-          </mat-card-content>
-        </mat-card>
+      <div class="dashboard-header">
+        <h1>Welcome to HR Portal</h1>
+        @if (!loading() && !error() && stats()) {
+          <button mat-icon-button (click)="loadDashboardData()" matTooltip="Refresh">
+            <mat-icon>refresh</mat-icon>
+          </button>
+        }
       </div>
 
-      <!-- Quick Actions -->
-      <div class="quick-actions">
-        <h2>Quick Actions</h2>
-        <div class="actions-grid">
-          <mat-card class="action-card" routerLink="/tenant/employees/new">
-            <mat-card-content>
-              <mat-icon>person_add</mat-icon>
-              <h3>Add Employee</h3>
-            </mat-card-content>
-          </mat-card>
+      <!-- Quick Filters -->
+      @if (!loading() && !error()) {
+        <div class="filter-controls">
+          <mat-form-field appearance="outline" class="filter-field">
+            <mat-label>Time Period</mat-label>
+            <mat-select [(value)]="selectedTimePeriod" (selectionChange)="onTimePeriodChange($event.value)">
+              @for (option of timePeriodOptions; track option.value) {
+                <mat-option [value]="option.value">{{ option.label }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
 
-          <mat-card class="action-card" routerLink="/tenant/leave">
-            <mat-card-content>
-              <mat-icon>approval</mat-icon>
-              <h3>Approve Leaves</h3>
-            </mat-card-content>
-          </mat-card>
-
-          <mat-card class="action-card" routerLink="/tenant/payroll">
-            <mat-card-content>
-              <mat-icon>account_balance</mat-icon>
-              <h3>Process Payroll</h3>
-            </mat-card-content>
-          </mat-card>
-
-          <mat-card class="action-card" routerLink="/tenant/reports">
-            <mat-card-content>
-              <mat-icon>summarize</mat-icon>
-              <h3>View Reports</h3>
-            </mat-card-content>
-          </mat-card>
+          <mat-form-field appearance="outline" class="filter-field">
+            <mat-label>Department</mat-label>
+            <mat-select [(value)]="selectedDepartment" (selectionChange)="onDepartmentChange($event.value)">
+              <mat-option value="all">All Departments</mat-option>
+              @for (dept of departments(); track dept) {
+                <mat-option [value]="dept">{{ dept }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
         </div>
-      </div>
+      }
+
+      <!-- Error State -->
+      @if (error() && !loading()) {
+        <mat-card class="error-card">
+          <mat-card-content>
+            <div class="error-content">
+              <mat-icon color="warn">error_outline</mat-icon>
+              <div class="error-text">
+                <h3>Failed to load dashboard data</h3>
+                <p>{{ error() }}</p>
+              </div>
+              <button mat-raised-button color="primary" (click)="retry()">
+                <mat-icon>refresh</mat-icon>
+                Retry
+              </button>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      }
+
+      <!-- Loading State (Skeleton) -->
+      @if (loading()) {
+        <div class="stats-grid">
+          @for (card of kpiCards; track card.title) {
+            <mat-card class="stat-card skeleton">
+              <mat-card-content>
+                <div class="stat-icon">
+                  <div class="skeleton-circle"></div>
+                </div>
+                <div class="stat-info">
+                  <div class="skeleton-line skeleton-title"></div>
+                  <div class="skeleton-line skeleton-subtitle"></div>
+                </div>
+              </mat-card-content>
+            </mat-card>
+          }
+        </div>
+      }
+
+      <!-- Stats Cards (Loaded) -->
+      @if (!loading() && !error() && stats()) {
+        <div class="stats-grid">
+          @for (card of kpiCards; track card.title) {
+            <mat-card class="stat-card" [class.positive]="isPositiveGrowth(card, stats()!)" [class.negative]="isNegativeGrowth(card, stats()!)">
+              <mat-card-content>
+                <div class="stat-icon">
+                  <mat-icon [color]="getCardColor(card, stats()!)">{{ card.icon }}</mat-icon>
+                </div>
+                <div class="stat-info">
+                  <h3>{{ card.getValue(stats()!) }}{{ card.suffix }}</h3>
+                  <p>{{ card.title }}</p>
+                </div>
+              </mat-card-content>
+            </mat-card>
+          }
+        </div>
+      }
+
+      <!-- Alerts Widget -->
+      @if (!loading() && !error() && alerts().length > 0) {
+        <div class="alerts-section">
+          <div class="section-header">
+            <h2>
+              <mat-icon>notification_important</mat-icon>
+              Urgent Alerts
+            </h2>
+            <span class="alert-count">{{ alerts().length }}</span>
+          </div>
+
+          <div class="alerts-grid">
+            @for (alert of alerts(); track alert.id) {
+              <mat-card class="alert-card" [class]="'severity-' + alert.severity">
+                <mat-card-content>
+                  <div class="alert-icon">
+                    <mat-icon [color]="getSeverityColor(alert.severity)">{{ alert.icon }}</mat-icon>
+                  </div>
+                  <div class="alert-content">
+                    <h3>{{ alert.title }}</h3>
+                    <p>{{ alert.description }}</p>
+                  </div>
+                  <div class="alert-action">
+                    <button mat-icon-button [routerLink]="alert.actionUrl" matTooltip="View Details">
+                      <mat-icon>arrow_forward</mat-icon>
+                    </button>
+                  </div>
+                </mat-card-content>
+              </mat-card>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- Charts Section -->
+      @if (!loading() && !error()) {
+        <div class="charts-section">
+          <h2>Analytics & Insights</h2>
+          <div class="charts-grid">
+            <!-- Department Headcount Chart -->
+            <mat-card class="chart-card">
+              <mat-card-header>
+                <mat-card-title>
+                  <mat-icon>corporate_fare</mat-icon>
+                  Department Headcount
+                </mat-card-title>
+              </mat-card-header>
+              <mat-card-content>
+                <div class="chart-container">
+                  <canvas baseChart
+                    [data]="departmentChartData"
+                    [options]="departmentChartOptions"
+                    type="bar">
+                  </canvas>
+                </div>
+              </mat-card-content>
+            </mat-card>
+
+            <!-- Employee Growth Chart -->
+            <mat-card class="chart-card">
+              <mat-card-header>
+                <mat-card-title>
+                  <mat-icon>trending_up</mat-icon>
+                  Employee Growth (12 Months)
+                </mat-card-title>
+              </mat-card-header>
+              <mat-card-content>
+                <div class="chart-container">
+                  <canvas baseChart
+                    [data]="growthChartData"
+                    [options]="growthChartOptions"
+                    type="line">
+                  </canvas>
+                </div>
+              </mat-card-content>
+            </mat-card>
+
+            <!-- Employee Type Distribution Chart -->
+            <mat-card class="chart-card">
+              <mat-card-header>
+                <mat-card-title>
+                  <mat-icon>pie_chart</mat-icon>
+                  Employee Type Distribution
+                </mat-card-title>
+              </mat-card-header>
+              <mat-card-content>
+                <div class="chart-container">
+                  <canvas baseChart
+                    [data]="typeChartData"
+                    [options]="typeChartOptions"
+                    type="doughnut">
+                  </canvas>
+                </div>
+              </mat-card-content>
+            </mat-card>
+          </div>
+        </div>
+      }
+
+      <!-- Quick Actions (Only show when not loading/error) -->
+      @if (!loading() && !error()) {
+        <div class="quick-actions">
+          <h2>Quick Actions</h2>
+          <div class="actions-grid">
+            <mat-card class="action-card" routerLink="/tenant/employees/new">
+              <mat-card-content>
+                <mat-icon>person_add</mat-icon>
+                <h3>Add Employee</h3>
+              </mat-card-content>
+            </mat-card>
+
+            <mat-card class="action-card" routerLink="/tenant/leave">
+              <mat-card-content>
+                <mat-icon>approval</mat-icon>
+                <h3>Approve Leaves</h3>
+              </mat-card-content>
+            </mat-card>
+
+            <mat-card class="action-card" routerLink="/tenant/payroll">
+              <mat-card-content>
+                <mat-icon>account_balance</mat-icon>
+                <h3>Process Payroll</h3>
+              </mat-card-content>
+            </mat-card>
+
+            <mat-card class="action-card" routerLink="/tenant/reports">
+              <mat-card-content>
+                <mat-icon>summarize</mat-icon>
+                <h3>View Reports</h3>
+              </mat-card-content>
+            </mat-card>
+          </div>
+        </div>
+      }
+
+      <!-- Activity Feed and Birthdays -->
+      @if (!loading() && !error()) {
+        <div class="widgets-section">
+          <div class="widgets-grid">
+            <!-- Recent Activity Feed -->
+            <div class="widget-container">
+              <mat-card class="widget-card">
+                <mat-card-header>
+                  <mat-card-title>
+                    <mat-icon>timeline</mat-icon>
+                    Recent Activity
+                  </mat-card-title>
+                </mat-card-header>
+                <mat-card-content>
+                  @if (activitiesLoading()) {
+                    <div class="widget-loading">
+                      <mat-progress-spinner diameter="40" mode="indeterminate"></mat-progress-spinner>
+                    </div>
+                  } @else if (activities().length === 0) {
+                    <div class="widget-empty">
+                      <mat-icon>info</mat-icon>
+                      <p>No recent activity</p>
+                    </div>
+                  } @else {
+                    <div class="activity-list">
+                      @for (activity of activities(); track activity.id) {
+                        <div class="activity-item">
+                          <div class="activity-icon">
+                            <mat-icon color="accent">{{ activity.icon }}</mat-icon>
+                          </div>
+                          <div class="activity-content">
+                            <h4>{{ activity.title }}</h4>
+                            <p>{{ activity.description }}</p>
+                            <span class="activity-time">{{ getTimeAgo(activity.timestamp) }}</span>
+                          </div>
+                        </div>
+                      }
+                    </div>
+                  }
+                </mat-card-content>
+              </mat-card>
+            </div>
+
+            <!-- Upcoming Birthdays -->
+            <div class="widget-container">
+              <mat-card class="widget-card">
+                <mat-card-header>
+                  <mat-card-title>
+                    <mat-icon>cake</mat-icon>
+                    Upcoming Birthdays
+                  </mat-card-title>
+                </mat-card-header>
+                <mat-card-content>
+                  @if (birthdaysLoading()) {
+                    <div class="widget-loading">
+                      <mat-progress-spinner diameter="40" mode="indeterminate"></mat-progress-spinner>
+                    </div>
+                  } @else if (birthdays().length === 0) {
+                    <div class="widget-empty">
+                      <mat-icon>info</mat-icon>
+                      <p>No upcoming birthdays in the next 30 days</p>
+                    </div>
+                  } @else {
+                    <div class="birthday-list">
+                      @for (birthday of birthdays(); track birthday.employeeId) {
+                        <div class="birthday-item">
+                          <div class="birthday-icon">
+                            <mat-icon color="accent">cake</mat-icon>
+                          </div>
+                          <div class="birthday-content">
+                            <h4>{{ birthday.employeeName }}</h4>
+                            <p>{{ birthday.department }}</p>
+                            <span class="birthday-date">
+                              @if (birthday.daysUntil === 0) {
+                                <mat-chip class="today-chip">Today</mat-chip>
+                              } @else if (birthday.daysUntil === 1) {
+                                Tomorrow
+                              } @else {
+                                In {{ birthday.daysUntil }} days
+                              }
+                            </span>
+                          </div>
+                        </div>
+                      }
+                    </div>
+                  }
+                </mat-card-content>
+              </mat-card>
+            </div>
+          </div>
+        </div>
+      }
     </div>
   </mat-sidenav-content>
 </mat-sidenav-container>

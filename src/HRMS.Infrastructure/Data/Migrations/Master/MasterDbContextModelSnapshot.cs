@@ -29,6 +29,9 @@ namespace HRMS.Infrastructure.Data.Migrations.Master
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<int>("AccessFailedCount")
+                        .HasColumnType("integer");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -67,6 +70,12 @@ namespace HRMS.Infrastructure.Data.Migrations.Master
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
+
+                    b.Property<bool>("LockoutEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("LockoutEnd")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("PasswordHash")
                         .IsRequired()
@@ -179,6 +188,125 @@ namespace HRMS.Infrastructure.Data.Migrations.Master
                     b.ToTable("AuditLogs", "master");
                 });
 
+            modelBuilder.Entity("HRMS.Core.Entities.Master.IndustrySector", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<int?>("ParentSectorId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("RemunerationOrderReference")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int?>("RemunerationOrderYear")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("RequiresSpecialPermits")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("SectorCode")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("SectorName")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<string>("SectorNameFrench")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("IsActive");
+
+                    b.HasIndex("ParentSectorId");
+
+                    b.HasIndex("SectorCode")
+                        .IsUnique();
+
+                    b.ToTable("IndustrySectors", "master");
+                });
+
+            modelBuilder.Entity("HRMS.Core.Entities.Master.SectorComplianceRule", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("EffectiveFrom")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("EffectiveTo")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("LegalReference")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Notes")
+                        .HasColumnType("text");
+
+                    b.Property<string>("RuleCategory")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("RuleConfig")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
+                    b.Property<string>("RuleName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int>("SectorId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RuleCategory");
+
+                    b.HasIndex("SectorId");
+
+                    b.HasIndex("EffectiveFrom", "EffectiveTo");
+
+                    b.ToTable("SectorComplianceRules", "master");
+                });
+
             modelBuilder.Entity("HRMS.Core.Entities.Master.Tenant", b =>
                 {
                     b.Property<Guid>("Id")
@@ -194,6 +322,9 @@ namespace HRMS.Infrastructure.Data.Migrations.Master
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
+
+                    b.Property<int>("ApiCallsPerMonth")
+                        .HasColumnType("integer");
 
                     b.Property<string>("CompanyName")
                         .IsRequired()
@@ -216,8 +347,8 @@ namespace HRMS.Infrastructure.Data.Migrations.Master
                     b.Property<string>("CreatedBy")
                         .HasColumnType("text");
 
-                    b.Property<long>("CurrentStorageBytes")
-                        .HasColumnType("bigint");
+                    b.Property<int>("CurrentStorageGB")
+                        .HasColumnType("integer");
 
                     b.Property<int>("CurrentUserCount")
                         .HasColumnType("integer");
@@ -231,25 +362,34 @@ namespace HRMS.Infrastructure.Data.Migrations.Master
                     b.Property<string>("DeletionReason")
                         .HasColumnType("text");
 
+                    b.Property<int>("EmployeeTier")
+                        .HasColumnType("integer");
+
                     b.Property<int>("GracePeriodDays")
                         .HasColumnType("integer");
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
 
-                    b.Property<int>("MaxApiCallsPerHour")
+                    b.Property<int>("MaxStorageGB")
                         .HasColumnType("integer");
-
-                    b.Property<long>("MaxStorageBytes")
-                        .HasColumnType("bigint");
 
                     b.Property<int>("MaxUsers")
                         .HasColumnType("integer");
+
+                    b.Property<decimal>("MonthlyPrice")
+                        .HasColumnType("numeric");
 
                     b.Property<string>("SchemaName")
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
+
+                    b.Property<int?>("SectorId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("SectorSelectedAt")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTime?>("SoftDeleteDate")
                         .HasColumnType("timestamp with time zone");
@@ -264,9 +404,6 @@ namespace HRMS.Infrastructure.Data.Migrations.Master
 
                     b.Property<DateTime?>("SubscriptionEndDate")
                         .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("SubscriptionPlan")
-                        .HasColumnType("integer");
 
                     b.Property<DateTime>("SubscriptionStartDate")
                         .HasColumnType("timestamp with time zone");
@@ -293,10 +430,50 @@ namespace HRMS.Infrastructure.Data.Migrations.Master
                     b.HasIndex("SchemaName")
                         .IsUnique();
 
+                    b.HasIndex("SectorId");
+
                     b.HasIndex("Subdomain")
                         .IsUnique();
 
                     b.ToTable("Tenants", "master");
+                });
+
+            modelBuilder.Entity("HRMS.Core.Entities.Master.IndustrySector", b =>
+                {
+                    b.HasOne("HRMS.Core.Entities.Master.IndustrySector", "ParentSector")
+                        .WithMany("SubSectors")
+                        .HasForeignKey("ParentSectorId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("ParentSector");
+                });
+
+            modelBuilder.Entity("HRMS.Core.Entities.Master.SectorComplianceRule", b =>
+                {
+                    b.HasOne("HRMS.Core.Entities.Master.IndustrySector", "Sector")
+                        .WithMany("ComplianceRules")
+                        .HasForeignKey("SectorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Sector");
+                });
+
+            modelBuilder.Entity("HRMS.Core.Entities.Master.Tenant", b =>
+                {
+                    b.HasOne("HRMS.Core.Entities.Master.IndustrySector", "Sector")
+                        .WithMany()
+                        .HasForeignKey("SectorId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Sector");
+                });
+
+            modelBuilder.Entity("HRMS.Core.Entities.Master.IndustrySector", b =>
+                {
+                    b.Navigation("ComplianceRules");
+
+                    b.Navigation("SubSectors");
                 });
 #pragma warning restore 612, 618
         }

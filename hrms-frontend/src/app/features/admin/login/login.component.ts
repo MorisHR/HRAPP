@@ -39,7 +39,8 @@ export class LoginComponent {
   constructor() {
     this.loginForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
-      password: ['', [Validators.required, Validators.minLength(6)]]
+      password: ['', [Validators.required, Validators.minLength(6)]],
+      subdomain: [''] // Optional: for tenant employee login
     });
   }
 
@@ -47,7 +48,14 @@ export class LoginComponent {
     if (this.loginForm.valid) {
       this.error.set(null);
 
-      this.authService.login(this.loginForm.value).subscribe({
+      // Prepare login credentials, excluding empty subdomain
+      const credentials = {
+        email: this.loginForm.value.email,
+        password: this.loginForm.value.password,
+        ...(this.loginForm.value.subdomain && { subdomain: this.loginForm.value.subdomain.trim() })
+      };
+
+      this.authService.login(credentials).subscribe({
         error: (err) => {
           this.error.set(err.error?.message || 'Login failed. Please try again.');
         }

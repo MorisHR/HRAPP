@@ -54,31 +54,56 @@ export class AuthService {
   login(credentials: LoginRequest): Observable<LoginResponse> {
     this.loadingSignal.set(true);
 
+    // Store subdomain for tenant employees
+    if (credentials.subdomain) {
+      localStorage.setItem('tenant_subdomain', credentials.subdomain);
+    } else {
+      localStorage.removeItem('tenant_subdomain');
+    }
+
     // Determine endpoint based on user type
-    const endpoint = credentials.tenantId
+    const endpoint = credentials.subdomain
       ? `${this.apiUrl}/auth/tenant/login`
       : `${this.apiUrl}/auth/login`;
 
     return this.http.post<any>(endpoint, credentials).pipe(
       map(apiResponse => {
-        // Backend returns: { success, data: { token, expiresAt, adminUser }, message }
+        // Backend returns: { success, data: { token, expiresAt, adminUser/employee }, message }
         // Transform to frontend format: { token, refreshToken, user, expiresIn }
         if (!apiResponse.success || !apiResponse.data) {
           throw new Error(apiResponse.message || 'Login failed');
         }
 
         const backendData = apiResponse.data;
-        const adminUser = backendData.adminUser;
+        let user: User;
 
-        // Map adminUser to User interface
-        const user: User = {
-          id: adminUser.id,
-          email: adminUser.email,
-          firstName: adminUser.userName?.split(' ')[0] || 'Admin',
-          lastName: adminUser.userName?.split(' ').slice(1).join(' ') || 'User',
-          role: UserRole.SuperAdmin,
-          avatarUrl: undefined
-        };
+        // Handle tenant employee login response
+        if (backendData.employee) {
+          const employee = backendData.employee;
+          const nameParts = employee.fullName?.split(' ') || ['Employee'];
+          user = {
+            id: employee.id,
+            email: employee.email,
+            firstName: nameParts[0] || 'Employee',
+            lastName: nameParts.slice(1).join(' ') || '',
+            role: UserRole.TenantAdmin, // Tenant employees are TenantAdmins
+            avatarUrl: undefined
+          };
+        }
+        // Handle SuperAdmin login response
+        else if (backendData.adminUser) {
+          const adminUser = backendData.adminUser;
+          user = {
+            id: adminUser.id,
+            email: adminUser.email,
+            firstName: adminUser.userName?.split(' ')[0] || 'Admin',
+            lastName: adminUser.userName?.split(' ').slice(1).join(' ') || 'User',
+            role: UserRole.SuperAdmin,
+            avatarUrl: undefined
+          };
+        } else {
+          throw new Error('Invalid login response format');
+        }
 
         const response: LoginResponse = {
           token: backendData.token,
@@ -127,6 +152,7 @@ export class AuthService {
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
     localStorage.removeItem('user');
+    localStorage.removeItem('tenant_subdomain');
 
     this.tokenSignal.set(null);
     this.userSignal.set(null);

@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Authorization;
 using HRMS.Application.DTOs;
 using HRMS.Infrastructure.Services;
 using HRMS.Core.Enums;
+using HRMS.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace HRMS.API.Controllers;
 
@@ -17,14 +19,72 @@ namespace HRMS.API.Controllers;
 public class TenantsController : ControllerBase
 {
     private readonly TenantManagementService _tenantManagementService;
+    private readonly MasterDbContext _context;
     private readonly ILogger<TenantsController> _logger;
 
     public TenantsController(
         TenantManagementService tenantManagementService,
+        MasterDbContext context,
         ILogger<TenantsController> logger)
     {
         _tenantManagementService = tenantManagementService;
+        _context = context;
         _logger = logger;
+    }
+
+    /// <summary>
+    /// Check if a tenant exists by subdomain (public endpoint for login flow)
+    /// </summary>
+    [HttpGet("check/{subdomain}")]
+    [AllowAnonymous]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> CheckTenant(string subdomain)
+    {
+        try
+        {
+            var normalizedSubdomain = subdomain.ToLower().Trim();
+
+            var tenant = await _context.Tenants
+                .Where(t => t.Subdomain == normalizedSubdomain && !t.IsDeleted)
+                .Select(t => new { t.CompanyName, t.Status, t.Subdomain })
+                .FirstOrDefaultAsync();
+
+            if (tenant == null)
+            {
+                return Ok(new { success = true, data = new { exists = false } });
+            }
+
+            if (tenant.Status != Core.Enums.TenantStatus.Active)
+            {
+                return Ok(new
+                {
+                    success = false,
+                    message = "This company account is not active. Please contact support.",
+                    data = new { exists = true, isActive = false }
+                });
+            }
+
+            return Ok(new
+            {
+                success = true,
+                data = new
+                {
+                    exists = true,
+                    companyName = tenant.CompanyName,
+                    subdomain = tenant.Subdomain,
+                    logoUrl = (string?)null
+                }
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error checking tenant: {Subdomain}", subdomain);
+            return StatusCode(500, new
+            {
+                success = false,
+                message = "An error occurred while checking the domain. Please try again."
+            });
+        }
     }
 
     /// <summary>
