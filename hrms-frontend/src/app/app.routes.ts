@@ -90,6 +90,10 @@ export const routes: Routes = [
         path: 'employees/:id',
         loadComponent: () => import('./features/tenant/employees/comprehensive-employee-form.component').then(m => m.ComprehensiveEmployeeFormComponent)
       },
+      {
+        path: 'timesheets/approvals',
+        loadComponent: () => import('./features/tenant/timesheets/timesheet-approvals.component').then(m => m.TimesheetApprovalsComponent)
+      },
       // TODO: Add more tenant routes (attendance, leave, payroll, reports)
     ]
   },
@@ -107,6 +111,22 @@ export const routes: Routes = [
       {
         path: 'dashboard',
         loadComponent: () => import('./features/employee/dashboard/employee-dashboard.component').then(m => m.EmployeeDashboardComponent)
+      },
+      {
+        path: 'timesheets',
+        loadComponent: () => import('./features/employee/timesheets/timesheet-list.component').then(m => m.TimesheetListComponent)
+      },
+      {
+        path: 'timesheets/:id',
+        loadComponent: () => import('./features/employee/timesheets/timesheet-detail.component').then(m => m.TimesheetDetailComponent)
+      },
+      {
+        path: 'payslips',
+        loadComponent: () => import('./features/employee/payslips/payslip-list.component').then(m => m.PayslipListComponent)
+      },
+      {
+        path: 'payslips/:id',
+        loadComponent: () => import('./features/employee/payslips/payslip-detail.component').then(m => m.PayslipDetailComponent)
       }
     ]
   },

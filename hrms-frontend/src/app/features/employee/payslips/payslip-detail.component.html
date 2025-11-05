@@ -1,0 +1,187 @@
+<div class="payslip-detail-container">
+  @if (loading()) {
+    <div class="loading-container">
+      <mat-spinner></mat-spinner>
+      <p>Loading payslip details...</p>
+    </div>
+  } @else if (payslip()) {
+    <!-- Header -->
+    <div class="page-header">
+      <div class="header-left">
+        <button mat-icon-button (click)="goBack()" class="back-button">
+          <mat-icon>arrow_back</mat-icon>
+        </button>
+        <div class="header-content">
+          <h1>Payslip Details</h1>
+          <p class="subtitle">{{ payslip()!.payPeriod }}</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button mat-raised-button color="primary" (click)="downloadPayslip()">
+          <mat-icon>download</mat-icon>
+          Download PDF
+        </button>
+      </div>
+    </div>
+
+    <!-- Employee Information Card -->
+    <mat-card class="info-card">
+      <mat-card-header>
+        <mat-icon mat-card-avatar class="header-icon">person</mat-icon>
+        <mat-card-title>Employee Information</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="info-grid">
+          <div class="info-item">
+            <span class="info-label">Employee Name</span>
+            <span class="info-value">{{ payslip()!.employeeName }}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Employee Code</span>
+            <span class="info-value">{{ payslip()!.employeeCode }}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Department</span>
+            <span class="info-value">{{ payslip()!.department }}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Designation</span>
+            <span class="info-value">{{ payslip()!.designation }}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Pay Period</span>
+            <span class="info-value">{{ payslip()!.payPeriod }}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Pay Date</span>
+            <span class="info-value">{{ formatDate(payslip()!.payDate) }}</span>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Earnings and Deductions Grid -->
+    <div class="earnings-deductions-grid">
+      <!-- Earnings Card -->
+      <mat-card class="breakdown-card">
+        <mat-card-header>
+          <mat-icon mat-card-avatar class="header-icon earnings">trending_up</mat-icon>
+          <mat-card-title>Earnings</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <table mat-table [dataSource]="payslip()!.earnings" class="breakdown-table">
+            <!-- Name Column -->
+            <ng-container matColumnDef="name">
+              <th mat-header-cell *matHeaderCellDef>Component</th>
+              <td mat-cell *matCellDef="let item">{{ item.name }}</td>
+              <td mat-footer-cell *matFooterCellDef><strong>Total Gross Pay</strong></td>
+            </ng-container>
+
+            <!-- Amount Column -->
+            <ng-container matColumnDef="amount">
+              <th mat-header-cell *matHeaderCellDef class="amount-header">Amount</th>
+              <td mat-cell *matCellDef="let item" class="amount-cell">
+                {{ formatCurrency(item.amount) }}
+              </td>
+              <td mat-footer-cell *matFooterCellDef class="total-cell earnings-total">
+                <strong>{{ formatCurrency(payslip()!.grossPay) }}</strong>
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="earningsColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: earningsColumns;"></tr>
+            <tr mat-footer-row *matFooterRowDef="earningsColumns" class="total-row"></tr>
+          </table>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Deductions Card -->
+      <mat-card class="breakdown-card">
+        <mat-card-header>
+          <mat-icon mat-card-avatar class="header-icon deductions">trending_down</mat-icon>
+          <mat-card-title>Deductions</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <table mat-table [dataSource]="payslip()!.deductions" class="breakdown-table">
+            <!-- Name Column -->
+            <ng-container matColumnDef="name">
+              <th mat-header-cell *matHeaderCellDef>Component</th>
+              <td mat-cell *matCellDef="let item">{{ item.name }}</td>
+              <td mat-footer-cell *matFooterCellDef><strong>Total Deductions</strong></td>
+            </ng-container>
+
+            <!-- Amount Column -->
+            <ng-container matColumnDef="amount">
+              <th mat-header-cell *matHeaderCellDef class="amount-header">Amount</th>
+              <td mat-cell *matCellDef="let item" class="amount-cell deduction">
+                -{{ formatCurrency(item.amount) }}
+              </td>
+              <td mat-footer-cell *matFooterCellDef class="total-cell deductions-total">
+                <strong>-{{ formatCurrency(payslip()!.totalDeductions) }}</strong>
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="deductionsColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: deductionsColumns;"></tr>
+            <tr mat-footer-row *matFooterRowDef="deductionsColumns" class="total-row"></tr>
+          </table>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Net Pay Summary Card -->
+    <mat-card class="summary-card">
+      <mat-card-content>
+        <div class="summary-content">
+          <div class="summary-left">
+            <div class="summary-icon">
+              <mat-icon>account_balance_wallet</mat-icon>
+            </div>
+            <div class="summary-details">
+              <div class="summary-label">Net Pay</div>
+              <div class="summary-sublabel">Amount to be credited</div>
+            </div>
+          </div>
+          <div class="summary-right">
+            <div class="net-pay-amount">{{ formatCurrency(payslip()!.netPay) }}</div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Calculation Summary Card -->
+    <mat-card class="calculation-card">
+      <mat-card-header>
+        <mat-icon mat-card-avatar class="header-icon">calculate</mat-icon>
+        <mat-card-title>Calculation Summary</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="calculation-breakdown">
+          <div class="calc-row">
+            <span class="calc-label">Total Gross Pay</span>
+            <span class="calc-value">{{ formatCurrency(payslip()!.grossPay) }}</span>
+          </div>
+          <div class="calc-row deduction">
+            <span class="calc-label">Total Deductions</span>
+            <span class="calc-value">-{{ formatCurrency(payslip()!.totalDeductions) }}</span>
+          </div>
+          <mat-divider></mat-divider>
+          <div class="calc-row total">
+            <span class="calc-label"><strong>Net Pay</strong></span>
+            <span class="calc-value"><strong>{{ formatCurrency(payslip()!.netPay) }}</strong></span>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  } @else {
+    <div class="error-state">
+      <mat-icon>error_outline</mat-icon>
+      <h3>Payslip Not Found</h3>
+      <p>The requested payslip could not be found.</p>
+      <button mat-raised-button color="primary" (click)="goBack()">
+        <mat-icon>arrow_back</mat-icon>
+        Back to Payslips
+      </button>
+    </div>
+  }
+</div>

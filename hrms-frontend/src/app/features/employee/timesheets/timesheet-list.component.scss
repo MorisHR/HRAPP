@@ -1,0 +1,319 @@
+.timesheet-list-container {
+  padding: 24px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.page-header {
+  margin-bottom: 32px;
+
+  .header-content {
+    h1 {
+      font-size: 28px;
+      font-weight: 600;
+      margin: 0 0 8px 0;
+      color: #1a1a1a;
+    }
+
+    .subtitle {
+      font-size: 14px;
+      color: #666;
+      margin: 0;
+    }
+  }
+}
+
+// Stats Grid
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+
+  .stat-card {
+    mat-card-content {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 20px !important;
+
+      .stat-icon {
+        width: 56px;
+        height: 56px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+
+        mat-icon {
+          color: white;
+          font-size: 28px;
+          width: 28px;
+          height: 28px;
+        }
+      }
+
+      .stat-details {
+        flex: 1;
+
+        .stat-value {
+          font-size: 32px;
+          font-weight: 700;
+          line-height: 1;
+          margin-bottom: 4px;
+        }
+
+        .stat-label {
+          font-size: 13px;
+          color: #666;
+          font-weight: 500;
+        }
+      }
+    }
+
+    &.draft .stat-icon {
+      background: linear-gradient(135deg, #9ca3af 0%, #6b7280 100%);
+    }
+
+    &.submitted .stat-icon {
+      background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    }
+
+    &.approved .stat-icon {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    }
+  }
+}
+
+// Filter Card
+.filter-card {
+  margin-bottom: 24px;
+
+  mat-card-content {
+    padding: 16px !important;
+
+    .filter-container {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+
+      mat-form-field {
+        flex: 1;
+        max-width: 300px;
+      }
+
+      button {
+        height: 40px;
+      }
+    }
+  }
+}
+
+// Table Card
+.table-card {
+  mat-card-content {
+    padding: 0 !important;
+  }
+
+  .loading-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    gap: 16px;
+
+    p {
+      color: #666;
+      margin: 0;
+    }
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+
+    mat-icon {
+      font-size: 64px;
+      width: 64px;
+      height: 64px;
+      color: #e0e0e0;
+      margin-bottom: 16px;
+    }
+
+    h3 {
+      font-size: 18px;
+      font-weight: 600;
+      margin: 0 0 8px 0;
+      color: #333;
+    }
+
+    p {
+      font-size: 14px;
+      color: #666;
+      max-width: 500px;
+      margin: 0 auto;
+    }
+  }
+
+  .table-container {
+    overflow-x: auto;
+  }
+}
+
+// Table Styles
+.timesheet-table {
+  width: 100%;
+
+  th {
+    background: #f8f9fa;
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #666;
+    padding: 16px;
+  }
+
+  td {
+    padding: 16px;
+    font-size: 14px;
+  }
+
+  .timesheet-row {
+    cursor: pointer;
+    transition: background-color 0.2s;
+
+    &:hover {
+      background-color: #f8f9fa;
+    }
+  }
+
+  .period-cell {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    .period-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+      color: #667eea;
+    }
+
+    span {
+      font-weight: 500;
+    }
+  }
+
+  .hours-cell {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+
+    mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+      color: #666;
+    }
+  }
+
+  .overtime-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 12px;
+    background: #fef3c7;
+    color: #92400e;
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  .no-overtime {
+    color: #999;
+  }
+
+  .action-buttons {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+
+    .locked-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+      color: #f59e0b;
+    }
+  }
+}
+
+// Status Chips
+mat-chip {
+  font-size: 12px;
+  font-weight: 600;
+  min-height: 28px;
+  border-radius: 14px;
+
+  &.status-chip-gray {
+    background: #f3f4f6 !important;
+    color: #6b7280 !important;
+  }
+
+  &.status-chip-blue {
+    background: #dbeafe !important;
+    color: #1e40af !important;
+  }
+
+  &.status-chip-green {
+    background: #d1fae5 !important;
+    color: #065f46 !important;
+  }
+
+  &.status-chip-red {
+    background: #fee2e2 !important;
+    color: #991b1b !important;
+  }
+
+  &.status-chip-purple {
+    background: #ede9fe !important;
+    color: #5b21b6 !important;
+  }
+}
+
+// Responsive
+@media (max-width: 768px) {
+  .timesheet-list-container {
+    padding: 16px;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .filter-container {
+    flex-direction: column;
+    align-items: stretch !important;
+
+    mat-form-field {
+      max-width: 100% !important;
+    }
+
+    button {
+      width: 100%;
+    }
+  }
+
+  .table-container {
+    .timesheet-table {
+      th, td {
+        padding: 12px 8px;
+        font-size: 12px;
+      }
+
+      .period-cell span {
+        font-size: 12px;
+      }
+    }
+  }
+}

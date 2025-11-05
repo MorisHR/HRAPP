@@ -1,0 +1,375 @@
+.payslip-detail-container {
+  padding: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+// Header
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 32px;
+
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+
+    .back-button {
+      mat-icon {
+        font-size: 24px;
+      }
+    }
+
+    .header-content {
+      h1 {
+        font-size: 28px;
+        font-weight: 600;
+        margin: 0 0 4px 0;
+        color: #1a1a1a;
+      }
+
+      .subtitle {
+        font-size: 14px;
+        color: #666;
+        margin: 0;
+      }
+    }
+  }
+
+  .header-actions {
+    button {
+      mat-icon {
+        margin-right: 8px;
+      }
+    }
+  }
+}
+
+// Info Card
+.info-card {
+  margin-bottom: 24px;
+
+  mat-card-header {
+    margin-bottom: 16px;
+
+    .header-icon {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+  }
+
+  .info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 24px;
+
+    .info-item {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+
+      .info-label {
+        font-size: 12px;
+        color: #666;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .info-value {
+        font-size: 15px;
+        color: #1f2937;
+        font-weight: 500;
+      }
+    }
+  }
+}
+
+// Earnings & Deductions Grid
+.earnings-deductions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+// Breakdown Cards
+.breakdown-card {
+  mat-card-header {
+    margin-bottom: 16px;
+
+    .header-icon {
+      color: white;
+
+      &.earnings {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      }
+
+      &.deductions {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+      }
+    }
+  }
+
+  .breakdown-table {
+    width: 100%;
+
+    th {
+      background-color: #f9fafb;
+      font-weight: 600;
+      font-size: 12px;
+      color: #374151;
+      padding: 12px 16px !important;
+      border-bottom: 2px solid #e5e7eb;
+
+      &.amount-header {
+        text-align: right;
+      }
+    }
+
+    td {
+      padding: 12px 16px !important;
+      border-bottom: 1px solid #e5e7eb;
+      font-size: 14px;
+
+      &.amount-cell {
+        text-align: right;
+        font-weight: 500;
+
+        &.deduction {
+          color: #dc2626;
+        }
+      }
+
+      &.total-cell {
+        font-size: 16px;
+        border-top: 2px solid #e5e7eb;
+        text-align: right;
+
+        &.earnings-total {
+          color: #059669;
+        }
+
+        &.deductions-total {
+          color: #dc2626;
+        }
+      }
+    }
+
+    .total-row {
+      td {
+        background-color: #f9fafb;
+      }
+    }
+  }
+}
+
+// Summary Card
+.summary-card {
+  margin-bottom: 24px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+
+  mat-card-content {
+    padding: 24px !important;
+
+    .summary-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+
+      .summary-left {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+
+        .summary-icon {
+          width: 64px;
+          height: 64px;
+          background: rgba(255, 255, 255, 0.2);
+          border-radius: 12px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+
+          mat-icon {
+            font-size: 32px;
+            width: 32px;
+            height: 32px;
+          }
+        }
+
+        .summary-details {
+          .summary-label {
+            font-size: 16px;
+            font-weight: 500;
+            margin-bottom: 4px;
+          }
+
+          .summary-sublabel {
+            font-size: 13px;
+            opacity: 0.9;
+          }
+        }
+      }
+
+      .summary-right {
+        .net-pay-amount {
+          font-size: 36px;
+          font-weight: 700;
+        }
+      }
+    }
+  }
+}
+
+// Calculation Card
+.calculation-card {
+  mat-card-header {
+    margin-bottom: 16px;
+
+    .header-icon {
+      background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+      color: white;
+    }
+  }
+
+  .calculation-breakdown {
+    .calc-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 0;
+      font-size: 15px;
+
+      .calc-label {
+        color: #374151;
+      }
+
+      .calc-value {
+        font-weight: 600;
+        color: #1f2937;
+      }
+
+      &.deduction {
+        .calc-value {
+          color: #dc2626;
+        }
+      }
+
+      &.total {
+        padding-top: 16px;
+        font-size: 18px;
+
+        .calc-value {
+          color: #059669;
+          font-size: 20px;
+        }
+      }
+    }
+
+    mat-divider {
+      margin: 12px 0;
+    }
+  }
+}
+
+// Loading State
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 24px;
+  gap: 16px;
+
+  p {
+    color: #666;
+    font-size: 14px;
+  }
+}
+
+// Error State
+.error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 24px;
+  text-align: center;
+
+  mat-icon {
+    font-size: 64px;
+    width: 64px;
+    height: 64px;
+    color: #dc2626;
+    margin-bottom: 16px;
+  }
+
+  h3 {
+    font-size: 20px;
+    font-weight: 600;
+    margin: 0 0 8px 0;
+    color: #374151;
+  }
+
+  p {
+    font-size: 14px;
+    color: #6b7280;
+    margin: 0 0 24px 0;
+  }
+
+  button mat-icon {
+    margin-right: 8px;
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+  }
+}
+
+// Responsive
+@media (max-width: 768px) {
+  .payslip-detail-container {
+    padding: 16px;
+  }
+
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+
+    .header-actions {
+      width: 100%;
+
+      button {
+        width: 100%;
+      }
+    }
+  }
+
+  .earnings-deductions-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .info-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .summary-card {
+    mat-card-content {
+      .summary-content {
+        flex-direction: column;
+        gap: 20px;
+        text-align: center;
+
+        .summary-left {
+          flex-direction: column;
+          gap: 12px;
+        }
+      }
+    }
+  }
+}
