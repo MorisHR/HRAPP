@@ -25,19 +25,19 @@
         <!-- Name Column -->
         <ng-container matColumnDef="name">
           <th mat-header-cell *matHeaderCellDef mat-sort-header>Name</th>
-          <td mat-cell *matCellDef="let tenant">{{ tenant.name }}</td>
+          <td mat-cell *matCellDef="let tenant">{{ tenant.companyName }}</td>
         </ng-container>
 
         <!-- Domain Column -->
         <ng-container matColumnDef="domain">
           <th mat-header-cell *matHeaderCellDef mat-sort-header>Domain</th>
-          <td mat-cell *matCellDef="let tenant">{{ tenant.domain }}</td>
+          <td mat-cell *matCellDef="let tenant">{{ tenant.subdomain }}</td>
         </ng-container>
 
-        <!-- Industry Column -->
+        <!-- Tier Column -->
         <ng-container matColumnDef="industry">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Industry</th>
-          <td mat-cell *matCellDef="let tenant">{{ tenant.industry }}</td>
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Tier</th>
+          <td mat-cell *matCellDef="let tenant">{{ tenant.employeeTierDisplay || tenant.employeeTier }}</td>
         </ng-container>
 
         <!-- Employee Count Column -->

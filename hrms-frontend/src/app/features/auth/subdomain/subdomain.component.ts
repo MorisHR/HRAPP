@@ -2,7 +2,7 @@ import { Component, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
-import { SubdomainService } from '../../../core/services/subdomain.service';
+import { TenantContextService } from '../../../core/services/tenant-context.service';
 import { environment } from '../../../../environments/environment';
 
 interface TenantCheckResponse {
@@ -34,7 +34,7 @@ export class SubdomainComponent {
 
   constructor(
     private http: HttpClient,
-    private subdomainService: SubdomainService
+    private tenantContext: TenantContextService
   ) {}
 
   onSubdomainInput(event: Event): void {
@@ -98,16 +98,15 @@ export class SubdomainComponent {
         return;
       }
 
-      // ✅ PROPER SUBDOMAIN-BASED ROUTING (Industry Best Practice)
-      // Redirect to tenant-specific subdomain instead of localStorage hack
-      // Examples:
-      // - Development: acme.localhost:4200/auth/login
-      // - Production: acme.hrms.com/auth/login
+      // ✅ ENVIRONMENT-AWARE TENANT NAVIGATION
+      // Automatically adapts to environment:
+      // - Codespaces: Angular routing with localStorage
+      // - Localhost: Browser redirect to subdomain.localhost:4200/auth/login
+      // - Production: Browser redirect to subdomain.morishr.com/auth/login
       console.log(`✅ Tenant verified: ${this.subdomain()}`);
-      console.log(`🔄 Redirecting to: ${this.subdomain()}.${window.location.host}/auth/login`);
 
-      // Redirect to tenant subdomain
-      this.subdomainService.redirectToTenant(this.subdomain(), '/auth/login');
+      // Use tenant context service for environment-aware navigation
+      this.tenantContext.navigateToLogin(this.subdomain(), '/auth/login');
     } catch (error: any) {
       console.error('Subdomain check error:', error);
       if (error.status === 404) {

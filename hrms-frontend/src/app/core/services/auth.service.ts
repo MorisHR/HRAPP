@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { Observable, tap, map, catchError, throwError } from 'rxjs';
 import { User, LoginRequest, LoginResponse, UserRole } from '../models/user.model';
 import { SubdomainService } from './subdomain.service';
+import { SessionManagementService } from './session-management.service';
 import { environment } from '../../../environments/environment';
 
 @Injectable({
@@ -12,6 +13,7 @@ import { environment } from '../../../environments/environment';
 export class AuthService {
   private http = inject(HttpClient);
   private router = inject(Router);
+  private sessionManagement = inject(SessionManagementService);
 
   // API URL from environment configuration
   private apiUrl = environment.apiUrl;
@@ -34,6 +36,12 @@ export class AuthService {
 
   constructor() {
     this.loadAuthState();
+
+    // Subscribe to session timeout logout events
+    this.sessionManagement.onLogoutRequested.subscribe(() => {
+      console.log('🔔 Session timeout - logging out user');
+      this.logout();
+    });
   }
 
   private loadAuthState(): void {
@@ -113,6 +121,11 @@ export class AuthService {
       }),
       tap(response => {
         this.setAuthState(response);
+
+        // Start session management after successful login
+        this.sessionManagement.startSession();
+        console.log('✅ Session management started after login');
+
         this.navigateBasedOnRole(response.user.role);
         this.loadingSignal.set(false);
       }),
@@ -129,9 +142,22 @@ export class AuthService {
    * UPDATED: Now calls backend to revoke refresh token and navigates based on user type
    */
   logout(): void {
+    console.log('🚪 LOGOUT: Starting logout process');
+
     // Get user type before clearing state
     const user = this.userSignal();
     const isSuperAdmin = user?.role === UserRole.SuperAdmin;
+
+    console.log('👤 LOGOUT: User role:', user?.role, '| SuperAdmin:', isSuperAdmin);
+
+    // Save user role for post-logout redirect (BEFORE clearing state)
+    if (user?.role) {
+      this.saveLastUserRole(user.role);
+    }
+
+    // Stop session management
+    this.sessionManagement.stopSession();
+    console.log('⏹️ Session management stopped');
 
     // Call backend to revoke refresh token
     // Don't wait for response - logout immediately for better UX
@@ -147,11 +173,13 @@ export class AuthService {
     // Clear local auth state
     this.clearAuthState();
 
-    // Navigate based on user type
+    // Navigate based on user type using replaceUrl to prevent back button issues
     if (isSuperAdmin) {
-      this.router.navigate(['/auth/superadmin']);
+      console.log('🔄 LOGOUT: Redirecting SuperAdmin to /auth/superadmin');
+      this.router.navigate(['/auth/superadmin'], { replaceUrl: true });
     } else {
       // Tenant user - redirect to subdomain entry page
+      console.log('🔄 LOGOUT: Redirecting tenant user to /auth/subdomain');
       const subdomainService = inject(SubdomainService);
       subdomainService.redirectToMainDomain('/auth/subdomain');
     }
@@ -226,12 +254,23 @@ export class AuthService {
     secret: string;
     backupCodes: string[];
   }): Observable<LoginResponse> {
+    console.log('🔵 [AUTH SERVICE] completeMfaSetup() called');
+    console.log('📋 [AUTH SERVICE] API URL:', `${this.apiUrl}/auth/mfa/complete-setup`);
+    console.log('📋 [AUTH SERVICE] Request payload:', {
+      userId: request.userId,
+      totpCode: request.totpCode,
+      secret: request.secret,
+      backupCodesCount: request.backupCodes.length
+    });
+
     return this.http.post<any>(
       `${this.apiUrl}/auth/mfa/complete-setup`,
       request,
       { withCredentials: true }
     ).pipe(
       map(response => {
+        console.log('✅ [AUTH SERVICE] Received response:', response);
+
         if (!response.success || !response.data) {
           throw new Error(response.message || 'MFA setup failed');
         }
@@ -255,9 +294,11 @@ export class AuthService {
           expiresIn: 15 * 60 // 15 minutes
         };
 
+        console.log('✅ [AUTH SERVICE] Login response created:', loginResponse);
         return loginResponse;
       }),
       tap(response => {
+        console.log('✅ [AUTH SERVICE] Setting auth state and navigating...');
         this.setAuthState(response);
         this.navigateBasedOnRole(response.user.role);
       })
@@ -313,6 +354,9 @@ export class AuthService {
 
     this.tokenSignal.set(response.token);
     this.userSignal.set(response.user);
+
+    // Save user role for post-logout redirect
+    this.saveLastUserRole(response.user.role);
   }
 
   private clearAuthState(): void {
@@ -320,9 +364,28 @@ export class AuthService {
     localStorage.removeItem('refresh_token');
     localStorage.removeItem('user');
     // ✅ No longer storing tenant_subdomain in localStorage
+    // NOTE: We keep hrms_last_user_role for post-logout redirect purposes
 
     this.tokenSignal.set(null);
     this.userSignal.set(null);
+  }
+
+  /**
+   * Save the user role for post-logout redirect purposes
+   * This persists after logout to redirect users to the correct login page
+   */
+  private saveLastUserRole(role: UserRole): void {
+    localStorage.setItem('hrms_last_user_role', role);
+    console.log('💾 Saved last user role for post-logout redirect:', role);
+  }
+
+  /**
+   * Get the last user role (even after logout)
+   * Used by guards to redirect to the correct login page
+   */
+  getLastUserRole(): UserRole | null {
+    const role = localStorage.getItem('hrms_last_user_role');
+    return role as UserRole | null;
   }
 
   private navigateBasedOnRole(role: UserRole): void {

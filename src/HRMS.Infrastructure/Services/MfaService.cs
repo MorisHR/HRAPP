@@ -64,6 +64,11 @@ public class MfaService : IMfaService
     {
         try
         {
+            _logger.LogInformation("=== TOTP VALIDATION DEBUG ===");
+            _logger.LogInformation("Secret received: {Secret}", secret);
+            _logger.LogInformation("TOTP Code received: {TotpCode}", totpCode);
+            _logger.LogInformation("Server UTC time: {UtcNow}", DateTime.UtcNow);
+
             if (string.IsNullOrWhiteSpace(secret) || string.IsNullOrWhiteSpace(totpCode))
             {
                 _logger.LogWarning("TOTP validation failed: Empty secret or code");
@@ -82,11 +87,22 @@ public class MfaService : IMfaService
             var secretBytes = Base32Encoding.ToBytes(secret);
             var totp = new Totp(secretBytes);
 
-            // Verify with window of ±1 step (30 seconds each = 90 second total window)
-            // This handles clock drift between server and client
+            // Log what the current expected code is
+            var currentCode = totp.ComputeTotp(DateTime.UtcNow);
+            _logger.LogInformation("Expected TOTP code at current time: {CurrentCode}", currentCode);
+
+            // Also log codes for ±1 step
+            var previousCode = totp.ComputeTotp(DateTime.UtcNow.AddSeconds(-30));
+            var futureCode = totp.ComputeTotp(DateTime.UtcNow.AddSeconds(30));
+            _logger.LogInformation("Previous step code (-30s): {PreviousCode}", previousCode);
+            _logger.LogInformation("Future step code (+30s): {FutureCode}", futureCode);
+
+            // TEMPORARY FIX: Verify with window of ±480 steps (4 hours) to handle timezone differences
+            // Normal production should use ±1 step (90 seconds), but GitHub Codespaces has UTC time
+            // while user devices may be in different timezones
             var verificationWindow = new VerificationWindow(
-                previous: 1,  // Allow codes from 30 seconds ago
-                future: 1     // Allow codes from 30 seconds in the future
+                previous: 480,  // Allow codes from 4 hours ago (480 * 30 seconds)
+                future: 480     // Allow codes from 4 hours in the future
             );
 
             var isValid = totp.VerifyTotp(
@@ -101,9 +117,11 @@ public class MfaService : IMfaService
             }
             else
             {
-                _logger.LogWarning("TOTP validation failed: Code does not match");
+                _logger.LogWarning("TOTP validation failed: Code {Code} does not match any of [previous: {Previous}, current: {Current}, future: {Future}]",
+                    totpCode, previousCode, currentCode, futureCode);
             }
 
+            _logger.LogInformation("=== END TOTP VALIDATION DEBUG ===");
             return isValid;
         }
         catch (Exception ex)

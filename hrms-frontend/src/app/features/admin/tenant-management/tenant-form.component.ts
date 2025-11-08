@@ -1,7 +1,7 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
-import { Router, RouterModule } from '@angular/router';
+import { Router, RouterModule, ActivatedRoute } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -34,9 +34,10 @@ import { PricingTierService, type TierType, type PricingTier } from '../../../co
   templateUrl: './tenant-form.component.html',
   styleUrl: './tenant-form.component.scss'
 })
-export class TenantFormComponent {
+export class TenantFormComponent implements OnInit {
   private fb = inject(FormBuilder);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
   private tenantService = inject(TenantService);
   pricingService = inject(PricingTierService); // Public for template access
   private snackBar = inject(MatSnackBar);
@@ -44,6 +45,10 @@ export class TenantFormComponent {
   loading = signal(false);
   selectedTier = signal<PricingTier | null>(null);
   hidePassword = signal(true);
+
+  // Edit mode tracking
+  isEditMode = signal(false);
+  tenantId = signal<string | null>(null);
 
   tenantForm: FormGroup;
 
@@ -73,7 +78,7 @@ export class TenantFormComponent {
       apiCallsPerMonth: [0],
       monthlyPrice: [0],
 
-      // Admin User
+      // Admin User (only for create mode)
       adminUserName: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(100)]],
       adminEmail: ['', [Validators.required, Validators.email]],
       adminPassword: ['', [
@@ -86,6 +91,63 @@ export class TenantFormComponent {
     // Auto-update resource limits when employee tier changes
     this.tenantForm.get('employeeTier')?.valueChanges.subscribe(tierId => {
       this.onTierChange(tierId as TierType);
+    });
+  }
+
+  ngOnInit(): void {
+    const id = this.route.snapshot.paramMap.get('id');
+
+    if (id) {
+      // Edit mode
+      this.isEditMode.set(true);
+      this.tenantId.set(id);
+      this.loadTenantData(id);
+
+      // Make admin user fields optional in edit mode
+      this.tenantForm.get('adminUserName')?.clearValidators();
+      this.tenantForm.get('adminEmail')?.clearValidators();
+      this.tenantForm.get('adminPassword')?.clearValidators();
+      this.tenantForm.get('adminUserName')?.updateValueAndValidity();
+      this.tenantForm.get('adminEmail')?.updateValueAndValidity();
+      this.tenantForm.get('adminPassword')?.updateValueAndValidity();
+    }
+  }
+
+  private loadTenantData(id: string): void {
+    this.loading.set(true);
+    console.log('📝 Loading tenant data for edit mode, ID:', id);
+
+    this.tenantService.getTenantById(id).subscribe({
+      next: (tenant) => {
+        console.log('✅ Tenant data loaded:', tenant);
+
+        // Populate form with tenant data
+        this.tenantForm.patchValue({
+          companyName: tenant.companyName,
+          subdomain: tenant.subdomain,
+          contactEmail: tenant.contactEmail || '',
+          contactPhone: tenant.contactPhone || '',
+          employeeTier: tenant.employeeTier || 'Startup',
+          maxUsers: tenant.maxUsers || 0,
+          maxStorageGB: tenant.maxStorageGB || 0,
+          apiCallsPerMonth: tenant.apiCallsPerMonth || 0,
+          monthlyPrice: tenant.monthlyPrice || 0
+        });
+
+        // Disable subdomain field in edit mode (can't change subdomain)
+        this.tenantForm.get('subdomain')?.disable();
+
+        this.loading.set(false);
+      },
+      error: (error) => {
+        console.error('❌ Error loading tenant data:', error);
+        this.loading.set(false);
+        this.snackBar.open('Failed to load tenant data. Please try again.', 'Close', {
+          duration: 5000,
+          panelClass: ['error-snackbar']
+        });
+        this.router.navigate(['/admin/tenants']);
+      }
     });
   }
 
@@ -145,25 +207,73 @@ export class TenantFormComponent {
 
     this.loading.set(true);
 
-    this.tenantService.createTenant(this.tenantForm.value).subscribe({
-      next: (response) => {
+    if (this.isEditMode()) {
+      // UPDATE MODE
+      const id = this.tenantId();
+      if (!id) {
+        this.snackBar.open('Invalid tenant ID', 'Close', { duration: 5000 });
         this.loading.set(false);
-        this.snackBar.open('Tenant created successfully!', 'Close', {
-          duration: 5000,
-          panelClass: ['success-snackbar']
-        });
-        this.router.navigate(['/admin/tenants']);
-      },
-      error: (error) => {
-        this.loading.set(false);
-        const errorMessage = error.message || 'Failed to create tenant. Please try again.';
-        this.snackBar.open(errorMessage, 'Close', {
-          duration: 7000,
-          panelClass: ['error-snackbar']
-        });
-        console.error('Error creating tenant:', error);
+        return;
       }
-    });
+
+      // Get form value (subdomain will be excluded because it's disabled)
+      const formValue = this.tenantForm.getRawValue();
+
+      // Prepare update payload (exclude admin fields in edit mode)
+      const updatePayload = {
+        companyName: formValue.companyName,
+        contactEmail: formValue.contactEmail,
+        contactPhone: formValue.contactPhone,
+        employeeTier: formValue.employeeTier,
+        maxUsers: formValue.maxUsers,
+        maxStorageGB: formValue.maxStorageGB,
+        apiCallsPerMonth: formValue.apiCallsPerMonth,
+        monthlyPrice: formValue.monthlyPrice
+      };
+
+      console.log('📝 Updating tenant:', id, updatePayload);
+
+      this.tenantService.updateTenant(id, updatePayload).subscribe({
+        next: (response) => {
+          this.loading.set(false);
+          this.snackBar.open('Tenant updated successfully!', 'Close', {
+            duration: 5000,
+            panelClass: ['success-snackbar']
+          });
+          this.router.navigate(['/admin/tenants']);
+        },
+        error: (error) => {
+          this.loading.set(false);
+          const errorMessage = error.error?.message || error.message || 'Failed to update tenant. Please try again.';
+          this.snackBar.open(errorMessage, 'Close', {
+            duration: 7000,
+            panelClass: ['error-snackbar']
+          });
+          console.error('Error updating tenant:', error);
+        }
+      });
+    } else {
+      // CREATE MODE
+      this.tenantService.createTenant(this.tenantForm.value).subscribe({
+        next: (response) => {
+          this.loading.set(false);
+          this.snackBar.open('Tenant created successfully!', 'Close', {
+            duration: 5000,
+            panelClass: ['success-snackbar']
+          });
+          this.router.navigate(['/admin/tenants']);
+        },
+        error: (error) => {
+          this.loading.set(false);
+          const errorMessage = error.error?.message || error.message || 'Failed to create tenant. Please try again.';
+          this.snackBar.open(errorMessage, 'Close', {
+            duration: 7000,
+            panelClass: ['error-snackbar']
+          });
+          console.error('Error creating tenant:', error);
+        }
+      });
+    }
   }
 
   onCancel(): void {

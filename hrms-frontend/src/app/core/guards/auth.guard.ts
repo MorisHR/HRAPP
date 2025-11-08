@@ -1,6 +1,7 @@
 import { inject } from '@angular/core';
 import { Router, CanActivateFn, ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
 import { AuthService } from '../services/auth.service';
+import { UserRole } from '../models/user.model';
 
 export const authGuard: CanActivateFn = (route: ActivatedRouteSnapshot, state: RouterStateSnapshot) => {
   const authService = inject(AuthService);
@@ -20,9 +21,19 @@ export const authGuard: CanActivateFn = (route: ActivatedRouteSnapshot, state: R
   });
 
   if (!isAuth) {
-    console.log('❌ AUTH GUARD: Access DENIED - redirecting to /login');
-    console.log('📍 Return URL will be:', state.url);
-    router.navigate(['/login'], { queryParams: { returnUrl: state.url } });
+    // Get last user role to redirect to correct login page
+    const lastUserRole = authService.getLastUserRole();
+    console.log('❌ AUTH GUARD: Access DENIED');
+    console.log('📍 Last user role:', lastUserRole);
+
+    // Redirect based on last user type
+    if (lastUserRole === UserRole.SuperAdmin) {
+      console.log('🔄 AUTH GUARD: Redirecting to SuperAdmin login');
+      router.navigate(['/auth/superadmin'], { queryParams: { returnUrl: state.url } });
+    } else {
+      console.log('🔄 AUTH GUARD: Redirecting to tenant login');
+      router.navigate(['/auth/subdomain'], { queryParams: { returnUrl: state.url } });
+    }
     return false;
   }
 

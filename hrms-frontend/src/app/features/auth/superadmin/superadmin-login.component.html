@@ -198,14 +198,14 @@
           <p class="step-description">
             Enter the 6-digit code from Google Authenticator:
           </p>
-          <form (ngSubmit)="onMfaSetupSubmit()" class="mfa-form">
+          <form [formGroup]="mfaSetupForm" (ngSubmit)="onMfaSetupSubmit()" class="mfa-form">
             <div class="totp-input-container">
               <input
                 type="text"
                 class="totp-input"
                 placeholder="000000"
-                [value]="totpCode()"
-                (input)="onTotpInput($event)"
+                formControlName="totpCode"
+                (input)="onTotpInput($event, 'setup')"
                 [disabled]="isLoading()"
                 maxlength="6"
                 pattern="[0-9]*"
@@ -228,7 +228,7 @@
             <button
               type="submit"
               class="submit-button"
-              [disabled]="!isValidMfaSetupForm() || isLoading()"
+              [disabled]="isMfaSetupButtonDisabled"
             >
               @if (isLoading()) {
                 <span class="loading-spinner"></span>
@@ -256,7 +256,7 @@
       </div>
 
       <div class="form-container">
-        <form (ngSubmit)="onMfaVerifySubmit()" class="login-form">
+        <form [formGroup]="mfaVerifyForm" (ngSubmit)="onMfaVerifySubmit()" class="login-form">
           <div class="mfa-verify-content">
             <p class="mfa-instruction">
               Open Google Authenticator and enter the 6-digit code for your SuperAdmin account:
@@ -267,8 +267,8 @@
                 type="text"
                 class="totp-input large"
                 placeholder="000000"
-                [value]="totpCode()"
-                (input)="onTotpInput($event)"
+                formControlName="totpCode"
+                (input)="onTotpInput($event, 'verify')"
                 [disabled]="isLoading()"
                 maxlength="6"
                 pattern="[0-9]*"
@@ -297,7 +297,7 @@
           <button
             type="submit"
             class="submit-button"
-            [disabled]="!isValidTotpCode() || isLoading()"
+            [disabled]="isMfaVerifyButtonDisabled"
           >
             @if (isLoading()) {
               <span class="loading-spinner"></span>

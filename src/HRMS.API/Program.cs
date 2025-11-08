@@ -421,7 +421,9 @@ builder.Services.AddCors(options =>
             })
             .AllowAnyMethod()
             .AllowAnyHeader()
-            .AllowCredentials();
+            .AllowCredentials()
+            .WithExposedHeaders("Content-Disposition", "X-Correlation-ID", "X-Total-Count")
+            .SetPreflightMaxAge(TimeSpan.FromMinutes(10));
 
             Log.Information("CORS configured with allowed origins: {AllowedOrigins}", string.Join(", ", allowedOrigins));
             Log.Information("CORS configured with wildcard subdomain support for domains: {AllowedDomains}", string.Join(", ", allowedDomains));
@@ -449,7 +451,9 @@ builder.Services.AddCors(options =>
             })
             .AllowAnyMethod()
             .AllowAnyHeader()
-            .AllowCredentials();
+            .AllowCredentials()
+            .WithExposedHeaders("Content-Disposition", "X-Correlation-ID", "X-Total-Count")
+            .SetPreflightMaxAge(TimeSpan.FromMinutes(10));
 
             Log.Information("CORS enabled for development: localhost (with wildcard subdomains), cloud dev environments");
         }
@@ -648,17 +652,21 @@ using (var scope = app.Services.CreateScope())
 
 // ======================
 // HTTP REQUEST PIPELINE (Production-Grade)
+// CRITICAL: Middleware order matters! Follow Microsoft's recommended order.
 // ======================
 
 // Correlation ID - MUST be first for request tracking
 app.UseCorrelationId();
 
-// Global exception handling - Catches all unhandled exceptions
+// Global exception handling - Catches all unhandled exceptions (before everything else)
 app.UseGlobalExceptionHandling();
 
 // COST OPTIMIZATION: Response Compression (MUST be early in pipeline)
 // Compresses all responses with Brotli/Gzip - reduces bandwidth by 60-80%
 app.UseResponseCompression();
+
+// HTTPS Redirection - Early to force HTTPS
+app.UseHttpsRedirection();
 
 // Request/Response logging with PII masking (only in non-production for performance)
 if (!app.Environment.IsProduction())
@@ -692,23 +700,12 @@ if (!app.Environment.IsProduction())
     Log.Information("Swagger UI enabled at /swagger");
 }
 
-// HTTPS Redirection
-app.UseHttpsRedirection();
+// CRITICAL: UseRouting MUST come before UseCors for proper CORS handling
+app.UseRouting();
 
-// CORS - Must be before authentication and all other middleware
+// CORS - MUST come after UseRouting and before UseAuthentication/UseAuthorization
+// ASP.NET Core will automatically handle OPTIONS preflight requests
 app.UseCors("ProductionCorsPolicy");
-
-// Handle OPTIONS requests early (CORS preflight)
-app.Use(async (context, next) =>
-{
-    if (context.Request.Method == "OPTIONS")
-    {
-        context.Response.StatusCode = 200;
-        await context.Response.CompleteAsync();
-        return;
-    }
-    await next();
-});
 
 // SECURITY FIX: Rate Limiting (prevents brute force attacks)
 app.UseIpRateLimiting();
@@ -719,7 +716,7 @@ app.UseTenantResolution();
 // SECURITY FIX: Tenant Context Validation (blocks requests without valid tenant)
 app.UseTenantContextValidation();
 
-// Authentication & Authorization
+// Authentication & Authorization - MUST come after UseCors
 app.UseAuthentication();
 app.UseAuthorization();
 

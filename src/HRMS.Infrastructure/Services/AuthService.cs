@@ -136,7 +136,7 @@ public class AuthService : IAuthService
             new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
             new Claim(ClaimTypes.Name, userName),
             new Claim(ClaimTypes.Email, email),
-            new Claim("role", "SuperAdmin") // Add role claim
+            new Claim(ClaimTypes.Role, "SuperAdmin") // ✅ FIX: Use ClaimTypes.Role instead of lowercase "role"
         };
 
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSettings.Secret));

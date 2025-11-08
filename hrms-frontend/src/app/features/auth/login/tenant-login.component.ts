@@ -3,7 +3,8 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
-import { SubdomainService } from '../../../core/services/subdomain.service';
+import { TenantContextService } from '../../../core/services/tenant-context.service';
+import { SessionManagementService } from '../../../core/services/session-management.service';
 
 @Component({
   selector: 'app-tenant-login',
@@ -24,31 +25,48 @@ export class TenantLoginComponent implements OnInit {
   constructor(
     private router: Router,
     private authService: AuthService,
-    private subdomainService: SubdomainService
+    private tenantContext: TenantContextService,
+    private sessionManagement: SessionManagementService
   ) {}
 
   ngOnInit(): void {
-    // ✅ PROPER SUBDOMAIN-BASED ROUTING
-    // Extract subdomain from URL instead of localStorage
-    const currentSubdomain = this.subdomainService.getSubdomainFromUrl();
-
-    if (!currentSubdomain || !this.subdomainService.isOnTenantSubdomain()) {
-      // Not on a tenant subdomain, redirect to main domain for subdomain entry
-      console.log('❌ Not on tenant subdomain, redirecting to main domain');
-      this.subdomainService.redirectToMainDomain('/auth/subdomain');
+    // ✅ ENTERPRISE FEATURE: Auto-redirect authenticated users
+    // Prevents users from viewing login page while logged in
+    // Matches Fortune 500 behavior (Google, Microsoft, Salesforce)
+    if (this.authService.isAuthenticated() && !this.sessionManagement.isTokenExpired()) {
+      console.log('✅ User already authenticated - redirecting to dashboard');
+      this.router.navigate(['/dashboard'], { replaceUrl: true });
       return;
     }
 
-    // Set subdomain from URL
-    this.subdomain.set(currentSubdomain);
-    this.companyName.set(currentSubdomain); // You can fetch company name from API if needed
-    console.log(`✅ Tenant login page loaded for subdomain: ${currentSubdomain}`);
+    // If token exists but is expired, clear it
+    if (this.authService.isAuthenticated() && this.sessionManagement.isTokenExpired()) {
+      console.log('⚠️ Token expired - clearing auth state');
+      this.authService.logout();
+    }
+
+    // ✅ ENVIRONMENT-AWARE TENANT DETECTION
+    // Automatically gets tenant from URL (production/localhost) or localStorage (Codespaces)
+    const currentTenant = this.tenantContext.getCurrentTenant();
+
+    if (!currentTenant) {
+      // No tenant context, redirect to subdomain selection
+      console.log('❌ No tenant context, redirecting to subdomain selection');
+      this.tenantContext.navigateToSubdomainSelection('/auth/subdomain');
+      return;
+    }
+
+    // Set subdomain from tenant context
+    this.subdomain.set(currentTenant);
+    this.companyName.set(currentTenant); // You can fetch company name from API if needed
+    console.log(`✅ Tenant login page loaded for tenant: ${currentTenant}`);
+    console.log(`📍 Routing mode: ${this.tenantContext.getRoutingMode()}`);
   }
 
   onChangeCompany(): void {
-    // Redirect back to main domain for subdomain entry
-    console.log('🔄 Changing company, redirecting to main domain');
-    this.subdomainService.redirectToMainDomain('/auth/subdomain');
+    // Navigate back to subdomain selection (environment-aware)
+    console.log('🔄 Changing company, redirecting to subdomain selection');
+    this.tenantContext.navigateToSubdomainSelection('/auth/subdomain');
   }
 
   togglePasswordVisibility(): void {

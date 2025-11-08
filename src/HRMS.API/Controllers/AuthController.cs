@@ -241,12 +241,44 @@ public class AuthController : ControllerBase
     {
         try
         {
+            // DETAILED LOGGING FOR DEBUGGING
+            _logger.LogInformation("=== MFA COMPLETE SETUP REQUEST RECEIVED ===");
+            _logger.LogInformation("Request object is null: {IsNull}", request == null);
+
+            if (request != null)
+            {
+                _logger.LogInformation("UserId: {UserId}", request.UserId);
+                _logger.LogInformation("TotpCode: {TotpCode}", request.TotpCode);
+                _logger.LogInformation("Secret: {Secret}", request.Secret);  // Show full secret for debugging
+                _logger.LogInformation("Secret length: {SecretLength}", request.Secret?.Length ?? 0);
+                _logger.LogInformation("BackupCodes count: {BackupCodesCount}", request.BackupCodes?.Count ?? 0);
+
+                // Debug: Show first few backup codes
+                if (request.BackupCodes?.Count > 0)
+                {
+                    _logger.LogInformation("First backup code: {Code}", request.BackupCodes[0]);
+                }
+            }
+
+            _logger.LogInformation("ModelState.IsValid: {IsValid}", ModelState.IsValid);
+
             if (!ModelState.IsValid)
             {
+                // Log validation errors
+                foreach (var entry in ModelState)
+                {
+                    foreach (var error in entry.Value.Errors)
+                    {
+                        _logger.LogWarning("ModelState Error - Key: {Key}, Error: {Error}",
+                            entry.Key, error.ErrorMessage);
+                    }
+                }
+
                 return BadRequest(new
                 {
                     success = false,
-                    message = "Invalid request data"
+                    message = "Invalid request data",
+                    errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage)
                 });
             }
 
@@ -666,6 +698,65 @@ public class AuthController : ControllerBase
             {
                 success = false,
                 message = "Error revoking tokens"
+            });
+        }
+    }
+
+    /// <summary>
+    /// DIAGNOSTIC ENDPOINT: Validate current JWT token and show all claims
+    /// Used for debugging authentication issues
+    /// </summary>
+    [HttpGet("validate")]
+    [Authorize] // Requires valid JWT token
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public IActionResult ValidateToken()
+    {
+        try
+        {
+            // Extract all claims from the JWT token
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var email = User.FindFirst(ClaimTypes.Email)?.Value;
+            var name = User.FindFirst(ClaimTypes.Name)?.Value;
+            var role = User.FindFirst(ClaimTypes.Role)?.Value;
+            var isAuthenticated = User.Identity?.IsAuthenticated ?? false;
+
+            // Get all claims for comprehensive debugging
+            var allClaims = User.Claims.Select(c => new
+            {
+                type = c.Type,
+                value = c.Value
+            }).ToList();
+
+            // Log the validation for debugging
+            _logger.LogInformation("🔍 TOKEN VALIDATION - User: {UserId}, Email: {Email}, Role: {Role}, Authenticated: {IsAuthenticated}",
+                userId, email, role, isAuthenticated);
+
+            _logger.LogInformation("📋 ALL CLAIMS: {Claims}", string.Join(", ", allClaims.Select(c => $"{c.type}={c.value}")));
+
+            return Ok(new
+            {
+                success = true,
+                data = new
+                {
+                    userId,
+                    email,
+                    name,
+                    role,
+                    isAuthenticated,
+                    allClaims,
+                    timestamp = DateTime.UtcNow
+                },
+                message = "Token is valid"
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error validating token");
+            return StatusCode(500, new
+            {
+                success = false,
+                message = "Error validating token"
             });
         }
     }

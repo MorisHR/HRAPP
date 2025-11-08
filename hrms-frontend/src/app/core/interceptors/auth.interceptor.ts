@@ -1,7 +1,8 @@
 import { HttpInterceptorFn, HttpErrorResponse, HttpRequest } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { AuthService } from '../services/auth.service';
-import { SubdomainService } from '../services/subdomain.service';
+import { TenantContextService } from '../services/tenant-context.service';
+import { SessionManagementService } from '../services/session-management.service';
 import { catchError, switchMap, throwError, tap } from 'rxjs';
 import { Router } from '@angular/router';
 import { environment } from '../../../environments/environment';
@@ -19,9 +20,15 @@ const RETRY_REQUEST_MARKER = 'X-Retry-Request';
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const authService = inject(AuthService);
-  const subdomainService = inject(SubdomainService);
+  const tenantContext = inject(TenantContextService);
+  const sessionManagement = inject(SessionManagementService);
   const router = inject(Router);
   const token = authService.getToken();
+
+  // Record API calls as user activity (extends session)
+  if (authService.isAuthenticated()) {
+    sessionManagement.recordActivity();
+  }
 
   // Log every API request for debugging
   console.log(`🔵 API Request: ${req.method} ${req.url}`);
@@ -31,8 +38,22 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
     console.log(`⚠️  No token present`);
   }
 
-  // Get tenant subdomain from URL (proper multi-tenant routing)
-  const tenantSubdomain = subdomainService.getSubdomainForApiRequest();
+  // ✅ SECURITY FIX: Don't add tenant subdomain header for admin routes
+  // SuperAdmin endpoints at /api/Tenants, /api/AdminUsers, etc. don't need tenant context
+  const isAdminRoute = req.url.includes('/Tenants') ||
+                       req.url.includes('/AdminUsers') ||
+                       req.url.includes('/auth/');
+
+  // Get tenant subdomain from context (environment-aware)
+  // Works in both Codespaces (localStorage) and production (URL)
+  const tenantSubdomain = isAdminRoute ? null : tenantContext.getTenantForApiRequest();
+
+  if (isAdminRoute) {
+    console.log('👑 Admin API route - no tenant subdomain needed');
+  } else if (tenantSubdomain) {
+    console.log(`🏢 Tenant API route - subdomain: ${tenantSubdomain}`);
+    console.log(`📍 Routing mode: ${tenantContext.getRoutingMode()}`);
+  }
 
   // Clone request and add authorization header if token exists
   // Always set withCredentials for CORS (enables HttpOnly cookies)
@@ -88,6 +109,21 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
           // ============================================
           // CRITICAL FIX: Proper 401 handling with token refresh
           // ============================================
+
+          // Enhanced diagnostic logging
+          console.error('🚨 401 UNAUTHORIZED - DETAILED DIAGNOSTICS 🚨');
+          console.error('📍 Request Details:', {
+            url: error.url || req.url,
+            method: req.method,
+            headers: Array.from(req.headers.keys()),
+            hasAuthHeader: req.headers.has('Authorization'),
+            hasToken: !!authService.getToken(),
+            tokenPreview: authService.getToken()?.substring(0, 30) + '...',
+            currentRoute: router.url,
+            isRetry: isRetryRequest(req),
+            errorMessage: error.error?.message || error.message,
+            errorDetails: error.error
+          });
 
           // NEVER retry login/refresh endpoints
           if (req.url.includes('/auth/login') ||

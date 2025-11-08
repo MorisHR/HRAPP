@@ -2,30 +2,37 @@ import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
 import { superAdminGuard, hrGuard } from './core/guards/role.guard';
 import { subdomainGuard } from './core/guards/subdomain.guard';
+import { alreadyLoggedInGuard } from './core/guards/already-logged-in.guard';
 
 export const routes: Routes = [
-  // Default route - redirect to subdomain entry
+  // Landing Page - Marketing homepage
   {
     path: '',
-    redirectTo: '/auth/subdomain',
+    loadComponent: () => import('./features/marketing/landing-page.component').then(m => m.LandingPageComponent),
     pathMatch: 'full'
   },
 
   // Authentication routes
+  // SECURITY: All login routes protected by alreadyLoggedInGuard
+  // This prevents authenticated users from accessing login pages
+  // If user is already logged in and navigates to login page (via back button, etc.),
+  // they will be redirected to their appropriate dashboard
   {
     path: 'auth',
     children: [
       {
         path: 'subdomain',
+        canActivate: [alreadyLoggedInGuard],
         loadComponent: () => import('./features/auth/subdomain/subdomain.component').then(m => m.SubdomainComponent)
       },
       {
         path: 'login',
-        canActivate: [subdomainGuard],
+        canActivate: [subdomainGuard, alreadyLoggedInGuard],
         loadComponent: () => import('./features/auth/login/tenant-login.component').then(m => m.TenantLoginComponent)
       },
       {
         path: 'superadmin',
+        canActivate: [alreadyLoggedInGuard],
         loadComponent: () => import('./features/auth/superadmin/superadmin-login.component').then(m => m.SuperAdminLoginComponent)
       },
       {
@@ -62,6 +69,14 @@ export const routes: Routes = [
       },
       {
         path: 'tenants/new',
+        loadComponent: () => import('./features/admin/tenant-management/tenant-form.component').then(m => m.TenantFormComponent)
+      },
+      {
+        path: 'tenants/:id',
+        loadComponent: () => import('./features/admin/tenant-management/tenant-detail.component').then(m => m.TenantDetailComponent)
+      },
+      {
+        path: 'tenants/:id/edit',
         loadComponent: () => import('./features/admin/tenant-management/tenant-form.component').then(m => m.TenantFormComponent)
       }
     ]

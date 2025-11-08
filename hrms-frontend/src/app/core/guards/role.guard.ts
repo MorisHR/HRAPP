@@ -23,8 +23,19 @@ export const roleGuard = (allowedRoles: UserRole[]): CanActivateFn => {
     });
 
     if (!isAuth) {
-      console.log('❌ ROLE GUARD: User not authenticated - redirecting to /login');
-      router.navigate(['/login']);
+      // Get last user role to redirect to correct login page
+      const lastUserRole = authService.getLastUserRole();
+      console.log('❌ ROLE GUARD: User not authenticated');
+      console.log('📍 Last user role:', lastUserRole);
+
+      // Redirect based on last user type
+      if (lastUserRole === UserRole.SuperAdmin) {
+        console.log('🔄 ROLE GUARD: Redirecting to SuperAdmin login');
+        router.navigate(['/auth/superadmin']);
+      } else {
+        console.log('🔄 ROLE GUARD: Redirecting to tenant login');
+        router.navigate(['/auth/subdomain']);
+      }
       return false;
     }
 
