@@ -1,11 +1,25 @@
-import { HttpInterceptorFn, HttpErrorResponse } from '@angular/common/http';
+import { HttpInterceptorFn, HttpErrorResponse, HttpRequest } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { AuthService } from '../services/auth.service';
+import { SubdomainService } from '../services/subdomain.service';
 import { catchError, switchMap, throwError, tap } from 'rxjs';
 import { Router } from '@angular/router';
+import { environment } from '../../../environments/environment';
+
+// ============================================
+// PRODUCTION-GRADE HTTP INTERCEPTOR
+// Implements proper token refresh with retry logic
+// ============================================
+
+/**
+ * Marker to prevent infinite retry loops
+ * Tracks requests that are retries of failed requests
+ */
+const RETRY_REQUEST_MARKER = 'X-Retry-Request';
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const authService = inject(AuthService);
+  const subdomainService = inject(SubdomainService);
   const router = inject(Router);
   const token = authService.getToken();
 
@@ -14,22 +28,24 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   if (token) {
     console.log(`🔑 Token present: ${token.substring(0, 20)}...`);
   } else {
-    console.log(`⚠️ No token present`);
+    console.log(`⚠️  No token present`);
   }
 
-  // Get tenant subdomain from localStorage
-  const tenantSubdomain = localStorage.getItem('tenant_subdomain');
+  // Get tenant subdomain from URL (proper multi-tenant routing)
+  const tenantSubdomain = subdomainService.getSubdomainForApiRequest();
 
   // Clone request and add authorization header if token exists
-  // Always set withCredentials for CORS
+  // Always set withCredentials for CORS (enables HttpOnly cookies)
   if (token && !req.url.includes('/auth/login') && !req.url.includes('/auth/tenant/login')) {
     const headers: any = {
       Authorization: `Bearer ${token}`
     };
 
-    // Add tenant subdomain header for multi-tenant support
-    if (tenantSubdomain) {
+    // Add tenant subdomain header for multi-tenant support (DEVELOPMENT ONLY)
+    // In production, subdomain is extracted from request host by backend
+    if (tenantSubdomain && !environment.production) {
       headers['X-Tenant-Subdomain'] = tenantSubdomain;
+      console.log(`📍 Development: Adding X-Tenant-Subdomain header: ${tenantSubdomain}`);
     }
 
     req = req.clone({
@@ -40,9 +56,11 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
     // Set withCredentials even for login requests
     const headers: any = {};
 
-    // Add tenant subdomain header even for login requests (for tenant login)
-    if (tenantSubdomain) {
+    // Add tenant subdomain header even for login requests (DEVELOPMENT ONLY)
+    // In production, subdomain is extracted from request host by backend
+    if (tenantSubdomain && !environment.production) {
       headers['X-Tenant-Subdomain'] = tenantSubdomain;
+      console.log(`📍 Development: Adding X-Tenant-Subdomain header: ${tenantSubdomain}`);
     }
 
     req = req.clone({
@@ -67,35 +85,49 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
       // Handle different error types appropriately
       switch (error.status) {
         case 401:
-          // Only try to refresh if this is NOT a login or refresh endpoint
+          // ============================================
+          // CRITICAL FIX: Proper 401 handling with token refresh
+          // ============================================
+
+          // NEVER retry login/refresh endpoints
           if (req.url.includes('/auth/login') ||
               req.url.includes('/auth/tenant/login') ||
               req.url.includes('/auth/refresh')) {
             console.error('🔴 Authentication failed on login/refresh endpoint - NOT attempting refresh');
-            // Don't logout immediately - let the component handle it
             return throwError(() => error);
           }
 
-          console.warn('⚠️ Got 401 Unauthorized - Token may be expired or invalid');
+          // NEVER retry if this is already a retry request (prevent infinite loops)
+          if (isRetryRequest(req)) {
+            console.error('🔴 Retry request failed with 401 - logging out');
+            authService.logout();
+            return throwError(() => error);
+          }
+
+          console.warn('⚠️  Got 401 Unauthorized - Token may be expired');
           console.log('🔄 Attempting token refresh...');
 
-          // Try to refresh token
+          // Try to refresh token using HttpOnly cookie
           return authService.refreshToken().pipe(
-            switchMap(() => {
+            switchMap((response) => {
               console.log('✅ Token refresh successful, retrying original request');
+
               // Retry original request with new token
               const newToken = authService.getToken();
               const clonedReq = req.clone({
                 setHeaders: {
-                  Authorization: `Bearer ${newToken}`
+                  Authorization: `Bearer ${newToken}`,
+                  [RETRY_REQUEST_MARKER]: 'true' // Mark as retry to prevent infinite loops
                 },
                 withCredentials: true
               });
+
               return next(clonedReq);
             }),
             catchError(refreshError => {
               console.error('❌ Token refresh failed:', refreshError);
               console.log('🚪 Logging out user due to refresh failure');
+
               // Only NOW logout - after refresh explicitly failed
               authService.logout();
               return throwError(() => refreshError);
@@ -113,7 +145,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
           return throwError(() => error);
 
         case 400:
-          console.error('⚠️ 400 Bad Request - Invalid data sent to server');
+          console.error('⚠️  400 Bad Request - Invalid data sent to server');
           // Don't logout - this is a validation error
           return throwError(() => error);
 
@@ -131,3 +163,11 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
     })
   );
 };
+
+/**
+ * Check if a request is a retry request
+ * Prevents infinite retry loops
+ */
+function isRetryRequest(req: HttpRequest<any>): boolean {
+  return req.headers.has(RETRY_REQUEST_MARKER);
+}

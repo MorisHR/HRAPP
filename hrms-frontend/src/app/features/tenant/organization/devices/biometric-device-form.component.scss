@@ -1,0 +1,875 @@
+// MorisHR Executive Theme - Biometric Device Registration Form
+// Fortune 500 Enterprise-Grade Form Styling
+
+:host {
+  display: block;
+  padding: 24px;
+  background: linear-gradient(135deg, #f5f7fa 0%, #e8ecf1 100%);
+  min-height: 100%;
+}
+
+// ============================================
+// CARD CONTAINER - Premium Elevation
+// ============================================
+mat-card {
+  border-radius: 16px;
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.08),
+    0 2px 8px rgba(0, 0, 0, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  background: #ffffff;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+// ============================================
+// CARD HEADER - Executive Typography
+// ============================================
+mat-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 32px 32px 24px;
+  background: linear-gradient(135deg, #1a237e 0%, #283593 100%);
+  border-bottom: 3px solid #3949ab;
+  margin: 0;
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.3) 50%,
+      transparent 100%);
+  }
+
+  mat-card-title {
+    color: #ffffff;
+    font-size: 28px;
+    font-weight: 600;
+    letter-spacing: -0.5px;
+    margin: 0;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  }
+
+  .header-actions {
+    .test-connection-button {
+      padding: 12px 28px;
+      font-size: 15px;
+      font-weight: 600;
+      border-radius: 8px;
+      letter-spacing: 0.3px;
+      background: linear-gradient(135deg, #2196f3 0%, #42a5f5 100%);
+      color: #ffffff;
+      box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+      mat-icon,
+      mat-spinner {
+        margin-right: 8px;
+      }
+
+      mat-spinner {
+        ::ng-deep circle {
+          stroke: #ffffff;
+        }
+      }
+
+      &:hover:not(:disabled) {
+        transform: translateY(-2px) scale(1.03);
+        box-shadow: 0 6px 20px rgba(33, 150, 243, 0.4);
+        background: linear-gradient(135deg, #1e88e5 0%, #2196f3 100%);
+      }
+
+      &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+    }
+  }
+}
+
+// ============================================
+// CARD CONTENT - Spacious Layout
+// ============================================
+mat-card-content {
+  padding: 32px;
+}
+
+// ============================================
+// LOADING STATE - Premium Animation
+// ============================================
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 20px;
+  gap: 24px;
+
+  mat-spinner {
+    ::ng-deep circle {
+      stroke: #3949ab;
+      stroke-width: 4px;
+    }
+  }
+
+  p {
+    color: #5e6c84;
+    font-size: 16px;
+    font-weight: 500;
+    margin: 0;
+    letter-spacing: 0.2px;
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+// ============================================
+// DEVICE FORM - Main Container
+// ============================================
+.device-form {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+// ============================================
+// FORM SECTIONS - Clean Organization
+// ============================================
+.form-section {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 24px;
+  border-radius: 12px;
+  background: #fafafa;
+  transition: all 0.3s ease;
+
+  &:hover {
+    background: #f5f5f5;
+  }
+
+  // Network Section - HIGHLIGHTED (MOST IMPORTANT!)
+  &.network-section {
+    background: linear-gradient(135deg, #e3f2fd 0%, #e8f5e9 100%);
+    border: 3px solid #2196f3;
+    box-shadow:
+      0 4px 20px rgba(33, 150, 243, 0.2),
+      0 0 0 1px rgba(33, 150, 243, 0.1);
+    position: relative;
+    padding: 28px;
+    transform: scale(1.01);
+
+    &::before {
+      content: '';
+      position: absolute;
+      top: -3px;
+      left: -3px;
+      right: -3px;
+      bottom: -3px;
+      background: linear-gradient(135deg, #2196f3 0%, #4caf50 100%);
+      border-radius: 12px;
+      z-index: -1;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    &:hover {
+      background: linear-gradient(135deg, #e3f2fd 0%, #e8f5e9 100%);
+      box-shadow:
+        0 8px 32px rgba(33, 150, 243, 0.25),
+        0 0 0 1px rgba(33, 150, 243, 0.15);
+
+      &::before {
+        opacity: 0.1;
+      }
+    }
+  }
+}
+
+// ============================================
+// SECTION HEADERS - With Icons
+// ============================================
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+
+  mat-icon {
+    color: #3949ab;
+    font-size: 28px;
+    height: 28px;
+    width: 28px;
+  }
+
+  h3 {
+    color: #1a237e;
+    font-size: 20px;
+    font-weight: 600;
+    margin: 0;
+    letter-spacing: -0.3px;
+  }
+
+  // Highlighted section header
+  &.highlighted {
+    mat-icon {
+      color: #2196f3;
+      animation: iconPulse 2s ease-in-out infinite;
+    }
+
+    h3 {
+      color: #1565c0;
+      font-weight: 700;
+    }
+  }
+
+  // Badge styling
+  .badge {
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-left: auto;
+
+    &.important {
+      background: linear-gradient(135deg, #ff5252 0%, #ff6b6b 100%);
+      color: #ffffff;
+      box-shadow: 0 2px 8px rgba(255, 82, 82, 0.3);
+      animation: badgePulse 2s ease-in-out infinite;
+    }
+
+    &.optional {
+      background: #e0e0e0;
+      color: #616161;
+    }
+  }
+}
+
+@keyframes iconPulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+@keyframes badgePulse {
+  0%, 100% {
+    box-shadow: 0 2px 8px rgba(255, 82, 82, 0.3);
+  }
+  50% {
+    box-shadow: 0 4px 16px rgba(255, 82, 82, 0.5);
+  }
+}
+
+// ============================================
+// FORM GRID - Responsive Layout
+// ============================================
+.form-grid {
+  display: grid;
+  gap: 20px;
+  grid-template-columns: 1fr;
+
+  .full-width {
+    grid-column: 1 / -1;
+  }
+
+  .half-width {
+    grid-column: span 1;
+  }
+}
+
+// Desktop layout
+@media (min-width: 768px) {
+  .form-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+// ============================================
+// FORM FIELD STYLING - Material Design
+// ============================================
+mat-form-field {
+  width: 100%;
+
+  &.full-width {
+    width: 100%;
+  }
+
+  ::ng-deep {
+    .mat-form-field-wrapper {
+      padding-bottom: 0;
+    }
+
+    .mat-form-field-outline {
+      color: #c5cae9;
+      transition: all 0.3s ease;
+    }
+
+    .mat-form-field-outline-thick {
+      color: #3949ab;
+    }
+
+    .mat-form-field-label {
+      color: #5e6c84;
+      font-weight: 500;
+    }
+
+    .mat-focused .mat-form-field-label {
+      color: #3949ab;
+    }
+
+    .mat-form-field-prefix mat-icon,
+    .mat-form-field-suffix mat-icon {
+      color: #7c8a9d;
+    }
+
+    .mat-focused .mat-form-field-prefix mat-icon {
+      color: #3949ab;
+    }
+
+    // Error state
+    .mat-form-field-invalid {
+      .mat-form-field-outline {
+        color: #f44336;
+      }
+
+      .mat-form-field-label {
+        color: #f44336;
+      }
+    }
+
+    // Hint text
+    .mat-hint {
+      color: #7c8a9d;
+      font-size: 12px;
+      margin-top: 4px;
+    }
+
+    // Error messages
+    .mat-error {
+      color: #f44336;
+      font-size: 12px;
+      font-weight: 500;
+      margin-top: 4px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+  }
+}
+
+// Required field indicator
+.required {
+  color: #f44336;
+  font-weight: 700;
+  margin-left: 2px;
+}
+
+// ============================================
+// RADIO GROUP STYLING
+// ============================================
+.radio-group-container {
+  padding: 16px;
+  background: #ffffff;
+  border-radius: 8px;
+  border: 2px solid #e0e0e0;
+  transition: all 0.3s ease;
+
+  &:hover {
+    border-color: #c5cae9;
+  }
+
+  .radio-group-label {
+    display: block;
+    color: #5e6c84;
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 12px;
+  }
+
+  .radio-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+
+    mat-radio-button {
+      ::ng-deep {
+        .mat-radio-label {
+          font-size: 14px;
+          font-weight: 500;
+          color: #2c3e50;
+        }
+
+        .mat-radio-outer-circle {
+          border-color: #c5cae9;
+        }
+
+        .mat-radio-inner-circle {
+          background-color: #3949ab;
+        }
+
+        .mat-radio-checked .mat-radio-outer-circle {
+          border-color: #3949ab;
+        }
+      }
+    }
+  }
+}
+
+// ============================================
+// TOGGLE STYLING - Slide Toggles
+// ============================================
+.toggle-container {
+  padding: 16px;
+  background: #ffffff;
+  border-radius: 8px;
+  border: 2px solid #e0e0e0;
+  transition: all 0.3s ease;
+
+  &:hover {
+    border-color: #c5cae9;
+  }
+
+  mat-slide-toggle {
+    ::ng-deep {
+      .mat-slide-toggle-label {
+        strong {
+          color: #1a237e;
+          font-size: 15px;
+        }
+      }
+
+      .mat-slide-toggle-bar {
+        background-color: #bdbdbd;
+      }
+
+      .mat-checked .mat-slide-toggle-bar {
+        background-color: rgba(57, 73, 171, 0.5);
+      }
+
+      .mat-slide-toggle-thumb {
+        background-color: #fafafa;
+      }
+
+      .mat-checked .mat-slide-toggle-thumb {
+        background-color: #3949ab;
+      }
+    }
+  }
+
+  .toggle-hint {
+    color: #7c8a9d;
+    font-size: 13px;
+    margin: 8px 0 0 0;
+    line-height: 1.5;
+  }
+}
+
+// ============================================
+// INFO BOX - Network Configuration Tips
+// ============================================
+.info-box {
+  display: flex;
+  gap: 16px;
+  padding: 20px;
+  background: linear-gradient(135deg, #e3f2fd 0%, #e1f5fe 100%);
+  border: 2px solid #2196f3;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(33, 150, 243, 0.1);
+
+  mat-icon {
+    color: #2196f3;
+    font-size: 32px;
+    height: 32px;
+    width: 32px;
+    flex-shrink: 0;
+  }
+
+  .info-content {
+    flex: 1;
+
+    strong {
+      color: #1565c0;
+      font-size: 15px;
+      display: block;
+      margin-bottom: 12px;
+    }
+
+    ul {
+      margin: 0;
+      padding-left: 20px;
+      color: #2c3e50;
+      font-size: 14px;
+      line-height: 1.8;
+
+      li {
+        margin-bottom: 6px;
+
+        &:last-child {
+          margin-bottom: 0;
+        }
+      }
+    }
+  }
+}
+
+// ============================================
+// PASSWORD FIELD - Show/Hide Toggle
+// ============================================
+mat-form-field {
+  ::ng-deep {
+    .mat-form-field-suffix {
+      button[mat-icon-button] {
+        color: #7c8a9d;
+        transition: all 0.3s ease;
+
+        &:hover {
+          color: #3949ab;
+          transform: scale(1.1);
+        }
+      }
+    }
+  }
+}
+
+// ============================================
+// DIVIDERS - Section Separators
+// ============================================
+mat-divider {
+  border-top-color: #e0e0e0;
+  margin: 24px 0;
+}
+
+// ============================================
+// FORM ACTIONS - Button Container
+// ============================================
+.form-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-radius: 12px;
+  gap: 16px;
+  flex-wrap: wrap;
+
+  .left-actions,
+  .right-actions {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+  }
+
+  button {
+    padding: 12px 32px;
+    font-size: 15px;
+    font-weight: 600;
+    border-radius: 8px;
+    letter-spacing: 0.3px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    min-width: 140px;
+
+    mat-icon,
+    mat-spinner {
+      margin-right: 8px;
+    }
+
+    mat-spinner {
+      ::ng-deep circle {
+        stroke: #ffffff;
+      }
+    }
+
+    &:hover:not(:disabled) {
+      transform: translateY(-2px) scale(1.03);
+    }
+
+    &:active:not(:disabled) {
+      transform: translateY(0) scale(0.98);
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none !important;
+    }
+  }
+
+  // Cancel Button - Gray
+  .cancel-button {
+    background: #e0e0e0;
+    color: #424242;
+
+    &:hover:not(:disabled) {
+      background: #bdbdbd;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+  }
+
+  // Test Connection Button - Blue Gradient
+  .test-button {
+    background: linear-gradient(135deg, #2196f3 0%, #42a5f5 100%);
+    color: #ffffff;
+    box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
+
+    &:hover:not(:disabled) {
+      box-shadow: 0 6px 20px rgba(33, 150, 243, 0.4);
+      background: linear-gradient(135deg, #1e88e5 0%, #2196f3 100%);
+    }
+  }
+
+  // Submit Button - Golden Primary
+  .submit-button {
+    background: linear-gradient(135deg, #ffc107 0%, #ffb300 100%);
+    color: #1a237e;
+    box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);
+
+    &:hover:not(:disabled) {
+      box-shadow: 0 6px 20px rgba(255, 193, 7, 0.4);
+      background: linear-gradient(135deg, #ffca28 0%, #ffc107 100%);
+    }
+  }
+}
+
+// ============================================
+// VALIDATION SUMMARY - Error Alert
+// ============================================
+.validation-summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  background: linear-gradient(135deg, #fff5f5 0%, #ffe8e8 100%);
+  border: 2px solid #ff5252;
+  border-radius: 12px;
+  margin-top: 16px;
+  box-shadow: 0 4px 12px rgba(255, 82, 82, 0.15);
+
+  mat-icon {
+    color: #f44336;
+    font-size: 24px;
+    height: 24px;
+    width: 24px;
+  }
+
+  span {
+    color: #c62828;
+    font-size: 14px;
+    font-weight: 600;
+  }
+}
+
+// ============================================
+// RESPONSIVE DESIGN - Mobile Optimization
+// ============================================
+@media (max-width: 1200px) {
+  mat-card-header {
+    padding: 24px 24px 20px;
+
+    mat-card-title {
+      font-size: 24px;
+    }
+  }
+
+  mat-card-content {
+    padding: 24px;
+  }
+}
+
+@media (max-width: 768px) {
+  :host {
+    padding: 16px;
+  }
+
+  mat-card {
+    border-radius: 12px;
+  }
+
+  mat-card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 20px;
+
+    mat-card-title {
+      font-size: 20px;
+    }
+
+    .header-actions {
+      width: 100%;
+
+      .test-connection-button {
+        width: 100%;
+        justify-content: center;
+      }
+    }
+  }
+
+  mat-card-content {
+    padding: 16px;
+  }
+
+  .form-section {
+    padding: 16px;
+
+    &.network-section {
+      padding: 20px 16px;
+    }
+  }
+
+  .section-header {
+    mat-icon {
+      font-size: 24px;
+      height: 24px;
+      width: 24px;
+    }
+
+    h3 {
+      font-size: 18px;
+    }
+  }
+
+  .form-actions {
+    flex-direction: column;
+    padding: 16px;
+
+    .left-actions,
+    .right-actions {
+      width: 100%;
+      flex-direction: column;
+    }
+
+    button {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+
+  .radio-group {
+    flex-direction: column;
+  }
+
+  .info-box {
+    flex-direction: column;
+    padding: 16px;
+
+    mat-icon {
+      align-self: flex-start;
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  mat-card-header {
+    mat-card-title {
+      font-size: 18px;
+    }
+  }
+
+  .section-header {
+    h3 {
+      font-size: 16px;
+    }
+
+    .badge {
+      font-size: 9px;
+      padding: 3px 8px;
+    }
+  }
+
+  .form-actions {
+    button {
+      padding: 10px 24px;
+      font-size: 14px;
+      min-width: 120px;
+    }
+  }
+}
+
+// ============================================
+// PREMIUM TOUCHES - Subtle Enhancements
+// ============================================
+
+// Smooth entrance animations
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+mat-card {
+  animation: fadeInUp 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.form-section {
+  animation: fadeInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+
+  &:nth-child(2) {
+    animation-delay: 0.1s;
+  }
+
+  &:nth-child(3) {
+    animation-delay: 0.2s;
+  }
+
+  &:nth-child(4) {
+    animation-delay: 0.3s;
+  }
+
+  &:nth-child(5) {
+    animation-delay: 0.4s;
+  }
+}
+
+// Professional focus states
+button:focus-visible,
+mat-form-field:focus-visible {
+  outline: 3px solid rgba(57, 73, 171, 0.3);
+  outline-offset: 2px;
+}
+
+// Custom snackbar styles
+::ng-deep {
+  .success-snackbar {
+    background: linear-gradient(135deg, #4caf50 0%, #66bb6a 100%) !important;
+    color: #ffffff !important;
+  }
+
+  .error-snackbar {
+    background: linear-gradient(135deg, #f44336 0%, #ef5350 100%) !important;
+    color: #ffffff !important;
+  }
+}
+
+// Smooth scrolling for long forms
+:host {
+  scroll-behavior: smooth;
+}

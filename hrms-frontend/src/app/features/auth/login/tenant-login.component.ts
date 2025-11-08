@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
+import { SubdomainService } from '../../../core/services/subdomain.service';
 
 @Component({
   selector: 'app-tenant-login',
@@ -22,29 +23,32 @@ export class TenantLoginComponent implements OnInit {
 
   constructor(
     private router: Router,
-    private authService: AuthService
+    private authService: AuthService,
+    private subdomainService: SubdomainService
   ) {}
 
   ngOnInit(): void {
-    // Check if subdomain exists in localStorage
-    const storedSubdomain = localStorage.getItem('hrms_subdomain');
-    const storedCompanyName = localStorage.getItem('hrms_company_name');
+    // ✅ PROPER SUBDOMAIN-BASED ROUTING
+    // Extract subdomain from URL instead of localStorage
+    const currentSubdomain = this.subdomainService.getSubdomainFromUrl();
 
-    if (!storedSubdomain) {
-      // No subdomain, redirect to subdomain entry page
-      this.router.navigate(['/auth/subdomain']);
+    if (!currentSubdomain || !this.subdomainService.isOnTenantSubdomain()) {
+      // Not on a tenant subdomain, redirect to main domain for subdomain entry
+      console.log('❌ Not on tenant subdomain, redirecting to main domain');
+      this.subdomainService.redirectToMainDomain('/auth/subdomain');
       return;
     }
 
-    this.subdomain.set(storedSubdomain);
-    this.companyName.set(storedCompanyName || storedSubdomain);
+    // Set subdomain from URL
+    this.subdomain.set(currentSubdomain);
+    this.companyName.set(currentSubdomain); // You can fetch company name from API if needed
+    console.log(`✅ Tenant login page loaded for subdomain: ${currentSubdomain}`);
   }
 
   onChangeCompany(): void {
-    // Clear stored subdomain and redirect back to subdomain entry
-    localStorage.removeItem('hrms_subdomain');
-    localStorage.removeItem('hrms_company_name');
-    this.router.navigate(['/auth/subdomain']);
+    // Redirect back to main domain for subdomain entry
+    console.log('🔄 Changing company, redirecting to main domain');
+    this.subdomainService.redirectToMainDomain('/auth/subdomain');
   }
 
   togglePasswordVisibility(): void {

@@ -702,6 +702,226 @@ public class PayrollService : IPayrollService
 
     // ==================== EARNINGS CALCULATIONS ====================
 
+    public async Task<PayrollResult> CalculatePayrollFromTimesheetsAsync(Guid employeeId, DateTime periodStart, DateTime periodEnd)
+    {
+        _logger.LogInformation("Calculating payroll for employee {EmployeeId} from timesheets for period {Start} to {End}",
+            employeeId, periodStart, periodEnd);
+
+        var result = new PayrollResult
+        {
+            EmployeeId = employeeId,
+            PeriodStart = periodStart,
+            PeriodEnd = periodEnd,
+            CalculatedAt = DateTime.UtcNow,
+            Warnings = new List<string>()
+        };
+
+        // STEP 1: Get employee details
+        var employee = await _context.Employees
+            .Include(e => e.Department)
+            .FirstOrDefaultAsync(e => e.Id == employeeId && !e.IsDeleted);
+
+        if (employee == null)
+        {
+            throw new InvalidOperationException($"Employee {employeeId} not found");
+        }
+
+        result.EmployeeCode = employee.EmployeeCode;
+        result.EmployeeName = $"{employee.FirstName} {employee.LastName}";
+        result.Department = employee.Department?.Name ?? string.Empty;
+        result.JobTitle = employee.JobTitle ?? string.Empty;
+        result.BasicSalary = employee.BasicSalary;
+
+        // STEP 2: Get ALL approved timesheets for the period
+        var timesheets = await _context.Timesheets
+            .Include(t => t.Entries)
+            .Where(t => t.EmployeeId == employeeId &&
+                       t.Status == TimesheetStatus.Approved &&
+                       t.PeriodStart >= periodStart &&
+                       t.PeriodEnd <= periodEnd &&
+                       !t.IsDeleted)
+            .ToListAsync();
+
+        if (!timesheets.Any())
+        {
+            result.HasWarnings = true;
+            result.Warnings.Add("No approved timesheets found for this period. Payroll calculation may be incomplete.");
+        }
+
+        result.TimesheetIds = timesheets.Select(t => t.Id).ToList();
+        result.TimesheetsProcessed = timesheets.Count;
+
+        // STEP 3: Calculate total hours from timesheets
+        result.TotalRegularHours = timesheets.Sum(t => t.TotalRegularHours);
+        result.TotalOvertimeHours = timesheets.Sum(t => t.TotalOvertimeHours);
+        result.TotalHolidayHours = timesheets.Sum(t => t.TotalHolidayHours);
+
+        // Calculate leave hours from entries
+        var allEntries = timesheets.SelectMany(t => t.Entries).ToList();
+        result.TotalLeaveHours = allEntries.Sum(e => e.SickLeaveHours + e.AnnualLeaveHours);
+
+        result.TotalPayableHours = result.TotalRegularHours + result.TotalOvertimeHours +
+                                    result.TotalHolidayHours + result.TotalLeaveHours;
+
+        // STEP 4: Calculate working days information
+        var totalDays = (periodEnd - periodStart).Days + 1;
+        var workingDaysInPeriod = 0;
+        var currentDate = periodStart;
+        while (currentDate <= periodEnd)
+        {
+            if (currentDate.DayOfWeek != DayOfWeek.Saturday && currentDate.DayOfWeek != DayOfWeek.Sunday)
+                workingDaysInPeriod++;
+            currentDate = currentDate.AddDays(1);
+        }
+
+        result.WorkingDays = workingDaysInPeriod;
+
+        // Get leave days from timesheet entries (reuse allEntries from above)
+        result.PaidLeaveDays = allEntries.Count(e => e.DayType == DayType.AnnualLeave ||
+                                                     e.DayType == DayType.SickLeave ||
+                                                     e.DayType == DayType.CasualLeave);
+        result.UnpaidLeaveDays = allEntries.Count(e => e.DayType == DayType.UnpaidLeave);
+        result.ActualDaysWorked = allEntries.Count(e => e.DayType == DayType.Regular &&
+                                                        (e.RegularHours > 0 || e.OvertimeHours > 0));
+
+        // STEP 5: Calculate hourly rate
+        result.HourlyRate = employee.BasicSalary / STANDARD_MONTHLY_HOURS;
+
+        // STEP 6: Calculate gross pay components
+        result.RegularPay = Math.Round(result.TotalRegularHours * result.HourlyRate, 2);
+
+        // Overtime at 1.5x rate (standard)
+        result.OvertimePay = Math.Round(result.TotalOvertimeHours * result.HourlyRate * 1.5m, 2);
+
+        // Holiday pay at 2x rate
+        result.HolidayPay = Math.Round(result.TotalHolidayHours * result.HourlyRate * 2m, 2);
+
+        // Leave pay at regular rate (already paid through basic salary)
+        result.LeavePay = Math.Round(result.TotalLeaveHours * result.HourlyRate, 2);
+
+        // STEP 7: Get allowances from employee record
+        result.HousingAllowance = employee.HousingAllowance ?? 0m;
+        result.TransportAllowance = employee.TransportAllowance ?? 0m;
+        result.MealAllowance = employee.MealAllowance ?? 0m;
+        result.MobileAllowance = 0m; // Not available in Employee entity
+        result.OtherAllowances = 0m; // Not available in Employee entity
+
+        // Special payments (set to 0 for now - these are calculated separately)
+        result.ThirteenthMonthBonus = 0m;
+        result.LeaveEncashment = 0m;
+        result.GratuityPayment = 0m;
+        result.Commission = 0m;
+
+        // STEP 8: Calculate total gross salary
+        result.TotalGrossSalary = result.RegularPay +
+                                  result.OvertimePay +
+                                  result.HolidayPay +
+                                  result.LeavePay +
+                                  result.HousingAllowance +
+                                  result.TransportAllowance +
+                                  result.MealAllowance +
+                                  result.MobileAllowance +
+                                  result.OtherAllowances +
+                                  result.ThirteenthMonthBonus +
+                                  result.LeaveEncashment +
+                                  result.GratuityPayment +
+                                  result.Commission;
+
+        // STEP 9: Calculate Mauritius statutory deductions
+        var deductions = new MauritiusDeductions();
+
+        // CSG (employee and employer)
+        var monthlySalary = result.TotalGrossSalary;
+        deductions.IsBelowCSG_Threshold = monthlySalary <= CSG_THRESHOLD;
+        deductions.CSG_EmployeeRate = deductions.IsBelowCSG_Threshold ? CSG_EMPLOYEE_LOW : CSG_EMPLOYEE_HIGH;
+        deductions.CSG_EmployerRate = deductions.IsBelowCSG_Threshold ? CSG_EMPLOYER_LOW : CSG_EMPLOYER_HIGH;
+
+        deductions.CSG_Employee = await CalculateCSGEmployeeAsync(monthlySalary);
+        deductions.CSG_Employer = await CalculateCSGEmployerAsync(monthlySalary);
+
+        // NSF (employee and employer)
+        deductions.NSF_Employee = await CalculateNSFEmployeeAsync(employee.BasicSalary);
+        deductions.NSF_Employer = await CalculateNSFEmployerAsync(employee.BasicSalary);
+
+        // NPF (legacy - only if hired before 2020)
+        if (employee.JoiningDate < PRGF_IMPLEMENTATION_DATE)
+        {
+            deductions.NPF_Employee = await CalculateNPFEmployeeAsync(employee.BasicSalary);
+            deductions.NPF_Employer = await CalculateNPFEmployerAsync(employee.BasicSalary);
+        }
+
+        // PRGF (only if hired after Jan 2020)
+        var yearsOfService = CalculateYearsOfService(employee.JoiningDate, DateTime.UtcNow);
+        deductions.PRGF_Contribution = await CalculatePRGFAsync(monthlySalary, yearsOfService, employee.JoiningDate);
+
+        if (employee.JoiningDate >= PRGF_IMPLEMENTATION_DATE)
+        {
+            if (yearsOfService <= 5)
+                deductions.PRGF_Rate = PRGF_RATE_0_5_YEARS;
+            else if (yearsOfService <= 10)
+                deductions.PRGF_Rate = PRGF_RATE_6_10_YEARS;
+            else
+                deductions.PRGF_Rate = PRGF_RATE_ABOVE_10_YEARS;
+        }
+
+        // Training Levy
+        deductions.TrainingLevy = await CalculateTrainingLevyAsync(employee.BasicSalary);
+
+        // PAYE Tax
+        var annualGross = monthlySalary * 12;
+        var annualStatutoryDeductions = (deductions.CSG_Employee + deductions.NSF_Employee + deductions.NPF_Employee) * 12;
+        deductions.PAYE_Tax = await CalculatePAYEAsync(annualGross, annualStatutoryDeductions);
+
+        // Determine tax bracket for display
+        var taxableIncome = annualGross - annualStatutoryDeductions;
+        if (taxableIncome <= PAYE_THRESHOLD)
+            deductions.TaxBracket = "0% (Below MUR 390,000)";
+        else if (taxableIncome <= PAYE_BRACKET_1_LIMIT)
+            deductions.TaxBracket = "10% (MUR 390,001 - 550,000)";
+        else if (taxableIncome <= PAYE_BRACKET_2_LIMIT)
+            deductions.TaxBracket = "12% (MUR 550,001 - 650,000)";
+        else
+            deductions.TaxBracket = "20% (Above MUR 650,000)";
+
+        // Employee contributions (deducted from salary)
+        deductions.TotalEmployeeContributions = deductions.NPF_Employee +
+                                                 deductions.NSF_Employee +
+                                                 deductions.CSG_Employee +
+                                                 deductions.PAYE_Tax;
+
+        // Employer contributions (not deducted, but recorded)
+        deductions.TotalEmployerContributions = deductions.NPF_Employer +
+                                                 deductions.NSF_Employer +
+                                                 deductions.CSG_Employer +
+                                                 deductions.PRGF_Contribution +
+                                                 deductions.TrainingLevy;
+
+        result.StatutoryDeductions = deductions;
+
+        // STEP 10: Other deductions (set to 0 for now - would come from employee records)
+        result.LeaveDeductions = 0m; // Would calculate from unpaid leave days
+        result.LoanDeduction = 0m;
+        result.AdvanceDeduction = 0m;
+        result.MedicalInsurance = 0m;
+        result.OtherDeductions = 0m;
+
+        // STEP 11: Calculate total deductions
+        result.TotalDeductions = deductions.TotalEmployeeContributions +
+                                 result.LeaveDeductions +
+                                 result.LoanDeduction +
+                                 result.AdvanceDeduction +
+                                 result.MedicalInsurance +
+                                 result.OtherDeductions;
+
+        // STEP 12: Calculate net salary
+        result.NetSalary = result.TotalGrossSalary - result.TotalDeductions;
+
+        _logger.LogInformation("Payroll calculated successfully for employee {EmployeeId}. Gross: {Gross}, Net: {Net}",
+            employeeId, result.TotalGrossSalary, result.NetSalary);
+
+        return result;
+    }
+
     public async Task<decimal> CalculateOvertimePayAsync(Guid employeeId, int month, int year)
     {
         var employee = await _context.Employees.FindAsync(employeeId);

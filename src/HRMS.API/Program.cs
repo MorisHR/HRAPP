@@ -199,6 +199,7 @@ var key = Encoding.UTF8.GetBytes(jwtSecret);
 // ======================
 builder.Services.AddScoped<IPasswordHasher, Argon2PasswordHasher>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IMfaService, MfaService>();  // MFA (TOTP + Backup Codes)
 builder.Services.AddScoped<TenantAuthService>();  // Tenant employee authentication
 builder.Services.AddScoped<IEmployeeService, EmployeeService>();
 builder.Services.AddScoped<IEmployeeDraftService, EmployeeDraftService>();  // Employee draft management
@@ -214,9 +215,28 @@ builder.Services.AddScoped<IReportService, ReportService>();
 builder.Services.AddScoped<IPdfService, PdfService>();
 builder.Services.AddScoped<TenantManagementService>();
 
+// Timesheet Management Services
+builder.Services.AddScoped<ITimesheetGenerationService, TimesheetGenerationService>();
+builder.Services.AddScoped<ITimesheetApprovalService, TimesheetApprovalService>();
+builder.Services.AddScoped<ITimesheetAdjustmentService, TimesheetAdjustmentService>();
+Log.Information("Timesheet management services registered");
+
+// Multi-Device Biometric Attendance System Services
+builder.Services.AddScoped<ILocationService, LocationService>();
+builder.Services.AddScoped<IBiometricDeviceService, BiometricDeviceService>();
+Log.Information("Multi-device biometric attendance system services registered");
+
+// Department Management Service
+builder.Services.AddScoped<DepartmentService>();
+Log.Information("Department management service registered");
+
 // PRODUCTION FIX #1: Cloud Storage Service for file uploads
 builder.Services.AddSingleton<IFileStorageService, GoogleCloudStorageService>();
 Log.Information("Google Cloud Storage service registered for file uploads");
+
+// PRODUCTION-GRADE: Background token cleanup service
+builder.Services.AddHostedService<HRMS.API.Services.TokenCleanupService>();
+Log.Information("Token cleanup background service registered (runs hourly)");
 
 // ======================
 // BACKGROUND JOBS SERVICES
@@ -364,37 +384,64 @@ builder.Services.AddHangfireServer(options =>
 });
 
 // ======================
-// CORS CONFIGURATION (PRODUCTION-GRADE)
+// CORS CONFIGURATION (PRODUCTION-GRADE) - WILDCARD SUBDOMAIN SUPPORT
 // ======================
 var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? Array.Empty<string>();
+var allowedDomains = builder.Configuration.GetSection("Cors:AllowedDomains").Get<string[]>() ?? Array.Empty<string>();
 
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("ProductionCorsPolicy", policy =>
     {
-        if (allowedOrigins.Length > 0)
+        if (allowedOrigins.Length > 0 || allowedDomains.Length > 0)
         {
-            policy.WithOrigins(allowedOrigins)
-                  .AllowAnyMethod()
-                  .AllowAnyHeader()
-                  .AllowCredentials();
+            policy.SetIsOriginAllowed(origin =>
+            {
+                // Allow specific origins (exact match)
+                if (allowedOrigins.Contains(origin))
+                    return true;
+
+                // Allow wildcard subdomain domains (*.domain.com)
+                // Example: If allowedDomains contains "hrms.com", allow:
+                // - https://acme.hrms.com
+                // - https://demo.hrms.com
+                // - https://www.hrms.com
+                // - https://hrms.com (root domain)
+                foreach (var domain in allowedDomains)
+                {
+                    var uri = new Uri(origin);
+                    var host = uri.Host;
+
+                    // Match exact domain or subdomain.domain pattern
+                    if (host == domain || host.EndsWith($".{domain}"))
+                        return true;
+                }
+
+                return false;
+            })
+            .AllowAnyMethod()
+            .AllowAnyHeader()
+            .AllowCredentials();
 
             Log.Information("CORS configured with allowed origins: {AllowedOrigins}", string.Join(", ", allowedOrigins));
+            Log.Information("CORS configured with wildcard subdomain support for domains: {AllowedDomains}", string.Join(", ", allowedDomains));
         }
         else if (builder.Environment.IsDevelopment())
         {
-            // Development fallback - Allow localhost and GitHub Codespaces
+            // Development fallback - Allow localhost (with wildcard subdomains) and cloud dev environments
             policy.SetIsOriginAllowed(origin =>
             {
-                // Allow localhost
-                if (origin.StartsWith("http://localhost") || origin.StartsWith("https://localhost"))
+                // Allow localhost and *.localhost (subdomain support for development)
+                // Examples: http://localhost:4200, http://acme.localhost:4200
+                if (origin.StartsWith("http://localhost") || origin.StartsWith("https://localhost") ||
+                    origin.Contains(".localhost:") || origin.Contains(".localhost/"))
                     return true;
 
-                // Allow GitHub Codespaces domains
+                // Allow GitHub Codespaces domains (including subdomains)
                 if (origin.Contains(".app.github.dev"))
                     return true;
 
-                // Allow Gitpod domains
+                // Allow Gitpod domains (including subdomains)
                 if (origin.Contains(".gitpod.io"))
                     return true;
 
@@ -404,11 +451,11 @@ builder.Services.AddCors(options =>
             .AllowAnyHeader()
             .AllowCredentials();
 
-            Log.Information("CORS enabled for development: localhost and cloud development environments");
+            Log.Information("CORS enabled for development: localhost (with wildcard subdomains), cloud dev environments");
         }
         else
         {
-            Log.Warning("No CORS origins configured - CORS will block all cross-origin requests");
+            Log.Warning("No CORS origins/domains configured - CORS will block all cross-origin requests");
         }
     });
 });

@@ -94,6 +94,52 @@ export const routes: Routes = [
         path: 'timesheets/approvals',
         loadComponent: () => import('./features/tenant/timesheets/timesheet-approvals.component').then(m => m.TimesheetApprovalsComponent)
       },
+      // Department Management Routes
+      {
+        path: 'settings/organization/departments',
+        loadComponent: () => import('./features/tenant/organization/departments/department-list.component').then(m => m.DepartmentListComponent)
+      },
+      {
+        path: 'settings/organization/departments/add',
+        loadComponent: () => import('./features/tenant/organization/departments/department-form.component').then(m => m.DepartmentFormComponent)
+      },
+      {
+        path: 'settings/organization/departments/edit/:id',
+        loadComponent: () => import('./features/tenant/organization/departments/department-form.component').then(m => m.DepartmentFormComponent)
+      },
+      // Location Management Routes
+      {
+        path: 'organization/locations',
+        loadComponent: () => import('./features/tenant/organization/locations/location-list.component').then(m => m.LocationListComponent)
+      },
+      {
+        path: 'organization/locations/new',
+        loadComponent: () => import('./features/tenant/organization/locations/location-list.component').then(m => m.LocationListComponent) // Stub for now
+      },
+      {
+        path: 'organization/locations/:id',
+        loadComponent: () => import('./features/tenant/organization/locations/location-list.component').then(m => m.LocationListComponent) // Stub for now
+      },
+      {
+        path: 'organization/locations/:id/edit',
+        loadComponent: () => import('./features/tenant/organization/locations/location-list.component').then(m => m.LocationListComponent) // Stub for now
+      },
+      // Biometric Device Management Routes
+      {
+        path: 'organization/devices',
+        loadComponent: () => import('./features/tenant/organization/devices/biometric-device-list.component').then(m => m.BiometricDeviceListComponent),
+        data: { title: 'Biometric Devices' }
+      },
+      {
+        path: 'organization/devices/new',
+        loadComponent: () => import('./features/tenant/organization/devices/biometric-device-form.component').then(m => m.BiometricDeviceFormComponent),
+        data: { title: 'Register New Device' }
+      },
+      {
+        path: 'organization/devices/:id/edit',
+        loadComponent: () => import('./features/tenant/organization/devices/biometric-device-form.component').then(m => m.BiometricDeviceFormComponent),
+        data: { title: 'Edit Device' }
+      },
       // TODO: Add more tenant routes (attendance, leave, payroll, reports)
     ]
   },

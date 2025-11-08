@@ -20,9 +20,16 @@ public class EmployeeDto
     public int Age { get; set; }
     public Gender Gender { get; set; }
     public MaritalStatus MaritalStatus { get; set; }
-    public string Address { get; set; } = string.Empty;
+
+    // Address (Mauritius Compliant)
+    public string AddressLine1 { get; set; } = string.Empty;
+    public string? AddressLine2 { get; set; }
+    public string? Village { get; set; }
+    public string? District { get; set; }
+    public string? Region { get; set; }
     public string? City { get; set; }
     public string? PostalCode { get; set; }
+    public string Country { get; set; } = "Mauritius";
 
     // Employee Type & Nationality
     public EmployeeType EmployeeType { get; set; }

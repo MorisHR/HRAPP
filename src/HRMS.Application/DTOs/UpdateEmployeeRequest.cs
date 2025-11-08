@@ -36,15 +36,32 @@ public class UpdateEmployeeRequest
     [Required]
     public MaritalStatus MaritalStatus { get; set; }
 
+    // Address (Mauritius Compliant)
     [Required]
     [StringLength(500)]
-    public string Address { get; set; } = string.Empty;
+    public string AddressLine1 { get; set; } = string.Empty;
+
+    [StringLength(500)]
+    public string? AddressLine2 { get; set; }
+
+    [StringLength(100)]
+    public string? Village { get; set; }
+
+    [StringLength(100)]
+    public string? District { get; set; }
+
+    [StringLength(100)]
+    public string? Region { get; set; }
 
     [StringLength(100)]
     public string? City { get; set; }
 
     [StringLength(20)]
     public string? PostalCode { get; set; }
+
+    [Required]
+    [StringLength(100)]
+    public string Country { get; set; } = "Mauritius";
 
     // Employee Type & Nationality
     [Required]

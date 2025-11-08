@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { Observable, tap, map, catchError, throwError } from 'rxjs';
 import { User, LoginRequest, LoginResponse, UserRole } from '../models/user.model';
+import { SubdomainService } from './subdomain.service';
 import { environment } from '../../../environments/environment';
 
 @Injectable({
@@ -54,12 +55,8 @@ export class AuthService {
   login(credentials: LoginRequest): Observable<LoginResponse> {
     this.loadingSignal.set(true);
 
-    // Store subdomain for tenant employees
-    if (credentials.subdomain) {
-      localStorage.setItem('tenant_subdomain', credentials.subdomain);
-    } else {
-      localStorage.removeItem('tenant_subdomain');
-    }
+    // ✅ Subdomain is now extracted from URL by SubdomainService
+    // No need to store in localStorage - proper multi-tenant architecture
 
     // Determine endpoint based on user type
     const endpoint = credentials.subdomain
@@ -127,15 +124,185 @@ export class AuthService {
     );
   }
 
+  /**
+   * Logout user and revoke refresh token
+   * UPDATED: Now calls backend to revoke refresh token and navigates based on user type
+   */
   logout(): void {
+    // Get user type before clearing state
+    const user = this.userSignal();
+    const isSuperAdmin = user?.role === UserRole.SuperAdmin;
+
+    // Call backend to revoke refresh token
+    // Don't wait for response - logout immediately for better UX
+    this.http.post(
+      `${this.apiUrl}/auth/revoke`,
+      {},
+      { withCredentials: true } // Send refresh token cookie
+    ).subscribe({
+      next: () => console.log('✅ Refresh token revoked successfully'),
+      error: (err) => console.warn('⚠️ Token revocation failed (user logged out anyway):', err)
+    });
+
+    // Clear local auth state
     this.clearAuthState();
-    this.router.navigate(['/login']);
+
+    // Navigate based on user type
+    if (isSuperAdmin) {
+      this.router.navigate(['/auth/superadmin']);
+    } else {
+      // Tenant user - redirect to subdomain entry page
+      const subdomainService = inject(SubdomainService);
+      subdomainService.redirectToMainDomain('/auth/subdomain');
+    }
   }
 
+  // ============================================
+  // PRODUCTION-GRADE TOKEN REFRESH
+  // ============================================
+
+  /**
+   * Refreshes access token using refresh token from HttpOnly cookie
+   * The refresh token is NOT sent manually - browser sends it automatically via cookie
+   * Backend implements token rotation: old token revoked, new one issued
+   */
   refreshToken(): Observable<LoginResponse> {
-    const refreshToken = localStorage.getItem('refresh_token');
-    return this.http.post<LoginResponse>(`${this.apiUrl}/auth/refresh`, { refreshToken }).pipe(
+    return this.http.post<any>(
+      `${this.apiUrl}/auth/refresh`,
+      {}, // Empty body - refresh token comes from HttpOnly cookie
+      { withCredentials: true } // CRITICAL: Sends HttpOnly cookies
+    ).pipe(
+      map(response => {
+        if (!response.success || !response.data) {
+          throw new Error(response.message || 'Token refresh failed');
+        }
+
+        // Transform backend response to frontend LoginResponse format
+        const loginResponse: LoginResponse = {
+          token: response.data.token,
+          refreshToken: response.data.refreshToken,
+          user: this.userSignal()!, // User info stays the same
+          expiresIn: 15 * 60 // 15 minutes in seconds
+        };
+
+        return loginResponse;
+      }),
       tap(response => this.setAuthState(response))
+    );
+  }
+
+  // ============================================
+  // MULTI-FACTOR AUTHENTICATION (MFA) METHODS
+  // ============================================
+
+  /**
+   * SuperAdmin login using secret URL
+   * Returns MFA setup requirement or verification requirement
+   */
+  superAdminSecretLogin(credentials: { email: string; password: string }): Observable<any> {
+    const secretPath = environment.superAdminSecretPath;
+
+    return this.http.post<any>(
+      `${this.apiUrl}/auth/${secretPath}`,
+      credentials,
+      { withCredentials: true }
+    ).pipe(
+      map(response => {
+        if (!response.success) {
+          throw new Error(response.message || 'Login failed');
+        }
+        return response.data;
+      })
+    );
+  }
+
+  /**
+   * Complete MFA setup after scanning QR code
+   * Verifies TOTP code and enables MFA
+   */
+  completeMfaSetup(request: {
+    userId: string;
+    totpCode: string;
+    secret: string;
+    backupCodes: string[];
+  }): Observable<LoginResponse> {
+    return this.http.post<any>(
+      `${this.apiUrl}/auth/mfa/complete-setup`,
+      request,
+      { withCredentials: true }
+    ).pipe(
+      map(response => {
+        if (!response.success || !response.data) {
+          throw new Error(response.message || 'MFA setup failed');
+        }
+
+        const backendData = response.data;
+        const adminUser = backendData.adminUser;
+
+        const user: User = {
+          id: adminUser.id,
+          email: adminUser.email,
+          firstName: adminUser.userName?.split(' ')[0] || 'Admin',
+          lastName: adminUser.userName?.split(' ').slice(1).join(' ') || 'User',
+          role: UserRole.SuperAdmin,
+          avatarUrl: undefined
+        };
+
+        const loginResponse: LoginResponse = {
+          token: backendData.token,
+          refreshToken: backendData.refreshToken,
+          user: user,
+          expiresIn: 15 * 60 // 15 minutes
+        };
+
+        return loginResponse;
+      }),
+      tap(response => {
+        this.setAuthState(response);
+        this.navigateBasedOnRole(response.user.role);
+      })
+    );
+  }
+
+  /**
+   * Verify MFA code (TOTP or backup code) during login
+   */
+  verifyMfa(request: { userId: string; code: string }): Observable<LoginResponse> {
+    return this.http.post<any>(
+      `${this.apiUrl}/auth/mfa/verify`,
+      request,
+      { withCredentials: true }
+    ).pipe(
+      map(response => {
+        if (!response.success || !response.data) {
+          throw new Error(response.message || 'MFA verification failed');
+        }
+
+        const backendData = response.data;
+        const adminUser = backendData.adminUser;
+
+        const user: User = {
+          id: adminUser.id,
+          email: adminUser.email,
+          firstName: adminUser.userName?.split(' ')[0] || 'Admin',
+          lastName: adminUser.userName?.split(' ').slice(1).join(' ') || 'User',
+          role: UserRole.SuperAdmin,
+          avatarUrl: undefined
+        };
+
+        const loginResponse: LoginResponse = {
+          token: backendData.token,
+          refreshToken: backendData.refreshToken,
+          user: user,
+          expiresIn: 15 * 60 // 15 minutes
+        };
+
+        return loginResponse;
+      }),
+      tap(response => {
+        this.setAuthState(response);
+        this.navigateBasedOnRole(response.user.role);
+      })
     );
   }
 
@@ -152,7 +319,7 @@ export class AuthService {
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
     localStorage.removeItem('user');
-    localStorage.removeItem('tenant_subdomain');
+    // ✅ No longer storing tenant_subdomain in localStorage
 
     this.tokenSignal.set(null);
     this.userSignal.set(null);

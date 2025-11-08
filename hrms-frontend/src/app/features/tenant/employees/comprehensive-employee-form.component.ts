@@ -24,7 +24,10 @@ import { MatDividerModule } from '@angular/material/divider';
 // Services
 import { EmployeeService } from '../../../core/services/employee.service';
 import { EmployeeDraftService, SaveDraftRequest } from '../../../core/services/employee-draft.service';
+import { DepartmentService, DepartmentDropdownDto } from '../organization/departments/services/department.service';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { AddressService } from '../../../services/address.service';
+import { DistrictDto, VillageDto } from '../../../models/address.models';
 
 @Component({
   selector: 'app-comprehensive-employee-form',
@@ -59,6 +62,8 @@ export class ComprehensiveEmployeeFormComponent implements OnInit, OnDestroy {
   private route = inject(ActivatedRoute);
   private employeeService = inject(EmployeeService);
   private draftService = inject(EmployeeDraftService);
+  private departmentService = inject(DepartmentService);
+  private addressService = inject(AddressService);
   private snackBar = inject(MatSnackBar);
   private destroy$ = new Subject<void>();
 
@@ -71,6 +76,11 @@ export class ComprehensiveEmployeeFormComponent implements OnInit, OnDestroy {
   lastSaved = signal<Date | null>(null);
   error = signal<string | null>(null);
   completionPercentage = signal(0);
+  departments = signal<DepartmentDropdownDto[]>([]);
+
+  // Address data
+  districts = signal<DistrictDto[]>([]);
+  villages = signal<VillageDto[]>([]);
 
   // Auto-save
   private autoSaveSubject$ = new Subject<void>();
@@ -87,6 +97,10 @@ export class ComprehensiveEmployeeFormComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     const employeeId = this.route.snapshot.paramMap.get('id');
     const draftId = this.route.snapshot.queryParamMap.get('draftId');
+
+    // Load departments and districts for dropdowns
+    this.loadDepartments();
+    this.loadDistricts();
 
     if (employeeId) {
       this.isEditMode.set(true);
@@ -119,9 +133,15 @@ export class ComprehensiveEmployeeFormComponent implements OnInit, OnDestroy {
       phoneNumber: ['', Validators.required],
       email: ['', [Validators.required, Validators.email]],
       alternateEmail: ['', Validators.email],
-      address: ['', Validators.required],
-      city: ['', Validators.required],
+      // Address fields (Mauritius-compliant)
+      district: ['', Validators.required],
+      village: [''],
+      addressLine1: ['', [Validators.required, Validators.minLength(10)]],
+      addressLine2: [''],
+      city: [''],
       postalCode: [''],
+      region: [''],
+      country: ['Mauritius', Validators.required],
       bloodGroup: [''],
 
       // ===== SECTION 2: EMPLOYMENT DETAILS =====
@@ -357,6 +377,82 @@ export class ComprehensiveEmployeeFormComponent implements OnInit, OnDestroy {
         this.loading.set(false);
       }
     });
+  }
+
+  private loadDepartments(): void {
+    this.departmentService.getDropdown()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (depts) => {
+          this.departments.set(depts);
+        },
+        error: (error) => {
+          console.error('Error loading departments:', error);
+          // Don't block form if departments fail to load
+          this.snackBar.open('Warning: Could not load departments', 'Close', { duration: 3000 });
+        }
+      });
+  }
+
+  private loadDistricts(): void {
+    this.addressService.getDistricts()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (districts) => {
+          this.districts.set(districts);
+        },
+        error: (error) => {
+          console.error('Error loading districts:', error);
+          this.snackBar.open('Warning: Could not load districts', 'Close', { duration: 3000 });
+        }
+      });
+  }
+
+  onDistrictChange(districtId: string): void {
+    if (!districtId) {
+      this.villages.set([]);
+      return;
+    }
+
+    this.addressService.getVillagesByDistrict(+districtId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (villages) => {
+          this.villages.set(villages);
+        },
+        error: (error) => {
+          console.error('Error loading villages:', error);
+          this.snackBar.open('Warning: Could not load villages', 'Close', { duration: 3000 });
+        }
+      });
+  }
+
+  onPostalCodeBlur(code: string): void {
+    if (!code || code.length < 3) {
+      return;
+    }
+
+    this.addressService.lookupPostalCode(code)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (results) => {
+          if (results.length > 0) {
+            const result = results[0];
+            // Auto-fill address fields based on postal code lookup
+            this.employeeForm.patchValue({
+              district: result.districtId.toString(),
+              village: result.villageId.toString(),
+              city: result.villageName,
+              region: result.region
+            });
+            // Trigger village loading for the selected district
+            this.onDistrictChange(result.districtId.toString());
+          }
+        },
+        error: (error) => {
+          console.error('Error looking up postal code:', error);
+        }
+      });
   }
 
   saveDraft(): void {

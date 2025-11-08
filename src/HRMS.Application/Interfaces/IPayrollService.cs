@@ -170,6 +170,16 @@ public interface IPayrollService
     // ==================== EARNINGS CALCULATIONS ====================
 
     /// <summary>
+    /// Calculates complete payroll from approved timesheets for a given period
+    /// NEW METHOD - Replaces manual hour entry with timesheet-based calculation
+    /// </summary>
+    /// <param name="employeeId">Employee ID</param>
+    /// <param name="periodStart">Start date of payroll period</param>
+    /// <param name="periodEnd">End date of payroll period</param>
+    /// <returns>Complete payroll calculation result with all deductions</returns>
+    Task<PayrollResult> CalculatePayrollFromTimesheetsAsync(Guid employeeId, DateTime periodStart, DateTime periodEnd);
+
+    /// <summary>
     /// Calculates overtime pay from attendance records with sector-aware rates
     /// </summary>
     /// <param name="employeeId">Employee ID</param>

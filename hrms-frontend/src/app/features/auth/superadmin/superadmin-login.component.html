@@ -1,110 +1,328 @@
 <div class="login-container">
-  <div class="login-card">
-    <!-- SuperAdmin Header -->
-    <div class="header">
-      <h1 class="title">SuperAdmin Access</h1>
-      <p class="subtitle">MorisHR Administrator Panel</p>
-    </div>
+  <div class="login-card" [class.mfa-setup]="loginStage() === 'mfa-setup'">
 
-    <!-- Login Form -->
-    <div class="form-container">
-      <form (ngSubmit)="onSubmit()" class="login-form">
-        <!-- Email Input -->
-        <div class="input-group">
-          <label for="email" class="input-label">Email address</label>
-          <input
-            type="email"
-            id="email"
-            class="form-input"
-            placeholder="admin@morishr.com"
-            [value]="email()"
-            (input)="email.set($any($event.target).value)"
-            [disabled]="isLoading()"
-            autocomplete="email"
-            required
-            aria-label="Email address"
-            aria-required="true"
-          />
-        </div>
-
-        <!-- Password Input -->
-        <div class="input-group">
-          <label for="password" class="input-label">Password</label>
-          <div class="password-wrapper">
-            <input
-              [type]="hidePassword() ? 'password' : 'text'"
-              id="password"
-              class="form-input password-input"
-              placeholder="Enter your password"
-              [value]="password()"
-              (input)="password.set($any($event.target).value)"
-              [disabled]="isLoading()"
-              autocomplete="current-password"
-              required
-              aria-label="Password"
-              aria-required="true"
-            />
-            <button
-              type="button"
-              class="password-toggle"
-              (click)="togglePasswordVisibility()"
-              [attr.aria-label]="hidePassword() ? 'Show password' : 'Hide password'"
-            >
-              <svg *ngIf="hidePassword()" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                <circle cx="12" cy="12" r="3"></circle>
-              </svg>
-              <svg *ngIf="!hidePassword()" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
-                <line x1="1" y1="1" x2="23" y2="23"></line>
-              </svg>
-            </button>
-          </div>
-        </div>
-
-        <!-- Error Message -->
-        @if (errorMessage()) {
-          <div class="error-message" role="alert">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="12" r="10"></circle>
-              <line x1="12" y1="8" x2="12" y2="12"></line>
-              <line x1="12" y1="16" x2="12.01" y2="16"></line>
-            </svg>
-            <span>{{ errorMessage() }}</span>
-          </div>
-        }
-
-        <!-- Submit Button -->
-        <button
-          type="submit"
-          class="submit-button"
-          [disabled]="!isValidForm() || isLoading()"
-          aria-label="Sign in as SuperAdmin"
-        >
-          @if (isLoading()) {
-            <span class="loading-spinner"></span>
-            <span>Authenticating...</span>
-          } @else {
-            <span>Sign in as SuperAdmin</span>
-          }
-        </button>
-      </form>
-
-      <!-- Back Link -->
-      <div class="back-link-container">
-        <a href="/auth/subdomain" class="back-link">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="19" y1="12" x2="5" y2="12"></line>
-            <polyline points="12 19 5 12 12 5"></polyline>
-          </svg>
-          <span>Back to employee login</span>
-        </a>
+    <!-- ========================================
+         STAGE 1: CREDENTIALS LOGIN
+    ======================================== -->
+    @if (loginStage() === 'credentials') {
+      <!-- SuperAdmin Header -->
+      <div class="header">
+        <h1 class="title">SuperAdmin Access</h1>
+        <p class="subtitle">MorisHR Administrator Panel</p>
       </div>
-    </div>
 
-    <!-- Footer -->
-    <div class="login-footer">
-      <p class="footer-text">© 2025 MorisHR · Administrator Access</p>
-    </div>
+      <!-- Login Form -->
+      <div class="form-container">
+        <form (ngSubmit)="onCredentialsSubmit()" class="login-form">
+          <!-- Email Input -->
+          <div class="input-group">
+            <label for="email" class="input-label">Email address</label>
+            <input
+              type="email"
+              id="email"
+              class="form-input"
+              placeholder="admin@morishr.com"
+              [value]="email()"
+              (input)="email.set($any($event.target).value)"
+              [disabled]="isLoading()"
+              autocomplete="email"
+              required
+            />
+          </div>
+
+          <!-- Password Input -->
+          <div class="input-group">
+            <label for="password" class="input-label">Password</label>
+            <div class="password-wrapper">
+              <input
+                [type]="hidePassword() ? 'password' : 'text'"
+                id="password"
+                class="form-input password-input"
+                placeholder="Enter your password"
+                [value]="password()"
+                (input)="password.set($any($event.target).value)"
+                [disabled]="isLoading()"
+                autocomplete="current-password"
+                required
+              />
+              <button
+                type="button"
+                class="password-toggle"
+                (click)="togglePasswordVisibility()"
+              >
+                <svg *ngIf="hidePassword()" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+                <svg *ngIf="!hidePassword()" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                  <line x1="1" y1="1" x2="23" y2="23"></line>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Error Message -->
+          @if (errorMessage()) {
+            <div class="error-message" role="alert">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+              </svg>
+              <span>{{ errorMessage() }}</span>
+            </div>
+          }
+
+          <!-- Submit Button -->
+          <button
+            type="submit"
+            class="submit-button"
+            [disabled]="!isValidCredentialsForm() || isLoading()"
+          >
+            @if (isLoading()) {
+              <span class="loading-spinner"></span>
+              <span>Authenticating...</span>
+            } @else {
+              <span>Sign in as SuperAdmin</span>
+            }
+          </button>
+        </form>
+
+        <!-- Back Link -->
+        <div class="back-link-container">
+          <a href="/auth/subdomain" class="back-link">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="19" y1="12" x2="5" y2="12"></line>
+              <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+            <span>Back to employee login</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="login-footer">
+        <p class="footer-text">© 2025 MorisHR · Administrator Access</p>
+      </div>
+    }
+
+    <!-- ========================================
+         STAGE 2: MFA SETUP (First Login)
+    ======================================== -->
+    @if (loginStage() === 'mfa-setup') {
+      <div class="header">
+        <h1 class="title">Setup Two-Factor Authentication</h1>
+        <p class="subtitle">Secure your SuperAdmin account</p>
+      </div>
+
+      <div class="mfa-setup-container">
+        <!-- Step 1: Scan QR Code -->
+        <div class="mfa-step">
+          <div class="step-header">
+            <span class="step-number">1</span>
+            <h3 class="step-title">Scan QR Code</h3>
+          </div>
+          <p class="step-description">
+            Open Google Authenticator on your phone and scan this QR code:
+          </p>
+          <div class="qr-code-container">
+            <img
+              [src]="'data:image/png;base64,' + qrCodeBase64()"
+              alt="MFA QR Code"
+              class="qr-code-image"
+            />
+          </div>
+          <p class="manual-entry-text">
+            Can't scan? Manual entry code: <strong>{{ mfaSecret() }}</strong>
+          </p>
+        </div>
+
+        <!-- Step 2: Save Backup Codes -->
+        <div class="mfa-step">
+          <div class="step-header">
+            <span class="step-number">2</span>
+            <h3 class="step-title">Save Backup Codes</h3>
+          </div>
+          <p class="step-description">
+            Download or copy these backup codes. Each code can only be used once.
+          </p>
+          <div class="backup-codes-container">
+            <div class="backup-codes-grid">
+              @for (code of backupCodes(); track code) {
+                <div class="backup-code">{{ code }}</div>
+              }
+            </div>
+            <div class="backup-codes-actions">
+              <button
+                type="button"
+                class="backup-code-button"
+                (click)="downloadBackupCodes()"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="7 10 12 15 17 10"></polyline>
+                  <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+                Download Codes
+              </button>
+              <button
+                type="button"
+                class="backup-code-button secondary"
+                (click)="copyBackupCodes()"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                </svg>
+                Copy to Clipboard
+              </button>
+            </div>
+            @if (backupCodesDownloaded()) {
+              <div class="success-message">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+                <span>Backup codes saved!</span>
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- Step 3: Verify with TOTP -->
+        <div class="mfa-step">
+          <div class="step-header">
+            <span class="step-number">3</span>
+            <h3 class="step-title">Enter Verification Code</h3>
+          </div>
+          <p class="step-description">
+            Enter the 6-digit code from Google Authenticator:
+          </p>
+          <form (ngSubmit)="onMfaSetupSubmit()" class="mfa-form">
+            <div class="totp-input-container">
+              <input
+                type="text"
+                class="totp-input"
+                placeholder="000000"
+                [value]="totpCode()"
+                (input)="onTotpInput($event)"
+                [disabled]="isLoading()"
+                maxlength="6"
+                pattern="[0-9]*"
+                inputmode="numeric"
+                autocomplete="one-time-code"
+              />
+            </div>
+
+            @if (errorMessage()) {
+              <div class="error-message" role="alert">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="12" y1="8" x2="12" y2="12"></line>
+                  <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+                <span>{{ errorMessage() }}</span>
+              </div>
+            }
+
+            <button
+              type="submit"
+              class="submit-button"
+              [disabled]="!isValidMfaSetupForm() || isLoading()"
+            >
+              @if (isLoading()) {
+                <span class="loading-spinner"></span>
+                <span>Verifying...</span>
+              } @else {
+                <span>Complete Setup</span>
+              }
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <div class="login-footer">
+        <p class="footer-text">© 2025 MorisHR · Secure Authentication</p>
+      </div>
+    }
+
+    <!-- ========================================
+         STAGE 3: MFA VERIFICATION (Subsequent Logins)
+    ======================================== -->
+    @if (loginStage() === 'mfa-verify') {
+      <div class="header">
+        <h1 class="title">Two-Factor Authentication</h1>
+        <p class="subtitle">Enter your verification code</p>
+      </div>
+
+      <div class="form-container">
+        <form (ngSubmit)="onMfaVerifySubmit()" class="login-form">
+          <div class="mfa-verify-content">
+            <p class="mfa-instruction">
+              Open Google Authenticator and enter the 6-digit code for your SuperAdmin account:
+            </p>
+
+            <div class="totp-input-container">
+              <input
+                type="text"
+                class="totp-input large"
+                placeholder="000000"
+                [value]="totpCode()"
+                (input)="onTotpInput($event)"
+                [disabled]="isLoading()"
+                maxlength="6"
+                pattern="[0-9]*"
+                inputmode="numeric"
+                autocomplete="one-time-code"
+                autofocus
+              />
+            </div>
+
+            <p class="backup-code-hint">
+              Don't have access to your phone? You can use a backup code instead.
+            </p>
+          </div>
+
+          @if (errorMessage()) {
+            <div class="error-message" role="alert">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+              </svg>
+              <span>{{ errorMessage() }}</span>
+            </div>
+          }
+
+          <button
+            type="submit"
+            class="submit-button"
+            [disabled]="!isValidTotpCode() || isLoading()"
+          >
+            @if (isLoading()) {
+              <span class="loading-spinner"></span>
+              <span>Verifying...</span>
+            } @else {
+              <span>Verify & Sign In</span>
+            }
+          </button>
+        </form>
+
+        <div class="back-link-container">
+          <button type="button" class="back-link" (click)="backToCredentials()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="19" y1="12" x2="5" y2="12"></line>
+              <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+            <span>Back to login</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="login-footer">
+        <p class="footer-text">© 2025 MorisHR · Secure Authentication</p>
+      </div>
+    }
+
   </div>
 </div>

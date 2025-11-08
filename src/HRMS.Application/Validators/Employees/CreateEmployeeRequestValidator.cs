@@ -132,14 +132,40 @@ public class CreateEmployeeRequestValidator : AbstractValidator<CreateEmployeeRe
             .WithMessage("Invalid marital status selected")
             .WithName("Marital Status");
 
-        RuleFor(x => x.Address)
+        // ===== ADDRESS (Mauritius Compliant) =====
+
+        RuleFor(x => x.AddressLine1)
             .NotEmpty()
-            .WithMessage("Address is required")
+            .WithMessage("Address line 1 is required")
             .MinimumLength(10)
             .WithMessage("Please provide a complete address (at least 10 characters)")
             .MaximumLength(500)
-            .WithMessage("Address is too long (maximum 500 characters)")
-            .WithName("Address");
+            .WithMessage("Address line 1 is too long (maximum 500 characters)")
+            .WithName("Address Line 1");
+
+        RuleFor(x => x.AddressLine2)
+            .MaximumLength(500)
+            .WithMessage("Address line 2 is too long (maximum 500 characters)")
+            .When(x => !string.IsNullOrWhiteSpace(x.AddressLine2))
+            .WithName("Address Line 2");
+
+        RuleFor(x => x.Village)
+            .MaximumLength(100)
+            .WithMessage("Village name is too long (maximum 100 characters)")
+            .When(x => !string.IsNullOrWhiteSpace(x.Village))
+            .WithName("Village");
+
+        RuleFor(x => x.District)
+            .MaximumLength(100)
+            .WithMessage("District name is too long (maximum 100 characters)")
+            .When(x => !string.IsNullOrWhiteSpace(x.District))
+            .WithName("District");
+
+        RuleFor(x => x.Region)
+            .MaximumLength(100)
+            .WithMessage("Region name is too long (maximum 100 characters)")
+            .When(x => !string.IsNullOrWhiteSpace(x.Region))
+            .WithName("Region");
 
         RuleFor(x => x.City)
             .MaximumLength(100)

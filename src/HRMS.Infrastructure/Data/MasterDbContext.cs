@@ -17,9 +17,17 @@ public class MasterDbContext : DbContext
     public DbSet<AdminUser> AdminUsers { get; set; }
     public DbSet<AuditLog> AuditLogs { get; set; }
 
+    // JWT Refresh Tokens (Production-Grade Security)
+    public DbSet<RefreshToken> RefreshTokens { get; set; } = null!;
+
     // Industry Sectors (Mauritius Remuneration Orders)
     public DbSet<IndustrySector> IndustrySectors { get; set; }
     public DbSet<SectorComplianceRule> SectorComplianceRules { get; set; }
+
+    // Mauritius Address Hierarchy
+    public DbSet<District> Districts { get; set; }
+    public DbSet<Village> Villages { get; set; }
+    public DbSet<PostalCode> PostalCodes { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
@@ -68,6 +76,12 @@ public class MasterDbContext : DbContext
             entity.Property(e => e.FirstName).HasMaxLength(100);
             entity.Property(e => e.LastName).HasMaxLength(100);
             entity.Property(e => e.PhoneNumber).HasMaxLength(20);
+
+            // MFA Configuration
+            entity.Property(e => e.TwoFactorSecret).HasMaxLength(500);
+            entity.Property(e => e.BackupCodes)
+                .HasColumnType("jsonb")
+                .HasComment("JSON array of SHA256-hashed backup codes for MFA recovery");
 
             entity.HasQueryFilter(u => !u.IsDeleted);
         });
@@ -132,5 +146,109 @@ public class MasterDbContext : DbContext
             .WithMany()
             .HasForeignKey(t => t.SectorId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        // Configure District entity
+        modelBuilder.Entity<District>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => e.DistrictCode).IsUnique();
+            entity.HasIndex(e => e.Region);
+            entity.HasIndex(e => e.DisplayOrder);
+
+            entity.Property(e => e.DistrictCode).IsRequired().HasMaxLength(10);
+            entity.Property(e => e.DistrictName).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.DistrictNameFrench).HasMaxLength(100);
+            entity.Property(e => e.Region).IsRequired().HasMaxLength(50);
+
+            entity.HasQueryFilter(e => !e.IsDeleted);
+        });
+
+        // Configure Village entity
+        modelBuilder.Entity<Village>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => e.VillageCode).IsUnique();
+            entity.HasIndex(e => e.DistrictId);
+            entity.HasIndex(e => e.PostalCode);
+            entity.HasIndex(e => e.DisplayOrder);
+
+            entity.Property(e => e.VillageCode).IsRequired().HasMaxLength(10);
+            entity.Property(e => e.VillageName).IsRequired().HasMaxLength(200);
+            entity.Property(e => e.VillageNameFrench).HasMaxLength(200);
+            entity.Property(e => e.PostalCode).IsRequired().HasMaxLength(10);
+            entity.Property(e => e.LocalityType).HasMaxLength(50);
+
+            entity.HasOne(e => e.District)
+                  .WithMany(d => d.Villages)
+                  .HasForeignKey(e => e.DistrictId)
+                  .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasQueryFilter(e => !e.IsDeleted);
+        });
+
+        // Configure PostalCode entity
+        modelBuilder.Entity<PostalCode>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => e.Code).IsUnique();
+            entity.HasIndex(e => e.VillageId);
+            entity.HasIndex(e => e.DistrictId);
+            entity.HasIndex(e => new { e.VillageName, e.DistrictName });
+
+            entity.Property(e => e.Code).IsRequired().HasMaxLength(10);
+            entity.Property(e => e.VillageName).IsRequired().HasMaxLength(200);
+            entity.Property(e => e.DistrictName).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.Region).IsRequired().HasMaxLength(50);
+            entity.Property(e => e.LocalityType).HasMaxLength(50);
+            entity.Property(e => e.Notes).HasMaxLength(500);
+
+            entity.HasOne(e => e.Village)
+                  .WithMany()
+                  .HasForeignKey(e => e.VillageId)
+                  .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(e => e.District)
+                  .WithMany()
+                  .HasForeignKey(e => e.DistrictId)
+                  .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasQueryFilter(e => !e.IsDeleted);
+        });
+
+        // Configure RefreshToken entity (Production-Grade JWT Security)
+        modelBuilder.Entity<RefreshToken>(entity =>
+        {
+            entity.ToTable("RefreshTokens", schema: "master");
+            entity.HasKey(e => e.Id);
+
+            entity.Property(e => e.Token)
+                .IsRequired()
+                .HasMaxLength(500);
+
+            entity.Property(e => e.CreatedByIp)
+                .IsRequired()
+                .HasMaxLength(45); // IPv6 max length
+
+            entity.Property(e => e.RevokedByIp)
+                .HasMaxLength(45);
+
+            entity.Property(e => e.ReplacedByToken)
+                .HasMaxLength(500);
+
+            entity.Property(e => e.ReasonRevoked)
+                .HasMaxLength(200);
+
+            // Indexes for performance
+            entity.HasIndex(e => e.Token).IsUnique();
+            entity.HasIndex(e => e.AdminUserId);
+            entity.HasIndex(e => e.ExpiresAt);
+            entity.HasIndex(e => new { e.AdminUserId, e.ExpiresAt });
+
+            // Relationship with AdminUser
+            entity.HasOne(e => e.AdminUser)
+                .WithMany()
+                .HasForeignKey(e => e.AdminUserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
     }
 }

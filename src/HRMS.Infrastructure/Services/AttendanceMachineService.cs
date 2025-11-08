@@ -55,7 +55,7 @@ public class AttendanceMachineService : IAttendanceMachineService
             MachineName = dto.MachineName,
             MachineId = dto.MachineId,
             IpAddress = dto.IpAddress,
-            Location = dto.Location,
+            LegacyLocation = dto.Location,
             Port = dto.Port ?? 4370, // ZKTeco default port
             ZKTecoDeviceId = dto.ZKTecoDeviceId,
             SerialNumber = dto.SerialNumber,
@@ -105,7 +105,7 @@ public class AttendanceMachineService : IAttendanceMachineService
             MachineName = m.MachineName,
             MachineId = m.MachineId,
             IpAddress = m.IpAddress,
-            Location = m.Location,
+            Location = m.LegacyLocation,
             Port = m.Port,
             ZKTecoDeviceId = m.ZKTecoDeviceId,
             SerialNumber = m.SerialNumber,
@@ -145,7 +145,7 @@ public class AttendanceMachineService : IAttendanceMachineService
             MachineName = machine.MachineName,
             MachineId = machine.MachineId,
             IpAddress = machine.IpAddress,
-            Location = machine.Location,
+            Location = machine.LegacyLocation,
             Port = machine.Port,
             ZKTecoDeviceId = machine.ZKTecoDeviceId,
             SerialNumber = machine.SerialNumber,
@@ -185,10 +185,10 @@ public class AttendanceMachineService : IAttendanceMachineService
         // Update fields
         machine.MachineName = dto.MachineName;
         machine.IpAddress = dto.IpAddress;
-        machine.Location = dto.Location;
+        machine.LegacyLocation = dto.Location;
         machine.DepartmentId = dto.DepartmentId;
         machine.Model = dto.Model;
-        machine.Port = dto.Port;
+        machine.Port = dto.Port ?? 4370;
         machine.IsActive = dto.IsActive;
         machine.UpdatedAt = DateTime.UtcNow;
         machine.UpdatedBy = updatedBy;

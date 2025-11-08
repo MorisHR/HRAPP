@@ -1,8 +1,8 @@
 import { Component, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
+import { SubdomainService } from '../../../core/services/subdomain.service';
 import { environment } from '../../../../environments/environment';
 
 interface TenantCheckResponse {
@@ -33,8 +33,8 @@ export class SubdomainComponent {
   private readonly subdomainPattern = /^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$/;
 
   constructor(
-    private router: Router,
-    private http: HttpClient
+    private http: HttpClient,
+    private subdomainService: SubdomainService
   ) {}
 
   onSubdomainInput(event: Event): void {
@@ -98,14 +98,16 @@ export class SubdomainComponent {
         return;
       }
 
-      // Store subdomain in localStorage
-      localStorage.setItem('hrms_subdomain', this.subdomain());
-      if (response.data.companyName) {
-        localStorage.setItem('hrms_company_name', response.data.companyName);
-      }
+      // ✅ PROPER SUBDOMAIN-BASED ROUTING (Industry Best Practice)
+      // Redirect to tenant-specific subdomain instead of localStorage hack
+      // Examples:
+      // - Development: acme.localhost:4200/auth/login
+      // - Production: acme.hrms.com/auth/login
+      console.log(`✅ Tenant verified: ${this.subdomain()}`);
+      console.log(`🔄 Redirecting to: ${this.subdomain()}.${window.location.host}/auth/login`);
 
-      // Navigate to login page
-      await this.router.navigate(['/auth/login']);
+      // Redirect to tenant subdomain
+      this.subdomainService.redirectToTenant(this.subdomain(), '/auth/login');
     } catch (error: any) {
       console.error('Subdomain check error:', error);
       if (error.status === 404) {

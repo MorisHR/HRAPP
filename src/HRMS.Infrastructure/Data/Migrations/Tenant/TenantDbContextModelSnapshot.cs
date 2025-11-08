@@ -32,6 +32,10 @@ namespace HRMS.Infrastructure.Data.Migrations.Tenant
                     b.Property<Guid?>("AttendanceMachineId")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("AuthorizationNote")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
                     b.Property<DateTime?>("CheckInTime")
                         .HasColumnType("timestamp with time zone");
 
@@ -53,11 +57,21 @@ namespace HRMS.Infrastructure.Data.Migrations.Tenant
                     b.Property<string>("DeletedBy")
                         .HasColumnType("text");
 
+                    b.Property<Guid?>("DeviceId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("DeviceUserId")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
                     b.Property<int?>("EarlyDepartureMinutes")
                         .HasColumnType("integer");
 
                     b.Property<Guid>("EmployeeId")
                         .HasColumnType("uuid");
+
+                    b.Property<bool>("IsAuthorized")
+                        .HasColumnType("boolean");
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
@@ -74,11 +88,19 @@ namespace HRMS.Infrastructure.Data.Migrations.Tenant
                     b.Property<int?>("LateArrivalMinutes")
                         .HasColumnType("integer");
 
+                    b.Property<Guid?>("LocationId")
+                        .HasColumnType("uuid");
+
                     b.Property<decimal>("OvertimeHours")
                         .HasColumnType("decimal(10,2)");
 
                     b.Property<decimal?>("OvertimeRate")
                         .HasColumnType("decimal(10,2)");
+
+                    b.Property<string>("PunchSource")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
 
                     b.Property<DateTime?>("RegularizedAt")
                         .HasColumnType("timestamp with time zone");
@@ -102,6 +124,10 @@ namespace HRMS.Infrastructure.Data.Migrations.Tenant
                     b.Property<string>("UpdatedBy")
                         .HasColumnType("text");
 
+                    b.Property<string>("VerificationMethod")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
                     b.Property<decimal>("WorkingHours")
                         .HasColumnType("decimal(10,2)");
 
@@ -109,12 +135,137 @@ namespace HRMS.Infrastructure.Data.Migrations.Tenant
 
                     b.HasIndex("Date");
 
+                    b.HasIndex("DeviceId");
+
+                    b.HasIndex("LocationId");
+
                     b.HasIndex("Status");
 
                     b.HasIndex("EmployeeId", "Date")
                         .IsUnique();
 
+                    b.HasIndex("EmployeeId", "DeviceId", "Date");
+
                     b.ToTable("Attendances", "tenant_default");
+                });
+
+            modelBuilder.Entity("HRMS.Core.Entities.Tenant.AttendanceAnomaly", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("AnomalyDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("AnomalyDescription")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<string>("AnomalyDetailsJson")
+                        .HasColumnType("jsonb");
+
+                    b.Property<string>("AnomalySeverity")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTime>("AnomalyTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("AnomalyType")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<Guid?>("AttendanceId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AutoResolutionRule")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<bool>("AutoResolved")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DeletedBy")
+                        .HasColumnType("text");
+
+                    b.Property<Guid?>("DeviceId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("EmployeeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("ExpectedLocationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid?>("LocationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("NotificationRecipientsJson")
+                        .HasColumnType("jsonb");
+
+                    b.Property<bool>("NotificationSent")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("NotificationSentAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("ResolutionDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ResolutionNote")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<string>("ResolutionStatus")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<Guid?>("ResolvedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AnomalyDate");
+
+                    b.HasIndex("AttendanceId");
+
+                    b.HasIndex("DeviceId");
+
+                    b.HasIndex("EmployeeId");
+
+                    b.HasIndex("ExpectedLocationId");
+
+                    b.HasIndex("LocationId");
+
+                    b.HasIndex("ResolutionStatus");
+
+                    b.HasIndex("AnomalyType", "AnomalySeverity");
+
+                    b.HasIndex("EmployeeId", "AnomalyDate");
+
+                    b.ToTable("AttendanceAnomalies", "tenant_default");
                 });
 
             modelBuilder.Entity("HRMS.Core.Entities.Tenant.AttendanceCorrection", b =>
@@ -200,6 +351,14 @@ namespace HRMS.Infrastructure.Data.Migrations.Tenant
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<string>("ConnectionMethod")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<int>("ConnectionTimeoutSeconds")
+                        .HasColumnType("integer");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -215,6 +374,28 @@ namespace HRMS.Infrastructure.Data.Migrations.Tenant
                     b.Property<Guid?>("DepartmentId")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("DeviceCode")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("DeviceConfigJson")
+                        .HasColumnType("jsonb");
+
+                    b.Property<string>("DeviceStatus")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("DeviceType")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("FirmwareVersion")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
                     b.Property<string>("IpAddress")
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
@@ -228,9 +409,26 @@ namespace HRMS.Infrastructure.Data.Migrations.Tenant
                     b.Property<DateTime?>("LastSyncAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("Location")
+                    b.Property<int>("LastSyncRecordCount")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("LastSyncStatus")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTime?>("LastSyncTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("LegacyLocation")
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
+
+                    b.Property<Guid?>("LocationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("MacAddress")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
 
                     b.Property<string>("MachineId")
                         .IsRequired()
@@ -246,12 +444,24 @@ namespace HRMS.Infrastructure.Data.Migrations.Tenant
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
-                    b.Property<int?>("Port")
+                    b.Property<bool>("OfflineAlertEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("OfflineThresholdMinutes")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Port")
                         .HasColumnType("integer");
 
                     b.Property<string>("SerialNumber")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
+
+                    b.Property<bool>("SyncEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("SyncIntervalMinutes")
+                        .HasColumnType("integer");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -265,11 +475,18 @@ namespace HRMS.Infrastructure.Data.Migrations.Tenant
 
                     b.HasKey("Id");
 
+                    b.HasIndex("DeviceCode")
+                        .IsUnique();
+
                     b.HasIndex("IpAddress");
+
+                    b.HasIndex("LocationId");
 
                     b.HasIndex("SerialNumber");
 
                     b.HasIndex("ZKTecoDeviceId");
+
+                    b.HasIndex("LocationId", "DeviceStatus");
 
                     b.ToTable("AttendanceMachines", "tenant_default");
                 });
@@ -284,6 +501,9 @@ namespace HRMS.Infrastructure.Data.Migrations.Tenant
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
+
+                    b.Property<string>("CostCenterCode")
+                        .HasColumnType("text");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -333,6 +553,102 @@ namespace HRMS.Infrastructure.Data.Migrations.Tenant
                     b.HasIndex("ParentDepartmentId");
 
                     b.ToTable("Departments", "tenant_default");
+                });
+
+            modelBuilder.Entity("HRMS.Core.Entities.Tenant.DeviceSyncLog", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("DateRangeFrom")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("DateRangeTo")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DeletedBy")
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("DeviceId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ErrorDetailsJson")
+                        .HasColumnType("jsonb");
+
+                    b.Property<string>("ErrorMessage")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<Guid?>("InitiatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("RecordsErrored")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("RecordsFetched")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("RecordsInserted")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("RecordsProcessed")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("RecordsSkipped")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("RecordsUpdated")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("SyncDurationSeconds")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("SyncEndTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("SyncMethod")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTime>("SyncStartTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("SyncStatus")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DeviceId");
+
+                    b.HasIndex("SyncStartTime");
+
+                    b.HasIndex("SyncStatus");
+
+                    b.HasIndex("DeviceId", "SyncStartTime");
+
+                    b.ToTable("DeviceSyncLogs", "tenant_default");
                 });
 
             modelBuilder.Entity("HRMS.Core.Entities.Tenant.EmergencyContact", b =>
@@ -449,6 +765,13 @@ namespace HRMS.Infrastructure.Data.Migrations.Tenant
 
                     b.Property<decimal>("BasicSalary")
                         .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime?>("BiometricEnrollmentDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("BiometricEnrollmentId")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
                     b.Property<string>("BloodGroup")
                         .HasColumnType("text");
@@ -666,6 +989,9 @@ namespace HRMS.Infrastructure.Data.Migrations.Tenant
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
 
+                    b.Property<Guid?>("PrimaryLocationId")
+                        .HasColumnType("uuid");
+
                     b.Property<DateTime?>("ProbationEndDate")
                         .HasColumnType("timestamp with time zone");
 
@@ -750,7 +1076,88 @@ namespace HRMS.Infrastructure.Data.Migrations.Tenant
 
                     b.HasIndex("PassportNumber");
 
+                    b.HasIndex("PrimaryLocationId");
+
                     b.ToTable("Employees", "tenant_default");
+                });
+
+            modelBuilder.Entity("HRMS.Core.Entities.Tenant.EmployeeDeviceAccess", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AccessReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("AccessType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("AllowedDaysJson")
+                        .HasColumnType("jsonb");
+
+                    b.Property<TimeSpan?>("AllowedTimeEnd")
+                        .HasColumnType("interval");
+
+                    b.Property<TimeSpan?>("AllowedTimeStart")
+                        .HasColumnType("interval");
+
+                    b.Property<Guid?>("ApprovedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("ApprovedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DeletedBy")
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("DeviceId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("EmployeeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("ValidFrom")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("ValidUntil")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AccessType");
+
+                    b.HasIndex("DeviceId");
+
+                    b.HasIndex("ValidFrom", "ValidUntil");
+
+                    b.HasIndex("EmployeeId", "DeviceId", "IsActive");
+
+                    b.ToTable("EmployeeDeviceAccesses", "tenant_default");
                 });
 
             modelBuilder.Entity("HRMS.Core.Entities.Tenant.EmployeeDraft", b =>
@@ -1208,6 +1615,122 @@ namespace HRMS.Infrastructure.Data.Migrations.Tenant
                     b.ToTable("LeaveTypes", "tenant_default");
                 });
 
+            modelBuilder.Entity("HRMS.Core.Entities.Tenant.Location", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AddressLine1")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("AddressLine2")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<int?>("CapacityHeadcount")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("City")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("Country")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DeletedBy")
+                        .HasColumnType("text");
+
+                    b.Property<string>("District")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Email")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<decimal?>("Latitude")
+                        .HasColumnType("decimal(10,8)");
+
+                    b.Property<string>("LocationCode")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<Guid?>("LocationManagerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("LocationName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("LocationType")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<decimal?>("Longitude")
+                        .HasColumnType("decimal(11,8)");
+
+                    b.Property<string>("Phone")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("PostalCode")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("Region")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("Timezone")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<string>("WorkingHoursJson")
+                        .HasColumnType("jsonb");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LocationCode")
+                        .IsUnique();
+
+                    b.HasIndex("LocationManagerId");
+
+                    b.HasIndex("LocationName");
+
+                    b.HasIndex("LocationType");
+
+                    b.HasIndex("Latitude", "Longitude");
+
+                    b.ToTable("Locations", "tenant_default");
+                });
+
             modelBuilder.Entity("HRMS.Core.Entities.Tenant.PayrollCycle", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1367,6 +1890,9 @@ namespace HRMS.Infrastructure.Data.Migrations.Tenant
                     b.Property<decimal>("HousingAllowance")
                         .HasColumnType("decimal(18,2)");
 
+                    b.Property<bool>("IsCalculatedFromTimesheets")
+                        .HasColumnType("boolean");
+
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
 
@@ -1458,6 +1984,12 @@ namespace HRMS.Infrastructure.Data.Migrations.Tenant
 
                     b.Property<decimal>("ThirteenthMonthBonus")
                         .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("TimesheetIdsJson")
+                        .HasColumnType("text");
+
+                    b.Property<int>("TimesheetsProcessed")
+                        .HasColumnType("integer");
 
                     b.Property<decimal>("TotalDeductions")
                         .HasColumnType("decimal(18,2)");
@@ -1782,15 +2314,420 @@ namespace HRMS.Infrastructure.Data.Migrations.Tenant
                     b.ToTable("TenantSectorConfigurations", "tenant_default");
                 });
 
+            modelBuilder.Entity("HRMS.Core.Entities.Tenant.Timesheet", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("ApprovedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ApprovedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ApprovedByName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DeletedBy")
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("EmployeeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsLocked")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("LockedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("LockedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<DateTime>("PeriodEnd")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("PeriodStart")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("PeriodType")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("RejectedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("RejectedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("RejectionReason")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("SubmittedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("SubmittedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("TotalAbsentHours")
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<decimal>("TotalAnnualLeaveHours")
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<decimal>("TotalHolidayHours")
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<decimal>("TotalOvertimeHours")
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<decimal>("TotalRegularHours")
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<decimal>("TotalSickLeaveHours")
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("TenantId");
+
+                    b.HasIndex("PeriodStart", "PeriodEnd");
+
+                    b.HasIndex("EmployeeId", "PeriodStart", "PeriodEnd");
+
+                    b.ToTable("Timesheets", "tenant_default");
+                });
+
+            modelBuilder.Entity("HRMS.Core.Entities.Tenant.TimesheetAdjustment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("AdjustedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("AdjustedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AdjustedByName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int>("AdjustmentType")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("ApprovedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ApprovedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ApprovedByName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DeletedBy")
+                        .HasColumnType("text");
+
+                    b.Property<string>("FieldName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("NewValue")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("OldValue")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<string>("RejectionReason")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("TimesheetEntryId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AdjustedBy");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("TimesheetEntryId");
+
+                    b.ToTable("TimesheetAdjustments", "tenant_default");
+                });
+
+            modelBuilder.Entity("HRMS.Core.Entities.Tenant.TimesheetComment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Comment")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<DateTime>("CommentedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DeletedBy")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("TimesheetId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("UserName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CommentedAt");
+
+                    b.HasIndex("TimesheetId");
+
+                    b.ToTable("TimesheetComments", "tenant_default");
+                });
+
+            modelBuilder.Entity("HRMS.Core.Entities.Tenant.TimesheetEntry", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("ActualHours")
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<decimal>("AnnualLeaveHours")
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<Guid?>("AttendanceId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("BreakDuration")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("ClockInTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("ClockOutTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("Date")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("DayType")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DeletedBy")
+                        .HasColumnType("text");
+
+                    b.Property<decimal>("HolidayHours")
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<bool>("IsAbsent")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsHoliday")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsOnLeave")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsWeekend")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<decimal>("OvertimeHours")
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<decimal>("RegularHours")
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<decimal>("SickLeaveHours")
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<Guid>("TimesheetId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AttendanceId");
+
+                    b.HasIndex("Date");
+
+                    b.HasIndex("TimesheetId", "Date");
+
+                    b.ToTable("TimesheetEntries", "tenant_default");
+                });
+
             modelBuilder.Entity("HRMS.Core.Entities.Tenant.Attendance", b =>
                 {
+                    b.HasOne("HRMS.Core.Entities.Tenant.AttendanceMachine", "Device")
+                        .WithMany("Attendances")
+                        .HasForeignKey("DeviceId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("HRMS.Core.Entities.Tenant.Employee", "Employee")
                         .WithMany()
                         .HasForeignKey("EmployeeId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("HRMS.Core.Entities.Tenant.Location", "Location")
+                        .WithMany("Attendances")
+                        .HasForeignKey("LocationId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Device");
+
                     b.Navigation("Employee");
+
+                    b.Navigation("Location");
+                });
+
+            modelBuilder.Entity("HRMS.Core.Entities.Tenant.AttendanceAnomaly", b =>
+                {
+                    b.HasOne("HRMS.Core.Entities.Tenant.Attendance", "Attendance")
+                        .WithMany("Anomalies")
+                        .HasForeignKey("AttendanceId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.HasOne("HRMS.Core.Entities.Tenant.AttendanceMachine", "Device")
+                        .WithMany()
+                        .HasForeignKey("DeviceId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("HRMS.Core.Entities.Tenant.Employee", "Employee")
+                        .WithMany("AttendanceAnomalies")
+                        .HasForeignKey("EmployeeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("HRMS.Core.Entities.Tenant.Location", "ExpectedLocation")
+                        .WithMany()
+                        .HasForeignKey("ExpectedLocationId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("HRMS.Core.Entities.Tenant.Location", "Location")
+                        .WithMany()
+                        .HasForeignKey("LocationId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Attendance");
+
+                    b.Navigation("Device");
+
+                    b.Navigation("Employee");
+
+                    b.Navigation("ExpectedLocation");
+
+                    b.Navigation("Location");
                 });
 
             modelBuilder.Entity("HRMS.Core.Entities.Tenant.AttendanceCorrection", b =>
@@ -1812,6 +2749,16 @@ namespace HRMS.Infrastructure.Data.Migrations.Tenant
                     b.Navigation("Employee");
                 });
 
+            modelBuilder.Entity("HRMS.Core.Entities.Tenant.AttendanceMachine", b =>
+                {
+                    b.HasOne("HRMS.Core.Entities.Tenant.Location", "Location")
+                        .WithMany("BiometricDevices")
+                        .HasForeignKey("LocationId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Location");
+                });
+
             modelBuilder.Entity("HRMS.Core.Entities.Tenant.Department", b =>
                 {
                     b.HasOne("HRMS.Core.Entities.Tenant.Employee", "DepartmentHead")
@@ -1827,6 +2774,17 @@ namespace HRMS.Infrastructure.Data.Migrations.Tenant
                     b.Navigation("DepartmentHead");
 
                     b.Navigation("ParentDepartment");
+                });
+
+            modelBuilder.Entity("HRMS.Core.Entities.Tenant.DeviceSyncLog", b =>
+                {
+                    b.HasOne("HRMS.Core.Entities.Tenant.AttendanceMachine", "Device")
+                        .WithMany("SyncLogs")
+                        .HasForeignKey("DeviceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Device");
                 });
 
             modelBuilder.Entity("HRMS.Core.Entities.Tenant.EmergencyContact", b =>
@@ -1853,9 +2811,35 @@ namespace HRMS.Infrastructure.Data.Migrations.Tenant
                         .HasForeignKey("ManagerId")
                         .OnDelete(DeleteBehavior.Restrict);
 
+                    b.HasOne("HRMS.Core.Entities.Tenant.Location", "PrimaryLocation")
+                        .WithMany("Employees")
+                        .HasForeignKey("PrimaryLocationId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.Navigation("Department");
 
                     b.Navigation("Manager");
+
+                    b.Navigation("PrimaryLocation");
+                });
+
+            modelBuilder.Entity("HRMS.Core.Entities.Tenant.EmployeeDeviceAccess", b =>
+                {
+                    b.HasOne("HRMS.Core.Entities.Tenant.AttendanceMachine", "Device")
+                        .WithMany("EmployeeDeviceAccesses")
+                        .HasForeignKey("DeviceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("HRMS.Core.Entities.Tenant.Employee", "Employee")
+                        .WithMany("DeviceAccesses")
+                        .HasForeignKey("EmployeeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Device");
+
+                    b.Navigation("Employee");
                 });
 
             modelBuilder.Entity("HRMS.Core.Entities.Tenant.LeaveApplication", b =>
@@ -1939,6 +2923,16 @@ namespace HRMS.Infrastructure.Data.Migrations.Tenant
                     b.Navigation("Employee");
                 });
 
+            modelBuilder.Entity("HRMS.Core.Entities.Tenant.Location", b =>
+                {
+                    b.HasOne("HRMS.Core.Entities.Tenant.Employee", "LocationManager")
+                        .WithMany()
+                        .HasForeignKey("LocationManagerId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("LocationManager");
+                });
+
             modelBuilder.Entity("HRMS.Core.Entities.Tenant.Payslip", b =>
                 {
                     b.HasOne("HRMS.Core.Entities.Tenant.Employee", "Employee")
@@ -1969,6 +2963,71 @@ namespace HRMS.Infrastructure.Data.Migrations.Tenant
                     b.Navigation("Employee");
                 });
 
+            modelBuilder.Entity("HRMS.Core.Entities.Tenant.Timesheet", b =>
+                {
+                    b.HasOne("HRMS.Core.Entities.Tenant.Employee", "Employee")
+                        .WithMany()
+                        .HasForeignKey("EmployeeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Employee");
+                });
+
+            modelBuilder.Entity("HRMS.Core.Entities.Tenant.TimesheetAdjustment", b =>
+                {
+                    b.HasOne("HRMS.Core.Entities.Tenant.TimesheetEntry", "TimesheetEntry")
+                        .WithMany("Adjustments")
+                        .HasForeignKey("TimesheetEntryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("TimesheetEntry");
+                });
+
+            modelBuilder.Entity("HRMS.Core.Entities.Tenant.TimesheetComment", b =>
+                {
+                    b.HasOne("HRMS.Core.Entities.Tenant.Timesheet", "Timesheet")
+                        .WithMany("Comments")
+                        .HasForeignKey("TimesheetId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Timesheet");
+                });
+
+            modelBuilder.Entity("HRMS.Core.Entities.Tenant.TimesheetEntry", b =>
+                {
+                    b.HasOne("HRMS.Core.Entities.Tenant.Attendance", "Attendance")
+                        .WithMany()
+                        .HasForeignKey("AttendanceId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("HRMS.Core.Entities.Tenant.Timesheet", "Timesheet")
+                        .WithMany("Entries")
+                        .HasForeignKey("TimesheetId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Attendance");
+
+                    b.Navigation("Timesheet");
+                });
+
+            modelBuilder.Entity("HRMS.Core.Entities.Tenant.Attendance", b =>
+                {
+                    b.Navigation("Anomalies");
+                });
+
+            modelBuilder.Entity("HRMS.Core.Entities.Tenant.AttendanceMachine", b =>
+                {
+                    b.Navigation("Attendances");
+
+                    b.Navigation("EmployeeDeviceAccesses");
+
+                    b.Navigation("SyncLogs");
+                });
+
             modelBuilder.Entity("HRMS.Core.Entities.Tenant.Department", b =>
                 {
                     b.Navigation("Employees");
@@ -1978,6 +3037,10 @@ namespace HRMS.Infrastructure.Data.Migrations.Tenant
 
             modelBuilder.Entity("HRMS.Core.Entities.Tenant.Employee", b =>
                 {
+                    b.Navigation("AttendanceAnomalies");
+
+                    b.Navigation("DeviceAccesses");
+
                     b.Navigation("EmergencyContacts");
                 });
 
@@ -1993,9 +3056,30 @@ namespace HRMS.Infrastructure.Data.Migrations.Tenant
                     b.Navigation("LeaveBalances");
                 });
 
+            modelBuilder.Entity("HRMS.Core.Entities.Tenant.Location", b =>
+                {
+                    b.Navigation("Attendances");
+
+                    b.Navigation("BiometricDevices");
+
+                    b.Navigation("Employees");
+                });
+
             modelBuilder.Entity("HRMS.Core.Entities.Tenant.PayrollCycle", b =>
                 {
                     b.Navigation("Payslips");
+                });
+
+            modelBuilder.Entity("HRMS.Core.Entities.Tenant.Timesheet", b =>
+                {
+                    b.Navigation("Comments");
+
+                    b.Navigation("Entries");
+                });
+
+            modelBuilder.Entity("HRMS.Core.Entities.Tenant.TimesheetEntry", b =>
+                {
+                    b.Navigation("Adjustments");
                 });
 #pragma warning restore 612, 618
         }

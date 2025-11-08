@@ -257,6 +257,23 @@ public class Payslip : BaseEntity
     /// </summary>
     public DateTime? DeliveredAt { get; set; }
 
+    // Timesheet Integration
+    /// <summary>
+    /// JSON array of timesheet IDs used for calculating this payslip
+    /// Format: ["guid1", "guid2", ...]
+    /// </summary>
+    public string? TimesheetIdsJson { get; set; }
+
+    /// <summary>
+    /// Number of approved timesheets processed for this payslip
+    /// </summary>
+    public int TimesheetsProcessed { get; set; }
+
+    /// <summary>
+    /// Indicates if this payslip was calculated from timesheets (true) or manual entry (false)
+    /// </summary>
+    public bool IsCalculatedFromTimesheets { get; set; }
+
     // Navigation properties
     /// <summary>
     /// Reference to the parent payroll cycle

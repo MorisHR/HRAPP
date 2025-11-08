@@ -1,0 +1,578 @@
+// MorisHR Executive Theme - Location Management
+// Enterprise-Grade Professional Styling
+
+:host {
+  display: block;
+  padding: 24px;
+  background: linear-gradient(135deg, #f5f7fa 0%, #e8ecf1 100%);
+  min-height: 100%;
+}
+
+// ============================================
+// CARD CONTAINER - Premium Elevation
+// ============================================
+mat-card {
+  border-radius: 16px;
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.08),
+    0 2px 8px rgba(0, 0, 0, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  background: #ffffff;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+  &:hover {
+    box-shadow:
+      0 8px 32px rgba(0, 0, 0, 0.12),
+      0 4px 16px rgba(0, 0, 0, 0.08);
+    transform: translateY(-2px);
+  }
+}
+
+// ============================================
+// CARD HEADER - Executive Typography
+// ============================================
+mat-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 32px 32px 24px;
+  background: linear-gradient(135deg, #1a237e 0%, #283593 100%);
+  border-bottom: 3px solid #3949ab;
+  margin: 0;
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.3) 50%,
+      transparent 100%);
+  }
+
+  mat-card-title {
+    color: #ffffff;
+    font-size: 28px;
+    font-weight: 600;
+    letter-spacing: -0.5px;
+    margin: 0;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  }
+
+  .header-actions {
+    button {
+      padding: 12px 28px;
+      font-size: 15px;
+      font-weight: 600;
+      border-radius: 8px;
+      letter-spacing: 0.3px;
+      box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      background: linear-gradient(135deg, #ffc107 0%, #ffb300 100%);
+      color: #1a237e;
+
+      mat-icon {
+        margin-right: 8px;
+        font-size: 20px;
+        height: 20px;
+        width: 20px;
+      }
+
+      &:hover {
+        transform: translateY(-2px) scale(1.03);
+        box-shadow: 0 6px 20px rgba(255, 193, 7, 0.4);
+        background: linear-gradient(135deg, #ffca28 0%, #ffc107 100%);
+      }
+
+      &:active {
+        transform: translateY(0) scale(0.98);
+      }
+    }
+  }
+}
+
+// ============================================
+// CARD CONTENT - Spacious Layout
+// ============================================
+mat-card-content {
+  padding: 32px;
+  min-height: 400px;
+}
+
+// ============================================
+// LOADING STATE - Premium Animation
+// ============================================
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 20px;
+  gap: 24px;
+
+  mat-spinner {
+    ::ng-deep circle {
+      stroke: #3949ab;
+      stroke-width: 4px;
+    }
+  }
+
+  p {
+    color: #5e6c84;
+    font-size: 16px;
+    font-weight: 500;
+    margin: 0;
+    letter-spacing: 0.2px;
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+// ============================================
+// ERROR STATE - Professional Alert
+// ============================================
+.error-container {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 24px 28px;
+  background: linear-gradient(135deg, #fff5f5 0%, #ffe8e8 100%);
+  border: 2px solid #ff5252;
+  border-radius: 12px;
+  margin: 20px 0;
+  box-shadow: 0 4px 12px rgba(255, 82, 82, 0.15);
+
+  mat-icon {
+    font-size: 32px;
+    height: 32px;
+    width: 32px;
+    color: #d32f2f;
+  }
+
+  p {
+    color: #c62828;
+    font-size: 15px;
+    font-weight: 500;
+    margin: 0;
+    flex: 1;
+  }
+}
+
+// ============================================
+// TABLE CONTAINER - Professional Layout
+// ============================================
+.table-container {
+  overflow-x: auto;
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.06);
+}
+
+// ============================================
+// TABLE - Premium Data Display
+// ============================================
+.locations-table {
+  width: 100%;
+  background: transparent;
+
+  // Header Styling
+  .mat-header-cell {
+    background: linear-gradient(180deg, #f8f9fa 0%, #e9ecef 100%);
+    color: #1a237e;
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 20px 24px;
+    border-bottom: 3px solid #3949ab;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+
+  // Cell Styling
+  .mat-cell {
+    padding: 20px 24px;
+    font-size: 14px;
+    color: #2c3e50;
+    border-bottom: 1px solid #e9ecef;
+    transition: all 0.2s ease;
+  }
+
+  // Row Hover Effect
+  .mat-row {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+    &:hover {
+      background: linear-gradient(135deg, #f0f4ff 0%, #e8f0fe 100%);
+      box-shadow: 0 2px 8px rgba(57, 73, 171, 0.1);
+      transform: scale(1.01);
+
+      .mat-cell {
+        color: #1a237e;
+      }
+    }
+
+    &:last-child .mat-cell {
+      border-bottom: none;
+    }
+  }
+
+  // No Data Row
+  .no-data {
+    text-align: center;
+    padding: 60px 20px !important;
+    color: #7c8a9d;
+    font-size: 15px;
+    background: #f8f9fa;
+
+    mat-icon {
+      display: block;
+      margin: 0 auto 16px;
+      font-size: 48px;
+      height: 48px;
+      width: 48px;
+      color: #adb5bd;
+      opacity: 0.6;
+    }
+
+    p {
+      margin: 0;
+      font-weight: 500;
+    }
+  }
+}
+
+// ============================================
+// LOCATION TYPE BADGE - Category Labels
+// ============================================
+.location-type-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 16px;
+  background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+  color: #1565c0;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: capitalize;
+  border: 1px solid #90caf9;
+  box-shadow: 0 2px 4px rgba(21, 101, 192, 0.1);
+  transition: all 0.2s ease;
+
+  &:hover {
+    transform: scale(1.05);
+    box-shadow: 0 3px 8px rgba(21, 101, 192, 0.2);
+  }
+}
+
+// ============================================
+// STATUS BADGE - Active/Inactive Indicators
+// ============================================
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 7px 18px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.12);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    left: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    animation: statusPulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  &.active {
+    background: linear-gradient(135deg, #4caf50 0%, #66bb6a 100%);
+    color: #ffffff;
+    border: 1px solid #43a047;
+
+    &::before {
+      background: #ffffff;
+      box-shadow: 0 0 8px #ffffff;
+    }
+
+    &:hover {
+      transform: scale(1.08);
+      box-shadow: 0 4px 16px rgba(76, 175, 80, 0.4);
+    }
+  }
+
+  &.inactive {
+    background: linear-gradient(135deg, #f44336 0%, #e57373 100%);
+    color: #ffffff;
+    border: 1px solid #e53935;
+
+    &::before {
+      background: #ffffff;
+      box-shadow: 0 0 8px #ffffff;
+    }
+
+    &:hover {
+      transform: scale(1.08);
+      box-shadow: 0 4px 16px rgba(244, 67, 54, 0.4);
+    }
+  }
+}
+
+@keyframes statusPulse {
+  0%, 100% {
+    opacity: 1;
+    transform: translateY(-50%) scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: translateY(-50%) scale(1.3);
+  }
+}
+
+// ============================================
+// ACTION BUTTONS - Interactive Icons
+// ============================================
+.mat-column-actions {
+  width: 180px;
+  text-align: right;
+
+  button {
+    margin-left: 4px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+
+    &::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.3);
+      transform: translate(-50%, -50%);
+      transition: width 0.4s, height 0.4s;
+    }
+
+    &:hover {
+      transform: translateY(-3px) scale(1.1);
+
+      &::before {
+        width: 100%;
+        height: 100%;
+      }
+
+      mat-icon {
+        transform: scale(1.15);
+      }
+    }
+
+    &:active {
+      transform: translateY(-1px) scale(1.05);
+    }
+
+    mat-icon {
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      font-size: 20px;
+      height: 20px;
+      width: 20px;
+    }
+
+    // View Button - Primary Blue
+    &[color="primary"] {
+      background: linear-gradient(135deg, #2196f3 0%, #42a5f5 100%);
+      color: #ffffff;
+
+      &:hover {
+        box-shadow: 0 6px 20px rgba(33, 150, 243, 0.4);
+        background: linear-gradient(135deg, #1e88e5 0%, #2196f3 100%);
+      }
+    }
+
+    // Edit Button - Accent Purple
+    &[color="accent"] {
+      background: linear-gradient(135deg, #9c27b0 0%, #ab47bc 100%);
+      color: #ffffff;
+
+      &:hover {
+        box-shadow: 0 6px 20px rgba(156, 39, 176, 0.4);
+        background: linear-gradient(135deg, #8e24aa 0%, #9c27b0 100%);
+      }
+    }
+
+    // Delete Button - Warning Red
+    &[color="warn"] {
+      background: linear-gradient(135deg, #f44336 0%, #ef5350 100%);
+      color: #ffffff;
+
+      &:hover {
+        box-shadow: 0 6px 20px rgba(244, 67, 54, 0.4);
+        background: linear-gradient(135deg, #e53935 0%, #f44336 100%);
+      }
+    }
+  }
+}
+
+// ============================================
+// RESPONSIVE DESIGN - Mobile Optimization
+// ============================================
+@media (max-width: 1200px) {
+  mat-card-header {
+    padding: 24px 24px 20px;
+
+    mat-card-title {
+      font-size: 24px;
+    }
+  }
+
+  mat-card-content {
+    padding: 24px;
+  }
+}
+
+@media (max-width: 768px) {
+  :host {
+    padding: 16px;
+  }
+
+  mat-card {
+    border-radius: 12px;
+  }
+
+  mat-card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 20px;
+
+    mat-card-title {
+      font-size: 20px;
+    }
+
+    .header-actions {
+      width: 100%;
+
+      button {
+        width: 100%;
+        justify-content: center;
+      }
+    }
+  }
+
+  mat-card-content {
+    padding: 16px;
+  }
+
+  .locations-table {
+    .mat-header-cell,
+    .mat-cell {
+      padding: 12px 8px;
+      font-size: 12px;
+    }
+  }
+
+  .mat-column-actions {
+    width: 140px;
+
+    button {
+      mat-icon {
+        font-size: 18px;
+        height: 18px;
+        width: 18px;
+      }
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  mat-card-header {
+    mat-card-title {
+      font-size: 18px;
+    }
+  }
+
+  .status-badge,
+  .location-type-badge {
+    padding: 5px 12px;
+    font-size: 10px;
+  }
+
+  .mat-column-actions {
+    width: 120px;
+  }
+}
+
+// ============================================
+// PREMIUM TOUCHES - Subtle Enhancements
+// ============================================
+
+// Smooth scrollbar for table
+.table-container {
+  &::-webkit-scrollbar {
+    height: 8px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: #f1f3f5;
+    border-radius: 4px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, #3949ab 0%, #5c6bc0 100%);
+    border-radius: 4px;
+
+    &:hover {
+      background: linear-gradient(135deg, #283593 0%, #3949ab 100%);
+    }
+  }
+}
+
+// Subtle entrance animations
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+mat-card {
+  animation: fadeInUp 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+// Professional focus states
+button:focus-visible,
+.mat-icon-button:focus-visible {
+  outline: 3px solid rgba(57, 73, 171, 0.3);
+  outline-offset: 2px;
+}

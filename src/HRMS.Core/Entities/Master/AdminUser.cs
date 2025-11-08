@@ -17,6 +17,12 @@ public class AdminUser : BaseEntity
     public bool IsTwoFactorEnabled { get; set; }
     public string? TwoFactorSecret { get; set; }
 
+    /// <summary>
+    /// Backup codes for 2FA (hashed with SHA256). Max 10 codes.
+    /// Format: JSON array of hashed codes ["hash1", "hash2", ...]
+    /// </summary>
+    public string? BackupCodes { get; set; }
+
     // SECURITY: Account Lockout Fields
     public bool LockoutEnabled { get; set; } = true;
     public DateTime? LockoutEnd { get; set; }

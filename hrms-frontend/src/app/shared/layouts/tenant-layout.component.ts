@@ -12,7 +12,9 @@ import { ThemeService } from '../../core/services/theme.service';
 interface MenuItem {
   label: string;
   icon: string;
-  route: string;
+  route?: string;
+  children?: MenuItem[];
+  expanded?: boolean;
 }
 
 @Component({
@@ -39,11 +41,54 @@ interface MenuItem {
         </div>
 
         <mat-nav-list>
-          @for (item of menuItems; track item.route) {
-            <a mat-list-item [routerLink]="item.route" routerLinkActive="active">
-              <mat-icon matListItemIcon>{{ item.icon }}</mat-icon>
-              <span matListItemTitle>{{ item.label }}</span>
-            </a>
+          @for (item of menuItems; track item.label) {
+            @if (item.route) {
+              <!-- Regular menu item with route -->
+              <a mat-list-item [routerLink]="item.route" routerLinkActive="active">
+                <mat-icon matListItemIcon>{{ item.icon }}</mat-icon>
+                <span matListItemTitle>{{ item.label }}</span>
+              </a>
+            } @else if (item.children) {
+              <!-- Expandable menu item -->
+              <a mat-list-item (click)="toggleMenu(item)" class="expandable-item">
+                <mat-icon matListItemIcon>{{ item.icon }}</mat-icon>
+                <span matListItemTitle>{{ item.label }}</span>
+                <mat-icon class="expand-icon">{{ item.expanded ? 'expand_less' : 'expand_more' }}</mat-icon>
+              </a>
+
+              <!-- Submenu items -->
+              @if (item.expanded) {
+                <div class="submenu">
+                  @for (child of item.children; track child.label) {
+                    @if (child.route) {
+                      <a mat-list-item [routerLink]="child.route" routerLinkActive="active" class="submenu-item">
+                        <mat-icon matListItemIcon>{{ child.icon }}</mat-icon>
+                        <span matListItemTitle>{{ child.label }}</span>
+                      </a>
+                    } @else if (child.children) {
+                      <!-- Nested expandable item -->
+                      <a mat-list-item (click)="toggleMenu(child)" class="submenu-item expandable-item">
+                        <mat-icon matListItemIcon>{{ child.icon }}</mat-icon>
+                        <span matListItemTitle>{{ child.label }}</span>
+                        <mat-icon class="expand-icon">{{ child.expanded ? 'expand_less' : 'expand_more' }}</mat-icon>
+                      </a>
+
+                      <!-- Nested submenu -->
+                      @if (child.expanded) {
+                        <div class="submenu submenu-nested">
+                          @for (nestedChild of child.children; track nestedChild.label) {
+                            <a mat-list-item [routerLink]="nestedChild.route" routerLinkActive="active" class="submenu-item-nested">
+                              <mat-icon matListItemIcon>{{ nestedChild.icon }}</mat-icon>
+                              <span matListItemTitle>{{ nestedChild.label }}</span>
+                            </a>
+                          }
+                        </div>
+                      }
+                    }
+                  }
+                </div>
+              }
+            }
           }
         </mat-nav-list>
       </mat-sidenav>
@@ -120,6 +165,52 @@ interface MenuItem {
           }
         }
       }
+
+      .expandable-item {
+        cursor: pointer;
+        user-select: none;
+
+        .expand-icon {
+          margin-left: auto;
+          font-size: 20px;
+          width: 20px;
+          height: 20px;
+          transition: transform 0.2s;
+        }
+      }
+
+      .submenu {
+        padding-left: 16px;
+        margin-top: 4px;
+
+        .submenu-item {
+          margin: 2px 8px;
+          padding-left: 24px;
+          font-size: 0.9rem;
+
+          mat-icon {
+            font-size: 20px;
+            width: 20px;
+            height: 20px;
+          }
+        }
+
+        .submenu-nested {
+          padding-left: 16px;
+
+          .submenu-item-nested {
+            margin: 2px 8px;
+            padding-left: 32px;
+            font-size: 0.85rem;
+
+            mat-icon {
+              font-size: 18px;
+              width: 18px;
+              height: 18px;
+            }
+          }
+        }
+      }
     }
 
     mat-toolbar {
@@ -162,9 +253,33 @@ export class TenantLayoutComponent {
     { label: 'Employees', icon: 'people', route: '/tenant/employees' },
     { label: 'Attendance', icon: 'event_available', route: '/tenant/attendance' },
     { label: 'Leave Management', icon: 'beach_access', route: '/tenant/leave' },
+    { label: 'Timesheets', icon: 'schedule', route: '/tenant/timesheets/approvals' },
     { label: 'Payroll', icon: 'payments', route: '/tenant/payroll' },
     { label: 'Reports', icon: 'assessment', route: '/tenant/reports' },
+    {
+      label: 'Settings',
+      icon: 'settings',
+      expanded: false,
+      children: [
+        {
+          label: 'Organization',
+          icon: 'business',
+          expanded: false,
+          children: [
+            { label: 'Departments', icon: 'corporate_fare', route: '/tenant/settings/organization/departments' },
+            { label: 'Locations', icon: 'location_on', route: '/tenant/organization/locations' },
+            { label: 'Biometric Devices', icon: 'devices', route: '/tenant/organization/devices' }
+          ]
+        }
+      ]
+    }
   ];
+
+  toggleMenu(item: MenuItem): void {
+    if (item.children) {
+      item.expanded = !item.expanded;
+    }
+  }
 
   toggleTheme(): void {
     this.themeService.toggleTheme();

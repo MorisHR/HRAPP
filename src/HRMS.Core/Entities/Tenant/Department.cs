@@ -12,6 +12,7 @@ public class Department : BaseEntity
     public Department? ParentDepartment { get; set; }
     public Guid? DepartmentHeadId { get; set; }
     public Employee? DepartmentHead { get; set; }
+    public string? CostCenterCode { get; set; }
     public bool IsActive { get; set; } = true;
 
     // Navigation properties

@@ -150,22 +150,87 @@
                 </mat-select>
               </mat-form-field>
 
-              <mat-form-field appearance="outline" class="full-width">
-                <mat-label>Address *</mat-label>
-                <textarea matInput formControlName="address" rows="2" placeholder="Street address"></textarea>
-                <mat-error>Address is required</mat-error>
-              </mat-form-field>
+              <!-- Mauritius Address Section -->
+              <div class="address-section full-width">
+                <h4 class="subsection-title">Residential Address (Mauritius)</h4>
+                <div class="form-grid">
+                  <mat-form-field appearance="outline">
+                    <mat-label>District *</mat-label>
+                    <mat-select formControlName="district" (selectionChange)="onDistrictChange($event.value)">
+                      @if (districts().length === 0) {
+                        <mat-option disabled>Loading districts...</mat-option>
+                      }
+                      @for (district of districts(); track district.id) {
+                        <mat-option [value]="district.id">
+                          {{ district.districtName }}
+                        </mat-option>
+                      }
+                    </mat-select>
+                    <mat-hint>Select district first</mat-hint>
+                    <mat-error>District is required</mat-error>
+                  </mat-form-field>
 
-              <mat-form-field appearance="outline">
-                <mat-label>City *</mat-label>
-                <input matInput formControlName="city" placeholder="Port Louis">
-                <mat-error>City is required</mat-error>
-              </mat-form-field>
+                  <mat-form-field appearance="outline">
+                    <mat-label>Village/Locality</mat-label>
+                    <mat-select formControlName="village">
+                      @if (villages().length === 0) {
+                        <mat-option disabled>Select district first</mat-option>
+                      }
+                      @for (village of villages(); track village.id) {
+                        <mat-option [value]="village.id">
+                          {{ village.villageName }} ({{ village.postalCode }})
+                        </mat-option>
+                      }
+                    </mat-select>
+                    <mat-hint>Optional - auto-filled by postal code</mat-hint>
+                  </mat-form-field>
 
-              <mat-form-field appearance="outline">
-                <mat-label>Postal Code</mat-label>
-                <input matInput formControlName="postalCode" placeholder="11302">
-              </mat-form-field>
+                  <mat-form-field appearance="outline">
+                    <mat-label>Postal Code</mat-label>
+                    <input matInput formControlName="postalCode" placeholder="11302"
+                      (blur)="onPostalCodeBlur(employeeForm.get('postalCode')?.value)">
+                    <mat-hint>Enter postal code to auto-fill address</mat-hint>
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline">
+                    <mat-label>City/Town</mat-label>
+                    <input matInput formControlName="city" placeholder="Port Louis">
+                    <mat-hint>Auto-filled from postal code</mat-hint>
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Address Line 1 *</mat-label>
+                    <input matInput formControlName="addressLine1" placeholder="House/Building number, Street name">
+                    <mat-error *ngIf="employeeForm.get('addressLine1')?.hasError('required')">
+                      Address line 1 is required
+                    </mat-error>
+                    <mat-error *ngIf="employeeForm.get('addressLine1')?.hasError('minlength')">
+                      Must be at least 10 characters
+                    </mat-error>
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Address Line 2</mat-label>
+                    <input matInput formControlName="addressLine2" placeholder="Additional address details (optional)">
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline">
+                    <mat-label>Region</mat-label>
+                    <input matInput formControlName="region" placeholder="e.g., North, South">
+                    <mat-hint>Auto-filled from postal code</mat-hint>
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline">
+                    <mat-label>Country *</mat-label>
+                    <mat-select formControlName="country">
+                      <mat-option value="Mauritius">Mauritius</mat-option>
+                      <mat-option value="Rodrigues">Rodrigues</mat-option>
+                      <mat-option value="Agalega">Agalega</mat-option>
+                    </mat-select>
+                    <mat-error>Country is required</mat-error>
+                  </mat-form-field>
+                </div>
+              </div>
 
               <!-- Expatriate-specific fields -->
               @if (isExpatriate()) {
@@ -262,7 +327,16 @@
 
               <mat-form-field appearance="outline">
                 <mat-label>Department *</mat-label>
-                <input matInput formControlName="department" placeholder="Manufacturing">
+                <mat-select formControlName="department">
+                  @if (departments().length === 0) {
+                    <mat-option disabled>Loading departments...</mat-option>
+                  }
+                  @for (dept of departments(); track dept.id) {
+                    <mat-option [value]="dept.name">
+                      {{ dept.name }} ({{ dept.code }})
+                    </mat-option>
+                  }
+                </mat-select>
                 <mat-error>Department is required</mat-error>
               </mat-form-field>
 

@@ -153,11 +153,17 @@ public class TenantAuthService
         _logger.LogInformation("Successful tenant login: Employee {EmployeeId} in Tenant {TenantId}",
             employee.Id, tenant.Id);
 
-        // Step 8: Generate JWT token with tenant claims
+        // Step 8: Check if employee is a manager (has subordinates)
+        var isManager = await tenantContext.Employees
+            .AnyAsync(e => e.ManagerId == employee.Id && !e.IsDeleted);
+
+        // Step 9: Generate JWT token with tenant claims
         var token = GenerateTenantJwtToken(
             employee.Id,
             employee.Email,
             employee.FullName,
+            employee.JobTitle,
+            isManager,
             tenant.Id,
             tenant.Subdomain,
             tenant.SchemaName
@@ -171,11 +177,47 @@ public class TenantAuthService
         Guid employeeId,
         string email,
         string fullName,
+        string? jobTitle,
+        bool isManager,
         Guid tenantId,
         string subdomain,
         string schemaName)
     {
-        var claims = new[]
+        // Determine employee roles based on job title and manager status
+        var roles = new List<string> { "TenantEmployee" };
+
+        if (!string.IsNullOrEmpty(jobTitle))
+        {
+            var titleLower = jobTitle.ToLower();
+
+            // Check for Admin role
+            if (titleLower.Contains("admin"))
+            {
+                roles.Add("Admin");
+            }
+
+            // Check for HR role
+            if (titleLower.Contains("hr") || titleLower.Contains("human resource"))
+            {
+                roles.Add("HR");
+            }
+
+            // Check for Manager role based on title
+            if (titleLower.Contains("manager") || titleLower.Contains("supervisor") ||
+                titleLower.Contains("head") || titleLower.Contains("director") ||
+                titleLower.Contains("lead"))
+            {
+                roles.Add("Manager");
+            }
+        }
+
+        // Add Manager role if employee has subordinates
+        if (isManager && !roles.Contains("Manager"))
+        {
+            roles.Add("Manager");
+        }
+
+        var claimsList = new List<Claim>
         {
             new Claim(JwtRegisteredClaimNames.Sub, employeeId.ToString()),
             new Claim(JwtRegisteredClaimNames.Email, email),
@@ -184,11 +226,19 @@ public class TenantAuthService
             new Claim(ClaimTypes.NameIdentifier, employeeId.ToString()),
             new Claim(ClaimTypes.Name, fullName),
             new Claim(ClaimTypes.Email, email),
-            new Claim("role", "TenantEmployee"),
             new Claim("tenant_id", tenantId.ToString()),
             new Claim("tenant_subdomain", subdomain),
             new Claim("tenant_schema", schemaName)
         };
+
+        // Add all role claims
+        foreach (var role in roles)
+        {
+            claimsList.Add(new Claim(ClaimTypes.Role, role));
+            claimsList.Add(new Claim("role", role)); // Legacy claim name for compatibility
+        }
+
+        var claims = claimsList.ToArray();
 
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSettings.Secret));
         var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);

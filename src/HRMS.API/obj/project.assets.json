@@ -1803,6 +1803,24 @@
           }
         }
       },
+      "Microsoft.Win32.SystemEvents/6.0.0": {
+        "type": "package",
+        "compile": {
+          "lib/net6.0/Microsoft.Win32.SystemEvents.dll": {}
+        },
+        "runtime": {
+          "lib/net6.0/Microsoft.Win32.SystemEvents.dll": {}
+        },
+        "build": {
+          "buildTransitive/netcoreapp3.1/_._": {}
+        },
+        "runtimeTargets": {
+          "runtimes/win/lib/net6.0/Microsoft.Win32.SystemEvents.dll": {
+            "assetType": "runtime",
+            "rid": "win"
+          }
+        }
+      },
       "Mono.TextTemplating/3.0.0": {
         "type": "package",
         "dependencies": {
@@ -1853,6 +1871,15 @@
           "lib/net8.0/Npgsql.EntityFrameworkCore.PostgreSQL.dll": {}
         }
       },
+      "Otp.NET/1.4.0": {
+        "type": "package",
+        "compile": {
+          "lib/net8.0/Otp.NET.dll": {}
+        },
+        "runtime": {
+          "lib/net8.0/Otp.NET.dll": {}
+        }
+      },
       "Pipelines.Sockets.Unofficial/2.2.8": {
         "type": "package",
         "dependencies": {
@@ -1892,6 +1919,18 @@
           "lib/net8.0/Polly.Core.dll": {
             "related": ".pdb"
           }
+        }
+      },
+      "QRCoder/1.7.0": {
+        "type": "package",
+        "dependencies": {
+          "System.Drawing.Common": "6.0.0"
+        },
+        "compile": {
+          "lib/net6.0/QRCoder.dll": {}
+        },
+        "runtime": {
+          "lib/net6.0/QRCoder.dll": {}
         }
       },
       "QuestPDF/2025.7.3": {
@@ -2388,6 +2427,31 @@
           "lib/netstandard1.3/System.Diagnostics.StackTrace.dll": {}
         }
       },
+      "System.Drawing.Common/6.0.0": {
+        "type": "package",
+        "dependencies": {
+          "Microsoft.Win32.SystemEvents": "6.0.0"
+        },
+        "compile": {
+          "lib/net6.0/System.Drawing.Common.dll": {}
+        },
+        "runtime": {
+          "lib/net6.0/System.Drawing.Common.dll": {}
+        },
+        "build": {
+          "buildTransitive/netcoreapp3.1/_._": {}
+        },
+        "runtimeTargets": {
+          "runtimes/unix/lib/net6.0/System.Drawing.Common.dll": {
+            "assetType": "runtime",
+            "rid": "unix"
+          },
+          "runtimes/win/lib/net6.0/System.Drawing.Common.dll": {
+            "assetType": "runtime",
+            "rid": "win"
+          }
+        }
+      },
       "System.IdentityModel.Tokens.Jwt/8.14.0": {
         "type": "package",
         "dependencies": {
@@ -2682,6 +2746,8 @@
           "Microsoft.Extensions.Configuration.Abstractions": "9.0.10",
           "Microsoft.Extensions.Configuration.Json": "9.0.10",
           "Npgsql.EntityFrameworkCore.PostgreSQL": "9.0.4",
+          "Otp.NET": "1.4.0",
+          "QRCoder": "1.7.0",
           "QuestPDF": "2025.7.3",
           "System.IdentityModel.Tokens.Jwt": "8.14.0"
         },
@@ -5822,6 +5888,31 @@
         "microsoft.openapi.nuspec"
       ]
     },
+    "Microsoft.Win32.SystemEvents/6.0.0": {
+      "sha512": "hqTM5628jSsQiv+HGpiq3WKBl2c8v1KZfby2J6Pr7pEPlK9waPdgEO6b8A/+/xn/yZ9ulv8HuqK71ONy2tg67A==",
+      "type": "package",
+      "path": "microsoft.win32.systemevents/6.0.0",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "Icon.png",
+        "LICENSE.TXT",
+        "THIRD-PARTY-NOTICES.TXT",
+        "buildTransitive/netcoreapp2.0/Microsoft.Win32.SystemEvents.targets",
+        "buildTransitive/netcoreapp3.1/_._",
+        "lib/net461/Microsoft.Win32.SystemEvents.dll",
+        "lib/net6.0/Microsoft.Win32.SystemEvents.dll",
+        "lib/netcoreapp3.1/Microsoft.Win32.SystemEvents.dll",
+        "lib/netstandard2.0/Microsoft.Win32.SystemEvents.dll",
+        "microsoft.win32.systemevents.6.0.0.nupkg.sha512",
+        "microsoft.win32.systemevents.nuspec",
+        "runtimes/win/lib/net6.0/Microsoft.Win32.SystemEvents.dll",
+        "runtimes/win/lib/net6.0/Microsoft.Win32.SystemEvents.xml",
+        "runtimes/win/lib/netcoreapp3.1/Microsoft.Win32.SystemEvents.dll",
+        "runtimes/win/lib/netcoreapp3.1/Microsoft.Win32.SystemEvents.xml",
+        "useSharedDesignerContext.txt"
+      ]
+    },
     "Mono.TextTemplating/3.0.0": {
       "sha512": "YqueG52R/Xej4VVbKuRIodjiAhV0HR/XVbLbNrJhCZnzjnSjgMJ/dCdV0akQQxavX6hp/LC6rqLGLcXeQYU7XA==",
       "type": "package",
@@ -5890,6 +5981,26 @@
         "postgresql.png"
       ]
     },
+    "Otp.NET/1.4.0": {
+      "sha512": "Fk1NKc0lWmlo6LAFYpFJInRgFKt72knRNEvxndDYoQHFwYOPXav+WEUBvQA0k4lxq5xt0SymrZ+oi0F/G40bPQ==",
+      "type": "package",
+      "path": "otp.net/1.4.0",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "LICENSE.txt",
+        "README.md",
+        "icon.png",
+        "lib/net461/Otp.NET.dll",
+        "lib/net5.0/Otp.NET.dll",
+        "lib/net6.0/Otp.NET.dll",
+        "lib/net7.0/Otp.NET.dll",
+        "lib/net8.0/Otp.NET.dll",
+        "lib/netstandard2.0/Otp.NET.dll",
+        "otp.net.1.4.0.nupkg.sha512",
+        "otp.net.nuspec"
+      ]
+    },
     "Pipelines.Sockets.Unofficial/2.2.8": {
       "sha512": "zG2FApP5zxSx6OcdJQLbZDk2AVlN2BNQD6MorwIfV6gVj0RRxWPEp2LXAxqDGZqeNV1Zp0BNPcNaey/GXmTdvQ==",
       "type": "package",
@@ -5951,6 +6062,26 @@
         "package-readme.md",
         "polly.core.8.6.4.nupkg.sha512",
         "polly.core.nuspec"
+      ]
+    },
+    "QRCoder/1.7.0": {
+      "sha512": "6R3hQkayihGIDjp3F1nLRDBWG+nqahGyOY2+fH4Rll16Vad67oaUUfHkOiMWKiJFnGh+PIGDfUos+0R9m54O1g==",
+      "type": "package",
+      "path": "qrcoder/1.7.0",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "README.md",
+        "lib/net35/QRCoder.dll",
+        "lib/net40/QRCoder.dll",
+        "lib/net5.0/QRCoder.dll",
+        "lib/net6.0/QRCoder.dll",
+        "lib/netstandard1.3/QRCoder.dll",
+        "lib/netstandard2.0/QRCoder.dll",
+        "lib/netstandard2.1/QRCoder.dll",
+        "nuget-icon.png",
+        "qrcoder.1.7.0.nupkg.sha512",
+        "qrcoder.nuspec"
       ]
     },
     "QuestPDF/2025.7.3": {
@@ -6600,6 +6731,41 @@
         "runtimes/aot/lib/netcore50/System.Diagnostics.StackTrace.dll",
         "system.diagnostics.stacktrace.4.3.0.nupkg.sha512",
         "system.diagnostics.stacktrace.nuspec"
+      ]
+    },
+    "System.Drawing.Common/6.0.0": {
+      "sha512": "NfuoKUiP2nUWwKZN6twGqXioIe1zVD0RIj2t976A+czLHr2nY454RwwXs6JU9Htc6mwqL6Dn/nEL3dpVf2jOhg==",
+      "type": "package",
+      "path": "system.drawing.common/6.0.0",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "Icon.png",
+        "LICENSE.TXT",
+        "THIRD-PARTY-NOTICES.TXT",
+        "buildTransitive/netcoreapp2.0/System.Drawing.Common.targets",
+        "buildTransitive/netcoreapp3.1/_._",
+        "lib/MonoAndroid10/_._",
+        "lib/MonoTouch10/_._",
+        "lib/net461/System.Drawing.Common.dll",
+        "lib/net6.0/System.Drawing.Common.dll",
+        "lib/netcoreapp3.1/System.Drawing.Common.dll",
+        "lib/netstandard2.0/System.Drawing.Common.dll",
+        "lib/xamarinios10/_._",
+        "lib/xamarinmac20/_._",
+        "lib/xamarintvos10/_._",
+        "lib/xamarinwatchos10/_._",
+        "runtimes/unix/lib/net6.0/System.Drawing.Common.dll",
+        "runtimes/unix/lib/net6.0/System.Drawing.Common.xml",
+        "runtimes/unix/lib/netcoreapp3.1/System.Drawing.Common.dll",
+        "runtimes/unix/lib/netcoreapp3.1/System.Drawing.Common.xml",
+        "runtimes/win/lib/net6.0/System.Drawing.Common.dll",
+        "runtimes/win/lib/net6.0/System.Drawing.Common.xml",
+        "runtimes/win/lib/netcoreapp3.1/System.Drawing.Common.dll",
+        "runtimes/win/lib/netcoreapp3.1/System.Drawing.Common.xml",
+        "system.drawing.common.6.0.0.nupkg.sha512",
+        "system.drawing.common.nuspec",
+        "useSharedDesignerContext.txt"
       ]
     },
     "System.IdentityModel.Tokens.Jwt/8.14.0": {

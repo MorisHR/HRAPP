@@ -42,9 +42,16 @@ public class EmployeeService : IEmployeeService
             DateOfBirth = request.DateOfBirth,
             Gender = request.Gender,
             MaritalStatus = request.MaritalStatus,
-            Address = request.Address,
+
+            // Address
+            AddressLine1 = request.AddressLine1,
+            AddressLine2 = request.AddressLine2,
+            Village = request.Village,
+            District = request.District,
+            Region = request.Region,
             City = request.City,
             PostalCode = request.PostalCode,
+            Country = request.Country,
 
             // Employee Type & Nationality
             EmployeeType = request.EmployeeType,
@@ -207,9 +214,16 @@ public class EmployeeService : IEmployeeService
         employee.DateOfBirth = request.DateOfBirth;
         employee.Gender = request.Gender;
         employee.MaritalStatus = request.MaritalStatus;
-        employee.Address = request.Address;
+
+        // Address
+        employee.AddressLine1 = request.AddressLine1;
+        employee.AddressLine2 = request.AddressLine2;
+        employee.Village = request.Village;
+        employee.District = request.District;
+        employee.Region = request.Region;
         employee.City = request.City;
         employee.PostalCode = request.PostalCode;
+        employee.Country = request.Country;
 
         employee.EmployeeType = request.EmployeeType;
         employee.Nationality = request.Nationality;
@@ -624,9 +638,16 @@ public class EmployeeService : IEmployeeService
             Age = employee.Age,
             Gender = employee.Gender,
             MaritalStatus = employee.MaritalStatus,
-            Address = employee.Address,
+
+            // Address
+            AddressLine1 = employee.AddressLine1,
+            AddressLine2 = employee.AddressLine2,
+            Village = employee.Village,
+            District = employee.District,
+            Region = employee.Region,
             City = employee.City,
             PostalCode = employee.PostalCode,
+            Country = employee.Country,
 
             EmployeeType = employee.EmployeeType,
             IsExpatriate = employee.IsExpatriate,

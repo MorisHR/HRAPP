@@ -190,6 +190,127 @@ public class PayrollController : ControllerBase
         }
     }
 
+    // ==================== TIMESHEET-BASED PAYROLL CALCULATION ====================
+
+    /// <summary>
+    /// Calculates payroll from approved timesheets for a single employee
+    /// NEW ENDPOINT - Replaces manual hour entry with timesheet-based calculation
+    /// </summary>
+    [HttpPost("calculate-from-timesheets")]
+    [Authorize(Roles = "Admin,HR,Manager")]
+    public async Task<ActionResult<PayrollResult>> CalculatePayrollFromTimesheets([FromBody] CalculateFromTimesheetsRequest request)
+    {
+        try
+        {
+            _logger.LogInformation("Calculating payroll from timesheets for employee {EmployeeId}, period {Start} to {End}",
+                request.EmployeeId, request.PeriodStart, request.PeriodEnd);
+
+            var result = await _payrollService.CalculatePayrollFromTimesheetsAsync(
+                request.EmployeeId,
+                request.PeriodStart,
+                request.PeriodEnd);
+
+            return Ok(result);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error calculating payroll from timesheets for employee {EmployeeId}",
+                request.EmployeeId);
+            return StatusCode(500, new { error = "An error occurred while calculating payroll from timesheets" });
+        }
+    }
+
+    /// <summary>
+    /// Preview payroll calculation from timesheets without saving
+    /// Useful for HR to verify calculations before processing
+    /// </summary>
+    [HttpPost("preview-from-timesheets")]
+    [Authorize(Roles = "Admin,HR,Manager")]
+    public async Task<ActionResult<PayrollResult>> PreviewPayrollFromTimesheets([FromBody] CalculateFromTimesheetsRequest request)
+    {
+        try
+        {
+            _logger.LogInformation("Previewing payroll from timesheets for employee {EmployeeId}",
+                request.EmployeeId);
+
+            var result = await _payrollService.CalculatePayrollFromTimesheetsAsync(
+                request.EmployeeId,
+                request.PeriodStart,
+                request.PeriodEnd);
+
+            // Add preview flag to response
+            result.CalculationNotes = "PREVIEW ONLY - Not saved to database";
+
+            return Ok(result);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error previewing payroll from timesheets for employee {EmployeeId}",
+                request.EmployeeId);
+            return StatusCode(500, new { error = "An error occurred while previewing payroll" });
+        }
+    }
+
+    /// <summary>
+    /// Batch process payroll from timesheets for multiple employees
+    /// Calculates and returns results for all specified employees
+    /// </summary>
+    [HttpPost("process-batch-from-timesheets")]
+    [Authorize(Roles = "Admin,HR")]
+    public async Task<ActionResult<BatchPayrollResult>> ProcessBatchFromTimesheets([FromBody] BatchCalculateFromTimesheetsRequest request)
+    {
+        try
+        {
+            _logger.LogInformation("Batch processing payroll from timesheets for {Count} employees, period {Start} to {End}",
+                request.EmployeeIds.Count, request.PeriodStart, request.PeriodEnd);
+
+            var results = new List<PayrollResult>();
+            var errors = new List<string>();
+
+            foreach (var employeeId in request.EmployeeIds)
+            {
+                try
+                {
+                    var result = await _payrollService.CalculatePayrollFromTimesheetsAsync(
+                        employeeId,
+                        request.PeriodStart,
+                        request.PeriodEnd);
+
+                    results.Add(result);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error calculating payroll for employee {EmployeeId}", employeeId);
+                    errors.Add($"Employee {employeeId}: {ex.Message}");
+                }
+            }
+
+            var batchResult = new BatchPayrollResult
+            {
+                Results = results,
+                TotalProcessed = results.Count,
+                TotalFailed = errors.Count,
+                Errors = errors,
+                ProcessedAt = DateTime.UtcNow
+            };
+
+            return Ok(batchResult);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in batch processing payroll from timesheets");
+            return StatusCode(500, new { error = "An error occurred during batch processing" });
+        }
+    }
+
     // ==================== PAYSLIP OPERATIONS ====================
 
     /// <summary>

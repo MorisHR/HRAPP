@@ -32,6 +32,10 @@ namespace HRMS.Infrastructure.Data.Migrations.Master
                     b.Property<int>("AccessFailedCount")
                         .HasColumnType("integer");
 
+                    b.Property<string>("BackupCodes")
+                        .HasColumnType("jsonb")
+                        .HasComment("JSON array of SHA256-hashed backup codes for MFA recovery");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -86,7 +90,8 @@ namespace HRMS.Infrastructure.Data.Migrations.Master
                         .HasColumnType("character varying(20)");
 
                     b.Property<string>("TwoFactorSecret")
-                        .HasColumnType("text");
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -188,6 +193,66 @@ namespace HRMS.Infrastructure.Data.Migrations.Master
                     b.ToTable("AuditLogs", "master");
                 });
 
+            modelBuilder.Entity("HRMS.Core.Entities.Master.District", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal?>("AreaSqKm")
+                        .HasColumnType("numeric");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("DistrictCode")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<string>("DistrictName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("DistrictNameFrench")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<int?>("Population")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Region")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DisplayOrder");
+
+                    b.HasIndex("DistrictCode")
+                        .IsUnique();
+
+                    b.HasIndex("Region");
+
+                    b.ToTable("Districts", "master");
+                });
+
             modelBuilder.Entity("HRMS.Core.Entities.Master.IndustrySector", b =>
                 {
                     b.Property<int>("Id")
@@ -248,6 +313,131 @@ namespace HRMS.Infrastructure.Data.Migrations.Master
                         .IsUnique();
 
                     b.ToTable("IndustrySectors", "master");
+                });
+
+            modelBuilder.Entity("HRMS.Core.Entities.Master.PostalCode", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("DistrictId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("DistrictName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsPrimary")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("LocalityType")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("Region")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("VillageId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("VillageName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
+
+                    b.HasIndex("DistrictId");
+
+                    b.HasIndex("VillageId");
+
+                    b.HasIndex("VillageName", "DistrictName");
+
+                    b.ToTable("PostalCodes", "master");
+                });
+
+            modelBuilder.Entity("HRMS.Core.Entities.Master.RefreshToken", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AdminUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedByIp")
+                        .IsRequired()
+                        .HasMaxLength(45)
+                        .HasColumnType("character varying(45)");
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ReasonRevoked")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("ReplacedByToken")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<DateTime?>("RevokedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("RevokedByIp")
+                        .HasMaxLength(45)
+                        .HasColumnType("character varying(45)");
+
+                    b.Property<string>("Token")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AdminUserId");
+
+                    b.HasIndex("ExpiresAt");
+
+                    b.HasIndex("Token")
+                        .IsUnique();
+
+                    b.HasIndex("AdminUserId", "ExpiresAt");
+
+                    b.ToTable("RefreshTokens", "master");
                 });
 
             modelBuilder.Entity("HRMS.Core.Entities.Master.SectorComplianceRule", b =>
@@ -438,6 +628,75 @@ namespace HRMS.Infrastructure.Data.Migrations.Master
                     b.ToTable("Tenants", "master");
                 });
 
+            modelBuilder.Entity("HRMS.Core.Entities.Master.Village", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("DistrictId")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<decimal?>("Latitude")
+                        .HasColumnType("numeric");
+
+                    b.Property<string>("LocalityType")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<decimal?>("Longitude")
+                        .HasColumnType("numeric");
+
+                    b.Property<string>("PostalCode")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("VillageCode")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<string>("VillageName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("VillageNameFrench")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DisplayOrder");
+
+                    b.HasIndex("DistrictId");
+
+                    b.HasIndex("PostalCode");
+
+                    b.HasIndex("VillageCode")
+                        .IsUnique();
+
+                    b.ToTable("Villages", "master");
+                });
+
             modelBuilder.Entity("HRMS.Core.Entities.Master.IndustrySector", b =>
                 {
                     b.HasOne("HRMS.Core.Entities.Master.IndustrySector", "ParentSector")
@@ -446,6 +705,36 @@ namespace HRMS.Infrastructure.Data.Migrations.Master
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("ParentSector");
+                });
+
+            modelBuilder.Entity("HRMS.Core.Entities.Master.PostalCode", b =>
+                {
+                    b.HasOne("HRMS.Core.Entities.Master.District", "District")
+                        .WithMany()
+                        .HasForeignKey("DistrictId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("HRMS.Core.Entities.Master.Village", "Village")
+                        .WithMany()
+                        .HasForeignKey("VillageId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("District");
+
+                    b.Navigation("Village");
+                });
+
+            modelBuilder.Entity("HRMS.Core.Entities.Master.RefreshToken", b =>
+                {
+                    b.HasOne("HRMS.Core.Entities.Master.AdminUser", "AdminUser")
+                        .WithMany()
+                        .HasForeignKey("AdminUserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("AdminUser");
                 });
 
             modelBuilder.Entity("HRMS.Core.Entities.Master.SectorComplianceRule", b =>
@@ -467,6 +756,22 @@ namespace HRMS.Infrastructure.Data.Migrations.Master
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("Sector");
+                });
+
+            modelBuilder.Entity("HRMS.Core.Entities.Master.Village", b =>
+                {
+                    b.HasOne("HRMS.Core.Entities.Master.District", "District")
+                        .WithMany("Villages")
+                        .HasForeignKey("DistrictId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("District");
+                });
+
+            modelBuilder.Entity("HRMS.Core.Entities.Master.District", b =>
+                {
+                    b.Navigation("Villages");
                 });
 
             modelBuilder.Entity("HRMS.Core.Entities.Master.IndustrySector", b =>

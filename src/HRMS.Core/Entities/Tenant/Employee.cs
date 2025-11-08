@@ -23,9 +23,20 @@ public class Employee : BaseEntity
     public DateTime DateOfBirth { get; set; }
     public Gender Gender { get; set; }
     public MaritalStatus MaritalStatus { get; set; }
-    public string Address { get; set; } = string.Empty;
+
+    // ==========================================
+    // ADDRESS INFORMATION (Mauritius Compliant)
+    // ==========================================
+
+    public string AddressLine1 { get; set; } = string.Empty;
+    public string? AddressLine2 { get; set; }
+    public string? Village { get; set; }
+    public string? District { get; set; }
+    public string? Region { get; set; }
     public string? City { get; set; }
     public string? PostalCode { get; set; }
+    public string Country { get; set; } = "Mauritius";
+
     public string? BloodGroup { get; set; }
 
     // ==========================================
@@ -398,4 +409,30 @@ public class Employee : BaseEntity
     public bool LockoutEnabled { get; set; } = true;
     public DateTime? LockoutEnd { get; set; }
     public int AccessFailedCount { get; set; } = 0;
+
+    // ==============================================
+    // LOCATION & BIOMETRIC ACCESS
+    // ==============================================
+
+    /// <summary>
+    /// Primary work location - employee can use all biometric devices at this location
+    /// CRITICAL for multi-location attendance tracking
+    /// </summary>
+    public Guid? PrimaryLocationId { get; set; }
+    public Location? PrimaryLocation { get; set; }
+
+    /// <summary>
+    /// Biometric enrollment ID from the device (fingerprint/face template ID)
+    /// Used to match device punch records to this employee
+    /// </summary>
+    public string? BiometricEnrollmentId { get; set; }
+
+    /// <summary>
+    /// Date when employee was enrolled on biometric device
+    /// </summary>
+    public DateTime? BiometricEnrollmentDate { get; set; }
+
+    // Navigation Properties
+    public ICollection<EmployeeDeviceAccess> DeviceAccesses { get; set; } = new List<EmployeeDeviceAccess>();
+    public ICollection<AttendanceAnomaly> AttendanceAnomalies { get; set; } = new List<AttendanceAnomaly>();
 }

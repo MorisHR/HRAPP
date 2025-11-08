@@ -44,6 +44,18 @@ public class TenantDbContext : DbContext
     public DbSet<Payslip> Payslips { get; set; }
     public DbSet<SalaryComponent> SalaryComponents { get; set; }
 
+    // Timesheet Management
+    public DbSet<Timesheet> Timesheets { get; set; }
+    public DbSet<TimesheetEntry> TimesheetEntries { get; set; }
+    public DbSet<TimesheetAdjustment> TimesheetAdjustments { get; set; }
+    public DbSet<TimesheetComment> TimesheetComments { get; set; }
+
+    // Multi-Device Biometric Attendance System
+    public DbSet<Location> Locations { get; set; }
+    public DbSet<EmployeeDeviceAccess> EmployeeDeviceAccesses { get; set; }
+    public DbSet<DeviceSyncLog> DeviceSyncLogs { get; set; }
+    public DbSet<AttendanceAnomaly> AttendanceAnomalies { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -67,9 +79,16 @@ public class TenantDbContext : DbContext
             entity.Property(e => e.MiddleName).HasMaxLength(100);
             entity.Property(e => e.Email).IsRequired().HasMaxLength(100);
             entity.Property(e => e.PhoneNumber).HasMaxLength(20);
-            entity.Property(e => e.Address).HasMaxLength(500);
+
+            // Address (Mauritius Compliant)
+            entity.Property(e => e.AddressLine1).IsRequired().HasMaxLength(500);
+            entity.Property(e => e.AddressLine2).HasMaxLength(500);
+            entity.Property(e => e.Village).HasMaxLength(100);
+            entity.Property(e => e.District).HasMaxLength(100);
+            entity.Property(e => e.Region).HasMaxLength(100);
             entity.Property(e => e.City).HasMaxLength(100);
             entity.Property(e => e.PostalCode).HasMaxLength(20);
+            entity.Property(e => e.Country).IsRequired().HasMaxLength(100);
 
             // Nationality & Type
             entity.Property(e => e.Nationality).IsRequired().HasMaxLength(100);
@@ -120,6 +139,15 @@ public class TenantDbContext : DbContext
                   .WithMany()
                   .HasForeignKey(e => e.ManagerId)
                   .OnDelete(DeleteBehavior.Restrict);
+
+            // Primary location relationship (multi-device biometric system)
+            entity.HasOne(e => e.PrimaryLocation)
+                  .WithMany(l => l.Employees)
+                  .HasForeignKey(e => e.PrimaryLocationId)
+                  .OnDelete(DeleteBehavior.SetNull);
+
+            // Biometric enrollment fields
+            entity.Property(e => e.BiometricEnrollmentId).HasMaxLength(100);
 
             // Ignore calculated properties
             entity.Ignore(e => e.FullName);
@@ -334,16 +362,37 @@ public class TenantDbContext : DbContext
             entity.HasIndex(e => new { e.EmployeeId, e.Date }).IsUnique();
             entity.HasIndex(e => e.Date);
             entity.HasIndex(e => e.Status);
+            entity.HasIndex(e => e.DeviceId);
+            entity.HasIndex(e => e.LocationId);
+            entity.HasIndex(e => new { e.EmployeeId, e.DeviceId, e.Date });
 
             entity.Property(e => e.WorkingHours).HasColumnType("decimal(10,2)");
             entity.Property(e => e.OvertimeHours).HasColumnType("decimal(10,2)");
             entity.Property(e => e.OvertimeRate).HasColumnType("decimal(10,2)");
             entity.Property(e => e.Remarks).HasMaxLength(500);
 
+            // Multi-device tracking fields
+            entity.Property(e => e.PunchSource).HasMaxLength(50);
+            entity.Property(e => e.VerificationMethod).HasMaxLength(50);
+            entity.Property(e => e.DeviceUserId).HasMaxLength(100);
+            entity.Property(e => e.AuthorizationNote).HasMaxLength(1000);
+
             entity.HasOne(e => e.Employee)
                   .WithMany()
                   .HasForeignKey(e => e.EmployeeId)
                   .OnDelete(DeleteBehavior.Cascade);
+
+            // Device relationship (multi-device biometric system)
+            entity.HasOne(e => e.Device)
+                  .WithMany(d => d.Attendances)
+                  .HasForeignKey(e => e.DeviceId)
+                  .OnDelete(DeleteBehavior.SetNull);
+
+            // Location relationship (multi-device biometric system)
+            entity.HasOne(e => e.Location)
+                  .WithMany(l => l.Attendances)
+                  .HasForeignKey(e => e.LocationId)
+                  .OnDelete(DeleteBehavior.SetNull);
 
             entity.HasQueryFilter(e => !e.IsDeleted);
         });
@@ -355,14 +404,33 @@ public class TenantDbContext : DbContext
             entity.HasIndex(e => e.IpAddress);
             entity.HasIndex(e => e.ZKTecoDeviceId);
             entity.HasIndex(e => e.SerialNumber);
+            entity.HasIndex(e => e.DeviceCode).IsUnique();
+            entity.HasIndex(e => e.LocationId);
+            entity.HasIndex(e => new { e.LocationId, e.DeviceStatus });
 
             entity.Property(e => e.MachineName).IsRequired().HasMaxLength(200);
             entity.Property(e => e.MachineId).IsRequired().HasMaxLength(100);
             entity.Property(e => e.IpAddress).HasMaxLength(50);
-            entity.Property(e => e.Location).HasMaxLength(200);
+            entity.Property(e => e.LegacyLocation).HasMaxLength(200); // Legacy field - kept for backward compatibility
             entity.Property(e => e.ZKTecoDeviceId).HasMaxLength(50);
             entity.Property(e => e.SerialNumber).HasMaxLength(100);
             entity.Property(e => e.Model).HasMaxLength(100);
+
+            // Multi-device system fields
+            entity.Property(e => e.DeviceCode).IsRequired().HasMaxLength(50);
+            entity.Property(e => e.DeviceType).HasMaxLength(100);
+            entity.Property(e => e.MacAddress).HasMaxLength(50);
+            entity.Property(e => e.FirmwareVersion).HasMaxLength(50);
+            entity.Property(e => e.ConnectionMethod).HasMaxLength(50);
+            entity.Property(e => e.DeviceConfigJson).HasColumnType("jsonb");
+            entity.Property(e => e.DeviceStatus).IsRequired().HasMaxLength(50);
+            entity.Property(e => e.LastSyncStatus).HasMaxLength(50);
+
+            // Location relationship (multi-device biometric system)
+            entity.HasOne(e => e.Location)
+                  .WithMany(l => l.BiometricDevices)
+                  .HasForeignKey(e => e.LocationId)
+                  .OnDelete(DeleteBehavior.SetNull);
 
             entity.HasQueryFilter(e => !e.IsDeleted);
         });
@@ -505,6 +573,242 @@ public class TenantDbContext : DbContext
                   .WithMany()
                   .HasForeignKey(e => e.EmployeeId)
                   .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasQueryFilter(e => !e.IsDeleted);
+        });
+
+        // Configure Timesheet entity
+        modelBuilder.Entity<Timesheet>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => new { e.EmployeeId, e.PeriodStart, e.PeriodEnd });
+            entity.HasIndex(e => e.Status);
+            entity.HasIndex(e => e.TenantId);
+            entity.HasIndex(e => new { e.PeriodStart, e.PeriodEnd });
+
+            entity.Property(e => e.TotalRegularHours).HasColumnType("decimal(10,2)");
+            entity.Property(e => e.TotalOvertimeHours).HasColumnType("decimal(10,2)");
+            entity.Property(e => e.TotalHolidayHours).HasColumnType("decimal(10,2)");
+            entity.Property(e => e.TotalSickLeaveHours).HasColumnType("decimal(10,2)");
+            entity.Property(e => e.TotalAnnualLeaveHours).HasColumnType("decimal(10,2)");
+            entity.Property(e => e.TotalAbsentHours).HasColumnType("decimal(10,2)");
+            entity.Property(e => e.ApprovedByName).HasMaxLength(200);
+            entity.Property(e => e.RejectionReason).HasMaxLength(1000);
+            entity.Property(e => e.Notes).HasMaxLength(2000);
+
+            entity.HasOne(e => e.Employee)
+                  .WithMany()
+                  .HasForeignKey(e => e.EmployeeId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.Ignore(e => e.TotalPayableHours);
+            entity.HasQueryFilter(e => !e.IsDeleted);
+        });
+
+        // Configure TimesheetEntry entity
+        modelBuilder.Entity<TimesheetEntry>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => new { e.TimesheetId, e.Date });
+            entity.HasIndex(e => e.AttendanceId);
+            entity.HasIndex(e => e.Date);
+
+            entity.Property(e => e.ActualHours).HasColumnType("decimal(10,2)");
+            entity.Property(e => e.RegularHours).HasColumnType("decimal(10,2)");
+            entity.Property(e => e.OvertimeHours).HasColumnType("decimal(10,2)");
+            entity.Property(e => e.HolidayHours).HasColumnType("decimal(10,2)");
+            entity.Property(e => e.SickLeaveHours).HasColumnType("decimal(10,2)");
+            entity.Property(e => e.AnnualLeaveHours).HasColumnType("decimal(10,2)");
+            entity.Property(e => e.Notes).HasMaxLength(1000);
+
+            entity.HasOne(e => e.Timesheet)
+                  .WithMany(t => t.Entries)
+                  .HasForeignKey(e => e.TimesheetId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.Attendance)
+                  .WithMany()
+                  .HasForeignKey(e => e.AttendanceId)
+                  .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasQueryFilter(e => !e.IsDeleted);
+        });
+
+        // Configure TimesheetAdjustment entity
+        modelBuilder.Entity<TimesheetAdjustment>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => e.TimesheetEntryId);
+            entity.HasIndex(e => e.AdjustedBy);
+            entity.HasIndex(e => e.Status);
+
+            entity.Property(e => e.FieldName).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.OldValue).HasMaxLength(500);
+            entity.Property(e => e.NewValue).HasMaxLength(500);
+            entity.Property(e => e.Reason).IsRequired().HasMaxLength(1000);
+            entity.Property(e => e.AdjustedByName).HasMaxLength(200);
+            entity.Property(e => e.ApprovedByName).HasMaxLength(200);
+            entity.Property(e => e.RejectionReason).HasMaxLength(1000);
+
+            entity.HasOne(e => e.TimesheetEntry)
+                  .WithMany(te => te.Adjustments)
+                  .HasForeignKey(e => e.TimesheetEntryId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasQueryFilter(e => !e.IsDeleted);
+        });
+
+        // Configure TimesheetComment entity
+        modelBuilder.Entity<TimesheetComment>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => e.TimesheetId);
+            entity.HasIndex(e => e.CommentedAt);
+
+            entity.Property(e => e.UserName).IsRequired().HasMaxLength(200);
+            entity.Property(e => e.Comment).IsRequired().HasMaxLength(2000);
+
+            entity.HasOne(e => e.Timesheet)
+                  .WithMany(t => t.Comments)
+                  .HasForeignKey(e => e.TimesheetId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasQueryFilter(e => !e.IsDeleted);
+        });
+
+        // ==============================================
+        // MULTI-DEVICE BIOMETRIC ATTENDANCE SYSTEM
+        // ==============================================
+
+        // Configure Location entity
+        modelBuilder.Entity<Location>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => e.LocationCode).IsUnique();
+            entity.HasIndex(e => e.LocationName);
+            entity.HasIndex(e => e.LocationType);
+            entity.HasIndex(e => new { e.Latitude, e.Longitude });
+
+            entity.Property(e => e.LocationCode).IsRequired().HasMaxLength(50);
+            entity.Property(e => e.LocationName).IsRequired().HasMaxLength(200);
+            entity.Property(e => e.LocationType).HasMaxLength(100);
+            entity.Property(e => e.AddressLine1).HasMaxLength(500);
+            entity.Property(e => e.AddressLine2).HasMaxLength(500);
+            entity.Property(e => e.City).HasMaxLength(100);
+            entity.Property(e => e.Region).HasMaxLength(100);
+            entity.Property(e => e.Country).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.PostalCode).HasMaxLength(20);
+            entity.Property(e => e.Phone).HasMaxLength(20);
+            entity.Property(e => e.Email).HasMaxLength(100);
+            entity.Property(e => e.WorkingHoursJson).HasColumnType("jsonb");
+            entity.Property(e => e.Timezone).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.Latitude).HasColumnType("decimal(10,8)");
+            entity.Property(e => e.Longitude).HasColumnType("decimal(11,8)");
+
+            // Self-referencing relationship for location manager
+            entity.HasOne(e => e.LocationManager)
+                  .WithMany()
+                  .HasForeignKey(e => e.LocationManagerId)
+                  .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasQueryFilter(e => !e.IsDeleted);
+        });
+
+        // Configure EmployeeDeviceAccess entity
+        modelBuilder.Entity<EmployeeDeviceAccess>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => new { e.EmployeeId, e.DeviceId, e.IsActive });
+            entity.HasIndex(e => e.DeviceId);
+            entity.HasIndex(e => e.AccessType);
+            entity.HasIndex(e => new { e.ValidFrom, e.ValidUntil });
+
+            entity.Property(e => e.AccessType).IsRequired().HasMaxLength(50);
+            entity.Property(e => e.AccessReason).HasMaxLength(500);
+            entity.Property(e => e.AllowedDaysJson).HasColumnType("jsonb");
+
+            // Relationships
+            entity.HasOne(e => e.Employee)
+                  .WithMany(emp => emp.DeviceAccesses)
+                  .HasForeignKey(e => e.EmployeeId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.Device)
+                  .WithMany(d => d.EmployeeDeviceAccesses)
+                  .HasForeignKey(e => e.DeviceId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasQueryFilter(e => !e.IsDeleted);
+        });
+
+        // Configure DeviceSyncLog entity
+        modelBuilder.Entity<DeviceSyncLog>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => e.DeviceId);
+            entity.HasIndex(e => e.SyncStartTime);
+            entity.HasIndex(e => e.SyncStatus);
+            entity.HasIndex(e => new { e.DeviceId, e.SyncStartTime });
+
+            entity.Property(e => e.SyncStatus).IsRequired().HasMaxLength(50);
+            entity.Property(e => e.SyncMethod).IsRequired().HasMaxLength(50);
+            entity.Property(e => e.ErrorMessage).HasMaxLength(2000);
+            entity.Property(e => e.ErrorDetailsJson).HasColumnType("jsonb");
+
+            // Relationship
+            entity.HasOne(e => e.Device)
+                  .WithMany(d => d.SyncLogs)
+                  .HasForeignKey(e => e.DeviceId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasQueryFilter(e => !e.IsDeleted);
+        });
+
+        // Configure AttendanceAnomaly entity
+        modelBuilder.Entity<AttendanceAnomaly>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => e.EmployeeId);
+            entity.HasIndex(e => e.AttendanceId);
+            entity.HasIndex(e => new { e.AnomalyType, e.AnomalySeverity });
+            entity.HasIndex(e => e.AnomalyDate);
+            entity.HasIndex(e => e.ResolutionStatus);
+            entity.HasIndex(e => new { e.EmployeeId, e.AnomalyDate });
+
+            entity.Property(e => e.AnomalyType).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.AnomalySeverity).IsRequired().HasMaxLength(50);
+            entity.Property(e => e.AnomalyDescription).HasMaxLength(1000);
+            entity.Property(e => e.AnomalyDetailsJson).HasColumnType("jsonb");
+            entity.Property(e => e.ResolutionStatus).IsRequired().HasMaxLength(50);
+            entity.Property(e => e.ResolutionNote).HasMaxLength(1000);
+            entity.Property(e => e.NotificationRecipientsJson).HasColumnType("jsonb");
+            entity.Property(e => e.AutoResolutionRule).HasMaxLength(200);
+
+            // Relationships
+            entity.HasOne(e => e.Employee)
+                  .WithMany(emp => emp.AttendanceAnomalies)
+                  .HasForeignKey(e => e.EmployeeId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.Attendance)
+                  .WithMany(a => a.Anomalies)
+                  .HasForeignKey(e => e.AttendanceId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.Device)
+                  .WithMany()
+                  .HasForeignKey(e => e.DeviceId)
+                  .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasOne(e => e.Location)
+                  .WithMany()
+                  .HasForeignKey(e => e.LocationId)
+                  .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasOne(e => e.ExpectedLocation)
+                  .WithMany()
+                  .HasForeignKey(e => e.ExpectedLocationId)
+                  .OnDelete(DeleteBehavior.SetNull);
 
             entity.HasQueryFilter(e => !e.IsDeleted);
         });

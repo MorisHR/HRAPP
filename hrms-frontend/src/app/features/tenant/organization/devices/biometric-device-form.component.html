@@ -1,0 +1,372 @@
+<mat-card>
+  <mat-card-header>
+    <mat-card-title>{{ getPageTitle() }}</mat-card-title>
+    <div class="header-actions">
+      <button
+        mat-raised-button
+        color="primary"
+        (click)="onTestConnection()"
+        [disabled]="testingConnection || !isNetworkConfigRequired() || getControl('ipAddress')?.invalid"
+        class="test-connection-button"
+      >
+        <mat-spinner *ngIf="testingConnection" diameter="20"></mat-spinner>
+        <mat-icon *ngIf="!testingConnection">wifi_tethering</mat-icon>
+        Test Connection
+      </button>
+    </div>
+  </mat-card-header>
+
+  <mat-card-content>
+    <!-- Loading State -->
+    <div *ngIf="loading" class="loading-container">
+      <mat-spinner></mat-spinner>
+      <p>Loading device information...</p>
+    </div>
+
+    <!-- Form -->
+    <form *ngIf="!loading" [formGroup]="deviceForm" (ngSubmit)="onSubmit()" class="device-form">
+
+      <!-- ============================================ -->
+      <!-- SECTION 1: DEVICE INFORMATION -->
+      <!-- ============================================ -->
+      <div class="form-section">
+        <div class="section-header">
+          <mat-icon>info</mat-icon>
+          <h3>Device Information</h3>
+        </div>
+
+        <div class="form-grid">
+          <!-- Device Code -->
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Device Code <span class="required">*</span></mat-label>
+            <input matInput formControlName="deviceCode" placeholder="e.g., BIO-001">
+            <mat-icon matPrefix>fingerprint</mat-icon>
+            <mat-error *ngIf="hasError('deviceCode', 'required')">
+              Device code is required
+            </mat-error>
+            <mat-error *ngIf="hasError('deviceCode', 'maxlength')">
+              Maximum 50 characters allowed
+            </mat-error>
+            <mat-hint>Unique identifier for this device</mat-hint>
+          </mat-form-field>
+
+          <!-- Machine Name -->
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Machine Name <span class="required">*</span></mat-label>
+            <input matInput formControlName="machineName" placeholder="e.g., Main Entrance Scanner">
+            <mat-icon matPrefix>devices</mat-icon>
+            <mat-error *ngIf="hasError('machineName', 'required')">
+              Machine name is required
+            </mat-error>
+            <mat-error *ngIf="hasError('machineName', 'maxlength')">
+              Maximum 100 characters allowed
+            </mat-error>
+          </mat-form-field>
+
+          <!-- Location -->
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Location <span class="required">*</span></mat-label>
+            <mat-select formControlName="locationId" placeholder="Select location">
+              <mat-option *ngFor="let location of locations" [value]="location.id">
+                {{ location.locationName }} ({{ location.locationCode }})
+              </mat-option>
+            </mat-select>
+            <mat-icon matPrefix>location_on</mat-icon>
+            <mat-error *ngIf="hasError('locationId', 'required')">
+              Location is required
+            </mat-error>
+            <mat-hint *ngIf="loadingLocations">Loading locations...</mat-hint>
+          </mat-form-field>
+
+          <!-- Device Type -->
+          <mat-form-field appearance="outline" class="half-width">
+            <mat-label>Device Type <span class="required">*</span></mat-label>
+            <mat-select formControlName="deviceType">
+              <mat-option *ngFor="let type of deviceTypes" [value]="type.value">
+                {{ type.label }}
+              </mat-option>
+            </mat-select>
+            <mat-icon matPrefix>category</mat-icon>
+          </mat-form-field>
+
+          <!-- Model -->
+          <mat-form-field appearance="outline" class="half-width">
+            <mat-label>Model</mat-label>
+            <input matInput formControlName="model" placeholder="e.g., F18, K40">
+            <mat-icon matPrefix>model_training</mat-icon>
+            <mat-hint>Optional</mat-hint>
+          </mat-form-field>
+        </div>
+      </div>
+
+      <mat-divider></mat-divider>
+
+      <!-- ============================================ -->
+      <!-- SECTION 2: NETWORK CONFIGURATION (HIGHLIGHT) -->
+      <!-- ============================================ -->
+      <div class="form-section network-section">
+        <div class="section-header highlighted">
+          <mat-icon>router</mat-icon>
+          <h3>Network Configuration</h3>
+          <span class="badge important">Critical</span>
+        </div>
+
+        <div class="form-grid">
+          <!-- Connection Method -->
+          <div class="full-width radio-group-container">
+            <label class="radio-group-label">Connection Method <span class="required">*</span></label>
+            <mat-radio-group formControlName="connectionMethod" class="radio-group">
+              <mat-radio-button *ngFor="let method of connectionMethods" [value]="method.value">
+                {{ method.label }}
+              </mat-radio-button>
+            </mat-radio-group>
+          </div>
+
+          <!-- IP Address -->
+          <mat-form-field appearance="outline" class="half-width" *ngIf="isNetworkConfigRequired()">
+            <mat-label>IP Address <span class="required">*</span></mat-label>
+            <input matInput formControlName="ipAddress" placeholder="192.168.1.100">
+            <mat-icon matPrefix>public</mat-icon>
+            <mat-error *ngIf="hasError('ipAddress', 'required')">
+              IP address is required for network connection
+            </mat-error>
+            <mat-error *ngIf="hasError('ipAddress', 'pattern')">
+              Valid IP format required (e.g., 192.168.1.100)
+            </mat-error>
+            <mat-error *ngIf="hasError('ipAddress', 'invalidIp')">
+              Invalid IP address. Each segment must be 0-255
+            </mat-error>
+            <mat-hint>Device network IP address</mat-hint>
+          </mat-form-field>
+
+          <!-- Port -->
+          <mat-form-field appearance="outline" class="half-width" *ngIf="isNetworkConfigRequired()">
+            <mat-label>Port <span class="required">*</span></mat-label>
+            <input matInput type="number" formControlName="port" placeholder="4370">
+            <mat-icon matPrefix>settings_ethernet</mat-icon>
+            <mat-error *ngIf="hasError('port', 'required')">
+              Port is required
+            </mat-error>
+            <mat-error *ngIf="hasError('port', 'min') || hasError('port', 'max')">
+              Port must be between 1 and 65535
+            </mat-error>
+            <mat-hint>Default: 4370 for ZKTeco devices</mat-hint>
+          </mat-form-field>
+
+          <!-- MAC Address -->
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>MAC Address</mat-label>
+            <input matInput formControlName="macAddress" placeholder="00:17:61:01:23:45">
+            <mat-icon matPrefix>settings_input_antenna</mat-icon>
+            <mat-error *ngIf="hasError('macAddress', 'pattern')">
+              Invalid MAC address format. Use XX:XX:XX:XX:XX:XX
+            </mat-error>
+            <mat-hint>Format: XX:XX:XX:XX:XX:XX (Optional)</mat-hint>
+          </mat-form-field>
+
+          <!-- Network Configuration Info Box -->
+          <div class="info-box full-width">
+            <mat-icon>info</mat-icon>
+            <div class="info-content">
+              <strong>Network Setup Tips:</strong>
+              <ul>
+                <li>Ensure the device is powered on and connected to your network</li>
+                <li>Configure your network to allow communication on the specified port</li>
+                <li>Use static IP addresses for better reliability</li>
+                <li>Test the connection before saving to verify connectivity</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <mat-divider></mat-divider>
+
+      <!-- ============================================ -->
+      <!-- SECTION 3: DEVICE CREDENTIALS (OPTIONAL) -->
+      <!-- ============================================ -->
+      <div class="form-section">
+        <div class="section-header">
+          <mat-icon>lock</mat-icon>
+          <h3>Device Credentials</h3>
+          <span class="badge optional">Optional</span>
+        </div>
+
+        <div class="form-grid">
+          <!-- Username -->
+          <mat-form-field appearance="outline" class="half-width">
+            <mat-label>Username</mat-label>
+            <input matInput formControlName="username" placeholder="admin">
+            <mat-icon matPrefix>person</mat-icon>
+            <mat-hint>Device admin username (if required)</mat-hint>
+          </mat-form-field>
+
+          <!-- Password -->
+          <mat-form-field appearance="outline" class="half-width">
+            <mat-label>Password</mat-label>
+            <input
+              matInput
+              [type]="hidePassword ? 'password' : 'text'"
+              formControlName="password"
+              placeholder="Enter password"
+            >
+            <mat-icon matPrefix>vpn_key</mat-icon>
+            <button
+              mat-icon-button
+              matSuffix
+              type="button"
+              (click)="hidePassword = !hidePassword"
+              [attr.aria-label]="'Hide password'"
+              [attr.aria-pressed]="hidePassword"
+            >
+              <mat-icon>{{ hidePassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+            </button>
+            <mat-hint>Device admin password (if required)</mat-hint>
+          </mat-form-field>
+        </div>
+      </div>
+
+      <mat-divider></mat-divider>
+
+      <!-- ============================================ -->
+      <!-- SECTION 4: SYNC SETTINGS -->
+      <!-- ============================================ -->
+      <div class="form-section">
+        <div class="section-header">
+          <mat-icon>sync</mat-icon>
+          <h3>Synchronization Settings</h3>
+        </div>
+
+        <div class="form-grid">
+          <!-- Enable Auto-Sync -->
+          <div class="full-width toggle-container">
+            <mat-slide-toggle formControlName="syncEnabled" color="primary">
+              <strong>Enable Automatic Synchronization</strong>
+            </mat-slide-toggle>
+            <p class="toggle-hint">Automatically fetch attendance records from this device</p>
+          </div>
+
+          <!-- Sync Interval -->
+          <mat-form-field appearance="outline" class="half-width">
+            <mat-label>Sync Interval (Minutes) <span class="required">*</span></mat-label>
+            <input matInput type="number" formControlName="syncIntervalMinutes" placeholder="15">
+            <mat-icon matPrefix>schedule</mat-icon>
+            <mat-error>{{ getErrorMessage('syncIntervalMinutes') }}</mat-error>
+            <mat-hint>How often to sync (1-1440 minutes). Recommended: 15</mat-hint>
+          </mat-form-field>
+
+          <!-- Connection Timeout -->
+          <mat-form-field appearance="outline" class="half-width">
+            <mat-label>Connection Timeout (Seconds) <span class="required">*</span></mat-label>
+            <input matInput type="number" formControlName="connectionTimeoutSeconds" placeholder="30">
+            <mat-icon matPrefix>timer</mat-icon>
+            <mat-error>{{ getErrorMessage('connectionTimeoutSeconds') }}</mat-error>
+            <mat-hint>Max wait time for connection (5-300 seconds)</mat-hint>
+          </mat-form-field>
+
+          <!-- Enable Offline Alerts -->
+          <div class="full-width toggle-container">
+            <mat-slide-toggle formControlName="offlineAlertEnabled" color="accent">
+              <strong>Enable Offline Alerts</strong>
+            </mat-slide-toggle>
+            <p class="toggle-hint">Receive notifications when device goes offline</p>
+          </div>
+
+          <!-- Offline Threshold -->
+          <mat-form-field appearance="outline" class="half-width">
+            <mat-label>Offline Threshold (Minutes) <span class="required">*</span></mat-label>
+            <input matInput type="number" formControlName="offlineThresholdMinutes" placeholder="60">
+            <mat-icon matPrefix>notifications_active</mat-icon>
+            <mat-error>{{ getErrorMessage('offlineThresholdMinutes') }}</mat-error>
+            <mat-hint>Alert if no sync for this duration (5-1440 minutes)</mat-hint>
+          </mat-form-field>
+        </div>
+      </div>
+
+      <mat-divider></mat-divider>
+
+      <!-- ============================================ -->
+      <!-- SECTION 5: DEVICE IDENTIFICATION (OPTIONAL) -->
+      <!-- ============================================ -->
+      <div class="form-section collapsible-section">
+        <div class="section-header">
+          <mat-icon>badge</mat-icon>
+          <h3>Device Identification</h3>
+          <span class="badge optional">Optional</span>
+        </div>
+
+        <div class="form-grid">
+          <!-- Serial Number -->
+          <mat-form-field appearance="outline" class="half-width">
+            <mat-label>Serial Number</mat-label>
+            <input matInput formControlName="serialNumber" placeholder="e.g., ZK2023001">
+            <mat-icon matPrefix>qr_code</mat-icon>
+            <mat-hint>Device serial number</mat-hint>
+          </mat-form-field>
+
+          <!-- Firmware Version -->
+          <mat-form-field appearance="outline" class="half-width">
+            <mat-label>Firmware Version</mat-label>
+            <input matInput formControlName="firmwareVersion" placeholder="e.g., 6.60">
+            <mat-icon matPrefix>system_update</mat-icon>
+            <mat-hint>Current firmware version</mat-hint>
+          </mat-form-field>
+        </div>
+      </div>
+
+      <mat-divider></mat-divider>
+
+      <!-- ============================================ -->
+      <!-- ACTION BUTTONS -->
+      <!-- ============================================ -->
+      <div class="form-actions">
+        <div class="left-actions">
+          <button
+            mat-button
+            type="button"
+            (click)="onCancel()"
+            [disabled]="savingDevice"
+            class="cancel-button"
+          >
+            <mat-icon>close</mat-icon>
+            Cancel
+          </button>
+        </div>
+
+        <div class="right-actions">
+          <button
+            mat-raised-button
+            color="primary"
+            type="button"
+            (click)="onTestConnection()"
+            [disabled]="testingConnection || savingDevice || !isNetworkConfigRequired() || getControl('ipAddress')?.invalid"
+            class="test-button"
+          >
+            <mat-spinner *ngIf="testingConnection" diameter="20"></mat-spinner>
+            <mat-icon *ngIf="!testingConnection">wifi_tethering</mat-icon>
+            {{ testingConnection ? 'Testing...' : 'Test Connection' }}
+          </button>
+
+          <button
+            mat-raised-button
+            color="primary"
+            type="submit"
+            [disabled]="deviceForm.invalid || savingDevice || testingConnection"
+            class="submit-button"
+          >
+            <mat-spinner *ngIf="savingDevice" diameter="20"></mat-spinner>
+            <mat-icon *ngIf="!savingDevice">save</mat-icon>
+            {{ savingDevice ? 'Saving...' : getSubmitButtonText() }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Form Validation Summary -->
+      <div *ngIf="deviceForm.invalid && deviceForm.touched" class="validation-summary">
+        <mat-icon>error</mat-icon>
+        <span>Please fix the validation errors above before submitting</span>
+      </div>
+
+    </form>
+  </mat-card-content>
+</mat-card>

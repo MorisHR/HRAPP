@@ -1,0 +1,225 @@
+<mat-card>
+  <mat-card-header>
+    <mat-card-title>Biometric Devices</mat-card-title>
+    <div class="header-actions">
+      <button mat-raised-button color="primary" (click)="onRefresh()" class="refresh-button">
+        <mat-icon>refresh</mat-icon>
+        Refresh
+      </button>
+      <button mat-raised-button color="primary" (click)="onAdd()" class="add-button">
+        <mat-icon>add</mat-icon>
+        Add Device
+      </button>
+    </div>
+  </mat-card-header>
+
+  <mat-card-content>
+    <!-- Loading Spinner -->
+    <div *ngIf="loading" class="loading-container">
+      <mat-spinner></mat-spinner>
+      <p>Loading biometric devices...</p>
+    </div>
+
+    <!-- Error Message -->
+    <div *ngIf="error" class="error-container">
+      <mat-icon color="warn">error</mat-icon>
+      <p>{{ error }}</p>
+    </div>
+
+    <!-- Devices Table -->
+    <div *ngIf="!loading && !error" class="table-container">
+      <table mat-table [dataSource]="(devices$ | async) || []" class="devices-table">
+
+        <!-- Device Code Column -->
+        <ng-container matColumnDef="code">
+          <th mat-header-cell *matHeaderCellDef>Device Code</th>
+          <td mat-cell *matCellDef="let device">
+            <div class="device-code">
+              <mat-icon class="device-icon">fingerprint</mat-icon>
+              <span>{{ device.deviceCode }}</span>
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- Device Name Column -->
+        <ng-container matColumnDef="name">
+          <th mat-header-cell *matHeaderCellDef>Device Name</th>
+          <td mat-cell *matCellDef="let device">
+            <div class="device-name">
+              <strong>{{ device.machineName }}</strong>
+              <span class="device-type">{{ device.deviceType }}{{ device.model ? ' - ' + device.model : '' }}</span>
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- Location Column -->
+        <ng-container matColumnDef="location">
+          <th mat-header-cell *matHeaderCellDef>Location</th>
+          <td mat-cell *matCellDef="let device">
+            <div class="location-info">
+              <mat-icon class="location-icon">location_on</mat-icon>
+              <span>{{ device.locationName || device.departmentName || 'Unassigned' }}</span>
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- IP Address Column -->
+        <ng-container matColumnDef="ipAddress">
+          <th mat-header-cell *matHeaderCellDef>IP Address:Port</th>
+          <td mat-cell *matCellDef="let device">
+            <div class="ip-address">
+              <mat-icon class="network-icon">router</mat-icon>
+              <span class="ip-text">{{ device.ipAddress || 'N/A' }}</span>
+              <span class="port-text" *ngIf="device.ipAddress">:{{ device.port }}</span>
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- Status Column -->
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef>Status</th>
+          <td mat-cell *matCellDef="let device">
+            <div class="status-badge-wrapper">
+              <span
+                class="device-status-badge"
+                [class.online]="getDeviceStatusClass(device) === 'online'"
+                [class.warning]="getDeviceStatusClass(device) === 'warning'"
+                [class.offline]="getDeviceStatusClass(device) === 'offline'"
+              >
+                <span class="status-dot"></span>
+                {{ getDeviceStatusText(device) }}
+              </span>
+              <span class="sync-enabled-badge" *ngIf="!device.syncEnabled" matTooltip="Sync Disabled">
+                <mat-icon>sync_disabled</mat-icon>
+              </span>
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- Last Sync Column -->
+        <ng-container matColumnDef="lastSync">
+          <th mat-header-cell *matHeaderCellDef>Last Sync</th>
+          <td mat-cell *matCellDef="let device">
+            <div class="last-sync-info">
+              <mat-icon class="sync-icon">schedule</mat-icon>
+              <div class="sync-details">
+                <span class="sync-time">{{ getLastSyncDisplay(device.lastSyncTime) }}</span>
+                <span class="sync-records" *ngIf="device.lastSyncRecordCount > 0">
+                  {{ device.lastSyncRecordCount }} records
+                </span>
+              </div>
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- Actions Column -->
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef>Actions</th>
+          <td mat-cell *matCellDef="let device">
+            <div class="action-buttons">
+              <!-- Test Connection Button -->
+              <button
+                mat-icon-button
+                color="primary"
+                (click)="onTestConnection(device)"
+                [disabled]="isTestingConnection(device.id)"
+                matTooltip="Test Connection"
+                class="test-button"
+              >
+                <mat-spinner *ngIf="isTestingConnection(device.id)" diameter="20"></mat-spinner>
+                <mat-icon *ngIf="!isTestingConnection(device.id)">wifi_tethering</mat-icon>
+              </button>
+
+              <!-- Sync Now Button -->
+              <button
+                mat-icon-button
+                color="accent"
+                (click)="onSyncNow(device)"
+                [disabled]="isSyncing(device.id) || !device.syncEnabled"
+                matTooltip="Sync Now"
+                class="sync-button"
+              >
+                <mat-spinner *ngIf="isSyncing(device.id)" diameter="20"></mat-spinner>
+                <mat-icon *ngIf="!isSyncing(device.id)">sync</mat-icon>
+              </button>
+
+              <!-- Edit Button -->
+              <button
+                mat-icon-button
+                (click)="onEdit(device.id)"
+                matTooltip="Edit Device"
+                class="edit-button"
+              >
+                <mat-icon>edit</mat-icon>
+              </button>
+
+              <!-- Delete Button -->
+              <button
+                mat-icon-button
+                color="warn"
+                (click)="onDelete(device.id, device.machineName)"
+                matTooltip="Delete Device"
+                class="delete-button"
+              >
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+
+        <!-- No Data Row -->
+        <tr class="mat-row" *matNoDataRow>
+          <td class="mat-cell no-data" [attr.colspan]="displayedColumns.length">
+            <div class="empty-state">
+              <mat-icon class="empty-icon">devices</mat-icon>
+              <h3>No Biometric Devices Registered</h3>
+              <p>Click "Add Device" to register your first biometric attendance device.</p>
+              <button mat-raised-button color="primary" (click)="onAdd()">
+                <mat-icon>add</mat-icon>
+                Add Your First Device
+              </button>
+            </div>
+          </td>
+        </tr>
+      </table>
+    </div>
+
+    <!-- Device Statistics Summary -->
+    <div *ngIf="!loading && !error && (devices$ | async)?.length" class="statistics-summary">
+      <div class="stat-card">
+        <mat-icon>devices</mat-icon>
+        <div class="stat-info">
+          <span class="stat-label">Total Devices</span>
+          <span class="stat-value">{{ (devices$ | async)?.length || 0 }}</span>
+        </div>
+      </div>
+
+      <div class="stat-card online">
+        <mat-icon>check_circle</mat-icon>
+        <div class="stat-info">
+          <span class="stat-label">Online</span>
+          <span class="stat-value">{{ getOnlineDeviceCount(devices$ | async) }}</span>
+        </div>
+      </div>
+
+      <div class="stat-card warning">
+        <mat-icon>warning</mat-icon>
+        <div class="stat-info">
+          <span class="stat-label">Warning</span>
+          <span class="stat-value">{{ getWarningDeviceCount(devices$ | async) }}</span>
+        </div>
+      </div>
+
+      <div class="stat-card offline">
+        <mat-icon>cancel</mat-icon>
+        <div class="stat-info">
+          <span class="stat-label">Offline</span>
+          <span class="stat-value">{{ getOfflineDeviceCount(devices$ | async) }}</span>
+        </div>
+      </div>
+    </div>
+  </mat-card-content>
+</mat-card>
