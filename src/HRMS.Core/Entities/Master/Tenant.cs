@@ -39,6 +39,17 @@ public class Tenant : BaseEntity
     // Admin user details (first tenant admin)
     public string AdminUserName { get; set; } = string.Empty;
     public string AdminEmail { get; set; } = string.Empty;
+    public string AdminFirstName { get; set; } = string.Empty;
+    public string AdminLastName { get; set; } = string.Empty;
+
+    // Tenant activation fields
+    public string? ActivationToken { get; set; }
+    public DateTime? ActivationTokenExpiry { get; set; }
+    public DateTime? ActivatedAt { get; set; }
+    public string? ActivatedBy { get; set; }
+
+    // Tenant type
+    public bool IsGovernmentEntity { get; set; } = false;
 
     // Usage tracking
     public int CurrentUserCount { get; set; }

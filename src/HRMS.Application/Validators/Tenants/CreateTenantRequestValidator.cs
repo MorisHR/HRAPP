@@ -148,25 +148,21 @@ public class CreateTenantRequestValidator : AbstractValidator<CreateTenantReques
             .WithMessage("Please provide a valid admin email address")
             .WithName("Admin Email");
 
-        // Admin Password Validation (NIST Guidelines - Admin should have stronger password)
-        RuleFor(x => x.AdminPassword)
+        // Admin First Name Validation
+        RuleFor(x => x.AdminFirstName)
             .NotEmpty()
-            .WithMessage("Admin password is required")
-            .MinimumLength(16) // Admin accounts require stronger passwords
-            .WithMessage("Admin password must be at least 16 characters long")
-            .MaximumLength(128)
-            .WithMessage("Password is too long (maximum 128 characters)")
-            .Must(ContainUppercase)
-            .WithMessage("Admin password must contain at least one uppercase letter")
-            .Must(ContainLowercase)
-            .WithMessage("Admin password must contain at least one lowercase letter")
-            .Must(ContainDigit)
-            .WithMessage("Admin password must contain at least one digit")
-            .Must(ContainSpecialCharacter)
-            .WithMessage("Admin password must contain at least one special character (!@#$%^&*(),.?\":{}|<>)")
-            .Must(NotContainCommonPatterns)
-            .WithMessage("Admin password contains common patterns (e.g., 'password', '123456', 'admin')")
-            .WithName("Admin Password");
+            .WithMessage("Admin first name is required")
+            .MaximumLength(100)
+            .WithMessage("Admin first name is too long (maximum 100 characters)")
+            .WithName("Admin First Name");
+
+        // Admin Last Name Validation
+        RuleFor(x => x.AdminLastName)
+            .NotEmpty()
+            .WithMessage("Admin last name is required")
+            .MaximumLength(100)
+            .WithMessage("Admin last name is too long (maximum 100 characters)")
+            .WithName("Admin Last Name");
 
         // Cross-field validation: Admin email should not be the same as contact email (best practice)
         RuleFor(x => x)

@@ -48,4 +48,27 @@ public interface IEmailService
     /// </summary>
     Task SendAttendanceCorrectionNotificationAsync(string employeeEmail, string employeeName,
         DateTime date, bool isApproved, string? rejectionReason = null);
+
+    /// <summary>
+    /// Sends tenant activation email with activation link
+    /// </summary>
+    Task<bool> SendTenantActivationEmailAsync(string toEmail, string tenantName,
+        string activationToken, string adminFirstName);
+
+    /// <summary>
+    /// Sends welcome email after successful tenant activation
+    /// </summary>
+    Task<bool> SendTenantWelcomeEmailAsync(string toEmail, string tenantName,
+        string adminFirstName, string subdomain);
+
+    /// <summary>
+    /// Sends password reset email
+    /// </summary>
+    Task<bool> SendPasswordResetEmailAsync(string toEmail, string resetToken, string firstName);
+
+    /// <summary>
+    /// Sends subscription expiry reminder email
+    /// </summary>
+    Task<bool> SendExpiryReminderAsync(string toEmail, string tenantName,
+        int daysRemaining, string adminFirstName);
 }

@@ -6,6 +6,11 @@ namespace HRMS.Core.Enums;
 public enum TenantStatus
 {
     /// <summary>
+    /// Tenant created, awaiting email activation (gray)
+    /// </summary>
+    Pending = 0,
+
+    /// <summary>
     /// Tenant is fully operational (green)
     /// </summary>
     Active = 1,

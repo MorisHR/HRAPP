@@ -5,6 +5,7 @@ using HRMS.Infrastructure.Services;
 using HRMS.Core.Enums;
 using HRMS.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
+using HRMS.Application.Interfaces;
 
 namespace HRMS.API.Controllers;
 
@@ -21,15 +22,21 @@ public class TenantsController : ControllerBase
     private readonly TenantManagementService _tenantManagementService;
     private readonly MasterDbContext _context;
     private readonly ILogger<TenantsController> _logger;
+    private readonly IEmailService _emailService;
+    private readonly IConfiguration _configuration;
 
     public TenantsController(
         TenantManagementService tenantManagementService,
         MasterDbContext context,
-        ILogger<TenantsController> logger)
+        ILogger<TenantsController> logger,
+        IEmailService emailService,
+        IConfiguration configuration)
     {
         _tenantManagementService = tenantManagementService;
         _context = context;
         _logger = logger;
+        _emailService = emailService;
+        _configuration = configuration;
     }
 
     /// <summary>
@@ -127,7 +134,7 @@ public class TenantsController : ControllerBase
     }
 
     /// <summary>
-    /// Create a new tenant
+    /// Create a new tenant with email activation workflow
     /// </summary>
     [HttpPost]
     public async Task<IActionResult> CreateTenant([FromBody] CreateTenantRequest request)
@@ -137,23 +144,139 @@ public class TenantsController : ControllerBase
             if (!ModelState.IsValid)
                 return BadRequest(new { success = false, message = "Invalid request", errors = ModelState });
 
+            // Validate subdomain uniqueness
+            var existingTenant = await _context.Tenants
+                .AnyAsync(t => t.Subdomain == request.Subdomain.ToLower());
+
+            if (existingTenant)
+                return BadRequest(new { success = false, message = "Subdomain already exists" });
+
             var createdBy = "SuperAdmin"; // TODO: Get from authenticated user
             var (success, message, tenant) = await _tenantManagementService.CreateTenantAsync(request, createdBy);
 
             if (!success)
                 return BadRequest(new { success = false, message });
 
-            _logger.LogInformation("Tenant created successfully: {TenantId}", tenant!.Id);
+            _logger.LogInformation("Tenant created successfully: {TenantId} - Status: {Status}", tenant!.Id, tenant.Status);
+
+            // Get the actual tenant entity to access activation token
+            var tenantEntity = await _context.Tenants.FindAsync(tenant.Id);
+
+            // Send activation email
+            var emailSent = await _emailService.SendTenantActivationEmailAsync(
+                request.AdminEmail,
+                request.CompanyName,
+                tenantEntity!.ActivationToken!,
+                request.AdminFirstName
+            );
+
+            if (!emailSent)
+            {
+                _logger.LogWarning("Failed to send activation email to {Email} for tenant {TenantId}",
+                    request.AdminEmail, tenant.Id);
+            }
 
             return CreatedAtAction(
                 nameof(GetTenantById),
                 new { id = tenant.Id },
-                new { success = true, message, data = tenant });
+                new
+                {
+                    success = true,
+                    message = "Tenant created successfully. Activation email sent to admin.",
+                    data = new
+                    {
+                        tenantId = tenant.Id,
+                        subdomain = tenantEntity.Subdomain,
+                        companyName = tenantEntity.CompanyName,
+                        status = tenantEntity.Status.ToString(),
+                        activationEmailSent = emailSent,
+                        adminEmail = tenantEntity.AdminEmail
+                    }
+                });
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error creating tenant");
             return StatusCode(500, new { success = false, message = "Error creating tenant" });
+        }
+    }
+
+    /// <summary>
+    /// Activate a tenant account using activation token from email
+    /// Public endpoint - no authentication required
+    /// </summary>
+    [HttpPost("activate")]
+    [AllowAnonymous]
+    public async Task<IActionResult> ActivateTenant([FromBody] ActivateTenantRequest request)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(request.ActivationToken))
+                return BadRequest(new { success = false, message = "Activation token is required" });
+
+            // Get tenant by activation token
+            var tenant = await _tenantManagementService.GetTenantByActivationTokenAsync(request.ActivationToken);
+
+            if (tenant == null)
+            {
+                _logger.LogWarning("Activation attempt with invalid token: {Token}",
+                    request.ActivationToken.Substring(0, Math.Min(8, request.ActivationToken.Length)));
+                return NotFound(new { success = false, message = "Invalid activation token" });
+            }
+
+            // Check if already activated
+            if (tenant.Status == TenantStatus.Active)
+            {
+                _logger.LogWarning("Activation attempt for already active tenant: {Subdomain}", tenant.Subdomain);
+                return BadRequest(new { success = false, message = "Tenant account is already activated" });
+            }
+
+            // Check token expiry
+            if (tenant.ActivationTokenExpiry < DateTime.UtcNow)
+            {
+                _logger.LogWarning("Activation attempt with expired token for tenant: {Subdomain}", tenant.Subdomain);
+                return BadRequest(new { success = false, message = "Activation link has expired. Please contact support." });
+            }
+
+            // Activate tenant
+            var (success, message, subdomain) = await _tenantManagementService.ActivateTenantAsync(request.ActivationToken);
+
+            if (!success)
+            {
+                _logger.LogError("Tenant activation failed: {Message}", message);
+                return BadRequest(new { success = false, message });
+            }
+
+            _logger.LogInformation("Tenant activated successfully: {Subdomain}", subdomain);
+
+            // Send welcome email
+            var welcomeEmailSent = await _emailService.SendTenantWelcomeEmailAsync(
+                tenant.AdminEmail,
+                tenant.CompanyName,
+                tenant.AdminFirstName,
+                tenant.Subdomain
+            );
+
+            if (!welcomeEmailSent)
+            {
+                _logger.LogWarning("Failed to send welcome email to {Email}", tenant.AdminEmail);
+            }
+
+            var frontendUrl = _configuration["AppSettings:FrontendUrl"] ?? "http://localhost:4200";
+
+            return Ok(new ActivateTenantResponse
+            {
+                Success = true,
+                Message = "Tenant activated successfully! Check your email for login instructions.",
+                TenantSubdomain = subdomain,
+                LoginUrl = $"{frontendUrl}/login",
+                AdminEmail = tenant.AdminEmail
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error activating tenant");
+            return StatusCode(500, new { success = false, message = "Activation failed. Please try again." });
         }
     }
 

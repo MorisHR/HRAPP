@@ -27,6 +27,10 @@ export const routes: Routes = [
       {
         path: 'superadmin',
         loadComponent: () => import('./features/auth/superadmin/superadmin-login.component').then(m => m.SuperAdminLoginComponent)
+      },
+      {
+        path: 'activate',
+        loadComponent: () => import('./features/auth/activate/activate.component').then(m => m.ActivateComponent)
       }
     ]
   },

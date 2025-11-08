@@ -74,6 +74,11 @@ public class TenantManagementService
 
             // Create tenant entity
             _logger.LogInformation("✓ Step 3/5: Creating tenant record in master database...");
+
+            // Generate activation token
+            var activationToken = Guid.NewGuid().ToString("N");
+            var activationExpiry = DateTime.UtcNow.AddHours(24);
+
             var tenant = new Tenant
             {
                 Id = Guid.NewGuid(),
@@ -82,7 +87,7 @@ public class TenantManagementService
                 SchemaName = schemaName,
                 ContactEmail = request.ContactEmail,
                 ContactPhone = request.ContactPhone,
-                Status = TenantStatus.Active,
+                Status = TenantStatus.Pending, // Changed: Pending activation
                 EmployeeTier = request.EmployeeTier,
                 MonthlyPrice = request.MonthlyPrice,
                 MaxUsers = request.MaxUsers,
@@ -91,6 +96,14 @@ public class TenantManagementService
                 SubscriptionStartDate = DateTime.UtcNow,
                 AdminUserName = request.AdminUserName,
                 AdminEmail = request.AdminEmail,
+                AdminFirstName = request.AdminFirstName,
+                AdminLastName = request.AdminLastName,
+                IsGovernmentEntity = request.IsGovernmentEntity,
+                TrialEndDate = request.TrialEndDate,
+                SubscriptionEndDate = request.SubscriptionEndDate,
+                // Activation fields
+                ActivationToken = activationToken,
+                ActivationTokenExpiry = activationExpiry,
                 CreatedAt = DateTime.UtcNow,
                 CreatedBy = createdBy,
                 CurrentUserCount = 0,
@@ -371,6 +384,94 @@ public class TenantManagementService
             AdminEmail = tenant.AdminEmail
         };
     }
+
+    /// <summary>
+    /// Get tenant by activation token
+    /// </summary>
+    public async Task<Tenant?> GetTenantByActivationTokenAsync(string activationToken)
+    {
+        return await _masterDbContext.Tenants
+            .FirstOrDefaultAsync(t => t.ActivationToken == activationToken);
+    }
+
+    /// <summary>
+    /// Activate tenant account and create admin user
+    /// </summary>
+    public async Task<(bool Success, string Message, string? Subdomain)> ActivateTenantAsync(string activationToken)
+    {
+        // Use execution strategy
+        var strategy = _masterDbContext.Database.CreateExecutionStrategy();
+
+        return await strategy.ExecuteAsync(async () =>
+        {
+            await using var transaction = await _masterDbContext.Database.BeginTransactionAsync();
+
+            try
+            {
+                _logger.LogInformation("Starting tenant activation for token: {Token}", activationToken.Substring(0, 8) + "...");
+
+                // Find tenant by activation token
+                var tenant = await _masterDbContext.Tenants
+                    .FirstOrDefaultAsync(t => t.ActivationToken == activationToken);
+
+                if (tenant == null)
+                {
+                    _logger.LogWarning("Activation failed: Invalid activation token");
+                    return (false, "Invalid activation token", null);
+                }
+
+                // Check if already activated
+                if (tenant.Status == TenantStatus.Active)
+                {
+                    _logger.LogWarning("Activation failed: Tenant {Subdomain} already activated", tenant.Subdomain);
+                    return (false, "Tenant account is already activated", tenant.Subdomain);
+                }
+
+                // Check token expiry
+                if (tenant.ActivationTokenExpiry < DateTime.UtcNow)
+                {
+                    _logger.LogWarning("Activation failed: Token expired for tenant {Subdomain}", tenant.Subdomain);
+                    return (false, "Activation link has expired. Please contact support.", null);
+                }
+
+                // Create tenant schema if not exists (in case it was only partially created)
+                _logger.LogInformation("Ensuring tenant schema exists: {SchemaName}", tenant.SchemaName);
+                if (!await _schemaProvisioningService.SchemaExistsAsync(tenant.SchemaName))
+                {
+                    _logger.LogInformation("Schema does not exist. Creating now...");
+                    var schemaCreated = await _schemaProvisioningService.CreateTenantSchemaAsync(tenant.SchemaName);
+                    if (!schemaCreated)
+                    {
+                        _logger.LogError("Failed to create tenant schema during activation");
+                        return (false, "Failed to provision tenant database. Please contact support.", null);
+                    }
+                }
+
+                // Update tenant status
+                tenant.Status = TenantStatus.Active;
+                tenant.ActivatedAt = DateTime.UtcNow;
+                tenant.ActivationToken = null; // Clear token for security
+                tenant.ActivationTokenExpiry = null;
+                tenant.UpdatedAt = DateTime.UtcNow;
+
+                await _masterDbContext.SaveChangesAsync();
+                await transaction.CommitAsync();
+
+                _logger.LogInformation("✓ Tenant {Subdomain} activated successfully", tenant.Subdomain);
+
+                return (true, "Tenant activated successfully", tenant.Subdomain);
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                _logger.LogError(ex, "Error activating tenant");
+                return (false, "An error occurred during activation. Please try again.", null);
+            }
+        });
+    }
+
+    // Note: Admin user creation is handled separately through the employee onboarding flow
+    // after tenant activation. The controller will send welcome email with login instructions.
 
     private string GetTierDisplayName(EmployeeTier tier)
     {

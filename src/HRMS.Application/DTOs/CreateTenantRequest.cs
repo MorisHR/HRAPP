@@ -23,8 +23,16 @@ public class CreateTenantRequest
     public int ApiCallsPerMonth { get; set; }
     public decimal MonthlyPrice { get; set; }
 
-    // Admin User Details
+    // Admin User Details (for activation email)
     public string AdminUserName { get; set; } = string.Empty;
     public string AdminEmail { get; set; } = string.Empty;
-    public string AdminPassword { get; set; } = string.Empty;
+    public string AdminFirstName { get; set; } = string.Empty;
+    public string AdminLastName { get; set; } = string.Empty;
+
+    // Tenant Type
+    public bool IsGovernmentEntity { get; set; } = false;
+
+    // Subscription Period (optional - for trial/paid setup)
+    public DateTime? TrialEndDate { get; set; }
+    public DateTime? SubscriptionEndDate { get; set; }
 }
