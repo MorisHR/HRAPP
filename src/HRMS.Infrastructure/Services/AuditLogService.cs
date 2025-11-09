@@ -108,10 +108,11 @@ public class AuditLogService : IAuditLogService
     public async Task<AuditLog> LogAuthenticationAsync(
         AuditActionType actionType,
         Guid? userId,
-        string userEmail,
+        string? userEmail,
         bool success,
+        Guid? tenantId = null,
         string? errorMessage = null,
-        string? additionalInfo = null)
+        Dictionary<string, object>? eventData = null)
     {
         var log = new AuditLog
         {
@@ -121,14 +122,15 @@ public class AuditLogService : IAuditLogService
             Severity = success ? AuditSeverity.INFO : AuditSeverity.WARNING,
             UserId = userId,
             UserEmail = userEmail,
+            TenantId = tenantId,
             Success = success,
             ErrorMessage = errorMessage,
-            AdditionalMetadata = additionalInfo,
+            AdditionalMetadata = eventData != null ? JsonSerializer.Serialize(eventData) : null,
             PerformedAt = DateTime.UtcNow
         };
 
         // Escalate to CRITICAL if multiple failed attempts detected
-        if (!success && actionType == AuditActionType.LOGIN_FAILED)
+        if (!success && actionType == AuditActionType.LOGIN_FAILED && !string.IsNullOrEmpty(userEmail))
         {
             var recentFailures = await CountRecentFailedLogins(userEmail);
             if (recentFailures >= 3)

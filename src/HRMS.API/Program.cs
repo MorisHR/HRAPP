@@ -111,7 +111,7 @@ if (string.IsNullOrEmpty(connectionString))
 }
 
 // Master DbContext (system-wide data)
-builder.Services.AddDbContext<MasterDbContext>(options =>
+builder.Services.AddDbContext<MasterDbContext>((serviceProvider, options) =>
 {
     options.UseNpgsql(connectionString, npgsqlOptions =>
     {
@@ -121,6 +121,10 @@ builder.Services.AddDbContext<MasterDbContext>(options =>
             errorCodesToAdd: null);
         npgsqlOptions.CommandTimeout(30);
     });
+
+    // PHASE 2: Add automatic audit logging interceptor
+    var interceptor = serviceProvider.GetRequiredService<HRMS.Infrastructure.Persistence.Interceptors.AuditLoggingSaveChangesInterceptor>();
+    options.AddInterceptors(interceptor);
 
     // Enable sensitive data logging only in development
     if (builder.Environment.IsDevelopment())
@@ -157,6 +161,10 @@ builder.Services.AddScoped<TenantDbContext>(serviceProvider =>
         o.MigrationsHistoryTable("__EFMigrationsHistory", tenantSchema);
         o.EnableRetryOnFailure(3, TimeSpan.FromSeconds(5), null);
     });
+
+    // PHASE 2: Add automatic audit logging interceptor
+    var interceptor = serviceProvider.GetRequiredService<HRMS.Infrastructure.Persistence.Interceptors.AuditLoggingSaveChangesInterceptor>();
+    optionsBuilder.AddInterceptors(interceptor);
 
     return new TenantDbContext(optionsBuilder.Options, tenantSchema);
 });
@@ -214,6 +222,14 @@ builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IReportService, ReportService>();
 builder.Services.AddScoped<IPdfService, PdfService>();
 builder.Services.AddScoped<TenantManagementService>();
+
+// Audit Logging Service - Production-grade audit trail
+builder.Services.AddScoped<IAuditLogService, AuditLogService>();
+Log.Information("Audit logging service registered for comprehensive audit trail");
+
+// PHASE 2: Audit Logging Interceptor - Automatic data change tracking
+builder.Services.AddScoped<HRMS.Infrastructure.Persistence.Interceptors.AuditLoggingSaveChangesInterceptor>();
+Log.Information("Audit logging interceptor registered for automatic database change tracking");
 
 // Timesheet Management Services
 builder.Services.AddScoped<ITimesheetGenerationService, TimesheetGenerationService>();
@@ -719,6 +735,9 @@ app.UseTenantContextValidation();
 // Authentication & Authorization - MUST come after UseCors
 app.UseAuthentication();
 app.UseAuthorization();
+
+// Audit Logging - MUST come after authentication to capture user context
+app.UseMiddleware<AuditLoggingMiddleware>();
 
 // ======================
 // HANGFIRE DASHBOARD (Production-secured)

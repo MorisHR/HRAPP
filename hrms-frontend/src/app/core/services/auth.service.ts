@@ -44,19 +44,104 @@ export class AuthService {
     });
   }
 
+  /**
+   * Decodes a JWT token and extracts the payload
+   * SECURITY: Does NOT validate signature - only extracts claims
+   * Signature validation must be done by backend
+   */
+  private decodeJwt(token: string): any {
+    try {
+      // JWT format: header.payload.signature
+      const parts = token.split('.');
+      if (parts.length !== 3) {
+        throw new Error('Invalid JWT format');
+      }
+
+      // Decode base64url payload (second part)
+      const payload = parts[1];
+
+      // Replace base64url chars with base64 chars
+      const base64 = payload.replace(/-/g, '+').replace(/_/g, '/');
+
+      // Decode base64 and parse JSON
+      const jsonPayload = decodeURIComponent(
+        atob(base64)
+          .split('')
+          .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+          .join('')
+      );
+
+      return JSON.parse(jsonPayload);
+    } catch (error) {
+      console.error('❌ Failed to decode JWT:', error);
+      throw new Error('Invalid JWT token');
+    }
+  }
+
+  /**
+   * Checks if a JWT token is expired
+   * Returns true if token is expired, false if still valid
+   */
+  private isTokenExpired(token: string): boolean {
+    try {
+      const payload = this.decodeJwt(token);
+
+      if (!payload.exp) {
+        console.warn('⚠️ Token has no expiration claim');
+        return false; // If no exp claim, assume valid (let backend reject)
+      }
+
+      const now = Math.floor(Date.now() / 1000); // Current time in seconds
+      const expiresAt = payload.exp;
+      const isExpired = expiresAt < now;
+
+      if (isExpired) {
+        const expiredDate = new Date(expiresAt * 1000);
+        console.warn(`⏰ Token expired at ${expiredDate.toISOString()}`);
+      }
+
+      return isExpired;
+    } catch (error) {
+      console.error('❌ Error checking token expiration:', error);
+      return true; // If we can't decode, assume expired for security
+    }
+  }
+
+  /**
+   * SECURITY FIX: Load auth state from localStorage with token expiration validation
+   * CRITICAL: Validates token expiration before accepting stored credentials
+   */
   private loadAuthState(): void {
     const token = localStorage.getItem('access_token');
     const userJson = localStorage.getItem('user');
 
+    console.log('🔐 Loading auth state from localStorage...');
+
     if (token && userJson) {
       try {
+        // SECURITY CHECK: Validate token expiration before accepting it
+        if (this.isTokenExpired(token)) {
+          console.warn('🚫 SECURITY: Stored token is expired - clearing auth state');
+          this.clearAuthState();
+          return;
+        }
+
+        console.log('✅ Token is valid and not expired');
+
         const user = JSON.parse(userJson) as User;
         this.tokenSignal.set(token);
         this.userSignal.set(user);
+
+        console.log('✅ Auth state loaded successfully:', {
+          email: user.email,
+          role: user.role
+        });
       } catch (error) {
-        console.error('Error loading auth state:', error);
+        console.error('❌ Error loading auth state:', error);
         this.clearAuthState();
       }
+    } else {
+      console.log('ℹ️ No stored credentials found');
     }
   }
 
@@ -140,6 +225,7 @@ export class AuthService {
   /**
    * Logout user and revoke refresh token
    * UPDATED: Now calls backend to revoke refresh token and navigates based on user type
+   * SECURITY FIX: Clears state synchronously before navigation to prevent guard race conditions
    */
   logout(): void {
     console.log('🚪 LOGOUT: Starting logout process');
@@ -159,8 +245,13 @@ export class AuthService {
     this.sessionManagement.stopSession();
     console.log('⏹️ Session management stopped');
 
-    // Call backend to revoke refresh token
-    // Don't wait for response - logout immediately for better UX
+    // CRITICAL: Clear local auth state FIRST (before backend call)
+    // This ensures signals update immediately before navigation
+    this.clearAuthState();
+    console.log('🧹 Auth state cleared from localStorage and signals');
+
+    // Call backend to revoke refresh token (fire-and-forget)
+    // This runs async AFTER state is cleared
     this.http.post(
       `${this.apiUrl}/auth/revoke`,
       {},
@@ -170,18 +261,16 @@ export class AuthService {
       error: (err) => console.warn('⚠️ Token revocation failed (user logged out anyway):', err)
     });
 
-    // Clear local auth state
-    this.clearAuthState();
-
     // Navigate based on user type using replaceUrl to prevent back button issues
+    // State is already cleared, so guards won't block navigation
     if (isSuperAdmin) {
       console.log('🔄 LOGOUT: Redirecting SuperAdmin to /auth/superadmin');
       this.router.navigate(['/auth/superadmin'], { replaceUrl: true });
     } else {
-      // Tenant user - redirect to subdomain entry page
-      console.log('🔄 LOGOUT: Redirecting tenant user to /auth/subdomain');
-      const subdomainService = inject(SubdomainService);
-      subdomainService.redirectToMainDomain('/auth/subdomain');
+      // Tenant/Employee users - redirect to subdomain entry page
+      // IMPROVED: Use Angular Router for SPA navigation instead of full page reload
+      console.log('🔄 LOGOUT: Redirecting to /auth/subdomain');
+      this.router.navigate(['/auth/subdomain'], { replaceUrl: true });
     }
   }
 

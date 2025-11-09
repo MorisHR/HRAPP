@@ -99,27 +99,24 @@ namespace HRMS.Infrastructure.Data.Migrations.Master
                 oldClrType: typeof(DateTime),
                 oldType: "timestamp with time zone");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "OldValues",
-                schema: "master",
-                table: "AuditLogs",
-                type: "jsonb",
-                nullable: true,
-                comment: "Old values before change (JSON format)",
-                oldClrType: typeof(string),
-                oldType: "text",
-                oldNullable: true);
+            // Use raw SQL for text to jsonb conversion with USING clause
+            migrationBuilder.Sql(@"
+                ALTER TABLE master.""AuditLogs""
+                ALTER COLUMN ""OldValues"" TYPE jsonb USING CASE
+                    WHEN ""OldValues"" IS NULL THEN NULL
+                    ELSE ""OldValues""::jsonb
+                END;
+                COMMENT ON COLUMN master.""AuditLogs"".""OldValues"" IS 'Old values before change (JSON format)';
+            ");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "NewValues",
-                schema: "master",
-                table: "AuditLogs",
-                type: "jsonb",
-                nullable: true,
-                comment: "New values after change (JSON format)",
-                oldClrType: typeof(string),
-                oldType: "text",
-                oldNullable: true);
+            migrationBuilder.Sql(@"
+                ALTER TABLE master.""AuditLogs""
+                ALTER COLUMN ""NewValues"" TYPE jsonb USING CASE
+                    WHEN ""NewValues"" IS NULL THEN NULL
+                    ELSE ""NewValues""::jsonb
+                END;
+                COMMENT ON COLUMN master.""AuditLogs"".""NewValues"" IS 'New values after change (JSON format)';
+            ");
 
             migrationBuilder.AlterColumn<string>(
                 name: "IpAddress",

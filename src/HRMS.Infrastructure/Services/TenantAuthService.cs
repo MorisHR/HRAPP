@@ -4,7 +4,9 @@ using System.Text;
 using HRMS.Core.Entities.Tenant;
 using HRMS.Core.Interfaces;
 using HRMS.Core.Settings;
+using HRMS.Core.Enums;
 using HRMS.Infrastructure.Data;
+using HRMS.Application.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -23,13 +25,15 @@ public class TenantAuthService
     private readonly JwtSettings _jwtSettings;
     private readonly string _connectionString;
     private readonly ILogger<TenantAuthService> _logger;
+    private readonly IAuditLogService _auditLogService;
 
     public TenantAuthService(
         MasterDbContext masterContext,
         IPasswordHasher passwordHasher,
         IOptions<JwtSettings> jwtSettings,
         IConfiguration configuration,
-        ILogger<TenantAuthService> logger)
+        ILogger<TenantAuthService> logger,
+        IAuditLogService auditLogService)
     {
         _masterContext = masterContext;
         _passwordHasher = passwordHasher;
@@ -37,6 +41,7 @@ public class TenantAuthService
         _connectionString = configuration.GetConnectionString("DefaultConnection")
             ?? throw new InvalidOperationException("Connection string not found");
         _logger = logger;
+        _auditLogService = auditLogService;
     }
 
     public async Task<(string Token, DateTime ExpiresAt, Employee User, Guid TenantId)?> LoginAsync(
@@ -51,12 +56,34 @@ public class TenantAuthService
         if (tenant == null)
         {
             _logger.LogWarning("Tenant not found for subdomain: {Subdomain}", subdomain);
+
+            // Audit log: Failed login - tenant not found
+            _ = _auditLogService.LogAuthenticationAsync(
+                AuditActionType.LOGIN_FAILED,
+                userId: null,
+                userEmail: email,
+                success: false,
+                tenantId: null,
+                errorMessage: $"Tenant not found for subdomain: {subdomain}"
+            );
+
             return null;
         }
 
         if (tenant.Status != Core.Enums.TenantStatus.Active)
         {
             _logger.LogWarning("Tenant is not active: {TenantId}, Status: {Status}", tenant.Id, tenant.Status);
+
+            // Audit log: Failed login - inactive tenant
+            _ = _auditLogService.LogAuthenticationAsync(
+                AuditActionType.LOGIN_FAILED,
+                userId: null,
+                userEmail: email,
+                success: false,
+                tenantId: tenant.Id,
+                errorMessage: $"Tenant is not active (Status: {tenant.Status})"
+            );
+
             throw new InvalidOperationException("Tenant account is not active. Please contact support.");
         }
 
@@ -79,18 +106,51 @@ public class TenantAuthService
         if (employee == null)
         {
             _logger.LogWarning("Employee not found in tenant {TenantId}: {Email}", tenant.Id, email);
+
+            // Audit log: Failed login - employee not found
+            _ = _auditLogService.LogAuthenticationAsync(
+                AuditActionType.LOGIN_FAILED,
+                userId: null,
+                userEmail: email,
+                success: false,
+                tenantId: tenant.Id,
+                errorMessage: "Employee not found"
+            );
+
             return null;
         }
 
         if (!employee.IsActive)
         {
             _logger.LogWarning("Employee account is not active: {EmployeeId}", employee.Id);
+
+            // Audit log: Failed login - inactive employee
+            _ = _auditLogService.LogAuthenticationAsync(
+                AuditActionType.LOGIN_FAILED,
+                userId: employee.Id,
+                userEmail: email,
+                success: false,
+                tenantId: tenant.Id,
+                errorMessage: "Employee account is not active"
+            );
+
             return null;
         }
 
         if (employee.IsOffboarded)
         {
             _logger.LogWarning("Employee has been offboarded: {EmployeeId}", employee.Id);
+
+            // Audit log: Failed login - employee offboarded
+            _ = _auditLogService.LogAuthenticationAsync(
+                AuditActionType.LOGIN_FAILED,
+                userId: employee.Id,
+                userEmail: email,
+                success: false,
+                tenantId: tenant.Id,
+                errorMessage: "Employee has been offboarded"
+            );
+
             return null;
         }
 
@@ -108,6 +168,17 @@ public class TenantAuthService
             {
                 _logger.LogWarning("Employee account is locked: {EmployeeId} until {LockoutEnd}",
                     employee.Id, employee.LockoutEnd.Value);
+
+                // Audit log: Login attempt on locked account
+                _ = _auditLogService.LogAuthenticationAsync(
+                    AuditActionType.LOGIN_FAILED,
+                    userId: employee.Id,
+                    userEmail: email,
+                    success: false,
+                    tenantId: tenant.Id,
+                    errorMessage: $"Account is locked until {employee.LockoutEnd.Value:yyyy-MM-dd HH:mm:ss} UTC"
+                );
+
                 throw new InvalidOperationException(
                     $"Account is locked until {employee.LockoutEnd.Value:yyyy-MM-dd HH:mm:ss} UTC. " +
                     $"Please try again later or contact your administrator.");
@@ -134,6 +205,17 @@ public class TenantAuthService
                 await tenantContext.SaveChangesAsync();
 
                 _logger.LogWarning("Employee account locked due to failed login attempts: {EmployeeId}", employee.Id);
+
+                // Audit log: Account locked
+                _ = _auditLogService.LogAuthenticationAsync(
+                    AuditActionType.ACCOUNT_LOCKED,
+                    userId: employee.Id,
+                    userEmail: email,
+                    success: false,
+                    tenantId: tenant.Id,
+                    errorMessage: $"Account locked due to {employee.AccessFailedCount} failed login attempts"
+                );
+
                 throw new InvalidOperationException(
                     "Account has been locked due to multiple failed login attempts. " +
                     $"Please try again after {employee.LockoutEnd.Value:yyyy-MM-dd HH:mm:ss} UTC or contact your administrator.");
@@ -141,6 +223,17 @@ public class TenantAuthService
 
             await tenantContext.SaveChangesAsync();
             _logger.LogWarning("Invalid password for employee: {Email} in tenant {TenantId}", email, tenant.Id);
+
+            // Audit log: Failed login - invalid password
+            _ = _auditLogService.LogAuthenticationAsync(
+                AuditActionType.LOGIN_FAILED,
+                userId: employee.Id,
+                userEmail: email,
+                success: false,
+                tenantId: tenant.Id,
+                errorMessage: $"Invalid password (attempt {employee.AccessFailedCount})"
+            );
+
             return null;
         }
 
@@ -169,6 +262,15 @@ public class TenantAuthService
             tenant.SchemaName
         );
         var expiresAt = DateTime.UtcNow.AddMinutes(_jwtSettings.ExpirationMinutes);
+
+        // Audit log: Successful login
+        _ = _auditLogService.LogAuthenticationAsync(
+            AuditActionType.LOGIN_SUCCESS,
+            userId: employee.Id,
+            userEmail: email,
+            success: true,
+            tenantId: tenant.Id
+        );
 
         return (token, expiresAt, employee, tenant.Id);
     }

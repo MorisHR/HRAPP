@@ -60,20 +60,23 @@ public interface IAuditLogService
 
     /// <summary>
     /// Log authentication events (login, logout, password changes, MFA)
+    /// AUTO-ENRICHES: IP address, user agent, session ID, correlation ID, user role from HttpContext
     /// </summary>
     /// <param name="actionType">Authentication action (LOGIN_SUCCESS, LOGIN_FAILED, etc.)</param>
     /// <param name="userId">User ID (if known)</param>
     /// <param name="userEmail">User email</param>
     /// <param name="success">Whether authentication succeeded</param>
+    /// <param name="tenantId">Tenant ID (null for SuperAdmin)</param>
     /// <param name="errorMessage">Error message if failed</param>
-    /// <param name="additionalInfo">Additional context (device info, geolocation, etc.)</param>
+    /// <param name="eventData">Event-specific data (MFA method, login duration, etc.)</param>
     Task<AuditLog> LogAuthenticationAsync(
         AuditActionType actionType,
         Guid? userId,
-        string userEmail,
+        string? userEmail,
         bool success,
+        Guid? tenantId = null,
         string? errorMessage = null,
-        string? additionalInfo = null
+        Dictionary<string, object>? eventData = null
     );
 
     /// <summary>

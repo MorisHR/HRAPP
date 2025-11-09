@@ -13,16 +13,16 @@ export const routes: Routes = [
   },
 
   // Authentication routes
-  // SECURITY: All login routes protected by alreadyLoggedInGuard
-  // This prevents authenticated users from accessing login pages
-  // If user is already logged in and navigates to login page (via back button, etc.),
-  // they will be redirected to their appropriate dashboard
+  // SECURITY NOTES:
+  // - /subdomain and /superadmin routes do NOT have alreadyLoggedInGuard
+  //   This allows logout flow to navigate to these pages after clearing auth state
+  // - Other login routes CAN have the guard to prevent authenticated users from accessing them
   {
     path: 'auth',
     children: [
       {
         path: 'subdomain',
-        canActivate: [alreadyLoggedInGuard],
+        // NO GUARD - Allow logout to navigate here
         loadComponent: () => import('./features/auth/subdomain/subdomain.component').then(m => m.SubdomainComponent)
       },
       {
@@ -32,7 +32,7 @@ export const routes: Routes = [
       },
       {
         path: 'superadmin',
-        canActivate: [alreadyLoggedInGuard],
+        // NO GUARD - Allow logout to navigate here
         loadComponent: () => import('./features/auth/superadmin/superadmin-login.component').then(m => m.SuperAdminLoginComponent)
       },
       {

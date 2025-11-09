@@ -6,7 +6,9 @@ using System.Text.Json;
 using HRMS.Core.Entities.Master;
 using HRMS.Core.Interfaces;
 using HRMS.Core.Settings;
+using HRMS.Core.Enums;
 using HRMS.Infrastructure.Data;
+using HRMS.Application.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Logging;
@@ -21,19 +23,22 @@ public class AuthService : IAuthService
     private readonly JwtSettings _jwtSettings;
     private readonly ILogger<AuthService> _logger;
     private readonly IMfaService _mfaService;
+    private readonly IAuditLogService _auditLogService;
 
     public AuthService(
         MasterDbContext context,
         IPasswordHasher passwordHasher,
         IOptions<JwtSettings> jwtSettings,
         ILogger<AuthService> logger,
-        IMfaService mfaService)
+        IMfaService mfaService,
+        IAuditLogService auditLogService)
     {
         _context = context;
         _passwordHasher = passwordHasher;
         _jwtSettings = jwtSettings.Value;
         _logger = logger;
         _mfaService = mfaService;
+        _auditLogService = auditLogService;
     }
 
     public async Task<(string Token, string RefreshToken, DateTime ExpiresAt, AdminUser User)?> LoginAsync(string email, string password, string ipAddress)
@@ -45,12 +50,34 @@ public class AuthService : IAuthService
         if (adminUser == null)
         {
             _logger.LogWarning("Login attempt failed: User not found for email {Email}", email);
+
+            // Audit log: Failed login attempt
+            _ = _auditLogService.LogAuthenticationAsync(
+                AuditActionType.LOGIN_FAILED,
+                userId: null,
+                userEmail: email,
+                success: false,
+                tenantId: null,
+                errorMessage: "User not found"
+            );
+
             return null; // User not found
         }
 
         if (!adminUser.IsActive)
         {
             _logger.LogWarning("Login attempt failed: User {Email} is deactivated", email);
+
+            // Audit log: Failed login attempt - inactive account
+            _ = _auditLogService.LogAuthenticationAsync(
+                AuditActionType.LOGIN_FAILED,
+                userId: adminUser.Id,
+                userEmail: email,
+                success: false,
+                tenantId: null,
+                errorMessage: "Account is deactivated"
+            );
+
             return null; // User is deactivated
         }
 
@@ -61,6 +88,17 @@ public class AuthService : IAuthService
             {
                 // Account is still locked
                 _logger.LogWarning("Login attempt failed: Account {Email} is locked until {LockoutEnd}", email, adminUser.LockoutEnd.Value);
+
+                // Audit log: Login attempt on locked account
+                _ = _auditLogService.LogAuthenticationAsync(
+                    AuditActionType.LOGIN_FAILED,
+                    userId: adminUser.Id,
+                    userEmail: email,
+                    success: false,
+                    tenantId: null,
+                    errorMessage: $"Account is locked until {adminUser.LockoutEnd.Value:yyyy-MM-dd HH:mm:ss} UTC"
+                );
+
                 throw new InvalidOperationException(
                     $"Account is locked until {adminUser.LockoutEnd.Value:yyyy-MM-dd HH:mm:ss} UTC. " +
                     $"Please try again later or contact an administrator.");
@@ -87,6 +125,17 @@ public class AuthService : IAuthService
                 await _context.SaveChangesAsync();
 
                 _logger.LogWarning("Account {Email} locked due to {FailedAttempts} failed login attempts", email, adminUser.AccessFailedCount);
+
+                // Audit log: Account locked
+                _ = _auditLogService.LogAuthenticationAsync(
+                    AuditActionType.ACCOUNT_LOCKED,
+                    userId: adminUser.Id,
+                    userEmail: email,
+                    success: false,
+                    tenantId: null,
+                    errorMessage: $"Account locked due to {adminUser.AccessFailedCount} failed login attempts"
+                );
+
                 throw new InvalidOperationException(
                     "Account has been locked due to multiple failed login attempts. " +
                     $"Please try again after {adminUser.LockoutEnd.Value:yyyy-MM-dd HH:mm:ss} UTC or contact an administrator.");
@@ -94,6 +143,17 @@ public class AuthService : IAuthService
 
             await _context.SaveChangesAsync();
             _logger.LogWarning("Login attempt failed: Invalid password for {Email} (attempt {Count})", email, adminUser.AccessFailedCount);
+
+            // Audit log: Failed login - invalid password
+            _ = _auditLogService.LogAuthenticationAsync(
+                AuditActionType.LOGIN_FAILED,
+                userId: adminUser.Id,
+                userEmail: email,
+                success: false,
+                tenantId: null,
+                errorMessage: $"Invalid password (attempt {adminUser.AccessFailedCount})"
+            );
+
             return null; // Invalid password
         }
 
@@ -121,6 +181,15 @@ public class AuthService : IAuthService
         await _context.SaveChangesAsync();
 
         _logger.LogInformation("User {Email} logged in successfully from IP {IpAddress}", email, ipAddress);
+
+        // Audit log: Successful login
+        _ = _auditLogService.LogAuthenticationAsync(
+            AuditActionType.LOGIN_SUCCESS,
+            userId: adminUser.Id,
+            userEmail: email,
+            success: true,
+            tenantId: null
+        );
 
         return (accessToken, refreshToken.Token, expiresAt, adminUser);
     }
@@ -209,6 +278,16 @@ public class AuthService : IAuthService
 
         await _context.SaveChangesAsync();
         _logger.LogInformation("Account {UserId} unlocked manually", userId);
+
+        // Audit log: Account unlocked
+        _ = _auditLogService.LogAuthenticationAsync(
+            AuditActionType.ACCOUNT_UNLOCKED,
+            userId: adminUser.Id,
+            userEmail: adminUser.Email,
+            success: true,
+            tenantId: null
+        );
+
         return true;
     }
 
@@ -262,12 +341,22 @@ public class AuthService : IAuthService
 
         _logger.LogInformation("Token refreshed successfully for user {UserId}", token.AdminUserId);
 
+        // Audit log: Token refreshed
+        _ = _auditLogService.LogAuthenticationAsync(
+            AuditActionType.TOKEN_REFRESHED,
+            userId: token.AdminUser.Id,
+            userEmail: token.AdminUser.Email,
+            success: true,
+            tenantId: null
+        );
+
         return (accessToken, newRefreshToken.Token);
     }
 
     public async Task RevokeTokenAsync(string refreshToken, string ipAddress, string? reason = null)
     {
         var token = await _context.RefreshTokens
+            .Include(rt => rt.AdminUser)
             .FirstOrDefaultAsync(rt => rt.Token == refreshToken);
 
         if (token == null || !token.IsActive)
@@ -284,6 +373,15 @@ public class AuthService : IAuthService
         await _context.SaveChangesAsync();
 
         _logger.LogInformation("Refresh token revoked for user {UserId}, reason: {Reason}", token.AdminUserId, token.ReasonRevoked);
+
+        // Audit log: Logout
+        _ = _auditLogService.LogAuthenticationAsync(
+            AuditActionType.LOGOUT,
+            userId: token.AdminUser?.Id,
+            userEmail: token.AdminUser?.Email,
+            success: true,
+            tenantId: null
+        );
     }
 
     public async Task RevokeAllTokensAsync(Guid adminUserId, string ipAddress, string reason)
@@ -387,6 +485,16 @@ public class AuthService : IAuthService
             await _context.SaveChangesAsync();
 
             _logger.LogInformation("MFA enabled successfully for user {UserId}", adminUserId);
+
+            // Audit log: MFA setup completed
+            _ = _auditLogService.LogAuthenticationAsync(
+                AuditActionType.MFA_SETUP_COMPLETED,
+                userId: adminUser.Id,
+                userEmail: adminUser.Email,
+                success: true,
+                tenantId: null
+            );
+
             return true;
         }
         catch (Exception ex)
@@ -415,10 +523,29 @@ public class AuthService : IAuthService
             if (isValid)
             {
                 _logger.LogInformation("MFA validation successful for user {UserId}", adminUserId);
+
+                // Audit log: MFA verification success
+                _ = _auditLogService.LogAuthenticationAsync(
+                    AuditActionType.MFA_VERIFICATION_SUCCESS,
+                    userId: adminUser.Id,
+                    userEmail: adminUser.Email,
+                    success: true,
+                    tenantId: null
+                );
             }
             else
             {
                 _logger.LogWarning("MFA validation failed for user {UserId}: Invalid TOTP code", adminUserId);
+
+                // Audit log: MFA verification failed
+                _ = _auditLogService.LogAuthenticationAsync(
+                    AuditActionType.MFA_VERIFICATION_FAILED,
+                    userId: adminUser.Id,
+                    userEmail: adminUser.Email,
+                    success: false,
+                    tenantId: null,
+                    errorMessage: "Invalid TOTP code"
+                );
             }
 
             return isValid;
@@ -456,10 +583,30 @@ public class AuthService : IAuthService
                 await _context.SaveChangesAsync();
 
                 _logger.LogInformation("Backup code validated and revoked for user {UserId}", adminUserId);
+
+                // Audit log: MFA verification success (backup code)
+                _ = _auditLogService.LogAuthenticationAsync(
+                    AuditActionType.MFA_VERIFICATION_SUCCESS,
+                    userId: adminUser.Id,
+                    userEmail: adminUser.Email,
+                    success: true,
+                    tenantId: null,
+                    errorMessage: "Backup code used"
+                );
             }
             else
             {
                 _logger.LogWarning("Backup code validation failed for user {UserId}: Invalid code", adminUserId);
+
+                // Audit log: MFA verification failed (backup code)
+                _ = _auditLogService.LogAuthenticationAsync(
+                    AuditActionType.MFA_VERIFICATION_FAILED,
+                    userId: adminUser.Id,
+                    userEmail: adminUser.Email,
+                    success: false,
+                    tenantId: null,
+                    errorMessage: "Invalid backup code"
+                );
             }
 
             return isValid;
