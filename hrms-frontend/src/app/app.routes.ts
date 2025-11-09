@@ -78,6 +78,11 @@ export const routes: Routes = [
       {
         path: 'tenants/:id/edit',
         loadComponent: () => import('./features/admin/tenant-management/tenant-form.component').then(m => m.TenantFormComponent)
+      },
+      {
+        path: 'audit-logs',
+        loadComponent: () => import('./features/admin/audit-logs/audit-logs.component').then(m => m.AdminAuditLogsComponent),
+        data: { title: 'System Audit Logs' }
       }
     ]
   },
@@ -159,6 +164,11 @@ export const routes: Routes = [
         loadComponent: () => import('./features/tenant/organization/devices/biometric-device-form.component').then(m => m.BiometricDeviceFormComponent),
         data: { title: 'Edit Device' }
       },
+      {
+        path: 'audit-logs',
+        loadComponent: () => import('./features/tenant/audit-logs/tenant-audit-logs.component').then(m => m.TenantAuditLogsComponent),
+        data: { title: 'Audit Trail' }
+      }
       // TODO: Add more tenant routes (attendance, leave, payroll, reports)
     ]
   },

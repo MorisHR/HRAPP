@@ -1,0 +1,274 @@
+<div class="audit-logs-container">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1>Your Organization's Audit Trail</h1>
+      <p class="subtitle">Complete activity history for your organization</p>
+    </div>
+    <div class="header-actions">
+      <button mat-raised-button (click)="refreshData()" [disabled]="loading">
+        <mat-icon>refresh</mat-icon>
+        Refresh
+      </button>
+      <button mat-raised-button color="primary" (click)="exportLogs()" [disabled]="loading">
+        <mat-icon>download</mat-icon>
+        Export CSV
+      </button>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <mat-tab-group [(selectedIndex)]="selectedTab">
+    <!-- Audit Logs Tab -->
+    <mat-tab label="Audit Logs">
+      <!-- Filter Panel -->
+      <div class="filter-panel">
+        <mat-expansion-panel>
+          <mat-expansion-panel-header>
+            <mat-panel-title>
+              <mat-icon>filter_list</mat-icon>
+              Filters
+            </mat-panel-title>
+          </mat-expansion-panel-header>
+
+          <div class="filter-content">
+            <div class="filter-row">
+              <!-- Date Range -->
+              <mat-form-field appearance="outline">
+                <mat-label>Start Date</mat-label>
+                <input matInput [matDatepicker]="startPicker" [(ngModel)]="filter.startDate" (dateChange)="onFilterChange({startDate: $event.value})">
+                <mat-datepicker-toggle matSuffix [for]="startPicker"></mat-datepicker-toggle>
+                <mat-datepicker #startPicker></mat-datepicker>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>End Date</mat-label>
+                <input matInput [matDatepicker]="endPicker" [(ngModel)]="filter.endDate" (dateChange)="onFilterChange({endDate: $event.value})">
+                <mat-datepicker-toggle matSuffix [for]="endPicker"></mat-datepicker-toggle>
+                <mat-datepicker #endPicker></mat-datepicker>
+              </mat-form-field>
+
+              <!-- User Email Search -->
+              <mat-form-field appearance="outline">
+                <mat-label>User Email</mat-label>
+                <input matInput [(ngModel)]="filter.userEmail" (ngModelChange)="onFilterChange({userEmail: $event})">
+                <mat-icon matSuffix>search</mat-icon>
+              </mat-form-field>
+
+              <!-- Entity Type -->
+              <mat-form-field appearance="outline">
+                <mat-label>Entity Type</mat-label>
+                <input matInput [(ngModel)]="filter.entityType" (ngModelChange)="onFilterChange({entityType: $event})">
+              </mat-form-field>
+            </div>
+
+            <div class="filter-actions">
+              <button mat-button (click)="clearFilters()">Clear All</button>
+              <button mat-raised-button color="primary" (click)="loadAuditLogs()">Apply Filters</button>
+            </div>
+          </div>
+        </mat-expansion-panel>
+      </div>
+
+      <!-- Table -->
+      <div class="table-container">
+        <div class="table-wrapper" *ngIf="!loading && auditLogs.length > 0">
+          <table mat-table [dataSource]="auditLogs" class="audit-logs-table">
+            <!-- Timestamp Column -->
+            <ng-container matColumnDef="performedAt">
+              <th mat-header-cell *matHeaderCellDef (click)="onSortChange('PerformedAt')">
+                Timestamp
+                <mat-icon *ngIf="filter.sortBy === 'PerformedAt'">
+                  {{ filter.sortDescending ? 'arrow_downward' : 'arrow_upward' }}
+                </mat-icon>
+              </th>
+              <td mat-cell *matCellDef="let log">
+                <div class="timestamp">
+                  <div class="date">{{ log.performedAt | date:'short' }}</div>
+                  <div class="relative">{{ getRelativeTime(log.performedAt) }}</div>
+                </div>
+              </td>
+            </ng-container>
+
+            <!-- User Column -->
+            <ng-container matColumnDef="userEmail">
+              <th mat-header-cell *matHeaderCellDef>User</th>
+              <td mat-cell *matCellDef="let log">
+                <div class="user-info">
+                  <div class="user-avatar">{{ log.userEmail?.charAt(0)?.toUpperCase() || 'S' }}</div>
+                  <div class="user-details">
+                    <div class="email">{{ log.userEmail || 'System' }}</div>
+                    <div class="role" *ngIf="log.userRole">{{ log.userRole }}</div>
+                  </div>
+                </div>
+              </td>
+            </ng-container>
+
+            <!-- Action Type Column -->
+            <ng-container matColumnDef="actionType">
+              <th mat-header-cell *matHeaderCellDef>Action</th>
+              <td mat-cell *matCellDef="let log">
+                <span class="action-badge">{{ log.actionTypeName }}</span>
+              </td>
+            </ng-container>
+
+            <!-- Category Column -->
+            <ng-container matColumnDef="category">
+              <th mat-header-cell *matHeaderCellDef>Category</th>
+              <td mat-cell *matCellDef="let log">
+                <span class="category-badge" [ngClass]="getCategoryClass(log.category)">
+                  {{ log.categoryName }}
+                </span>
+              </td>
+            </ng-container>
+
+            <!-- Severity Column -->
+            <ng-container matColumnDef="severity">
+              <th mat-header-cell *matHeaderCellDef>Severity</th>
+              <td mat-cell *matCellDef="let log">
+                <span class="severity-badge" [ngClass]="getSeverityClass(log.severity)">
+                  <mat-icon>{{ log.severity === 1 ? 'info' : log.severity === 2 ? 'warning' : 'error' }}</mat-icon>
+                  {{ log.severityName }}
+                </span>
+              </td>
+            </ng-container>
+
+            <!-- Entity Type Column -->
+            <ng-container matColumnDef="entityType">
+              <th mat-header-cell *matHeaderCellDef>Entity</th>
+              <td mat-cell *matCellDef="let log">
+                {{ log.entityType || '-' }}
+              </td>
+            </ng-container>
+
+            <!-- Success Column -->
+            <ng-container matColumnDef="success">
+              <th mat-header-cell *matHeaderCellDef>Status</th>
+              <td mat-cell *matCellDef="let log">
+                <mat-icon [class.success]="log.success" [class.failed]="!log.success">
+                  {{ log.success ? 'check_circle' : 'error' }}
+                </mat-icon>
+              </td>
+            </ng-container>
+
+            <!-- Actions Column -->
+            <ng-container matColumnDef="actions">
+              <th mat-header-cell *matHeaderCellDef>Actions</th>
+              <td mat-cell *matCellDef="let log">
+                <button mat-icon-button (click)="viewDetails(log)" matTooltip="View Details">
+                  <mat-icon>visibility</mat-icon>
+                </button>
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="audit-row"></tr>
+          </table>
+
+          <!-- Paginator -->
+          <mat-paginator
+            [length]="totalCount"
+            [pageSize]="pageSize"
+            [pageSizeOptions]="pageSizeOptions"
+            [pageIndex]="pageNumber - 1"
+            (page)="onPageChange($event)"
+            showFirstLastButtons>
+          </mat-paginator>
+        </div>
+
+        <!-- Loading State -->
+        <div class="loading-state" *ngIf="loading">
+          <mat-spinner diameter="50"></mat-spinner>
+          <p>Loading audit logs...</p>
+        </div>
+
+        <!-- Empty State -->
+        <div class="empty-state" *ngIf="!loading && auditLogs.length === 0">
+          <mat-icon>history</mat-icon>
+          <h3>No Audit Logs Found</h3>
+          <p>Try adjusting your filters or date range</p>
+        </div>
+      </div>
+    </mat-tab>
+
+    <!-- Statistics Tab -->
+    <mat-tab label="Statistics">
+      <div class="statistics-container" *ngIf="!loadingStats && statistics">
+        <div class="stats-grid">
+          <!-- Summary Cards -->
+          <mat-card class="stat-card">
+            <mat-card-header>
+              <mat-icon>analytics</mat-icon>
+              <mat-card-title>Total Actions</mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              <div class="stat-value">{{ statistics.totalActions | number }}</div>
+              <div class="stat-label">All time</div>
+            </mat-card-content>
+          </mat-card>
+
+          <mat-card class="stat-card">
+            <mat-card-header>
+              <mat-icon>today</mat-icon>
+              <mat-card-title>Today</mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              <div class="stat-value">{{ statistics.actionsToday | number }}</div>
+              <div class="stat-label">Actions</div>
+            </mat-card-content>
+          </mat-card>
+
+          <mat-card class="stat-card warning">
+            <mat-card-header>
+              <mat-icon>lock</mat-icon>
+              <mat-card-title>Failed Logins</mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              <div class="stat-value">{{ statistics.failedLogins | number }}</div>
+              <div class="stat-label">Security alerts</div>
+            </mat-card-content>
+          </mat-card>
+
+          <mat-card class="stat-card critical">
+            <mat-card-header>
+              <mat-icon>error</mat-icon>
+              <mat-card-title>Critical Events</mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              <div class="stat-value">{{ statistics.criticalEvents | number }}</div>
+              <div class="stat-label">Requires attention</div>
+            </mat-card-content>
+          </mat-card>
+        </div>
+
+        <!-- Most Active Users -->
+        <mat-card class="activity-card">
+          <mat-card-header>
+            <mat-card-title>Most Active Users</mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="user-list" *ngIf="statistics.mostActiveUsers.length > 0">
+              <div class="user-item" *ngFor="let user of statistics.mostActiveUsers">
+                <div class="user-avatar">{{ user.userEmail.charAt(0).toUpperCase() }}</div>
+                <div class="user-info">
+                  <div class="user-email">{{ user.userEmail }}</div>
+                  <div class="user-stats">{{ user.actionCount }} actions</div>
+                </div>
+                <div class="last-activity">{{ user.lastActivity | date:'short' }}</div>
+              </div>
+            </div>
+            <div *ngIf="statistics.mostActiveUsers.length === 0" class="no-data">
+              No activity data available
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+
+      <!-- Loading State -->
+      <div class="loading-state" *ngIf="loadingStats">
+        <mat-spinner diameter="50"></mat-spinner>
+        <p>Loading statistics...</p>
+      </div>
+    </mat-tab>
+  </mat-tab-group>
+</div>
