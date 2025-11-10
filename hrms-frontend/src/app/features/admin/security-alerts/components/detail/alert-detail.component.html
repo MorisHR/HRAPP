@@ -1,0 +1,370 @@
+<div class="alert-detail-container">
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-container">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+    <p>Loading alert details...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error && !loading" class="error-container">
+    <i class="fas fa-exclamation-circle"></i>
+    <h3>Error Loading Alert</h3>
+    <p>{{ error }}</p>
+    <button class="btn btn-primary" (click)="goBack()">
+      <i class="fas fa-arrow-left"></i> Back to List
+    </button>
+  </div>
+
+  <!-- Alert Details -->
+  <div *ngIf="alert && !loading" class="alert-details">
+    <!-- Header -->
+    <div class="detail-header">
+      <button class="btn btn-outline-secondary" (click)="goBack()">
+        <i class="fas fa-arrow-left"></i> Back
+      </button>
+      <h1>Security Alert Details</h1>
+      <button class="btn btn-outline-primary" (click)="refresh()" [disabled]="actionLoading">
+        <i class="fas fa-sync-alt" [class.fa-spin]="actionLoading"></i> Refresh
+      </button>
+    </div>
+
+    <!-- Alert Summary Card -->
+    <div class="summary-card">
+      <div class="summary-header">
+        <div class="severity-badge">
+          <span class="badge badge-lg" [ngClass]="'badge-' + getSeverityColor(alert.severity)">
+            <i [class]="'fas fa-' + getSeverityIcon(alert.severity)"></i>
+            {{ alert.severityName }}
+          </span>
+        </div>
+        <div class="status-badge">
+          <span class="badge badge-lg" [ngClass]="'badge-' + getStatusColor(alert.status)">
+            {{ alert.statusName }}
+          </span>
+        </div>
+      </div>
+
+      <h2>{{ alert.title }}</h2>
+      <p class="alert-description">{{ alert.description }}</p>
+
+      <div class="summary-grid">
+        <div class="summary-item">
+          <label>Alert Type</label>
+          <span>{{ alert.alertTypeName }}</span>
+        </div>
+        <div class="summary-item">
+          <label>Risk Score</label>
+          <span class="badge" [ngClass]="'badge-' + getRiskScoreColor(alert.riskScore)">
+            {{ alert.riskScore }}/100 - {{ getRiskScoreLabel(alert.riskScore) }}
+          </span>
+        </div>
+        <div class="summary-item">
+          <label>Detected</label>
+          <span>{{ alert.detectedAt | date:'medium' }}</span>
+          <small class="text-muted">{{ formatTimeAgo(alert.detectedAt) }}</small>
+        </div>
+        <div class="summary-item" *ngIf="alert.userEmail">
+          <label>User</label>
+          <span>{{ alert.userEmail }}</span>
+          <small class="text-muted" *ngIf="alert.userFullName">{{ alert.userFullName }}</small>
+        </div>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="action-buttons-container">
+      <h3>Actions</h3>
+      <div class="action-buttons">
+        <button *ngIf="canAcknowledge()" class="btn btn-warning"
+                (click)="acknowledgeAlert()" [disabled]="actionLoading">
+          <i class="fas fa-check"></i> Acknowledge
+        </button>
+        <button *ngIf="canMarkInProgress()" class="btn btn-info"
+                (click)="markInProgress()" [disabled]="actionLoading">
+          <i class="fas fa-play"></i> Mark In Progress
+        </button>
+        <button *ngIf="canAssign()" class="btn btn-primary"
+                (click)="toggleAssignForm()" [disabled]="actionLoading">
+          <i class="fas fa-user-plus"></i> Assign
+        </button>
+        <button *ngIf="canResolve()" class="btn btn-success"
+                (click)="toggleResolveForm()" [disabled]="actionLoading">
+          <i class="fas fa-check-circle"></i> Resolve
+        </button>
+        <button *ngIf="canMarkFalsePositive()" class="btn btn-secondary"
+                (click)="toggleFalsePositiveForm()" [disabled]="actionLoading">
+          <i class="fas fa-times-circle"></i> False Positive
+        </button>
+        <button *ngIf="canEscalate()" class="btn btn-danger"
+                (click)="toggleEscalateForm()" [disabled]="actionLoading">
+          <i class="fas fa-exclamation-triangle"></i> Escalate
+        </button>
+      </div>
+
+      <!-- Assign Form -->
+      <div *ngIf="showAssignForm" class="action-form">
+        <h4>Assign Alert</h4>
+        <div class="form-group">
+          <label for="assignEmail">Assign to (Email)</label>
+          <input type="email" id="assignEmail" class="form-control"
+                 [(ngModel)]="assignToEmail" placeholder="user@example.com">
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-primary" (click)="assignAlert()" [disabled]="actionLoading">
+            <i class="fas fa-check"></i> Assign
+          </button>
+          <button class="btn btn-secondary" (click)="toggleAssignForm()">
+            Cancel
+          </button>
+        </div>
+      </div>
+
+      <!-- Resolve Form -->
+      <div *ngIf="showResolveForm" class="action-form">
+        <h4>Resolve Alert</h4>
+        <div class="form-group">
+          <label for="resolutionNotes">Resolution Notes</label>
+          <textarea id="resolutionNotes" class="form-control" rows="4"
+                    [(ngModel)]="resolutionNotes"
+                    placeholder="Describe how this alert was resolved..."></textarea>
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-success" (click)="resolveAlert()" [disabled]="actionLoading">
+            <i class="fas fa-check-circle"></i> Resolve
+          </button>
+          <button class="btn btn-secondary" (click)="toggleResolveForm()">
+            Cancel
+          </button>
+        </div>
+      </div>
+
+      <!-- False Positive Form -->
+      <div *ngIf="showFalsePositiveForm" class="action-form">
+        <h4>Mark as False Positive</h4>
+        <div class="form-group">
+          <label for="falsePositiveReason">Reason</label>
+          <textarea id="falsePositiveReason" class="form-control" rows="4"
+                    [(ngModel)]="falsePositiveReason"
+                    placeholder="Explain why this is a false positive..."></textarea>
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-warning" (click)="markAsFalsePositive()" [disabled]="actionLoading">
+            <i class="fas fa-times-circle"></i> Mark False Positive
+          </button>
+          <button class="btn btn-secondary" (click)="toggleFalsePositiveForm()">
+            Cancel
+          </button>
+        </div>
+      </div>
+
+      <!-- Escalate Form -->
+      <div *ngIf="showEscalateForm" class="action-form">
+        <h4>Escalate Alert</h4>
+        <div class="form-group">
+          <label for="escalateTo">Escalate to</label>
+          <input type="text" id="escalateTo" class="form-control"
+                 [(ngModel)]="escalatedTo" placeholder="security-team@example.com">
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-danger" (click)="escalateAlert()" [disabled]="actionLoading">
+            <i class="fas fa-exclamation-triangle"></i> Escalate
+          </button>
+          <button class="btn btn-secondary" (click)="toggleEscalateForm()">
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Details Grid -->
+    <div class="details-grid">
+      <!-- User Information -->
+      <div class="detail-section">
+        <h3>User Information</h3>
+        <div class="detail-items">
+          <div class="detail-item" *ngIf="alert.userEmail">
+            <label>Email</label>
+            <span>{{ alert.userEmail }}</span>
+          </div>
+          <div class="detail-item" *ngIf="alert.userFullName">
+            <label>Full Name</label>
+            <span>{{ alert.userFullName }}</span>
+          </div>
+          <div class="detail-item" *ngIf="alert.userRole">
+            <label>Role</label>
+            <span>{{ alert.userRole }}</span>
+          </div>
+          <div class="detail-item" *ngIf="alert.userId">
+            <label>User ID</label>
+            <span><code>{{ alert.userId }}</code></span>
+          </div>
+          <div *ngIf="!alert.userEmail && !alert.userFullName" class="no-data">
+            No user information available
+          </div>
+        </div>
+      </div>
+
+      <!-- Location Information -->
+      <div class="detail-section">
+        <h3>Location & Device</h3>
+        <div class="detail-items">
+          <div class="detail-item" *ngIf="alert.ipAddress">
+            <label>IP Address</label>
+            <span><code>{{ alert.ipAddress }}</code></span>
+          </div>
+          <div class="detail-item" *ngIf="alert.geolocation">
+            <label>Geolocation</label>
+            <span>{{ alert.geolocation }}</span>
+          </div>
+          <div class="detail-item" *ngIf="alert.userAgent">
+            <label>User Agent</label>
+            <span class="text-small">{{ alert.userAgent }}</span>
+          </div>
+          <div class="detail-item" *ngIf="alert.deviceInfo">
+            <label>Device Info</label>
+            <span>{{ alert.deviceInfo }}</span>
+          </div>
+          <div *ngIf="!alert.ipAddress && !alert.geolocation" class="no-data">
+            No location information available
+          </div>
+        </div>
+      </div>
+
+      <!-- Workflow Information -->
+      <div class="detail-section">
+        <h3>Workflow</h3>
+        <div class="detail-items">
+          <div class="detail-item" *ngIf="alert.acknowledgedBy">
+            <label>Acknowledged By</label>
+            <span>{{ alert.acknowledgedByEmail }}</span>
+            <small class="text-muted">{{ alert.acknowledgedAt | date:'medium' }}</small>
+          </div>
+          <div class="detail-item" *ngIf="alert.assignedTo">
+            <label>Assigned To</label>
+            <span>{{ alert.assignedToEmail }}</span>
+          </div>
+          <div class="detail-item" *ngIf="alert.resolvedBy">
+            <label>Resolved By</label>
+            <span>{{ alert.resolvedByEmail }}</span>
+            <small class="text-muted">{{ alert.resolvedAt | date:'medium' }}</small>
+          </div>
+          <div class="detail-item" *ngIf="alert.resolutionNotes">
+            <label>Resolution Notes</label>
+            <span>{{ alert.resolutionNotes }}</span>
+          </div>
+          <div class="detail-item" *ngIf="alert.escalatedTo">
+            <label>Escalated To</label>
+            <span>{{ alert.escalatedTo }}</span>
+            <small class="text-muted">{{ alert.escalatedAt | date:'medium' }}</small>
+          </div>
+        </div>
+      </div>
+
+      <!-- Notification Status -->
+      <div class="detail-section">
+        <h3>Notifications</h3>
+        <div class="detail-items">
+          <div class="detail-item">
+            <label>Email</label>
+            <span [class.text-success]="alert.emailSent" [class.text-muted]="!alert.emailSent">
+              <i [class]="alert.emailSent ? 'fas fa-check-circle' : 'fas fa-times-circle'"></i>
+              {{ alert.emailSent ? 'Sent' : 'Not Sent' }}
+              <small *ngIf="alert.emailSentAt">({{ alert.emailSentAt | date:'short' }})</small>
+            </span>
+          </div>
+          <div class="detail-item" *ngIf="alert.emailRecipients">
+            <label>Email Recipients</label>
+            <span class="text-small">{{ alert.emailRecipients }}</span>
+          </div>
+          <div class="detail-item">
+            <label>SMS</label>
+            <span [class.text-success]="alert.smsSent" [class.text-muted]="!alert.smsSent">
+              <i [class]="alert.smsSent ? 'fas fa-check-circle' : 'fas fa-times-circle'"></i>
+              {{ alert.smsSent ? 'Sent' : 'Not Sent' }}
+              <small *ngIf="alert.smsSentAt">({{ alert.smsSentAt | date:'short' }})</small>
+            </span>
+          </div>
+          <div class="detail-item">
+            <label>Slack</label>
+            <span [class.text-success]="alert.slackSent" [class.text-muted]="!alert.slackSent">
+              <i [class]="alert.slackSent ? 'fas fa-check-circle' : 'fas fa-times-circle'"></i>
+              {{ alert.slackSent ? 'Sent' : 'Not Sent' }}
+              <small *ngIf="alert.slackSentAt">({{ alert.slackSentAt | date:'short' }})</small>
+            </span>
+          </div>
+          <div class="detail-item">
+            <label>SIEM</label>
+            <span [class.text-success]="alert.siemSent" [class.text-muted]="!alert.siemSent">
+              <i [class]="alert.siemSent ? 'fas fa-check-circle' : 'fas fa-times-circle'"></i>
+              {{ alert.siemSent ? 'Sent' : 'Not Sent' }}
+              <small *ngIf="alert.siemSentAt">({{ alert.siemSentAt | date:'short' }})</small>
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recommended Actions -->
+      <div class="detail-section" *ngIf="alert.recommendedActions">
+        <h3>Recommended Actions</h3>
+        <div class="recommended-actions">
+          <p>{{ alert.recommendedActions }}</p>
+        </div>
+      </div>
+
+      <!-- Additional Metadata -->
+      <div class="detail-section" *ngIf="alert.additionalMetadata">
+        <h3>Additional Metadata</h3>
+        <div class="metadata-box">
+          <pre>{{ alert.additionalMetadata }}</pre>
+        </div>
+      </div>
+
+      <!-- Compliance Information -->
+      <div class="detail-section" *ngIf="alert.complianceFrameworks">
+        <h3>Compliance</h3>
+        <div class="detail-items">
+          <div class="detail-item">
+            <label>Frameworks</label>
+            <span>{{ alert.complianceFrameworks }}</span>
+          </div>
+          <div class="detail-item">
+            <label>Requires Escalation</label>
+            <span [class.text-danger]="alert.requiresEscalation" [class.text-success]="!alert.requiresEscalation">
+              <i [class]="alert.requiresEscalation ? 'fas fa-exclamation-triangle' : 'fas fa-check-circle'"></i>
+              {{ alert.requiresEscalation ? 'Yes' : 'No' }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- System Information -->
+      <div class="detail-section">
+        <h3>System Information</h3>
+        <div class="detail-items">
+          <div class="detail-item">
+            <label>Alert ID</label>
+            <span><code>{{ alert.id }}</code></span>
+          </div>
+          <div class="detail-item" *ngIf="alert.auditLogId">
+            <label>Audit Log ID</label>
+            <span><code>{{ alert.auditLogId }}</code></span>
+          </div>
+          <div class="detail-item" *ngIf="alert.correlationId">
+            <label>Correlation ID</label>
+            <span><code>{{ alert.correlationId }}</code></span>
+          </div>
+          <div class="detail-item">
+            <label>Created</label>
+            <span>{{ alert.createdAt | date:'medium' }}</span>
+          </div>
+          <div class="detail-item" *ngIf="alert.tenantName">
+            <label>Tenant</label>
+            <span>{{ alert.tenantName }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

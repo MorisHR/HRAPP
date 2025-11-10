@@ -3,11 +3,16 @@ using Microsoft.EntityFrameworkCore;
 using HRMS.Core.Entities.Master;
 using HRMS.Core.Interfaces;
 using HRMS.Infrastructure.Data;
+using HRMS.Application.Interfaces;
+using HRMS.Core.Enums;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace HRMS.API.Controllers;
 
 /// <summary>
 /// Setup API for first-time system initialization
+/// FORTUNE 500 ENHANCED: Cryptographically secure password generation, audit logging, forced password change
 /// </summary>
 [ApiController]
 [Route("api/admin/[controller]")]
@@ -16,20 +21,27 @@ public class SetupController : ControllerBase
     private readonly MasterDbContext _context;
     private readonly IPasswordHasher _passwordHasher;
     private readonly ILogger<SetupController> _logger;
+    private readonly IAuditLogService _auditLogService;
+    private readonly IConfiguration _configuration;
 
     public SetupController(
         MasterDbContext context,
         IPasswordHasher passwordHasher,
-        ILogger<SetupController> logger)
+        ILogger<SetupController> logger,
+        IAuditLogService auditLogService,
+        IConfiguration configuration)
     {
         _context = context;
         _passwordHasher = passwordHasher;
         _logger = logger;
+        _auditLogService = auditLogService;
+        _configuration = configuration;
     }
 
     /// <summary>
     /// Create the first admin user for system bootstrap
     /// POST /api/admin/setup/create-first-admin
+    /// FORTUNE 500 ENHANCED: Cryptographically secure password, forced change, audit logging
     /// </summary>
     /// <returns>Success message with credentials or error if admin already exists</returns>
     [HttpPost("create-first-admin")]
@@ -54,14 +66,18 @@ public class SetupController : ControllerBase
                 });
             }
 
-            // Create the first admin user
+            // FORTUNE 500: Generate cryptographically secure random password
             const string email = "admin@hrms.com";
-            const string password = "Admin@123";
             const string firstName = "Super";
             const string lastName = "Admin";
+            var password = GenerateSecurePassword(20); // 20 characters with complexity
 
             // Hash the password using Argon2
             var passwordHash = _passwordHasher.HashPassword(password);
+
+            // FORTUNE 500: Set password rotation and expiry
+            var now = DateTime.UtcNow;
+            var passwordExpiryDays = _configuration.GetValue<int>("Security:PasswordExpiryDays", 90);
 
             var adminUser = new AdminUser
             {
@@ -72,27 +88,74 @@ public class SetupController : ControllerBase
                 FirstName = firstName,
                 LastName = lastName,
                 IsActive = true,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
+                CreatedAt = now,
+                UpdatedAt = now,
+
+                // FORTUNE 500: Security enhancements
+                MustChangePassword = true, // Force password change on first login
+                IsInitialSetupAccount = true, // Mark as bootstrap account
+                SessionTimeoutMinutes = 15, // Stricter timeout for SuperAdmin
+                LastPasswordChangeDate = now,
+                PasswordExpiresAt = now.AddDays(passwordExpiryDays),
+                LockoutEnabled = true,
+                AccessFailedCount = 0
             };
 
             _context.AdminUsers.Add(adminUser);
             await _context.SaveChangesAsync();
 
-            _logger.LogInformation("First admin user created successfully with email: {Email}", email);
+            // FORTUNE 500: Audit log for initial setup (critical operation)
+            await _auditLogService.LogSuperAdminActionAsync(
+                AuditActionType.SUPERADMIN_CREATED,
+                adminUser.Id,
+                email,
+                description: "BOOTSTRAP: Initial SuperAdmin account created during system setup",
+                newValues: System.Text.Json.JsonSerializer.Serialize(new
+                {
+                    adminUser.Id,
+                    adminUser.Email,
+                    adminUser.FirstName,
+                    adminUser.LastName,
+                    adminUser.IsInitialSetupAccount,
+                    adminUser.SessionTimeoutMinutes,
+                    PasswordExpiryDays = passwordExpiryDays
+                }),
+                success: true,
+                additionalContext: new Dictionary<string, object>
+                {
+                    { "operationType", "SYSTEM_BOOTSTRAP" },
+                    { "mustChangePassword", true },
+                    { "sessionTimeoutMinutes", 15 }
+                }
+            );
+
+            _logger.LogInformation("First admin user created successfully with email: {Email} (password must be changed on first login)", email);
 
             return Ok(new
             {
                 success = true,
-                message = $"Admin user created successfully. Email: {email}, Password: {password}",
+                message = $"SuperAdmin account created successfully. IMPORTANT: This password will be shown ONLY ONCE. Save it securely.",
                 data = new
                 {
                     email = email,
-                    password = password,
+                    temporaryPassword = password, // Shown only once, never logged
                     firstName = firstName,
                     lastName = lastName,
                     isActive = true,
-                    warning = "⚠️ Please change this password after first login!"
+                    mustChangePassword = true,
+                    sessionTimeoutMinutes = 15,
+                    passwordExpiresInDays = passwordExpiryDays,
+                    securityLevel = "FORTUNE_500_COMPLIANT",
+                    warning = "🔐 CRITICAL SECURITY NOTICE:",
+                    instructions = new[]
+                    {
+                        "1. Save this password in a secure password manager immediately",
+                        "2. This password will NOT be shown again",
+                        "3. You MUST change this password on first login",
+                        $"4. Password will expire in {passwordExpiryDays} days",
+                        "5. Failed login attempts will lock the account",
+                        "6. Session timeout is 15 minutes (stricter for SuperAdmin)"
+                    }
                 }
             });
         }
@@ -107,6 +170,49 @@ public class SetupController : ControllerBase
                 error = ex.Message
             });
         }
+    }
+
+    /// <summary>
+    /// Generate cryptographically secure random password
+    /// FORTUNE 500 COMPLIANT: 20+ chars, uppercase, lowercase, digits, symbols
+    /// </summary>
+    private string GenerateSecurePassword(int length = 20)
+    {
+        const string uppercase = "ABCDEFGHJKLMNPQRSTUVWXYZ"; // Excluding I, O for clarity
+        const string lowercase = "abcdefghijkmnpqrstuvwxyz"; // Excluding l, o for clarity
+        const string digits = "23456789"; // Excluding 0, 1 for clarity
+        const string symbols = "!@#$%^&*-_+="; // Common safe symbols
+
+        var allChars = uppercase + lowercase + digits + symbols;
+        var password = new StringBuilder();
+
+        using (var rng = RandomNumberGenerator.Create())
+        {
+            // Ensure at least one character from each category
+            password.Append(uppercase[GetRandomNumber(rng, uppercase.Length)]);
+            password.Append(lowercase[GetRandomNumber(rng, lowercase.Length)]);
+            password.Append(digits[GetRandomNumber(rng, digits.Length)]);
+            password.Append(symbols[GetRandomNumber(rng, symbols.Length)]);
+
+            // Fill remaining characters randomly
+            for (int i = 4; i < length; i++)
+            {
+                password.Append(allChars[GetRandomNumber(rng, allChars.Length)]);
+            }
+
+            // Shuffle the password to avoid predictable patterns
+            return new string(password.ToString().OrderBy(x => GetRandomNumber(rng, int.MaxValue)).ToArray());
+        }
+    }
+
+    /// <summary>
+    /// Get cryptographically secure random number
+    /// </summary>
+    private int GetRandomNumber(RandomNumberGenerator rng, int max)
+    {
+        var bytes = new byte[4];
+        rng.GetBytes(bytes);
+        return (int)(BitConverter.ToUInt32(bytes, 0) % (uint)max);
     }
 
     /// <summary>

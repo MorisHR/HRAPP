@@ -7,13 +7,15 @@ namespace HRMS.Infrastructure.Services;
 
 /// <summary>
 /// Service for resolving tenant context from HTTP request
+/// Implements both ITenantService and ITenantContext for DI compatibility
 /// </summary>
-public class TenantService : ITenantService
+public class TenantService : ITenantService, ITenantContext
 {
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly MasterDbContext _masterDbContext;
     private Guid? _currentTenantId;
     private string? _currentTenantSchema;
+    private string? _currentTenantName;
 
     public TenantService(IHttpContextAccessor httpContextAccessor, MasterDbContext masterDbContext)
     {
@@ -25,10 +27,32 @@ public class TenantService : ITenantService
 
     public string? GetCurrentTenantSchema() => _currentTenantSchema;
 
+    // ITenantContext implementation
+    public Guid? TenantId => _currentTenantId;
+    public string? TenantSchema => _currentTenantSchema;
+    public string? TenantName => _currentTenantName;
+
     public void SetTenantContext(Guid tenantId, string schemaName)
     {
         _currentTenantId = tenantId;
         _currentTenantSchema = schemaName;
+
+        // Try to load tenant name asynchronously for display purposes
+        Task.Run(async () =>
+        {
+            try
+            {
+                var tenant = await _masterDbContext.Tenants
+                    .Where(t => t.Id == tenantId)
+                    .Select(t => t.CompanyName)
+                    .FirstOrDefaultAsync();
+                _currentTenantName = tenant;
+            }
+            catch
+            {
+                // Ignore errors when fetching tenant name
+            }
+        });
     }
 
     public string? GetSubdomainFromHost(string host)

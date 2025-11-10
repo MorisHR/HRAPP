@@ -1,0 +1,108 @@
+<div class="activity-correlation">
+  <h1>User Activity Correlation</h1>
+
+  <mat-card>
+    <mat-card-header>
+      <mat-card-title>Generate Activity Timeline</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="correlation-parameters">
+        <mat-form-field appearance="outline">
+          <mat-label>User ID</mat-label>
+          <input matInput [(ngModel)]="userId" placeholder="Enter user ID">
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Start Date</mat-label>
+          <input matInput [matDatepicker]="startPicker" [(ngModel)]="startDate">
+          <mat-datepicker-toggle matSuffix [for]="startPicker"></mat-datepicker-toggle>
+          <mat-datepicker #startPicker></mat-datepicker>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>End Date</mat-label>
+          <input matInput [matDatepicker]="endPicker" [(ngModel)]="endDate">
+          <mat-datepicker-toggle matSuffix [for]="endPicker"></mat-datepicker-toggle>
+          <mat-datepicker #endPicker></mat-datepicker>
+        </mat-form-field>
+
+        <button mat-raised-button color="primary" (click)="generateCorrelation()" [disabled]="loading">
+          <mat-icon>timeline</mat-icon>
+          Generate Timeline
+        </button>
+      </div>
+
+      <div *ngIf="loading" class="loading-container">
+        <mat-spinner></mat-spinner>
+      </div>
+
+      <div *ngIf="correlation && !loading" class="correlation-results">
+        <h3>Activity Summary</h3>
+        <div class="summary-grid">
+          <div class="summary-item">
+            <label>User:</label>
+            <span>{{ correlation.userEmail || correlation.userId }}</span>
+          </div>
+          <div class="summary-item">
+            <label>Total Actions:</label>
+            <span>{{ correlation.totalActions }}</span>
+          </div>
+          <div class="summary-item">
+            <label>Risk Score:</label>
+            <span [class.warn-text]="correlation.riskScore > 50">{{ correlation.riskScore }}</span>
+          </div>
+          <div class="summary-item">
+            <label>Anomalies Detected:</label>
+            <span [class.error-text]="correlation.anomalies.length > 0">
+              {{ correlation.anomalies.length }}
+            </span>
+          </div>
+        </div>
+
+        <h3>Activity Timeline</h3>
+        <table mat-table [dataSource]="correlation.timeline">
+          <ng-container matColumnDef="timestamp">
+            <th mat-header-cell *matHeaderCellDef>Timestamp</th>
+            <td mat-cell *matCellDef="let event">{{ event.timestamp | date:'short' }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="actionType">
+            <th mat-header-cell *matHeaderCellDef>Action</th>
+            <td mat-cell *matCellDef="let event">{{ event.actionType }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="category">
+            <th mat-header-cell *matHeaderCellDef>Category</th>
+            <td mat-cell *matCellDef="let event">{{ event.category }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="severity">
+            <th mat-header-cell *matHeaderCellDef>Severity</th>
+            <td mat-cell *matCellDef="let event">
+              <span [class]="getSeverityColor(event.severity) + '-text'">
+                {{ event.severity }}
+              </span>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="entityType">
+            <th mat-header-cell *matHeaderCellDef>Entity Type</th>
+            <td mat-cell *matCellDef="let event">{{ event.entityType || 'N/A' }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="success">
+            <th mat-header-cell *matHeaderCellDef>Status</th>
+            <td mat-cell *matCellDef="let event">
+              <mat-icon [class.success-icon]="event.success" [class.error-icon]="!event.success">
+                {{ event.success ? 'check_circle' : 'error' }}
+              </mat-icon>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+        </table>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>

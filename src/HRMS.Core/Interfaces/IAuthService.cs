@@ -25,6 +25,25 @@ public interface IAuthService
     /// </summary>
     Task<bool> UnlockAccountAsync(Guid userId);
 
+    /// <summary>
+    /// Changes a SuperAdmin password with comprehensive security checks
+    /// FORTUNE 500 FEATURES:
+    /// - Password history validation (prevents reuse of last 5 passwords)
+    /// - Automatic expiry date calculation (90 days)
+    /// - Password complexity enforcement
+    /// - Audit logging
+    /// </summary>
+    /// <param name="userId">User ID</param>
+    /// <param name="currentPassword">Current password for verification</param>
+    /// <param name="newPassword">New password</param>
+    /// <param name="performedBySuperAdminId">ID of SuperAdmin performing the change (null if self-service)</param>
+    /// <returns>Success status and message</returns>
+    Task<(bool Success, string Message)> ChangePasswordAsync(
+        Guid userId,
+        string currentPassword,
+        string newPassword,
+        Guid? performedBySuperAdminId = null);
+
     // ============================================
     // PRODUCTION-GRADE TOKEN REFRESH METHODS
     // ============================================

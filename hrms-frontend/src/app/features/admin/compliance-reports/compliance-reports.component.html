@@ -1,0 +1,156 @@
+<div class="compliance-reports">
+  <h1>Compliance Reports</h1>
+
+  <mat-tab-group>
+    <!-- SOX Reports Tab -->
+    <mat-tab label="SOX Compliance">
+      <mat-card>
+        <mat-card-header>
+          <mat-card-title>Sarbanes-Oxley (SOX) Compliance Report</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="report-parameters">
+            <mat-form-field appearance="outline">
+              <mat-label>Start Date</mat-label>
+              <input matInput [matDatepicker]="startPicker" [(ngModel)]="soxStartDate">
+              <mat-datepicker-toggle matSuffix [for]="startPicker"></mat-datepicker-toggle>
+              <mat-datepicker #startPicker></mat-datepicker>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>End Date</mat-label>
+              <input matInput [matDatepicker]="endPicker" [(ngModel)]="soxEndDate">
+              <mat-datepicker-toggle matSuffix [for]="endPicker"></mat-datepicker-toggle>
+              <mat-datepicker #endPicker></mat-datepicker>
+            </mat-form-field>
+
+            <button mat-raised-button color="primary" (click)="generateSoxReport()" [disabled]="loading">
+              <mat-icon>assessment</mat-icon>
+              Generate Report
+            </button>
+          </div>
+
+          <div *ngIf="loading" class="loading-container">
+            <mat-spinner></mat-spinner>
+          </div>
+
+          <div *ngIf="soxReport && !loading" class="report-results">
+            <h3>Financial Data Access Summary</h3>
+            <div class="summary-grid">
+              <div class="summary-item">
+                <label>Total Accesses:</label>
+                <span>{{ soxReport.financialAccess.totalAccesses }}</span>
+              </div>
+              <div class="summary-item">
+                <label>Unique Users:</label>
+                <span>{{ soxReport.financialAccess.uniqueUsers }}</span>
+              </div>
+              <div class="summary-item">
+                <label>Salary Accesses:</label>
+                <span>{{ soxReport.financialAccess.salaryAccesses }}</span>
+              </div>
+              <div class="summary-item">
+                <label>Payroll Accesses:</label>
+                <span>{{ soxReport.financialAccess.payrollAccesses }}</span>
+              </div>
+            </div>
+
+            <h3>User Access Changes</h3>
+            <div class="summary-grid">
+              <div class="summary-item">
+                <label>Total Changes:</label>
+                <span>{{ soxReport.accessChanges.totalChanges }}</span>
+              </div>
+              <div class="summary-item">
+                <label>Role Changes:</label>
+                <span>{{ soxReport.accessChanges.roleChanges }}</span>
+              </div>
+              <div class="summary-item">
+                <label>Privilege Escalations:</label>
+                <span class="warn-text">{{ soxReport.accessChanges.privilegeEscalations }}</span>
+              </div>
+            </div>
+
+            <h3>IT General Controls</h3>
+            <div class="summary-grid">
+              <div class="summary-item">
+                <label>Failed Login Attempts:</label>
+                <span>{{ soxReport.itGeneralControls.failedLoginAttempts }}</span>
+              </div>
+              <div class="summary-item">
+                <label>Configuration Changes:</label>
+                <span>{{ soxReport.itGeneralControls.configurationChanges }}</span>
+              </div>
+            </div>
+
+            <div class="report-actions">
+              <button mat-raised-button color="accent" (click)="exportSoxReport()">
+                <mat-icon>download</mat-icon>
+                Export Report
+              </button>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </mat-tab>
+
+    <!-- GDPR Reports Tab -->
+    <mat-tab label="GDPR Compliance">
+      <mat-card>
+        <mat-card-header>
+          <mat-card-title>GDPR Data Subject Rights Report</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="report-parameters">
+            <mat-form-field appearance="outline">
+              <mat-label>User ID</mat-label>
+              <input matInput [(ngModel)]="gdprUserId" placeholder="Enter user ID">
+            </mat-form-field>
+
+            <button mat-raised-button color="primary" (click)="generateGdprReport()" [disabled]="loading">
+              <mat-icon>assessment</mat-icon>
+              Generate Right to Access Report
+            </button>
+          </div>
+
+          <div *ngIf="loading" class="loading-container">
+            <mat-spinner></mat-spinner>
+          </div>
+
+          <div *ngIf="gdprReport && !loading" class="report-results">
+            <h3>GDPR Right to Access Report</h3>
+            <div class="summary-grid">
+              <div class="summary-item">
+                <label>User Email:</label>
+                <span>{{ gdprReport.userEmail }}</span>
+              </div>
+              <div class="summary-item">
+                <label>Generated At:</label>
+                <span>{{ gdprReport.reportGeneratedAt | date:'medium' }}</span>
+              </div>
+              <div class="summary-item">
+                <label>Personal Data Items:</label>
+                <span>{{ gdprReport.personalData.length }}</span>
+              </div>
+              <div class="summary-item">
+                <label>Processing Activities:</label>
+                <span>{{ gdprReport.processingActivities.length }}</span>
+              </div>
+              <div class="summary-item">
+                <label>Total Audit Log Entries:</label>
+                <span>{{ gdprReport.totalAuditLogEntries }}</span>
+              </div>
+            </div>
+
+            <div class="report-actions">
+              <button mat-raised-button color="accent" (click)="exportGdprReport()">
+                <mat-icon>download</mat-icon>
+                Export Report
+              </button>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </mat-tab>
+  </mat-tab-group>
+</div>

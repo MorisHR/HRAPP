@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using HRMS.Application.DTOs;
+using HRMS.Application.Interfaces;
 using HRMS.Core.Entities.Master;
 using HRMS.Core.Enums;
 using HRMS.Core.Interfaces;
@@ -15,16 +16,19 @@ public class TenantManagementService
 {
     private readonly MasterDbContext _masterDbContext;
     private readonly ISchemaProvisioningService _schemaProvisioningService;
+    private readonly ISubscriptionManagementService? _subscriptionService;
     private readonly ILogger<TenantManagementService> _logger;
 
     public TenantManagementService(
         MasterDbContext masterDbContext,
         ISchemaProvisioningService schemaProvisioningService,
-        ILogger<TenantManagementService> logger)
+        ILogger<TenantManagementService> logger,
+        ISubscriptionManagementService? subscriptionService = null)
     {
         _masterDbContext = masterDbContext;
         _schemaProvisioningService = schemaProvisioningService;
         _logger = logger;
+        _subscriptionService = subscriptionService; // Optional to avoid circular dependency during startup
     }
 
     /// <summary>
@@ -89,7 +93,7 @@ public class TenantManagementService
                 ContactPhone = request.ContactPhone,
                 Status = TenantStatus.Pending, // Changed: Pending activation
                 EmployeeTier = request.EmployeeTier,
-                MonthlyPrice = request.MonthlyPrice,
+                YearlyPriceMUR = request.YearlyPriceMUR,
                 MaxUsers = request.MaxUsers,
                 MaxStorageGB = request.MaxStorageGB,
                 ApiCallsPerMonth = request.ApiCallsPerMonth,
@@ -141,6 +145,36 @@ public class TenantManagementService
 
             _logger.LogInformation("✅ SUCCESS: Tenant '{CompanyName}' created successfully! Subdomain: {Subdomain}",
                 request.CompanyName, request.Subdomain);
+
+            // ============================================
+            // FORTUNE 500: Auto-create first subscription payment
+            // ============================================
+            if (_subscriptionService != null && tenant.YearlyPriceMUR > 0)
+            {
+                try
+                {
+                    var subscriptionEndDate = tenant.SubscriptionEndDate ?? DateTime.UtcNow.AddYears(1);
+                    tenant.SubscriptionEndDate = subscriptionEndDate;
+
+                    var payment = await _subscriptionService.CreatePaymentRecordAsync(
+                        tenantId: tenant.Id,
+                        periodStart: DateTime.UtcNow,
+                        periodEnd: subscriptionEndDate,
+                        amountMUR: tenant.YearlyPriceMUR,
+                        dueDate: DateTime.UtcNow.AddDays(30), // Due in 30 days
+                        tier: tenant.EmployeeTier,
+                        description: "Initial subscription payment - First year",
+                        calculateTax: true);
+
+                    _logger.LogInformation("💰 Auto-created initial payment: MUR {Amount:N2}, Due: {DueDate:yyyy-MM-dd}",
+                        payment.TotalMUR, payment.DueDate);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Failed to create initial payment for tenant {TenantId} - non-critical", tenant.Id);
+                    // Don't fail tenant creation if payment creation fails
+                }
+            }
 
             // TODO: Send welcome email with login credentials
 
@@ -322,6 +356,7 @@ public class TenantManagementService
 
     /// <summary>
     /// Update tenant employee tier and pricing
+    /// FORTUNE 500: Supports pro-rated upgrades
     /// </summary>
     public async Task<(bool Success, string Message)> UpdateEmployeeTierAsync(
         Guid tenantId,
@@ -329,15 +364,19 @@ public class TenantManagementService
         int maxUsers,
         int maxStorageGB,
         int apiCallsPerMonth,
-        decimal monthlyPrice,
+        decimal yearlyPriceMUR,
         string updatedBy)
     {
         var tenant = await _masterDbContext.Tenants.FindAsync(tenantId);
         if (tenant == null)
             return (false, "Tenant not found");
 
+        var oldTier = tenant.EmployeeTier;
+        var oldPrice = tenant.YearlyPriceMUR;
+
+        // Update tenant
         tenant.EmployeeTier = newTier;
-        tenant.MonthlyPrice = monthlyPrice;
+        tenant.YearlyPriceMUR = yearlyPriceMUR;
         tenant.MaxUsers = maxUsers;
         tenant.MaxStorageGB = maxStorageGB;
         tenant.ApiCallsPerMonth = apiCallsPerMonth;
@@ -346,7 +385,34 @@ public class TenantManagementService
 
         await _masterDbContext.SaveChangesAsync();
 
-        _logger.LogInformation("Tenant employee tier updated: {TenantId}, New Tier: {Tier}", tenantId, newTier);
+        // ============================================
+        // FORTUNE 500: Create pro-rated payment for upgrades
+        // ============================================
+        if (_subscriptionService != null && yearlyPriceMUR > oldPrice && tenant.SubscriptionEndDate.HasValue)
+        {
+            try
+            {
+                var proRatedPayment = await _subscriptionService.CreateProRatedPaymentAsync(
+                    tenantId,
+                    newTier,
+                    yearlyPriceMUR,
+                    $"Tier upgrade: {oldTier} → {newTier}");
+
+                if (proRatedPayment != null)
+                {
+                    _logger.LogInformation(
+                        "💰 Pro-rated payment created for tier upgrade: MUR {Amount:N2}",
+                        proRatedPayment.TotalMUR);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to create pro-rated payment for tier upgrade - non-critical");
+                // Don't fail tier update if pro-rated payment fails
+            }
+        }
+
+        _logger.LogInformation("Tenant employee tier updated: {TenantId}, {OldTier} → {NewTier}", tenantId, oldTier, newTier);
 
         return (true, "Employee tier updated successfully");
     }
@@ -365,7 +431,7 @@ public class TenantManagementService
             StatusDisplay = tenant.Status.ToString(),
             EmployeeTier = tenant.EmployeeTier,
             EmployeeTierDisplay = GetTierDisplayName(tenant.EmployeeTier),
-            MonthlyPrice = tenant.MonthlyPrice,
+            YearlyPriceMUR = tenant.YearlyPriceMUR,
             MaxUsers = tenant.MaxUsers,
             CurrentUserCount = tenant.CurrentUserCount,
             MaxStorageGB = tenant.MaxStorageGB,

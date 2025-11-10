@@ -214,15 +214,16 @@
         <button mat-raised-button type="button" (click)="onCancel()" [disabled]="loading()">
           Cancel
         </button>
-        <button mat-raised-button color="primary" type="submit" [disabled]="loading() || tenantForm.invalid">
-          @if (loading()) {
+        @if (loading()) {
+          <button mat-raised-button color="primary" type="submit" [disabled]="true">
             <mat-spinner diameter="20" class="button-spinner"></mat-spinner>
-            <span>Creating...</span>
-          } @else {
-            <mat-icon>add_business</mat-icon>
-            <span>Create Tenant</span>
-          }
-        </button>
+            Creating...
+          </button>
+        } @else {
+          <button mat-raised-button color="primary" type="submit" [disabled]="tenantForm.invalid">
+            Create Tenant
+          </button>
+        }
       </div>
     </form>
   </div>

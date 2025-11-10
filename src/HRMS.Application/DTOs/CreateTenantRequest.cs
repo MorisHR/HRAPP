@@ -21,7 +21,12 @@ public class CreateTenantRequest
     public int MaxUsers { get; set; }
     public int MaxStorageGB { get; set; }
     public int ApiCallsPerMonth { get; set; }
-    public decimal MonthlyPrice { get; set; }
+
+    /// <summary>
+    /// FORTUNE 500 PATTERN: Yearly subscription price in Mauritian Rupees
+    /// Annual billing reduces churn (Salesforce, HubSpot, Zendesk pattern)
+    /// </summary>
+    public decimal YearlyPriceMUR { get; set; }
 
     // Admin User Details (for activation email)
     public string AdminUserName { get; set; } = string.Empty;

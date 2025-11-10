@@ -22,8 +22,8 @@ interface ApiResponse<T> {
   providedIn: 'root'
 })
 export class AuditLogService {
-  private superAdminApiUrl = `${environment.apiUrl}/superadmin/auditlog`;
-  private tenantApiUrl = `${environment.apiUrl}/tenant/auditlog`;
+  private superAdminApiUrl = `${environment.apiUrl}/superadmin/AuditLog`;
+  private tenantApiUrl = `${environment.apiUrl}/tenant/TenantAuditLog`;
 
   constructor(private http: HttpClient) {}
 

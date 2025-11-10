@@ -160,6 +160,58 @@ public enum AuditActionType
     TENANT_DATA_EXPORTED = 30,
 
     // ============================================
+    // SUPERADMIN SPECIFIC ACTIONS (121-135) - FORTUNE 500 COMPLIANCE
+    // ============================================
+
+    /// <summary>Tenant reactivated after suspension or soft delete</summary>
+    TENANT_REACTIVATED = 121,
+
+    /// <summary>Tenant permanently deleted (hard delete - IRREVERSIBLE)</summary>
+    TENANT_HARD_DELETED = 122,
+
+    /// <summary>Tenant employee tier/pricing changed</summary>
+    TENANT_TIER_UPDATED = 123,
+
+    /// <summary>New SuperAdmin account created</summary>
+    SUPERADMIN_CREATED = 124,
+
+    /// <summary>SuperAdmin account deleted</summary>
+    SUPERADMIN_DELETED = 125,
+
+    /// <summary>SuperAdmin permissions modified</summary>
+    SUPERADMIN_PERMISSION_CHANGED = 126,
+
+    /// <summary>SuperAdmin started tenant impersonation session</summary>
+    TENANT_IMPERSONATION_STARTED = 127,
+
+    /// <summary>SuperAdmin ended tenant impersonation session</summary>
+    TENANT_IMPERSONATION_ENDED = 128,
+
+    /// <summary>SuperAdmin unlocked a locked account</summary>
+    SUPERADMIN_UNLOCKED_ACCOUNT = 129,
+
+    /// <summary>SuperAdmin forced password reset for user</summary>
+    SUPERADMIN_FORCED_PASSWORD_RESET = 130,
+
+    /// <summary>SuperAdmin accessed audit logs (meta-audit)</summary>
+    SUPERADMIN_AUDIT_LOG_ACCESS = 131,
+
+    /// <summary>SuperAdmin performed bulk operation</summary>
+    SUPERADMIN_BULK_OPERATION = 132,
+
+    /// <summary>Password expired due to rotation policy</summary>
+    PASSWORD_EXPIRED = 133,
+
+    /// <summary>Security setting modified by SuperAdmin</summary>
+    SECURITY_SETTING_CHANGED = 134,
+
+    /// <summary>System-wide setting modified by SuperAdmin</summary>
+    SYSTEM_WIDE_SETTING_CHANGED = 135,
+
+    /// <summary>Password change attempt failed (validation failure, wrong current password, password reuse)</summary>
+    PASSWORD_CHANGE_FAILED = 136,
+
+    // ============================================
     // EMPLOYEE LIFECYCLE ACTIONS (31-40)
     // ============================================
 
@@ -464,4 +516,105 @@ public enum AuditActionType
 
     /// <summary>Scheduled job executed</summary>
     SCHEDULED_JOB_EXECUTED = 120
+}
+
+/// <summary>
+/// Security alert types for real-time threat detection and monitoring
+/// Supports Fortune 500 compliance requirements (SOX, GDPR, ISO 27001, PCI-DSS)
+/// </summary>
+public enum SecurityAlertType
+{
+    /// <summary>Multiple failed login attempts detected (possible brute force)</summary>
+    FAILED_LOGIN_THRESHOLD = 1,
+
+    /// <summary>Unauthorized access attempt to restricted resource</summary>
+    UNAUTHORIZED_ACCESS = 2,
+
+    /// <summary>Mass data export detected (possible data exfiltration)</summary>
+    MASS_DATA_EXPORT = 3,
+
+    /// <summary>After-hours access to sensitive data</summary>
+    AFTER_HOURS_ACCESS = 4,
+
+    /// <summary>Salary or financial data modification</summary>
+    SALARY_CHANGE = 5,
+
+    /// <summary>Role or permission escalation attempt</summary>
+    PRIVILEGE_ESCALATION = 6,
+
+    /// <summary>Login from unusual geographic location</summary>
+    GEOGRAPHIC_ANOMALY = 7,
+
+    /// <summary>Rapid successive high-risk actions</summary>
+    RAPID_HIGH_RISK_ACTIONS = 8,
+
+    /// <summary>Account locked due to security policy violation</summary>
+    ACCOUNT_LOCKOUT = 9,
+
+    /// <summary>Multiple simultaneous sessions from different locations</summary>
+    IMPOSSIBLE_TRAVEL = 10,
+
+    /// <summary>API rate limit exceeded</summary>
+    RATE_LIMIT_EXCEEDED = 11,
+
+    /// <summary>SQL injection attempt detected</summary>
+    SQL_INJECTION_ATTEMPT = 12,
+
+    /// <summary>XSS attack attempt detected</summary>
+    XSS_ATTEMPT = 13,
+
+    /// <summary>CSRF token validation failure</summary>
+    CSRF_FAILURE = 14,
+
+    /// <summary>Session hijacking detected</summary>
+    SESSION_HIJACK = 15,
+
+    /// <summary>Suspicious file upload detected</summary>
+    MALICIOUS_FILE_UPLOAD = 16,
+
+    /// <summary>Data breach indicators detected</summary>
+    DATA_BREACH = 17,
+
+    /// <summary>System integrity violation</summary>
+    INTEGRITY_VIOLATION = 18,
+
+    /// <summary>Compliance policy violation</summary>
+    COMPLIANCE_VIOLATION = 19,
+
+    /// <summary>Anomaly detected by machine learning model</summary>
+    ML_ANOMALY = 20,
+
+    /// <summary>Generic security event requiring review</summary>
+    GENERAL_SECURITY_EVENT = 99
+}
+
+/// <summary>
+/// Security alert status for workflow management
+/// Supports alert acknowledgement, investigation, and resolution tracking
+/// </summary>
+public enum SecurityAlertStatus
+{
+    /// <summary>Alert created, not yet reviewed</summary>
+    NEW = 1,
+
+    /// <summary>Alert acknowledged by security team</summary>
+    ACKNOWLEDGED = 2,
+
+    /// <summary>Investigation in progress</summary>
+    IN_PROGRESS = 3,
+
+    /// <summary>Alert resolved - threat mitigated</summary>
+    RESOLVED = 4,
+
+    /// <summary>Alert dismissed as false positive</summary>
+    FALSE_POSITIVE = 5,
+
+    /// <summary>Alert escalated to senior security team</summary>
+    ESCALATED = 6,
+
+    /// <summary>Alert requires further investigation</summary>
+    PENDING_REVIEW = 7,
+
+    /// <summary>Alert closed without action</summary>
+    CLOSED = 8
 }

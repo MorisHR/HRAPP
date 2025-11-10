@@ -33,5 +33,11 @@ public enum TenantStatus
     /// <summary>
     /// In trial period (blue)
     /// </summary>
-    Trial = 5
+    Trial = 5,
+
+    /// <summary>
+    /// Subscription expiring soon (7 days or less) - Warning state (amber)
+    /// FORTUNE 500 PATTERN: Early warning system for payment follow-up
+    /// </summary>
+    ExpiringSoon = 6
 }

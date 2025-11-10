@@ -3,11 +3,8 @@ import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
-import { MatToolbarModule } from '@angular/material/toolbar';
 import { RouterModule } from '@angular/router';
 import { TenantService } from '../../../core/services/tenant.service';
-import { ThemeService } from '../../../core/services/theme.service';
-import { AuthService } from '../../../core/services/auth.service';
 
 interface DashboardStats {
   totalTenants: number;
@@ -24,7 +21,6 @@ interface DashboardStats {
     MatCardModule,
     MatIconModule,
     MatButtonModule,
-    MatToolbarModule,
     RouterModule
   ],
   templateUrl: './admin-dashboard.component.html',
@@ -32,8 +28,6 @@ interface DashboardStats {
 })
 export class AdminDashboardComponent implements OnInit {
   private tenantService = inject(TenantService);
-  private themeService = inject(ThemeService);
-  private authService = inject(AuthService);
 
   // Signals for reactive state
   stats = signal<DashboardStats>({
@@ -42,9 +36,6 @@ export class AdminDashboardComponent implements OnInit {
     totalEmployees: 0,
     monthlyRevenue: 0
   });
-
-  user = this.authService.user;
-  isDark = this.themeService.isDark;
 
   ngOnInit(): void {
     this.loadDashboardData();
@@ -64,13 +55,5 @@ export class AdminDashboardComponent implements OnInit {
         });
       }
     });
-  }
-
-  toggleTheme(): void {
-    this.themeService.toggleTheme();
-  }
-
-  logout(): void {
-    this.authService.logout();
   }
 }

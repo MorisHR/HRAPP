@@ -16,6 +16,9 @@ public class MasterDbContext : DbContext
     public DbSet<Tenant> Tenants { get; set; }
     public DbSet<AdminUser> AdminUsers { get; set; }
     public DbSet<AuditLog> AuditLogs { get; set; }
+    public DbSet<SecurityAlert> SecurityAlerts { get; set; }
+    public DbSet<DetectedAnomaly> DetectedAnomalies { get; set; }
+    public DbSet<LegalHold> LegalHolds { get; set; }
 
     // JWT Refresh Tokens (Production-Grade Security)
     public DbSet<RefreshToken> RefreshTokens { get; set; } = null!;
@@ -28,6 +31,18 @@ public class MasterDbContext : DbContext
     public DbSet<District> Districts { get; set; }
     public DbSet<Village> Villages { get; set; }
     public DbSet<PostalCode> PostalCodes { get; set; }
+
+    /// <summary>
+    /// PRODUCTION-GRADE: Yearly subscription payment history tracking
+    /// FORTUNE 500 PATTERN: Manual payment processing with full audit trail
+    /// </summary>
+    public DbSet<SubscriptionPayment> SubscriptionPayments { get; set; }
+
+    /// <summary>
+    /// PRODUCTION-GRADE: Subscription notification log (email deduplication)
+    /// FORTUNE 500 PATTERN: Prevents duplicate emails and provides compliance audit trail
+    /// </summary>
+    public DbSet<SubscriptionNotificationLog> SubscriptionNotificationLogs { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
@@ -482,6 +497,571 @@ public class MasterDbContext : DbContext
                 .WithMany()
                 .HasForeignKey(e => e.AdminUserId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // Configure SecurityAlert entity (Fortune 500 Compliance - Real-Time Security Monitoring)
+        modelBuilder.Entity<SecurityAlert>(entity =>
+        {
+            entity.ToTable("SecurityAlerts", schema: "master", tb =>
+            {
+                tb.HasComment("Production-grade security alert system for real-time threat detection. " +
+                             "Supports SOX, GDPR, ISO 27001, PCI-DSS compliance. " +
+                             "Integrates with Email, SMS, Slack, and SIEM systems.");
+            });
+
+            entity.HasKey(e => e.Id);
+
+            // Alert Classification
+            entity.Property(e => e.AlertType)
+                .IsRequired()
+                .HasComment("Type of security alert (enum stored as integer)");
+
+            entity.Property(e => e.Severity)
+                .IsRequired()
+                .HasComment("Alert severity level (CRITICAL, EMERGENCY, HIGH, MEDIUM, LOW)");
+
+            entity.Property(e => e.Category)
+                .IsRequired()
+                .HasComment("Alert category for classification");
+
+            entity.Property(e => e.Status)
+                .IsRequired()
+                .HasComment("Alert status (NEW, ACKNOWLEDGED, IN_PROGRESS, RESOLVED, etc.)");
+
+            // Alert Details
+            entity.Property(e => e.Title)
+                .IsRequired()
+                .HasMaxLength(500)
+                .HasComment("Alert title/summary");
+
+            entity.Property(e => e.Description)
+                .IsRequired()
+                .HasMaxLength(2000)
+                .HasComment("Detailed alert description");
+
+            entity.Property(e => e.RecommendedActions)
+                .HasMaxLength(2000)
+                .HasComment("Recommended actions to address the alert");
+
+            entity.Property(e => e.RiskScore)
+                .IsRequired()
+                .HasComment("Risk score 0-100 calculated by anomaly detection");
+
+            // Related Audit Log
+            entity.Property(e => e.AuditLogId)
+                .HasComment("Related audit log entry ID");
+
+            entity.Property(e => e.AuditActionType)
+                .HasComment("Related audit log action type");
+
+            // WHO - User/Target Information
+            entity.Property(e => e.TenantId)
+                .HasComment("Tenant ID (null for platform-level alerts)");
+
+            entity.Property(e => e.TenantName)
+                .HasMaxLength(200)
+                .HasComment("Tenant name for reporting");
+
+            entity.Property(e => e.UserId)
+                .HasComment("User ID who triggered the alert");
+
+            entity.Property(e => e.UserEmail)
+                .HasMaxLength(100)
+                .HasComment("User email address");
+
+            entity.Property(e => e.UserFullName)
+                .HasMaxLength(200)
+                .HasComment("User full name");
+
+            entity.Property(e => e.UserRole)
+                .HasMaxLength(50)
+                .HasComment("User role at time of alert");
+
+            // WHERE - Location Information
+            entity.Property(e => e.IpAddress)
+                .HasMaxLength(45)
+                .HasComment("IP address associated with alert");
+
+            entity.Property(e => e.Geolocation)
+                .HasMaxLength(500)
+                .HasComment("Geolocation information");
+
+            entity.Property(e => e.UserAgent)
+                .HasMaxLength(500)
+                .HasComment("User agent string");
+
+            entity.Property(e => e.DeviceInfo)
+                .HasMaxLength(500)
+                .HasComment("Device information");
+
+            // WHEN - Timestamp Information
+            entity.Property(e => e.CreatedAt)
+                .IsRequired()
+                .HasComment("When alert was created (UTC)");
+
+            entity.Property(e => e.DetectedAt)
+                .IsRequired()
+                .HasComment("When alert was first detected (UTC)");
+
+            entity.Property(e => e.AcknowledgedAt)
+                .HasComment("When alert was acknowledged (UTC)");
+
+            entity.Property(e => e.ResolvedAt)
+                .HasComment("When alert was resolved (UTC)");
+
+            // Workflow & Assignment
+            entity.Property(e => e.AcknowledgedBy)
+                .HasComment("User ID who acknowledged the alert");
+
+            entity.Property(e => e.AcknowledgedByEmail)
+                .HasMaxLength(100)
+                .HasComment("Email of user who acknowledged");
+
+            entity.Property(e => e.ResolvedBy)
+                .HasComment("User ID who resolved the alert");
+
+            entity.Property(e => e.ResolvedByEmail)
+                .HasMaxLength(100)
+                .HasComment("Email of user who resolved");
+
+            entity.Property(e => e.ResolutionNotes)
+                .HasMaxLength(2000)
+                .HasComment("Resolution notes");
+
+            entity.Property(e => e.AssignedTo)
+                .HasComment("Assigned to user ID");
+
+            entity.Property(e => e.AssignedToEmail)
+                .HasMaxLength(100)
+                .HasComment("Assigned to user email");
+
+            // Notification Tracking
+            entity.Property(e => e.EmailSent)
+                .IsRequired()
+                .HasDefaultValue(false)
+                .HasComment("Whether email notification was sent");
+
+            entity.Property(e => e.EmailSentAt)
+                .HasComment("Email sent timestamp");
+
+            entity.Property(e => e.EmailRecipients)
+                .HasMaxLength(1000)
+                .HasComment("Email recipients (comma-separated)");
+
+            entity.Property(e => e.SmsSent)
+                .IsRequired()
+                .HasDefaultValue(false)
+                .HasComment("Whether SMS notification was sent");
+
+            entity.Property(e => e.SmsSentAt)
+                .HasComment("SMS sent timestamp");
+
+            entity.Property(e => e.SmsRecipients)
+                .HasMaxLength(500)
+                .HasComment("SMS recipients (comma-separated)");
+
+            entity.Property(e => e.SlackSent)
+                .IsRequired()
+                .HasDefaultValue(false)
+                .HasComment("Whether Slack notification was sent");
+
+            entity.Property(e => e.SlackSentAt)
+                .HasComment("Slack sent timestamp");
+
+            entity.Property(e => e.SlackChannels)
+                .HasMaxLength(500)
+                .HasComment("Slack channels notified");
+
+            entity.Property(e => e.SiemSent)
+                .IsRequired()
+                .HasDefaultValue(false)
+                .HasComment("Whether SIEM notification was sent");
+
+            entity.Property(e => e.SiemSentAt)
+                .HasComment("SIEM sent timestamp");
+
+            entity.Property(e => e.SiemSystem)
+                .HasMaxLength(100)
+                .HasComment("SIEM system name");
+
+            // Anomaly Detection Metadata
+            entity.Property(e => e.DetectionRule)
+                .HasColumnType("jsonb")
+                .HasComment("Detection rule that triggered alert (JSON)");
+
+            entity.Property(e => e.BaselineMetrics)
+                .HasColumnType("jsonb")
+                .HasComment("Baseline metrics (JSON)");
+
+            entity.Property(e => e.CurrentMetrics)
+                .HasColumnType("jsonb")
+                .HasComment("Current metrics that triggered alert (JSON)");
+
+            entity.Property(e => e.DeviationPercentage)
+                .HasPrecision(5, 2)
+                .HasComment("Deviation percentage from baseline");
+
+            // Context & Metadata
+            entity.Property(e => e.CorrelationId)
+                .HasMaxLength(100)
+                .HasComment("Correlation ID for distributed tracing");
+
+            entity.Property(e => e.AdditionalMetadata)
+                .HasColumnType("jsonb")
+                .HasComment("Additional metadata (JSON)");
+
+            entity.Property(e => e.Tags)
+                .HasMaxLength(500)
+                .HasComment("Tags for categorization");
+
+            // Compliance & Audit
+            entity.Property(e => e.ComplianceFrameworks)
+                .HasMaxLength(200)
+                .HasComment("Related compliance frameworks");
+
+            entity.Property(e => e.RequiresEscalation)
+                .IsRequired()
+                .HasDefaultValue(false)
+                .HasComment("Whether alert requires escalation");
+
+            entity.Property(e => e.EscalatedTo)
+                .HasMaxLength(200)
+                .HasComment("Escalated to (email or system)");
+
+            entity.Property(e => e.EscalatedAt)
+                .HasComment("Escalation timestamp");
+
+            // Soft Delete
+            entity.Property(e => e.IsDeleted)
+                .IsRequired()
+                .HasDefaultValue(false)
+                .HasComment("Soft delete flag");
+
+            entity.Property(e => e.DeletedAt)
+                .HasComment("When alert was soft-deleted");
+
+            // Indexes for Performance
+            entity.HasIndex(e => e.TenantId)
+                .HasDatabaseName("IX_SecurityAlerts_TenantId");
+
+            entity.HasIndex(e => e.CreatedAt)
+                .HasDatabaseName("IX_SecurityAlerts_CreatedAt");
+
+            entity.HasIndex(e => e.AlertType)
+                .HasDatabaseName("IX_SecurityAlerts_AlertType");
+
+            entity.HasIndex(e => e.Status)
+                .HasDatabaseName("IX_SecurityAlerts_Status");
+
+            entity.HasIndex(e => e.Severity)
+                .HasDatabaseName("IX_SecurityAlerts_Severity");
+
+            entity.HasIndex(e => e.UserId)
+                .HasDatabaseName("IX_SecurityAlerts_UserId");
+
+            entity.HasIndex(e => e.AuditLogId)
+                .HasDatabaseName("IX_SecurityAlerts_AuditLogId");
+
+            // Composite indexes for common queries
+            entity.HasIndex(e => new { e.TenantId, e.CreatedAt })
+                .HasDatabaseName("IX_SecurityAlerts_TenantId_CreatedAt");
+
+            entity.HasIndex(e => new { e.Status, e.CreatedAt })
+                .HasDatabaseName("IX_SecurityAlerts_Status_CreatedAt");
+
+            entity.HasIndex(e => new { e.Severity, e.Status, e.CreatedAt })
+                .HasDatabaseName("IX_SecurityAlerts_Severity_Status_CreatedAt");
+
+            // Soft delete filter
+            entity.HasQueryFilter(e => !e.IsDeleted);
+        });
+
+        // Configure DetectedAnomaly entity (Fortune 500 Compliance - Anomaly Detection)
+        modelBuilder.Entity<DetectedAnomaly>(entity =>
+        {
+            entity.ToTable("DetectedAnomalies", schema: "master");
+            entity.HasKey(e => e.Id);
+
+            entity.Property(e => e.TenantId).IsRequired();
+            entity.Property(e => e.AnomalyType).IsRequired();
+            entity.Property(e => e.RiskLevel).IsRequired();
+            entity.Property(e => e.Status).IsRequired();
+            entity.Property(e => e.RiskScore).IsRequired();
+            entity.Property(e => e.Description).IsRequired().HasMaxLength(2000);
+            entity.Property(e => e.Evidence).HasColumnType("jsonb");
+            entity.Property(e => e.DetectionRule).IsRequired().HasMaxLength(200);
+            entity.Property(e => e.UserEmail).HasMaxLength(100);
+            entity.Property(e => e.IpAddress).HasMaxLength(45);
+            entity.Property(e => e.Location).HasMaxLength(500);
+
+            // Indexes for performance
+            entity.HasIndex(e => e.TenantId);
+            entity.HasIndex(e => e.DetectedAt);
+            entity.HasIndex(e => e.Status);
+            entity.HasIndex(e => e.RiskLevel);
+            entity.HasIndex(e => e.AnomalyType);
+            entity.HasIndex(e => new { e.TenantId, e.DetectedAt });
+            entity.HasIndex(e => new { e.Status, e.DetectedAt });
+        });
+
+        // Configure LegalHold entity (Fortune 500 Compliance - eDiscovery & Legal Hold)
+        modelBuilder.Entity<LegalHold>(entity =>
+        {
+            entity.ToTable("LegalHolds", schema: "master");
+            entity.HasKey(e => e.Id);
+
+            entity.Property(e => e.TenantId).IsRequired();
+            entity.Property(e => e.CaseNumber).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.Description).IsRequired().HasMaxLength(2000);
+            entity.Property(e => e.Status).IsRequired();
+            entity.Property(e => e.UserIds).HasColumnType("jsonb");
+            entity.Property(e => e.EntityTypes).HasColumnType("jsonb");
+            entity.Property(e => e.RequestedBy).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.LegalRepresentative).HasMaxLength(200);
+            entity.Property(e => e.CourtOrder).HasMaxLength(500);
+            entity.Property(e => e.CreatedBy).IsRequired().HasMaxLength(100);
+
+            // Indexes for performance
+            entity.HasIndex(e => e.TenantId);
+            entity.HasIndex(e => e.Status);
+            entity.HasIndex(e => e.CaseNumber).IsUnique();
+            entity.HasIndex(e => e.CreatedAt);
+        });
+
+        // ============================================
+        // PRODUCTION-GRADE: Yearly Subscription Management
+        // ============================================
+
+        // Configure SubscriptionPayment entity (Fortune 500 - Manual Payment Tracking)
+        modelBuilder.Entity<SubscriptionPayment>(entity =>
+        {
+            entity.ToTable("SubscriptionPayments", schema: "master", tb =>
+            {
+                tb.HasComment("Production-grade yearly subscription payment history. " +
+                             "IMMUTABLE - payments are historical records. " +
+                             "Manual payment processing by SuperAdmin with full audit trail. " +
+                             "Indexed on TenantId, PaymentDate, Status for fast queries.");
+            });
+
+            entity.HasKey(e => e.Id);
+
+            // Foreign key to Tenant
+            entity.Property(e => e.TenantId)
+                .IsRequired()
+                .HasComment("Foreign key to Tenant");
+
+            // Payment period tracking
+            entity.Property(e => e.PeriodStartDate)
+                .IsRequired()
+                .HasComment("Subscription period start date");
+
+            entity.Property(e => e.PeriodEndDate)
+                .IsRequired()
+                .HasComment("Subscription period end date (usually +365 days)");
+
+            entity.Property(e => e.DueDate)
+                .IsRequired()
+                .HasComment("Payment due date for grace period calculations");
+
+            // Financial fields (MUR - Mauritian Rupees)
+            entity.Property(e => e.AmountMUR)
+                .IsRequired()
+                .HasPrecision(18, 2)
+                .HasComment("Amount in Mauritian Rupees (MUR) - decimal(18,2)");
+
+            // Payment status and tracking
+            entity.Property(e => e.Status)
+                .IsRequired()
+                .HasComment("Payment status (Pending, Paid, Overdue, Failed, etc.)");
+
+            entity.Property(e => e.PaidDate)
+                .HasComment("Date when payment was marked as paid");
+
+            entity.Property(e => e.ProcessedBy)
+                .HasMaxLength(100)
+                .HasComment("SuperAdmin who confirmed the payment (audit trail)");
+
+            entity.Property(e => e.PaymentReference)
+                .HasMaxLength(200)
+                .HasComment("Invoice, receipt, or bank transaction reference");
+
+            entity.Property(e => e.PaymentMethod)
+                .HasMaxLength(100)
+                .HasComment("Payment method (Bank Transfer, Cash, Cheque, etc.)");
+
+            entity.Property(e => e.Notes)
+                .HasMaxLength(1000)
+                .HasComment("Additional notes about the payment");
+
+            // Employee tier at time of payment (audit trail)
+            entity.Property(e => e.EmployeeTier)
+                .IsRequired()
+                .HasComment("Employee tier at time of payment (audit trail)");
+
+            // Indexes for performance
+            entity.HasIndex(e => e.TenantId)
+                .HasDatabaseName("IX_SubscriptionPayments_TenantId");
+
+            entity.HasIndex(e => e.Status)
+                .HasDatabaseName("IX_SubscriptionPayments_Status");
+
+            entity.HasIndex(e => e.DueDate)
+                .HasDatabaseName("IX_SubscriptionPayments_DueDate");
+
+            entity.HasIndex(e => e.PaidDate)
+                .HasDatabaseName("IX_SubscriptionPayments_PaidDate");
+
+            entity.HasIndex(e => new { e.TenantId, e.PeriodStartDate })
+                .HasDatabaseName("IX_SubscriptionPayments_TenantId_PeriodStartDate");
+
+            entity.HasIndex(e => new { e.TenantId, e.Status })
+                .HasDatabaseName("IX_SubscriptionPayments_TenantId_Status");
+
+            // Relationship to Tenant
+            entity.HasOne(e => e.Tenant)
+                .WithMany(t => t.SubscriptionPayments)
+                .HasForeignKey(e => e.TenantId)
+                .OnDelete(DeleteBehavior.Restrict); // Prevent accidental deletion
+
+            // Soft delete filter (inherited from BaseEntity)
+            entity.HasQueryFilter(e => !e.IsDeleted);
+        });
+
+        // Configure SubscriptionNotificationLog entity (Fortune 500 - Email Deduplication)
+        modelBuilder.Entity<SubscriptionNotificationLog>(entity =>
+        {
+            entity.ToTable("SubscriptionNotificationLogs", schema: "master", tb =>
+            {
+                tb.HasComment("Production-grade subscription notification audit log. " +
+                             "Prevents duplicate email sends (Stripe, Chargebee pattern). " +
+                             "IMMUTABLE - logs are historical records for compliance. " +
+                             "Indexed on TenantId, NotificationType, SentDate for fast duplicate checks.");
+            });
+
+            entity.HasKey(e => e.Id);
+
+            // Foreign keys
+            entity.Property(e => e.TenantId)
+                .IsRequired()
+                .HasComment("Foreign key to Tenant");
+
+            entity.Property(e => e.SubscriptionPaymentId)
+                .HasComment("Related subscription payment ID (if applicable)");
+
+            // Notification details
+            entity.Property(e => e.NotificationType)
+                .IsRequired()
+                .HasComment("Type of notification sent (30d, 15d, 7d, expiry, etc.)");
+
+            entity.Property(e => e.SentDate)
+                .IsRequired()
+                .HasComment("Date/time when notification was sent (UTC)");
+
+            entity.Property(e => e.RecipientEmail)
+                .IsRequired()
+                .HasMaxLength(100)
+                .HasComment("Recipient email address (audit trail)");
+
+            entity.Property(e => e.EmailSubject)
+                .IsRequired()
+                .HasMaxLength(500)
+                .HasComment("Email subject line");
+
+            // Delivery tracking
+            entity.Property(e => e.DeliverySuccess)
+                .IsRequired()
+                .HasDefaultValue(false)
+                .HasComment("Whether email was delivered successfully");
+
+            entity.Property(e => e.DeliveryError)
+                .HasMaxLength(2000)
+                .HasComment("Error message if delivery failed");
+
+            // Snapshot of subscription state at notification time
+            entity.Property(e => e.SubscriptionEndDateAtNotification)
+                .IsRequired()
+                .HasComment("Subscription end date at time of notification (audit trail)");
+
+            entity.Property(e => e.DaysUntilExpiryAtNotification)
+                .IsRequired()
+                .HasComment("Days until expiry at time of notification (audit trail)");
+
+            // Follow-up tracking
+            entity.Property(e => e.RequiresFollowUp)
+                .IsRequired()
+                .HasDefaultValue(false)
+                .HasComment("Does this notification require follow-up action?");
+
+            entity.Property(e => e.FollowUpCompletedDate)
+                .HasComment("When follow-up action was completed");
+
+            entity.Property(e => e.FollowUpNotes)
+                .HasMaxLength(2000)
+                .HasComment("Notes about follow-up action taken");
+
+            // Indexes for performance and duplicate prevention
+            entity.HasIndex(e => e.TenantId)
+                .HasDatabaseName("IX_SubscriptionNotificationLogs_TenantId");
+
+            entity.HasIndex(e => e.NotificationType)
+                .HasDatabaseName("IX_SubscriptionNotificationLogs_NotificationType");
+
+            entity.HasIndex(e => e.SentDate)
+                .HasDatabaseName("IX_SubscriptionNotificationLogs_SentDate");
+
+            entity.HasIndex(e => e.SubscriptionPaymentId)
+                .HasDatabaseName("IX_SubscriptionNotificationLogs_SubscriptionPaymentId");
+
+            // Composite index for duplicate checking
+            entity.HasIndex(e => new { e.TenantId, e.NotificationType, e.SentDate })
+                .HasDatabaseName("IX_SubscriptionNotificationLogs_TenantId_Type_SentDate");
+
+            entity.HasIndex(e => new { e.TenantId, e.SentDate })
+                .HasDatabaseName("IX_SubscriptionNotificationLogs_TenantId_SentDate");
+
+            // Index for follow-up tracking
+            entity.HasIndex(e => new { e.RequiresFollowUp, e.FollowUpCompletedDate })
+                .HasDatabaseName("IX_SubscriptionNotificationLogs_RequiresFollowUp");
+
+            // Relationships
+            entity.HasOne(e => e.Tenant)
+                .WithMany(t => t.SubscriptionNotificationLogs)
+                .HasForeignKey(e => e.TenantId)
+                .OnDelete(DeleteBehavior.Restrict); // Prevent accidental deletion
+
+            entity.HasOne(e => e.SubscriptionPayment)
+                .WithMany()
+                .HasForeignKey(e => e.SubscriptionPaymentId)
+                .OnDelete(DeleteBehavior.Restrict); // Prevent accidental deletion
+
+            // Soft delete filter (inherited from BaseEntity)
+            entity.HasQueryFilter(e => !e.IsDeleted);
+        });
+
+        // Update Tenant entity configuration - add subscription field configurations
+        modelBuilder.Entity<Tenant>(entity =>
+        {
+            // Yearly pricing in MUR
+            entity.Property(e => e.YearlyPriceMUR)
+                .HasPrecision(18, 2)
+                .HasComment("Yearly subscription price in Mauritian Rupees (MUR)");
+
+            // Notification tracking
+            entity.Property(e => e.LastNotificationSent)
+                .HasComment("Last subscription notification sent (timestamp)");
+
+            entity.Property(e => e.LastNotificationType)
+                .HasComment("Type of last notification sent (prevents duplicates)");
+
+            entity.Property(e => e.GracePeriodStartDate)
+                .HasComment("Grace period start date (when subscription expired)");
+
+            // Index for subscription expiry monitoring
+            entity.HasIndex(e => e.SubscriptionEndDate)
+                .HasDatabaseName("IX_Tenants_SubscriptionEndDate");
+
+            entity.HasIndex(e => new { e.Status, e.SubscriptionEndDate })
+                .HasDatabaseName("IX_Tenants_Status_SubscriptionEndDate");
         });
     }
 }

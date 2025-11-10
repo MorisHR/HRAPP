@@ -32,6 +32,12 @@ namespace HRMS.Infrastructure.Data.Migrations.Master
                     b.Property<int>("AccessFailedCount")
                         .HasColumnType("integer");
 
+                    b.Property<string>("AllowedIPAddresses")
+                        .HasColumnType("text");
+
+                    b.Property<string>("AllowedLoginHours")
+                        .HasColumnType("text");
+
                     b.Property<string>("BackupCodes")
                         .HasColumnType("jsonb")
                         .HasComment("JSON array of SHA256-hashed backup codes for MFA recovery");
@@ -41,6 +47,9 @@ namespace HRMS.Infrastructure.Data.Migrations.Master
 
                     b.Property<string>("CreatedBy")
                         .HasColumnType("text");
+
+                    b.Property<Guid?>("CreatedBySuperAdminId")
+                        .HasColumnType("uuid");
 
                     b.Property<DateTime?>("DeletedAt")
                         .HasColumnType("timestamp with time zone");
@@ -64,16 +73,31 @@ namespace HRMS.Infrastructure.Data.Migrations.Master
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
 
+                    b.Property<bool>("IsInitialSetupAccount")
+                        .HasColumnType("boolean");
+
                     b.Property<bool>("IsTwoFactorEnabled")
                         .HasColumnType("boolean");
 
+                    b.Property<DateTime?>("LastFailedLoginAttempt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<DateTime?>("LastLoginDate")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("LastLoginIPAddress")
+                        .HasColumnType("text");
+
+                    b.Property<Guid?>("LastModifiedBySuperAdminId")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("LastName")
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
+
+                    b.Property<DateTime?>("LastPasswordChangeDate")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("boolean");
@@ -81,13 +105,31 @@ namespace HRMS.Infrastructure.Data.Migrations.Master
                     b.Property<DateTime?>("LockoutEnd")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<bool>("MustChangePassword")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("PasswordExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("PasswordHash")
                         .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("PasswordHistory")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Permissions")
                         .HasColumnType("text");
 
                     b.Property<string>("PhoneNumber")
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
+
+                    b.Property<int>("SessionTimeoutMinutes")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("StatusNotes")
+                        .HasColumnType("text");
 
                     b.Property<string>("TwoFactorSecret")
                         .HasMaxLength(500)
@@ -209,6 +251,12 @@ namespace HRMS.Infrastructure.Data.Migrations.Master
                         .HasColumnType("boolean")
                         .HasDefaultValue(false)
                         .HasComment("Flag indicating if entry has been archived to cold storage");
+
+                    b.Property<bool>("IsUnderLegalHold")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid?>("LegalHoldId")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("NetworkInfo")
                         .HasMaxLength(500)
@@ -354,6 +402,114 @@ namespace HRMS.Infrastructure.Data.Migrations.Master
                         });
                 });
 
+            modelBuilder.Entity("HRMS.Core.Entities.Master.DetectedAnomaly", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("AnomalyType")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<DateTime>("DetectedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DetectionRule")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Evidence")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
+                    b.Property<DateTime?>("InvestigatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("InvestigatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("InvestigationNotes")
+                        .HasColumnType("text");
+
+                    b.Property<string>("IpAddress")
+                        .HasMaxLength(45)
+                        .HasColumnType("character varying(45)");
+
+                    b.Property<string>("Location")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("ModelVersion")
+                        .HasColumnType("text");
+
+                    b.Property<string>("NotificationRecipients")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("NotificationSent")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("NotificationSentAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("RelatedAuditLogIds")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Resolution")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("ResolvedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("RiskLevel")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("RiskScore")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UserEmail")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<Guid?>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AnomalyType");
+
+                    b.HasIndex("DetectedAt");
+
+                    b.HasIndex("RiskLevel");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("TenantId");
+
+                    b.HasIndex("Status", "DetectedAt");
+
+                    b.HasIndex("TenantId", "DetectedAt");
+
+                    b.ToTable("DetectedAnomalies", "master");
+                });
+
             modelBuilder.Entity("HRMS.Core.Entities.Master.District", b =>
                 {
                     b.Property<int>("Id")
@@ -474,6 +630,121 @@ namespace HRMS.Infrastructure.Data.Migrations.Master
                         .IsUnique();
 
                     b.ToTable("IndustrySectors", "master");
+                });
+
+            modelBuilder.Entity("HRMS.Core.Entities.Master.LegalHold", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AdditionalMetadata")
+                        .HasColumnType("text");
+
+                    b.Property<int>("AffectedAuditLogCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("AffectedEntityCount")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("CaseNumber")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("ComplianceFrameworks")
+                        .HasColumnType("text");
+
+                    b.Property<string>("CourtOrder")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasMaxLength(100)
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<DateTime?>("EndDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("EntityTypes")
+                        .HasColumnType("jsonb");
+
+                    b.Property<string>("LawFirm")
+                        .HasColumnType("text");
+
+                    b.Property<string>("LegalRepresentative")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("LegalRepresentativeEmail")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("NotificationSentAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("NotifiedUsers")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Reason")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ReleaseNotes")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("ReleasedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ReleasedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("RequestedBy")
+                        .HasMaxLength(100)
+                        .HasColumnType("uuid");
+
+                    b.Property<int?>("RetentionPeriodDays")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("SearchKeywords")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("StartDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("UserIds")
+                        .HasColumnType("jsonb");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CaseNumber")
+                        .IsUnique();
+
+                    b.HasIndex("CreatedAt");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("TenantId");
+
+                    b.ToTable("LegalHolds", "master");
                 });
 
             modelBuilder.Entity("HRMS.Core.Entities.Master.PostalCode", b =>
@@ -658,6 +929,551 @@ namespace HRMS.Infrastructure.Data.Migrations.Master
                     b.ToTable("SectorComplianceRules", "master");
                 });
 
+            modelBuilder.Entity("HRMS.Core.Entities.Master.SecurityAlert", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("AcknowledgedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasComment("When alert was acknowledged (UTC)");
+
+                    b.Property<Guid?>("AcknowledgedBy")
+                        .HasColumnType("uuid")
+                        .HasComment("User ID who acknowledged the alert");
+
+                    b.Property<string>("AcknowledgedByEmail")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasComment("Email of user who acknowledged");
+
+                    b.Property<string>("AdditionalMetadata")
+                        .HasColumnType("jsonb")
+                        .HasComment("Additional metadata (JSON)");
+
+                    b.Property<int>("AlertType")
+                        .HasColumnType("integer")
+                        .HasComment("Type of security alert (enum stored as integer)");
+
+                    b.Property<Guid?>("AssignedTo")
+                        .HasColumnType("uuid")
+                        .HasComment("Assigned to user ID");
+
+                    b.Property<string>("AssignedToEmail")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasComment("Assigned to user email");
+
+                    b.Property<int?>("AuditActionType")
+                        .HasColumnType("integer")
+                        .HasComment("Related audit log action type");
+
+                    b.Property<Guid?>("AuditLogId")
+                        .HasColumnType("uuid")
+                        .HasComment("Related audit log entry ID");
+
+                    b.Property<string>("BaselineMetrics")
+                        .HasColumnType("jsonb")
+                        .HasComment("Baseline metrics (JSON)");
+
+                    b.Property<int>("Category")
+                        .HasColumnType("integer")
+                        .HasComment("Alert category for classification");
+
+                    b.Property<string>("ComplianceFrameworks")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasComment("Related compliance frameworks");
+
+                    b.Property<string>("CorrelationId")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasComment("Correlation ID for distributed tracing");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasComment("When alert was created (UTC)");
+
+                    b.Property<string>("CurrentMetrics")
+                        .HasColumnType("jsonb")
+                        .HasComment("Current metrics that triggered alert (JSON)");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasComment("When alert was soft-deleted");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
+                        .HasComment("Detailed alert description");
+
+                    b.Property<DateTime>("DetectedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasComment("When alert was first detected (UTC)");
+
+                    b.Property<string>("DetectionRule")
+                        .HasColumnType("jsonb")
+                        .HasComment("Detection rule that triggered alert (JSON)");
+
+                    b.Property<decimal?>("DeviationPercentage")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("numeric(5,2)")
+                        .HasComment("Deviation percentage from baseline");
+
+                    b.Property<string>("DeviceInfo")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasComment("Device information");
+
+                    b.Property<string>("EmailRecipients")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)")
+                        .HasComment("Email recipients (comma-separated)");
+
+                    b.Property<bool>("EmailSent")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasComment("Whether email notification was sent");
+
+                    b.Property<DateTime?>("EmailSentAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasComment("Email sent timestamp");
+
+                    b.Property<DateTime?>("EscalatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasComment("Escalation timestamp");
+
+                    b.Property<string>("EscalatedTo")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasComment("Escalated to (email or system)");
+
+                    b.Property<string>("Geolocation")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasComment("Geolocation information");
+
+                    b.Property<string>("IpAddress")
+                        .HasMaxLength(45)
+                        .HasColumnType("character varying(45)")
+                        .HasComment("IP address associated with alert");
+
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasComment("Soft delete flag");
+
+                    b.Property<string>("RecommendedActions")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
+                        .HasComment("Recommended actions to address the alert");
+
+                    b.Property<bool>("RequiresEscalation")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasComment("Whether alert requires escalation");
+
+                    b.Property<string>("ResolutionNotes")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
+                        .HasComment("Resolution notes");
+
+                    b.Property<DateTime?>("ResolvedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasComment("When alert was resolved (UTC)");
+
+                    b.Property<Guid?>("ResolvedBy")
+                        .HasColumnType("uuid")
+                        .HasComment("User ID who resolved the alert");
+
+                    b.Property<string>("ResolvedByEmail")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasComment("Email of user who resolved");
+
+                    b.Property<int>("RiskScore")
+                        .HasColumnType("integer")
+                        .HasComment("Risk score 0-100 calculated by anomaly detection");
+
+                    b.Property<int>("Severity")
+                        .HasColumnType("integer")
+                        .HasComment("Alert severity level (CRITICAL, EMERGENCY, HIGH, MEDIUM, LOW)");
+
+                    b.Property<bool>("SiemSent")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasComment("Whether SIEM notification was sent");
+
+                    b.Property<DateTime?>("SiemSentAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasComment("SIEM sent timestamp");
+
+                    b.Property<string>("SiemSystem")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasComment("SIEM system name");
+
+                    b.Property<string>("SlackChannels")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasComment("Slack channels notified");
+
+                    b.Property<bool>("SlackSent")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasComment("Whether Slack notification was sent");
+
+                    b.Property<DateTime?>("SlackSentAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasComment("Slack sent timestamp");
+
+                    b.Property<string>("SmsRecipients")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasComment("SMS recipients (comma-separated)");
+
+                    b.Property<bool>("SmsSent")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasComment("Whether SMS notification was sent");
+
+                    b.Property<DateTime?>("SmsSentAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasComment("SMS sent timestamp");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer")
+                        .HasComment("Alert status (NEW, ACKNOWLEDGED, IN_PROGRESS, RESOLVED, etc.)");
+
+                    b.Property<string>("Tags")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasComment("Tags for categorization");
+
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasComment("Tenant ID (null for platform-level alerts)");
+
+                    b.Property<string>("TenantName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasComment("Tenant name for reporting");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasComment("Alert title/summary");
+
+                    b.Property<string>("UserAgent")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasComment("User agent string");
+
+                    b.Property<string>("UserEmail")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasComment("User email address");
+
+                    b.Property<string>("UserFullName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasComment("User full name");
+
+                    b.Property<Guid?>("UserId")
+                        .HasColumnType("uuid")
+                        .HasComment("User ID who triggered the alert");
+
+                    b.Property<string>("UserRole")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasComment("User role at time of alert");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AlertType")
+                        .HasDatabaseName("IX_SecurityAlerts_AlertType");
+
+                    b.HasIndex("AuditLogId")
+                        .HasDatabaseName("IX_SecurityAlerts_AuditLogId");
+
+                    b.HasIndex("CreatedAt")
+                        .HasDatabaseName("IX_SecurityAlerts_CreatedAt");
+
+                    b.HasIndex("Severity")
+                        .HasDatabaseName("IX_SecurityAlerts_Severity");
+
+                    b.HasIndex("Status")
+                        .HasDatabaseName("IX_SecurityAlerts_Status");
+
+                    b.HasIndex("TenantId")
+                        .HasDatabaseName("IX_SecurityAlerts_TenantId");
+
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("IX_SecurityAlerts_UserId");
+
+                    b.HasIndex("Status", "CreatedAt")
+                        .HasDatabaseName("IX_SecurityAlerts_Status_CreatedAt");
+
+                    b.HasIndex("TenantId", "CreatedAt")
+                        .HasDatabaseName("IX_SecurityAlerts_TenantId_CreatedAt");
+
+                    b.HasIndex("Severity", "Status", "CreatedAt")
+                        .HasDatabaseName("IX_SecurityAlerts_Severity_Status_CreatedAt");
+
+                    b.ToTable("SecurityAlerts", "master", t =>
+                        {
+                            t.HasComment("Production-grade security alert system for real-time threat detection. Supports SOX, GDPR, ISO 27001, PCI-DSS compliance. Integrates with Email, SMS, Slack, and SIEM systems.");
+                        });
+                });
+
+            modelBuilder.Entity("HRMS.Core.Entities.Master.SubscriptionNotificationLog", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<int>("DaysUntilExpiryAtNotification")
+                        .HasColumnType("integer")
+                        .HasComment("Days until expiry at time of notification (audit trail)");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DeletedBy")
+                        .HasColumnType("text");
+
+                    b.Property<string>("DeliveryError")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
+                        .HasComment("Error message if delivery failed");
+
+                    b.Property<bool>("DeliverySuccess")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasComment("Whether email was delivered successfully");
+
+                    b.Property<string>("EmailSubject")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasComment("Email subject line");
+
+                    b.Property<DateTime?>("FollowUpCompletedDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasComment("When follow-up action was completed");
+
+                    b.Property<string>("FollowUpNotes")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
+                        .HasComment("Notes about follow-up action taken");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("NotificationType")
+                        .HasColumnType("integer")
+                        .HasComment("Type of notification sent (30d, 15d, 7d, expiry, etc.)");
+
+                    b.Property<string>("RecipientEmail")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasComment("Recipient email address (audit trail)");
+
+                    b.Property<bool>("RequiresFollowUp")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasComment("Does this notification require follow-up action?");
+
+                    b.Property<DateTime>("SentDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasComment("Date/time when notification was sent (UTC)");
+
+                    b.Property<DateTime>("SubscriptionEndDateAtNotification")
+                        .HasColumnType("timestamp with time zone")
+                        .HasComment("Subscription end date at time of notification (audit trail)");
+
+                    b.Property<Guid?>("SubscriptionPaymentId")
+                        .HasColumnType("uuid")
+                        .HasComment("Related subscription payment ID (if applicable)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasComment("Foreign key to Tenant");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("NotificationType")
+                        .HasDatabaseName("IX_SubscriptionNotificationLogs_NotificationType");
+
+                    b.HasIndex("SentDate")
+                        .HasDatabaseName("IX_SubscriptionNotificationLogs_SentDate");
+
+                    b.HasIndex("SubscriptionPaymentId")
+                        .HasDatabaseName("IX_SubscriptionNotificationLogs_SubscriptionPaymentId");
+
+                    b.HasIndex("TenantId")
+                        .HasDatabaseName("IX_SubscriptionNotificationLogs_TenantId");
+
+                    b.HasIndex("RequiresFollowUp", "FollowUpCompletedDate")
+                        .HasDatabaseName("IX_SubscriptionNotificationLogs_RequiresFollowUp");
+
+                    b.HasIndex("TenantId", "SentDate")
+                        .HasDatabaseName("IX_SubscriptionNotificationLogs_TenantId_SentDate");
+
+                    b.HasIndex("TenantId", "NotificationType", "SentDate")
+                        .HasDatabaseName("IX_SubscriptionNotificationLogs_TenantId_Type_SentDate");
+
+                    b.ToTable("SubscriptionNotificationLogs", "master", t =>
+                        {
+                            t.HasComment("Production-grade subscription notification audit log. Prevents duplicate email sends (Stripe, Chargebee pattern). IMMUTABLE - logs are historical records for compliance. Indexed on TenantId, NotificationType, SentDate for fast duplicate checks.");
+                        });
+                });
+
+            modelBuilder.Entity("HRMS.Core.Entities.Master.SubscriptionPayment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("AmountMUR")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)")
+                        .HasComment("Amount in Mauritian Rupees (MUR) - decimal(18,2)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DeletedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("DueDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasComment("Payment due date for grace period calculations");
+
+                    b.Property<int>("EmployeeTier")
+                        .HasColumnType("integer")
+                        .HasComment("Employee tier at time of payment (audit trail)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsTaxExempt")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)")
+                        .HasComment("Additional notes about the payment");
+
+                    b.Property<DateTime?>("PaidDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasComment("Date when payment was marked as paid");
+
+                    b.Property<string>("PaymentMethod")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasComment("Payment method (Bank Transfer, Cash, Cheque, etc.)");
+
+                    b.Property<string>("PaymentReference")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasComment("Invoice, receipt, or bank transaction reference");
+
+                    b.Property<DateTime>("PeriodEndDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasComment("Subscription period end date (usually +365 days)");
+
+                    b.Property<DateTime>("PeriodStartDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasComment("Subscription period start date");
+
+                    b.Property<string>("ProcessedBy")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasComment("SuperAdmin who confirmed the payment (audit trail)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer")
+                        .HasComment("Payment status (Pending, Paid, Overdue, Failed, etc.)");
+
+                    b.Property<decimal>("SubtotalMUR")
+                        .HasColumnType("numeric");
+
+                    b.Property<decimal>("TaxAmountMUR")
+                        .HasColumnType("numeric");
+
+                    b.Property<decimal>("TaxRate")
+                        .HasColumnType("numeric");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasComment("Foreign key to Tenant");
+
+                    b.Property<decimal>("TotalMUR")
+                        .HasColumnType("numeric");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DueDate")
+                        .HasDatabaseName("IX_SubscriptionPayments_DueDate");
+
+                    b.HasIndex("PaidDate")
+                        .HasDatabaseName("IX_SubscriptionPayments_PaidDate");
+
+                    b.HasIndex("Status")
+                        .HasDatabaseName("IX_SubscriptionPayments_Status");
+
+                    b.HasIndex("TenantId")
+                        .HasDatabaseName("IX_SubscriptionPayments_TenantId");
+
+                    b.HasIndex("TenantId", "PeriodStartDate")
+                        .HasDatabaseName("IX_SubscriptionPayments_TenantId_PeriodStartDate");
+
+                    b.HasIndex("TenantId", "Status")
+                        .HasDatabaseName("IX_SubscriptionPayments_TenantId_Status");
+
+                    b.ToTable("SubscriptionPayments", "master", t =>
+                        {
+                            t.HasComment("Production-grade yearly subscription payment history. IMMUTABLE - payments are historical records. Manual payment processing by SuperAdmin with full audit trail. Indexed on TenantId, PaymentDate, Status for fast queries.");
+                        });
+                });
+
             modelBuilder.Entity("HRMS.Core.Entities.Master.Tenant", b =>
                 {
                     b.Property<Guid>("Id")
@@ -739,20 +1555,29 @@ namespace HRMS.Infrastructure.Data.Migrations.Master
                     b.Property<int>("GracePeriodDays")
                         .HasColumnType("integer");
 
+                    b.Property<DateTime?>("GracePeriodStartDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasComment("Grace period start date (when subscription expired)");
+
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
 
                     b.Property<bool>("IsGovernmentEntity")
                         .HasColumnType("boolean");
 
+                    b.Property<DateTime?>("LastNotificationSent")
+                        .HasColumnType("timestamp with time zone")
+                        .HasComment("Last subscription notification sent (timestamp)");
+
+                    b.Property<int?>("LastNotificationType")
+                        .HasColumnType("integer")
+                        .HasComment("Type of last notification sent (prevents duplicates)");
+
                     b.Property<int>("MaxStorageGB")
                         .HasColumnType("integer");
 
                     b.Property<int>("MaxUsers")
                         .HasColumnType("integer");
-
-                    b.Property<decimal>("MonthlyPrice")
-                        .HasColumnType("numeric");
 
                     b.Property<string>("SchemaName")
                         .IsRequired()
@@ -797,6 +1622,11 @@ namespace HRMS.Infrastructure.Data.Migrations.Master
                     b.Property<string>("UpdatedBy")
                         .HasColumnType("text");
 
+                    b.Property<decimal>("YearlyPriceMUR")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)")
+                        .HasComment("Yearly subscription price in Mauritian Rupees (MUR)");
+
                     b.HasKey("Id");
 
                     b.HasIndex("ContactEmail");
@@ -808,6 +1638,12 @@ namespace HRMS.Infrastructure.Data.Migrations.Master
 
                     b.HasIndex("Subdomain")
                         .IsUnique();
+
+                    b.HasIndex("SubscriptionEndDate")
+                        .HasDatabaseName("IX_Tenants_SubscriptionEndDate");
+
+                    b.HasIndex("Status", "SubscriptionEndDate")
+                        .HasDatabaseName("IX_Tenants_Status_SubscriptionEndDate");
 
                     b.ToTable("Tenants", "master");
                 });
@@ -932,6 +1768,35 @@ namespace HRMS.Infrastructure.Data.Migrations.Master
                     b.Navigation("Sector");
                 });
 
+            modelBuilder.Entity("HRMS.Core.Entities.Master.SubscriptionNotificationLog", b =>
+                {
+                    b.HasOne("HRMS.Core.Entities.Master.SubscriptionPayment", "SubscriptionPayment")
+                        .WithMany()
+                        .HasForeignKey("SubscriptionPaymentId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("HRMS.Core.Entities.Master.Tenant", "Tenant")
+                        .WithMany("SubscriptionNotificationLogs")
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("SubscriptionPayment");
+
+                    b.Navigation("Tenant");
+                });
+
+            modelBuilder.Entity("HRMS.Core.Entities.Master.SubscriptionPayment", b =>
+                {
+                    b.HasOne("HRMS.Core.Entities.Master.Tenant", "Tenant")
+                        .WithMany("SubscriptionPayments")
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Tenant");
+                });
+
             modelBuilder.Entity("HRMS.Core.Entities.Master.Tenant", b =>
                 {
                     b.HasOne("HRMS.Core.Entities.Master.IndustrySector", "Sector")
@@ -963,6 +1828,13 @@ namespace HRMS.Infrastructure.Data.Migrations.Master
                     b.Navigation("ComplianceRules");
 
                     b.Navigation("SubSectors");
+                });
+
+            modelBuilder.Entity("HRMS.Core.Entities.Master.Tenant", b =>
+                {
+                    b.Navigation("SubscriptionNotificationLogs");
+
+                    b.Navigation("SubscriptionPayments");
                 });
 #pragma warning restore 612, 618
         }

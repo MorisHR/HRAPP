@@ -175,6 +175,16 @@ public class AuditLog
     public DateTime? ArchivedAt { get; set; }
 
     // ============================================
+    // LEGAL HOLD & E-DISCOVERY
+    // ============================================
+
+    /// <summary>Flag indicating if this entry is under legal hold</summary>
+    public bool IsUnderLegalHold { get; set; }
+
+    /// <summary>Legal hold ID (if applicable)</summary>
+    public Guid? LegalHoldId { get; set; }
+
+    // ============================================
     // PARTITIONING METADATA
     // ============================================
     // NOTE: The table will be partitioned by PerformedAt (monthly partitions)

@@ -49,10 +49,11 @@ export const routes: Routes = [
     pathMatch: 'full'
   },
 
-  // Admin Portal Routes
+  // Admin Portal Routes - ALL WRAPPED IN SHARED LAYOUT
   {
     path: 'admin',
     canActivate: [superAdminGuard],
+    loadComponent: () => import('./shared/layouts/admin-layout.component').then(m => m.AdminLayoutComponent),
     children: [
       {
         path: '',
@@ -83,6 +84,31 @@ export const routes: Routes = [
         path: 'audit-logs',
         loadComponent: () => import('./features/admin/audit-logs/audit-logs.component').then(m => m.AdminAuditLogsComponent),
         data: { title: 'System Audit Logs' }
+      },
+      {
+        path: 'security-alerts',
+        loadChildren: () => import('./features/admin/security-alerts/security-alerts.module').then(m => m.SecurityAlertsModule),
+        data: { title: 'Security Alerts' }
+      },
+      {
+        path: 'anomaly-detection',
+        loadComponent: () => import('./features/admin/anomaly-detection/anomaly-detection-dashboard.component').then(m => m.AnomalyDetectionDashboardComponent),
+        data: { title: 'Anomaly Detection' }
+      },
+      {
+        path: 'legal-hold',
+        loadComponent: () => import('./features/admin/legal-hold/legal-hold-list.component').then(m => m.LegalHoldListComponent),
+        data: { title: 'Legal Hold Management' }
+      },
+      {
+        path: 'compliance-reports',
+        loadComponent: () => import('./features/admin/compliance-reports/compliance-reports.component').then(m => m.ComplianceReportsComponent),
+        data: { title: 'Compliance Reports' }
+      },
+      {
+        path: 'activity-correlation',
+        loadComponent: () => import('./features/admin/activity-correlation/activity-correlation.component').then(m => m.ActivityCorrelationComponent),
+        data: { title: 'Activity Correlation' }
       }
     ]
   },

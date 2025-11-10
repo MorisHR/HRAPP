@@ -216,7 +216,7 @@ public class DashboardController : ControllerBase
 
             foreach (var emp in expiringPassports)
             {
-                var daysLeft = (emp.PassportExpiryDate.Value - today).Days;
+                var daysLeft = (emp.PassportExpiryDate.GetValueOrDefault() - today).Days;
                 alerts.Add(new AlertItem
                 {
                     Id = Guid.NewGuid().ToString(),
@@ -224,7 +224,7 @@ public class DashboardController : ControllerBase
                     Severity = daysLeft <= 7 ? "critical" : daysLeft <= 14 ? "high" : "medium",
                     Icon = "passport",
                     Title = $"Passport Expiring: {emp.FirstName} {emp.LastName}",
-                    Description = $"Expires in {daysLeft} days on {emp.PassportExpiryDate.Value:MMM dd, yyyy}",
+                    Description = $"Expires in {daysLeft} days on {emp.PassportExpiryDate.GetValueOrDefault():MMM dd, yyyy}",
                     ActionUrl = $"/tenant/employees/{emp.Id}",
                     CreatedAt = DateTime.UtcNow
                 });
@@ -242,7 +242,7 @@ public class DashboardController : ControllerBase
 
             foreach (var emp in expiringVisas)
             {
-                var daysLeft = (emp.VisaExpiryDate.Value - today).Days;
+                var daysLeft = (emp.VisaExpiryDate.GetValueOrDefault() - today).Days;
                 alerts.Add(new AlertItem
                 {
                     Id = Guid.NewGuid().ToString(),
@@ -250,7 +250,7 @@ public class DashboardController : ControllerBase
                     Severity = daysLeft <= 7 ? "critical" : daysLeft <= 14 ? "high" : "medium",
                     Icon = "badge",
                     Title = $"Visa Expiring: {emp.FirstName} {emp.LastName}",
-                    Description = $"Expires in {daysLeft} days on {emp.VisaExpiryDate.Value:MMM dd, yyyy}",
+                    Description = $"Expires in {daysLeft} days on {emp.VisaExpiryDate.GetValueOrDefault():MMM dd, yyyy}",
                     ActionUrl = $"/tenant/employees/{emp.Id}",
                     CreatedAt = DateTime.UtcNow
                 });
@@ -268,7 +268,7 @@ public class DashboardController : ControllerBase
 
             foreach (var emp in expiringPermits)
             {
-                var daysLeft = (emp.WorkPermitExpiryDate.Value - today).Days;
+                var daysLeft = (emp.WorkPermitExpiryDate.GetValueOrDefault() - today).Days;
                 alerts.Add(new AlertItem
                 {
                     Id = Guid.NewGuid().ToString(),
@@ -276,7 +276,7 @@ public class DashboardController : ControllerBase
                     Severity = daysLeft <= 7 ? "critical" : daysLeft <= 14 ? "high" : "medium",
                     Icon = "work",
                     Title = $"Work Permit Expiring: {emp.FirstName} {emp.LastName}",
-                    Description = $"Expires in {daysLeft} days on {emp.WorkPermitExpiryDate.Value:MMM dd, yyyy}",
+                    Description = $"Expires in {daysLeft} days on {emp.WorkPermitExpiryDate.GetValueOrDefault():MMM dd, yyyy}",
                     ActionUrl = $"/tenant/employees/{emp.Id}",
                     CreatedAt = DateTime.UtcNow
                 });

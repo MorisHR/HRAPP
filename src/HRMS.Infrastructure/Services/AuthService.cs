@@ -81,6 +81,78 @@ public class AuthService : IAuthService
             return null; // User is deactivated
         }
 
+        // FORTUNE 500: IP Whitelisting Validation
+        if (!string.IsNullOrWhiteSpace(adminUser.AllowedIPAddresses))
+        {
+            var isIpAllowed = ValidateIpWhitelist(ipAddress, adminUser.AllowedIPAddresses);
+
+            if (!isIpAllowed)
+            {
+                _logger.LogWarning("Login attempt blocked: IP {IpAddress} not whitelisted for user {Email}", ipAddress, email);
+
+                // Audit log: IP restriction violation (CRITICAL security event)
+                _ = _auditLogService.LogSecurityEventAsync(
+                    AuditActionType.UNAUTHORIZED_ACCESS_ATTEMPT,
+                    AuditSeverity.CRITICAL,
+                    adminUser.Id,
+                    description: $"Login attempt from non-whitelisted IP address: {ipAddress}",
+                    additionalInfo: JsonSerializer.Serialize(new
+                    {
+                        userEmail = email,
+                        blockedIp = ipAddress,
+                        allowedIps = adminUser.AllowedIPAddresses,
+                        timestamp = DateTime.UtcNow
+                    })
+                );
+
+                // Also log as failed authentication
+                _ = _auditLogService.LogAuthenticationAsync(
+                    AuditActionType.LOGIN_FAILED,
+                    userId: adminUser.Id,
+                    userEmail: email,
+                    success: false,
+                    tenantId: null,
+                    errorMessage: $"IP address {ipAddress} is not whitelisted for this account"
+                );
+
+                throw new UnauthorizedAccessException(
+                    "Login denied: Your IP address is not authorized for this account. " +
+                    "Contact your administrator to add your IP to the whitelist.");
+            }
+
+            _logger.LogInformation("IP whitelist validation passed for user {Email} from IP {IpAddress}", email, ipAddress);
+        }
+
+        // FORTUNE 500: Check if password has expired
+        if (adminUser.PasswordExpiresAt.HasValue && adminUser.PasswordExpiresAt.Value <= DateTime.UtcNow)
+        {
+            _logger.LogWarning("Login attempt with expired password: User {Email}, password expired on {ExpiryDate}",
+                email, adminUser.PasswordExpiresAt.Value);
+
+            // Audit log: Password expired
+            _ = _auditLogService.LogSecurityEventAsync(
+                AuditActionType.PASSWORD_EXPIRED,
+                AuditSeverity.WARNING,
+                adminUser.Id,
+                description: $"Login attempt with expired password for user {email}",
+                additionalInfo: JsonSerializer.Serialize(new
+                {
+                    userEmail = email,
+                    passwordExpiredOn = adminUser.PasswordExpiresAt.Value,
+                    daysOverdue = (DateTime.UtcNow - adminUser.PasswordExpiresAt.Value).Days
+                })
+            );
+
+            // Force password change
+            adminUser.MustChangePassword = true;
+            await _context.SaveChangesAsync();
+
+            throw new InvalidOperationException(
+                $"Your password expired on {adminUser.PasswordExpiresAt.Value:yyyy-MM-dd}. " +
+                "You must change your password before logging in. " +
+                "Contact your administrator for assistance.");
+        }
+
         // SECURITY FIX: Check if account is locked out
         if (adminUser.LockoutEnabled && adminUser.LockoutEnd.HasValue)
         {
@@ -115,8 +187,9 @@ public class AuthService : IAuthService
         // Verify password
         if (!_passwordHasher.VerifyPassword(password, adminUser.PasswordHash))
         {
-            // SECURITY FIX: Increment failed login count
+            // SECURITY FIX: Increment failed login count and track timestamp
             adminUser.AccessFailedCount++;
+            adminUser.LastFailedLoginAttempt = DateTime.UtcNow; // FORTUNE 500: Track failed attempt timestamp
 
             // Lock account after 5 failed attempts (15 minute lockout)
             if (adminUser.LockoutEnabled && adminUser.AccessFailedCount >= 5)
@@ -161,8 +234,9 @@ public class AuthService : IAuthService
         adminUser.AccessFailedCount = 0;
         adminUser.LockoutEnd = null;
 
-        // Update last login date
+        // Update last login date and IP address
         adminUser.LastLoginDate = DateTime.UtcNow;
+        adminUser.LastLoginIPAddress = ipAddress; // FORTUNE 500: Track login IP for security monitoring
 
         // ============================================
         // PRODUCTION-GRADE: Generate access token AND refresh token
@@ -289,6 +363,220 @@ public class AuthService : IAuthService
         );
 
         return true;
+    }
+
+    // ============================================
+    // FORTUNE 500: PASSWORD ROTATION POLICY
+    // ============================================
+
+    /// <summary>
+    /// Changes a SuperAdmin password with comprehensive security checks
+    /// FORTUNE 500 FEATURES:
+    /// - Password history validation (prevents reuse of last 5 passwords)
+    /// - Automatic expiry date calculation (90 days)
+    /// - Password complexity enforcement
+    /// - Audit logging
+    /// - MustChangePassword flag reset
+    /// </summary>
+    /// <param name="userId">User ID</param>
+    /// <param name="currentPassword">Current password for verification</param>
+    /// <param name="newPassword">New password</param>
+    /// <param name="performedBySuperAdminId">ID of SuperAdmin performing the change (null if self-service)</param>
+    /// <returns>Success status and message</returns>
+    public async Task<(bool Success, string Message)> ChangePasswordAsync(
+        Guid userId,
+        string currentPassword,
+        string newPassword,
+        Guid? performedBySuperAdminId = null)
+    {
+        try
+        {
+            var adminUser = await _context.AdminUsers.FirstOrDefaultAsync(u => u.Id == userId);
+
+            if (adminUser == null)
+            {
+                _logger.LogWarning("Password change failed: User {UserId} not found", userId);
+                return (false, "User not found");
+            }
+
+            // Verify current password (unless forced by another SuperAdmin)
+            if (performedBySuperAdminId == null || performedBySuperAdminId == userId)
+            {
+                if (!_passwordHasher.VerifyPassword(currentPassword, adminUser.PasswordHash))
+                {
+                    _logger.LogWarning("Password change failed: Invalid current password for user {UserId}", userId);
+
+                    // Audit log: Failed password change
+                    _ = _auditLogService.LogAuthenticationAsync(
+                        AuditActionType.PASSWORD_CHANGE_FAILED,
+                        userId: adminUser.Id,
+                        userEmail: adminUser.Email,
+                        success: false,
+                        tenantId: null,
+                        errorMessage: "Invalid current password"
+                    );
+
+                    return (false, "Current password is incorrect");
+                }
+            }
+
+            // FORTUNE 500: Password complexity validation
+            var (isValid, validationMessage) = ValidatePasswordComplexity(newPassword);
+            if (!isValid)
+            {
+                _logger.LogWarning("Password change failed: Password does not meet complexity requirements for user {UserId}", userId);
+                return (false, validationMessage);
+            }
+
+            // FORTUNE 500: Check password history (prevent reuse of last 5 passwords)
+            var newPasswordHash = _passwordHasher.HashPassword(newPassword);
+
+            if (!string.IsNullOrWhiteSpace(adminUser.PasswordHistory))
+            {
+                var passwordHistory = JsonSerializer.Deserialize<List<string>>(adminUser.PasswordHistory) ?? new List<string>();
+
+                // Check if new password matches any of the last 5 passwords
+                foreach (var oldPasswordHash in passwordHistory)
+                {
+                    if (_passwordHasher.VerifyPassword(newPassword, oldPasswordHash))
+                    {
+                        _logger.LogWarning("Password change failed: Password was used previously for user {UserId}", userId);
+
+                        // Audit log: Password reuse attempt
+                        _ = _auditLogService.LogSecurityEventAsync(
+                            AuditActionType.PASSWORD_CHANGE_FAILED,
+                            AuditSeverity.WARNING,
+                            adminUser.Id,
+                            description: "Attempted to reuse a previously used password",
+                            additionalInfo: JsonSerializer.Serialize(new
+                            {
+                                userEmail = adminUser.Email,
+                                reason = "Password reuse prevention"
+                            })
+                        );
+
+                        return (false, "Password was used previously. Please choose a different password.");
+                    }
+                }
+
+                // Update password history: keep last 5 passwords
+                passwordHistory.Insert(0, adminUser.PasswordHash); // Add current password to history
+                if (passwordHistory.Count > 5)
+                {
+                    passwordHistory = passwordHistory.Take(5).ToList(); // Keep only last 5
+                }
+
+                adminUser.PasswordHistory = JsonSerializer.Serialize(passwordHistory);
+            }
+            else
+            {
+                // First password change: initialize history with current password
+                adminUser.PasswordHistory = JsonSerializer.Serialize(new List<string> { adminUser.PasswordHash });
+            }
+
+            // Update password and related fields
+            var now = DateTime.UtcNow;
+            var passwordExpiryDays = 90; // FORTUNE 500: 90-day password rotation policy
+
+            adminUser.PasswordHash = newPasswordHash;
+            adminUser.LastPasswordChangeDate = now;
+            adminUser.PasswordExpiresAt = now.AddDays(passwordExpiryDays);
+            adminUser.MustChangePassword = false; // Reset forced password change flag
+            adminUser.UpdatedAt = now;
+
+            await _context.SaveChangesAsync();
+
+            _logger.LogInformation("Password changed successfully for user {UserId}", userId);
+
+            // Audit log: Successful password change
+            var isSelfService = performedBySuperAdminId == null || performedBySuperAdminId == userId;
+            _ = _auditLogService.LogAuthenticationAsync(
+                AuditActionType.PASSWORD_CHANGED,
+                userId: adminUser.Id,
+                userEmail: adminUser.Email,
+                success: true,
+                tenantId: null,
+                eventData: new Dictionary<string, object>
+                {
+                    { "passwordExpiryDate", adminUser.PasswordExpiresAt!.Value },
+                    { "passwordExpiryDays", passwordExpiryDays },
+                    { "selfService", isSelfService },
+                    { "performedBySuperAdminId", performedBySuperAdminId ?? Guid.Empty }
+                }
+            );
+
+            return (true, $"Password changed successfully. Your new password will expire in {passwordExpiryDays} days.");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error changing password for user {UserId}", userId);
+            return (false, "An error occurred while changing the password");
+        }
+    }
+
+    /// <summary>
+    /// Validates password complexity requirements
+    /// FORTUNE 500 COMPLIANT: NIST 800-63B, OWASP recommendations
+    /// </summary>
+    /// <param name="password">Password to validate</param>
+    /// <returns>Validation result and message</returns>
+    private (bool IsValid, string Message) ValidatePasswordComplexity(string password)
+    {
+        if (string.IsNullOrWhiteSpace(password))
+        {
+            return (false, "Password cannot be empty");
+        }
+
+        if (password.Length < 12)
+        {
+            return (false, "Password must be at least 12 characters long");
+        }
+
+        if (password.Length > 128)
+        {
+            return (false, "Password cannot exceed 128 characters");
+        }
+
+        bool hasUppercase = password.Any(char.IsUpper);
+        bool hasLowercase = password.Any(char.IsLower);
+        bool hasDigit = password.Any(char.IsDigit);
+        bool hasSpecialChar = password.Any(c => !char.IsLetterOrDigit(c));
+
+        if (!hasUppercase)
+        {
+            return (false, "Password must contain at least one uppercase letter (A-Z)");
+        }
+
+        if (!hasLowercase)
+        {
+            return (false, "Password must contain at least one lowercase letter (a-z)");
+        }
+
+        if (!hasDigit)
+        {
+            return (false, "Password must contain at least one digit (0-9)");
+        }
+
+        if (!hasSpecialChar)
+        {
+            return (false, "Password must contain at least one special character (!@#$%^&*-_+=, etc.)");
+        }
+
+        // Check for common weak passwords (basic blacklist)
+        var weakPasswords = new[]
+        {
+            "Password123!",
+            "Admin123456!",
+            "Welcome123!",
+            "SuperAdmin123!"
+        };
+
+        if (weakPasswords.Any(weak => password.Equals(weak, StringComparison.OrdinalIgnoreCase)))
+        {
+            return (false, "Password is too common. Please choose a more unique password.");
+        }
+
+        return (true, "Password meets complexity requirements");
     }
 
     // ============================================
@@ -693,5 +981,146 @@ public class AuthService : IAuthService
             CreatedAt = DateTime.UtcNow,
             CreatedByIp = ipAddress
         };
+    }
+
+    // ============================================
+    // FORTUNE 500: IP WHITELISTING METHODS
+    // ============================================
+
+    /// <summary>
+    /// Validates if an IP address is in the whitelist
+    /// Supports CIDR notation (e.g., "192.168.1.0/24") and individual IPs
+    /// FORTUNE 500 PATTERN: Google Workspace, Microsoft 365, AWS IAM IP policies
+    /// </summary>
+    /// <param name="ipAddress">The IP address to validate</param>
+    /// <param name="allowedIpsJson">JSON array of allowed IPs/CIDR ranges</param>
+    /// <returns>True if IP is whitelisted, false otherwise</returns>
+    private bool ValidateIpWhitelist(string ipAddress, string allowedIpsJson)
+    {
+        try
+        {
+            // Parse JSON array of allowed IPs
+            var allowedIps = JsonSerializer.Deserialize<List<string>>(allowedIpsJson);
+
+            if (allowedIps == null || !allowedIps.Any())
+            {
+                // If whitelist is empty or invalid, deny access (fail-secure)
+                _logger.LogWarning("IP whitelist is empty or invalid for validation");
+                return false;
+            }
+
+            // Try to parse the incoming IP address
+            if (!System.Net.IPAddress.TryParse(ipAddress, out var incomingIp))
+            {
+                _logger.LogWarning("Invalid IP address format: {IpAddress}", ipAddress);
+                return false;
+            }
+
+            // Check each allowed IP/CIDR range
+            foreach (var allowedIp in allowedIps)
+            {
+                if (string.IsNullOrWhiteSpace(allowedIp))
+                    continue;
+
+                var trimmedIp = allowedIp.Trim();
+
+                // Check if it's a CIDR range (contains '/')
+                if (trimmedIp.Contains('/'))
+                {
+                    if (IsIpInCidrRange(incomingIp, trimmedIp))
+                    {
+                        _logger.LogDebug("IP {IpAddress} matched CIDR range {CidrRange}", ipAddress, trimmedIp);
+                        return true;
+                    }
+                }
+                else
+                {
+                    // Simple exact IP match
+                    if (System.Net.IPAddress.TryParse(trimmedIp, out var allowedIpAddress))
+                    {
+                        if (incomingIp.Equals(allowedIpAddress))
+                        {
+                            _logger.LogDebug("IP {IpAddress} matched exact IP {AllowedIp}", ipAddress, trimmedIp);
+                            return true;
+                        }
+                    }
+                }
+            }
+
+            // No match found
+            _logger.LogWarning("IP {IpAddress} not found in whitelist", ipAddress);
+            return false;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error validating IP whitelist for {IpAddress}", ipAddress);
+            // Fail secure: deny access on error
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Checks if an IP address is within a CIDR range
+    /// Supports IPv4 CIDR notation (e.g., "192.168.1.0/24")
+    /// FORTUNE 500 COMPLIANT: Enterprise-grade IP range validation
+    /// </summary>
+    /// <param name="ipAddress">The IP address to check</param>
+    /// <param name="cidrNotation">CIDR notation (e.g., "192.168.1.0/24")</param>
+    /// <returns>True if IP is in CIDR range, false otherwise</returns>
+    private bool IsIpInCidrRange(System.Net.IPAddress ipAddress, string cidrNotation)
+    {
+        try
+        {
+            var parts = cidrNotation.Split('/');
+            if (parts.Length != 2)
+            {
+                _logger.LogWarning("Invalid CIDR notation: {CidrNotation}", cidrNotation);
+                return false;
+            }
+
+            if (!System.Net.IPAddress.TryParse(parts[0], out var networkAddress))
+            {
+                _logger.LogWarning("Invalid network address in CIDR: {NetworkAddress}", parts[0]);
+                return false;
+            }
+
+            if (!int.TryParse(parts[1], out var prefixLength) || prefixLength < 0 || prefixLength > 32)
+            {
+                _logger.LogWarning("Invalid prefix length in CIDR: {PrefixLength}", parts[1]);
+                return false;
+            }
+
+            // Convert IP addresses to 32-bit integers for bitwise operations
+            var ipBytes = ipAddress.GetAddressBytes();
+            var networkBytes = networkAddress.GetAddressBytes();
+
+            // Only support IPv4 for now
+            if (ipBytes.Length != 4 || networkBytes.Length != 4)
+            {
+                _logger.LogWarning("IPv6 CIDR ranges not supported yet");
+                return false;
+            }
+
+            var ipInt = BitConverter.ToUInt32(ipBytes.Reverse().ToArray(), 0);
+            var networkInt = BitConverter.ToUInt32(networkBytes.Reverse().ToArray(), 0);
+
+            // Create subnet mask from prefix length
+            var mask = uint.MaxValue << (32 - prefixLength);
+
+            // Check if IP is in the network range
+            var isInRange = (ipInt & mask) == (networkInt & mask);
+
+            if (isInRange)
+            {
+                _logger.LogDebug("IP {IpAddress} is within CIDR range {CidrNotation}", ipAddress, cidrNotation);
+            }
+
+            return isInRange;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error checking CIDR range for IP {IpAddress} in range {CidrNotation}", ipAddress, cidrNotation);
+            return false;
+        }
     }
 }

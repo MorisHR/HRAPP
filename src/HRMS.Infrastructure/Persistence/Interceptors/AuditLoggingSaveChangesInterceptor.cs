@@ -30,7 +30,7 @@ namespace HRMS.Infrastructure.Persistence.Interceptors;
 /// - Only serializes changed fields on UPDATE (not entire entity)
 /// - Excludes volatile tables (tokens, sessions)
 /// - Batches audit logs after main SaveChanges
-/// - Non-blocking async execution
+/// - PERFORMANCE FIX: Uses queue-based background service instead of Task.Run
 /// - Shallow serialization (depth = 1, no navigation properties)
 /// </summary>
 public class AuditLoggingSaveChangesInterceptor : SaveChangesInterceptor
@@ -39,6 +39,10 @@ public class AuditLoggingSaveChangesInterceptor : SaveChangesInterceptor
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly ILogger<AuditLoggingSaveChangesInterceptor> _logger;
     private readonly IConfiguration _configuration;
+
+    // NOTE: AuditLogQueueService is optional to maintain backward compatibility
+    // If not registered, falls back to direct database write
+    private HRMS.Infrastructure.Services.AuditLogQueueService? _queueService;
 
     // Entities to exclude from audit logging (prevent infinite loops and reduce noise)
     private static readonly HashSet<string> ExcludedEntities = new(StringComparer.OrdinalIgnoreCase)
@@ -79,6 +83,20 @@ public class AuditLoggingSaveChangesInterceptor : SaveChangesInterceptor
         _httpContextAccessor = httpContextAccessor;
         _logger = logger;
         _configuration = configuration;
+
+        // PERFORMANCE FIX: Try to get queue service (optional for backward compatibility)
+        try
+        {
+            _queueService = serviceProvider.GetService<HRMS.Infrastructure.Services.AuditLogQueueService>();
+            if (_queueService != null)
+            {
+                _logger.LogInformation("Audit log queue service enabled for reliable delivery");
+            }
+        }
+        catch
+        {
+            // Queue service not available - will use fallback
+        }
     }
 
     public override async ValueTask<InterceptionResult<int>> SavingChangesAsync(
@@ -106,27 +124,50 @@ public class AuditLoggingSaveChangesInterceptor : SaveChangesInterceptor
             // Capture audit information now (before save)
             var auditLogs = entries.Select(entry => CaptureAuditInfo(entry)).ToList();
 
-            // Schedule audit logging to run after successful save
-            // Using Task.Run to avoid blocking the main save operation
-            _ = Task.Run(async () =>
+            // PERFORMANCE FIX: Use queue-based service if available, otherwise fallback to Task.Run
+            if (_queueService != null)
             {
-                // Wait a moment for SaveChanges to complete
-                await Task.Delay(100, cancellationToken);
-
+                // Queue audit logs for reliable background processing
                 foreach (var auditLog in auditLogs)
                 {
                     try
                     {
-                        await SaveAuditLogAsync(auditLog, cancellationToken);
+                        EnrichAuditLog(auditLog);
+                        auditLog.Checksum = GenerateChecksum(auditLog);
+
+                        await _queueService.QueueAuditLogAsync(auditLog);
                     }
                     catch (Exception ex)
                     {
                         _logger.LogError(ex,
-                            "Failed to create audit log for {EntityType} {EntityId}, Action: {Action}",
-                            auditLog.EntityType, auditLog.EntityId, auditLog.ActionType);
+                            "Failed to queue audit log for {EntityType} {EntityId}",
+                            auditLog.EntityType, auditLog.EntityId);
                     }
                 }
-            }, cancellationToken);
+            }
+            else
+            {
+                // Fallback: Using Task.Run (less reliable but maintains backward compatibility)
+                _ = Task.Run(async () =>
+                {
+                    // Wait a moment for SaveChanges to complete
+                    await Task.Delay(100, cancellationToken);
+
+                    foreach (var auditLog in auditLogs)
+                    {
+                        try
+                        {
+                            await SaveAuditLogAsync(auditLog, cancellationToken);
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogError(ex,
+                                "Failed to create audit log for {EntityType} {EntityId}, Action: {Action}",
+                                auditLog.EntityType, auditLog.EntityId, auditLog.ActionType);
+                        }
+                    }
+                }, cancellationToken);
+            }
         }
 
         return await base.SavingChangesAsync(eventData, result, cancellationToken);

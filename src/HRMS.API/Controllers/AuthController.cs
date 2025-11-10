@@ -262,6 +262,16 @@ public class AuthController : ControllerBase
 
             _logger.LogInformation("ModelState.IsValid: {IsValid}", ModelState.IsValid);
 
+            // Null check for request
+            if (request == null)
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    message = "Invalid request"
+                });
+            }
+
             if (!ModelState.IsValid)
             {
                 // Log validation errors
@@ -282,7 +292,17 @@ public class AuthController : ControllerBase
                 });
             }
 
-            var result = await _authService.CompleteMfaSetupAsync(request.UserId, request.TotpCode, request.Secret, request.BackupCodes);
+            // Null checks for required fields
+            if (string.IsNullOrEmpty(request.Secret) || request.BackupCodes == null)
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    message = "Secret and backup codes are required"
+                });
+            }
+
+            var result = await _authService.CompleteMfaSetupAsync(request.UserId, request.TotpCode, request.Secret!, request.BackupCodes!);
 
             if (!result)
             {

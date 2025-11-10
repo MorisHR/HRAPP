@@ -24,19 +24,22 @@ public class TenantsController : ControllerBase
     private readonly ILogger<TenantsController> _logger;
     private readonly IEmailService _emailService;
     private readonly IConfiguration _configuration;
+    private readonly IAuditLogService _auditLogService;
 
     public TenantsController(
         TenantManagementService tenantManagementService,
         MasterDbContext context,
         ILogger<TenantsController> logger,
         IEmailService emailService,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        IAuditLogService auditLogService)
     {
         _tenantManagementService = tenantManagementService;
         _context = context;
         _logger = logger;
         _emailService = emailService;
         _configuration = configuration;
+        _auditLogService = auditLogService;
     }
 
     /// <summary>
@@ -151,13 +154,55 @@ public class TenantsController : ControllerBase
             if (existingTenant)
                 return BadRequest(new { success = false, message = "Subdomain already exists" });
 
-            var createdBy = "SuperAdmin"; // TODO: Get from authenticated user
+            // Get SuperAdmin info from authenticated user
+            var superAdminId = Guid.Parse(User.FindFirst("sub")?.Value ?? User.FindFirst("userId")?.Value ?? Guid.Empty.ToString());
+            var superAdminEmail = User.FindFirst("email")?.Value ?? "unknown@hrms.com";
+            var createdBy = superAdminEmail;
+
             var (success, message, tenant) = await _tenantManagementService.CreateTenantAsync(request, createdBy);
 
             if (!success)
+            {
+                // FORTUNE 500: Log failed tenant creation attempt
+                await _auditLogService.LogSuperAdminActionAsync(
+                    AuditActionType.TENANT_CREATED,
+                    superAdminId,
+                    superAdminEmail,
+                    description: $"Failed to create tenant: {request.CompanyName}",
+                    newValues: System.Text.Json.JsonSerializer.Serialize(new { request.CompanyName, request.Subdomain, request.AdminEmail }),
+                    success: false,
+                    errorMessage: message
+                );
+
                 return BadRequest(new { success = false, message });
+            }
 
             _logger.LogInformation("Tenant created successfully: {TenantId} - Status: {Status}", tenant!.Id, tenant.Status);
+
+            // FORTUNE 500: Log successful tenant creation with full details
+            await _auditLogService.LogSuperAdminActionAsync(
+                AuditActionType.TENANT_CREATED,
+                superAdminId,
+                superAdminEmail,
+                targetTenantId: tenant.Id,
+                targetTenantName: tenant.CompanyName,
+                description: $"Created new tenant: {tenant.CompanyName} ({tenant.Subdomain})",
+                newValues: System.Text.Json.JsonSerializer.Serialize(new
+                {
+                    tenant.Id,
+                    tenant.CompanyName,
+                    tenant.Subdomain,
+                    tenant.AdminEmail,
+                    tenant.Status,
+                    tenant.EmployeeTier
+                }),
+                success: true,
+                additionalContext: new Dictionary<string, object>
+                {
+                    { "emailSent", true },
+                    { "initialStatus", tenant.Status.ToString() }
+                }
+            );
 
             // Get the actual tenant entity to access activation token
             var tenantEntity = await _context.Tenants.FindAsync(tenant.Id);
@@ -288,11 +333,46 @@ public class TenantsController : ControllerBase
     {
         try
         {
-            var suspendedBy = "SuperAdmin"; // TODO: Get from authenticated user
+            // Get SuperAdmin info from authenticated user
+            var superAdminId = Guid.Parse(User.FindFirst("sub")?.Value ?? User.FindFirst("userId")?.Value ?? Guid.Empty.ToString());
+            var superAdminEmail = User.FindFirst("email")?.Value ?? "unknown@hrms.com";
+            var suspendedBy = superAdminEmail;
+
+            // Get tenant details before suspension
+            var tenant = await _tenantManagementService.GetTenantByIdAsync(id);
             var (success, message) = await _tenantManagementService.SuspendTenantAsync(id, request.Reason, suspendedBy);
 
             if (!success)
+            {
+                // FORTUNE 500: Log failed suspension attempt
+                await _auditLogService.LogSuperAdminActionAsync(
+                    AuditActionType.TENANT_SUSPENDED,
+                    superAdminId,
+                    superAdminEmail,
+                    targetTenantId: id,
+                    targetTenantName: tenant?.CompanyName,
+                    description: $"Failed to suspend tenant",
+                    reason: request.Reason,
+                    success: false,
+                    errorMessage: message
+                );
+
                 return BadRequest(new { success = false, message });
+            }
+
+            // FORTUNE 500: Log successful suspension with reason
+            await _auditLogService.LogSuperAdminActionAsync(
+                AuditActionType.TENANT_SUSPENDED,
+                superAdminId,
+                superAdminEmail,
+                targetTenantId: id,
+                targetTenantName: tenant?.CompanyName,
+                description: $"Suspended tenant: {tenant?.CompanyName}",
+                oldValues: System.Text.Json.JsonSerializer.Serialize(new { Status = "Active" }),
+                newValues: System.Text.Json.JsonSerializer.Serialize(new { Status = "Suspended" }),
+                reason: request.Reason,
+                success: true
+            );
 
             return Ok(new { success = true, message });
         }
@@ -311,11 +391,46 @@ public class TenantsController : ControllerBase
     {
         try
         {
-            var deletedBy = "SuperAdmin"; // TODO: Get from authenticated user
+            // Get SuperAdmin info from authenticated user
+            var superAdminId = Guid.Parse(User.FindFirst("sub")?.Value ?? User.FindFirst("userId")?.Value ?? Guid.Empty.ToString());
+            var superAdminEmail = User.FindFirst("email")?.Value ?? "unknown@hrms.com";
+            var deletedBy = superAdminEmail;
+
+            // Get tenant details before deletion
+            var tenant = await _tenantManagementService.GetTenantByIdAsync(id);
             var (success, message) = await _tenantManagementService.SoftDeleteTenantAsync(id, request.Reason, deletedBy);
 
             if (!success)
+            {
+                // FORTUNE 500: Log failed soft delete attempt
+                await _auditLogService.LogSuperAdminActionAsync(
+                    AuditActionType.TENANT_DELETED,
+                    superAdminId,
+                    superAdminEmail,
+                    targetTenantId: id,
+                    targetTenantName: tenant?.CompanyName,
+                    description: $"Failed to soft delete tenant",
+                    reason: request.Reason,
+                    success: false,
+                    errorMessage: message
+                );
+
                 return BadRequest(new { success = false, message });
+            }
+
+            // FORTUNE 500: Log successful soft delete with grace period info
+            await _auditLogService.LogSuperAdminActionAsync(
+                AuditActionType.TENANT_DELETED,
+                superAdminId,
+                superAdminEmail,
+                targetTenantId: id,
+                targetTenantName: tenant?.CompanyName,
+                description: $"Soft deleted tenant: {tenant?.CompanyName} (30-day grace period)",
+                oldValues: System.Text.Json.JsonSerializer.Serialize(new { IsDeleted = false }),
+                newValues: System.Text.Json.JsonSerializer.Serialize(new { IsDeleted = true, DeletedAt = DateTime.UtcNow }),
+                reason: request.Reason,
+                success: true
+            );
 
             return Ok(new { success = true, message });
         }
@@ -334,11 +449,44 @@ public class TenantsController : ControllerBase
     {
         try
         {
-            var reactivatedBy = "SuperAdmin"; // TODO: Get from authenticated user
+            // Get SuperAdmin info from authenticated user
+            var superAdminId = Guid.Parse(User.FindFirst("sub")?.Value ?? User.FindFirst("userId")?.Value ?? Guid.Empty.ToString());
+            var superAdminEmail = User.FindFirst("email")?.Value ?? "unknown@hrms.com";
+            var reactivatedBy = superAdminEmail;
+
+            // Get tenant details before reactivation
+            var tenant = await _tenantManagementService.GetTenantByIdAsync(id);
             var (success, message) = await _tenantManagementService.ReactivateTenantAsync(id, reactivatedBy);
 
             if (!success)
+            {
+                // FORTUNE 500: Log failed reactivation attempt
+                await _auditLogService.LogSuperAdminActionAsync(
+                    AuditActionType.TENANT_REACTIVATED,
+                    superAdminId,
+                    superAdminEmail,
+                    targetTenantId: id,
+                    targetTenantName: tenant?.CompanyName,
+                    description: $"Failed to reactivate tenant",
+                    success: false,
+                    errorMessage: message
+                );
+
                 return BadRequest(new { success = false, message });
+            }
+
+            // FORTUNE 500: Log successful reactivation
+            await _auditLogService.LogSuperAdminActionAsync(
+                AuditActionType.TENANT_REACTIVATED,
+                superAdminId,
+                superAdminEmail,
+                targetTenantId: id,
+                targetTenantName: tenant?.CompanyName,
+                description: $"Reactivated tenant: {tenant?.CompanyName}",
+                oldValues: System.Text.Json.JsonSerializer.Serialize(new { Status = tenant?.Status.ToString() }),
+                newValues: System.Text.Json.JsonSerializer.Serialize(new { Status = "Active" }),
+                success: true
+            );
 
             return Ok(new { success = true, message });
         }
@@ -358,19 +506,84 @@ public class TenantsController : ControllerBase
     {
         try
         {
+            // Get SuperAdmin info from authenticated user
+            var superAdminId = Guid.Parse(User.FindFirst("sub")?.Value ?? User.FindFirst("userId")?.Value ?? Guid.Empty.ToString());
+            var superAdminEmail = User.FindFirst("email")?.Value ?? "unknown@hrms.com";
+
             // Require confirmation by typing tenant name
             var tenant = await _tenantManagementService.GetTenantByIdAsync(id);
             if (tenant == null)
                 return NotFound(new { success = false, message = "Tenant not found" });
 
             if (!request.ConfirmationName.Equals(tenant.CompanyName, StringComparison.OrdinalIgnoreCase))
-                return BadRequest(new { success = false, message = "Tenant name confirmation does not match" });
+            {
+                // FORTUNE 500: Log failed confirmation attempt (potential security incident)
+                await _auditLogService.LogSuperAdminActionAsync(
+                    AuditActionType.TENANT_HARD_DELETED,
+                    superAdminId,
+                    superAdminEmail,
+                    targetTenantId: id,
+                    targetTenantName: tenant.CompanyName,
+                    description: $"FAILED CONFIRMATION: Attempted hard delete with incorrect name confirmation",
+                    success: false,
+                    errorMessage: "Tenant name confirmation does not match",
+                    additionalContext: new Dictionary<string, object>
+                    {
+                        { "attemptedConfirmation", request.ConfirmationName },
+                        { "actualTenantName", tenant.CompanyName }
+                    }
+                );
 
-            var deletedBy = "SuperAdmin"; // TODO: Get from authenticated user
+                return BadRequest(new { success = false, message = "Tenant name confirmation does not match" });
+            }
+
+            var deletedBy = superAdminEmail;
             var (success, message) = await _tenantManagementService.HardDeleteTenantAsync(id, deletedBy);
 
             if (!success)
+            {
+                // FORTUNE 500: Log failed hard delete attempt
+                await _auditLogService.LogSuperAdminActionAsync(
+                    AuditActionType.TENANT_HARD_DELETED,
+                    superAdminId,
+                    superAdminEmail,
+                    targetTenantId: id,
+                    targetTenantName: tenant.CompanyName,
+                    description: $"CRITICAL: Failed hard delete attempt for tenant",
+                    oldValues: System.Text.Json.JsonSerializer.Serialize(new { tenant.Id, tenant.CompanyName, tenant.Subdomain }),
+                    success: false,
+                    errorMessage: message
+                );
+
                 return BadRequest(new { success = false, message });
+            }
+
+            // FORTUNE 500: Log CRITICAL successful hard delete (IRREVERSIBLE)
+            await _auditLogService.LogSuperAdminActionAsync(
+                AuditActionType.TENANT_HARD_DELETED,
+                superAdminId,
+                superAdminEmail,
+                targetTenantId: id,
+                targetTenantName: tenant.CompanyName,
+                description: $"CRITICAL: HARD DELETED tenant: {tenant.CompanyName} (IRREVERSIBLE)",
+                oldValues: System.Text.Json.JsonSerializer.Serialize(new
+                {
+                    tenant.Id,
+                    tenant.CompanyName,
+                    tenant.Subdomain,
+                    tenant.AdminEmail,
+                    tenant.Status,
+                    tenant.EmployeeTier,
+                    EmployeeCount = tenant.MaxUsers
+                }),
+                success: true,
+                additionalContext: new Dictionary<string, object>
+                {
+                    { "confirmationProvided", request.ConfirmationName },
+                    { "operationType", "HARD_DELETE" },
+                    { "reversible", false }
+                }
+            );
 
             return Ok(new { success = true, message });
         }
@@ -389,18 +602,71 @@ public class TenantsController : ControllerBase
     {
         try
         {
-            var updatedBy = "SuperAdmin"; // TODO: Get from authenticated user
+            // Get SuperAdmin info from authenticated user
+            var superAdminId = Guid.Parse(User.FindFirst("sub")?.Value ?? User.FindFirst("userId")?.Value ?? Guid.Empty.ToString());
+            var superAdminEmail = User.FindFirst("email")?.Value ?? "unknown@hrms.com";
+            var updatedBy = superAdminEmail;
+
+            // Get tenant details before update
+            var tenant = await _tenantManagementService.GetTenantByIdAsync(id);
+
             var (success, message) = await _tenantManagementService.UpdateEmployeeTierAsync(
                 id,
                 request.EmployeeTier,
                 request.MaxUsers,
                 request.MaxStorageGB,
                 request.ApiCallsPerMonth,
-                request.MonthlyPrice,
+                request.YearlyPriceMUR,
                 updatedBy);
 
             if (!success)
+            {
+                // FORTUNE 500: Log failed tier update attempt
+                await _auditLogService.LogSuperAdminActionAsync(
+                    AuditActionType.TENANT_TIER_UPDATED,
+                    superAdminId,
+                    superAdminEmail,
+                    targetTenantId: id,
+                    targetTenantName: tenant?.CompanyName,
+                    description: $"Failed to update employee tier",
+                    newValues: System.Text.Json.JsonSerializer.Serialize(request),
+                    success: false,
+                    errorMessage: message
+                );
+
                 return BadRequest(new { success = false, message });
+            }
+
+            // FORTUNE 500: Log successful tier update with pricing changes
+            await _auditLogService.LogSuperAdminActionAsync(
+                AuditActionType.TENANT_TIER_UPDATED,
+                superAdminId,
+                superAdminEmail,
+                targetTenantId: id,
+                targetTenantName: tenant?.CompanyName,
+                description: $"Updated employee tier for: {tenant?.CompanyName}",
+                oldValues: System.Text.Json.JsonSerializer.Serialize(new
+                {
+                    EmployeeTier = tenant?.EmployeeTier.ToString(),
+                    MaxUsers = tenant?.MaxUsers,
+                    MaxStorageGB = tenant?.MaxStorageGB,
+                    YearlyPriceMUR = tenant?.YearlyPriceMUR
+                }),
+                newValues: System.Text.Json.JsonSerializer.Serialize(new
+                {
+                    EmployeeTier = request.EmployeeTier.ToString(),
+                    request.MaxUsers,
+                    request.MaxStorageGB,
+                    request.ApiCallsPerMonth,
+                    request.YearlyPriceMUR
+                }),
+                success: true,
+                additionalContext: new Dictionary<string, object>
+                {
+                    { "tierChange", $"{tenant?.EmployeeTier} → {request.EmployeeTier}" },
+                    { "priceChange", $"MUR {tenant?.YearlyPriceMUR:N2} → MUR {request.YearlyPriceMUR:N2}" }
+                }
+            );
 
             return Ok(new { success = true, message });
         }
@@ -434,5 +700,9 @@ public class UpdateEmployeeTierRequest
     public int MaxUsers { get; set; }
     public int MaxStorageGB { get; set; }
     public int ApiCallsPerMonth { get; set; }
-    public decimal MonthlyPrice { get; set; }
+
+    /// <summary>
+    /// FORTUNE 500: Yearly subscription price in Mauritian Rupees
+    /// </summary>
+    public decimal YearlyPriceMUR { get; set; }
 }

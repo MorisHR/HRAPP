@@ -1,0 +1,171 @@
+<div class="security-alerts-dashboard">
+  <div class="dashboard-header">
+    <h1>Security Alerts Dashboard</h1>
+    <button class="btn btn-primary" (click)="refresh()" [disabled]="loading">
+      <i class="fas fa-sync-alt" [class.fa-spin]="loading"></i> Refresh
+    </button>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-container">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+    <p>Loading security alerts...</p>
+  </div>
+
+  <!-- Dashboard Content -->
+  <div *ngIf="!loading">
+    <!-- Severity Count Cards -->
+    <div class="severity-cards">
+      <div class="severity-card emergency" (click)="viewAlertsBySeverity(AuditSeverity.EMERGENCY)">
+        <div class="card-icon">
+          <i class="fas fa-fire"></i>
+        </div>
+        <div class="card-content">
+          <h3>{{ getSeverityCount(AuditSeverity.EMERGENCY) }}</h3>
+          <p>Emergency</p>
+        </div>
+      </div>
+
+      <div class="severity-card critical" (click)="viewAlertsBySeverity(AuditSeverity.CRITICAL)">
+        <div class="card-icon">
+          <i class="fas fa-exclamation-circle"></i>
+        </div>
+        <div class="card-content">
+          <h3>{{ getSeverityCount(AuditSeverity.CRITICAL) }}</h3>
+          <p>Critical</p>
+        </div>
+      </div>
+
+      <div class="severity-card warning" (click)="viewAlertsBySeverity(AuditSeverity.WARNING)">
+        <div class="card-icon">
+          <i class="fas fa-exclamation-triangle"></i>
+        </div>
+        <div class="card-content">
+          <h3>{{ getSeverityCount(AuditSeverity.WARNING) }}</h3>
+          <p>Warning</p>
+        </div>
+      </div>
+
+      <div class="severity-card info" (click)="viewAlertsBySeverity(AuditSeverity.INFO)">
+        <div class="card-icon">
+          <i class="fas fa-info-circle"></i>
+        </div>
+        <div class="card-content">
+          <h3>{{ getSeverityCount(AuditSeverity.INFO) }}</h3>
+          <p>Info</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Statistics Section -->
+    <div class="statistics-section" *ngIf="statistics">
+      <h2>Statistics (Last 30 Days)</h2>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-value">{{ statistics.totalAlerts }}</div>
+          <div class="stat-label">Total Alerts</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">{{ statistics.activeAlerts }}</div>
+          <div class="stat-label">Active Alerts</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">{{ statistics.resolvedAlerts }}</div>
+          <div class="stat-label">Resolved</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">{{ getResolutionPercentage() }}%</div>
+          <div class="stat-label">Resolution Rate</div>
+          <div class="progress">
+            <div class="progress-bar bg-success" [style.width.%]="getResolutionPercentage()"></div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">{{ statistics.averageResolutionTimeHours | number:'1.1-1' }}h</div>
+          <div class="stat-label">Avg Resolution Time</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">{{ statistics.highRiskAlerts }}</div>
+          <div class="stat-label">High Risk Alerts</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Critical Alerts -->
+    <div class="recent-alerts-section">
+      <div class="section-header">
+        <h2>Recent Critical Alerts (Last 24 Hours)</h2>
+        <button class="btn btn-sm btn-outline-primary" (click)="viewAllAlerts()">
+          View All <i class="fas fa-arrow-right"></i>
+        </button>
+      </div>
+
+      <div *ngIf="recentCriticalAlerts.length === 0" class="no-alerts">
+        <i class="fas fa-check-circle"></i>
+        <p>No critical alerts in the last 24 hours</p>
+      </div>
+
+      <div *ngIf="recentCriticalAlerts.length > 0" class="alerts-table">
+        <table class="table table-hover">
+          <thead>
+            <tr>
+              <th>Severity</th>
+              <th>Title</th>
+              <th>Risk Score</th>
+              <th>User</th>
+              <th>Time</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let alert of recentCriticalAlerts" (click)="viewAlertDetail(alert.id)" class="clickable-row">
+              <td>
+                <span class="badge" [ngClass]="'badge-' + getSeverityColor(alert.severity)">
+                  <i [class]="'fas fa-' + getSeverityIcon(alert.severity)"></i>
+                  {{ alert.severityName }}
+                </span>
+              </td>
+              <td>
+                <strong>{{ alert.title }}</strong>
+                <br>
+                <small class="text-muted">{{ alert.alertTypeName }}</small>
+              </td>
+              <td>
+                <span class="badge" [ngClass]="'badge-' + getRiskScoreColor(alert.riskScore)">
+                  {{ alert.riskScore }}/100
+                </span>
+                <br>
+                <small>{{ getRiskScoreLabel(alert.riskScore) }}</small>
+              </td>
+              <td>
+                <span *ngIf="alert.userEmail">{{ alert.userEmail }}</span>
+                <span *ngIf="!alert.userEmail" class="text-muted">N/A</span>
+              </td>
+              <td>
+                <small>{{ formatTimeAgo(alert.detectedAt) }}</small>
+              </td>
+              <td>
+                <span class="badge badge-status" [ngClass]="'badge-status-' + alert.status">
+                  {{ alert.statusName }}
+                </span>
+              </td>
+              <td>
+                <button class="btn btn-sm btn-outline-primary" (click)="viewAlertDetail(alert.id); $event.stopPropagation()">
+                  <i class="fas fa-eye"></i> View
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Auto-refresh indicator -->
+    <div class="auto-refresh-info">
+      <i class="fas fa-sync-alt"></i> Auto-refreshing every 30 seconds
+    </div>
+  </div>
+</div>

@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using HRMS.Application.DTOs.AuditLog;
+using HRMS.Application.Interfaces;
 using HRMS.Core.Interfaces;
 using HRMS.Core.Enums;
 using HRMS.Infrastructure.Middleware;

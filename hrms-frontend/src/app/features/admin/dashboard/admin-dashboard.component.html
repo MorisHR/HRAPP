@@ -1,24 +1,4 @@
 <div class="admin-dashboard">
-  <!-- Toolbar -->
-  <mat-toolbar color="primary" class="dashboard-toolbar">
-    <span class="toolbar-title">HRMS Admin Portal</span>
-    <span class="toolbar-spacer"></span>
-    @if (user()) {
-      <span class="user-name">{{ user()?.firstName }} {{ user()?.lastName }}</span>
-    }
-
-    <!-- Dark Mode Toggle -->
-    <button mat-icon-button (click)="toggleTheme()" [attr.aria-label]="'Toggle dark mode'">
-      <mat-icon>{{ isDark() ? 'light_mode' : 'dark_mode' }}</mat-icon>
-    </button>
-
-    <!-- Logout -->
-    <button mat-icon-button (click)="logout()" [attr.aria-label]="'Logout'">
-      <mat-icon>logout</mat-icon>
-    </button>
-  </mat-toolbar>
-
-  <!-- Main Content -->
   <div class="dashboard-content container">
     <h1 class="dashboard-title">Dashboard</h1>
 
@@ -97,13 +77,63 @@
           </mat-card-content>
         </mat-card>
 
-        <mat-card class="action-card">
+        <mat-card class="action-card" routerLink="/admin/audit-logs">
           <mat-card-content>
             <div class="icon-wrapper">
-              <mat-icon>analytics</mat-icon>
+              <mat-icon>history</mat-icon>
             </div>
-            <h3>View Reports</h3>
-            <p>Access analytics and reports</p>
+            <h3>Audit Logs</h3>
+            <p>View system-wide audit trail and security events</p>
+          </mat-card-content>
+        </mat-card>
+
+        <mat-card class="action-card" routerLink="/admin/security-alerts">
+          <mat-card-content>
+            <div class="icon-wrapper">
+              <mat-icon>security</mat-icon>
+            </div>
+            <h3>Security Alerts</h3>
+            <p>Real-time threat detection and security monitoring</p>
+          </mat-card-content>
+        </mat-card>
+
+        <mat-card class="action-card" routerLink="/admin/anomaly-detection">
+          <mat-card-content>
+            <div class="icon-wrapper">
+              <mat-icon>warning</mat-icon>
+            </div>
+            <h3>Anomaly Detection</h3>
+            <p>AI-powered threat detection and suspicious activity monitoring</p>
+          </mat-card-content>
+        </mat-card>
+
+        <mat-card class="action-card" routerLink="/admin/legal-hold">
+          <mat-card-content>
+            <div class="icon-wrapper">
+              <mat-icon>gavel</mat-icon>
+            </div>
+            <h3>Legal Hold</h3>
+            <p>Manage legal holds and eDiscovery for compliance</p>
+          </mat-card-content>
+        </mat-card>
+
+        <mat-card class="action-card" routerLink="/admin/compliance-reports">
+          <mat-card-content>
+            <div class="icon-wrapper">
+              <mat-icon>assessment</mat-icon>
+            </div>
+            <h3>Compliance Reports</h3>
+            <p>SOX, GDPR, and regulatory compliance reports</p>
+          </mat-card-content>
+        </mat-card>
+
+        <mat-card class="action-card" routerLink="/admin/activity-correlation">
+          <mat-card-content>
+            <div class="icon-wrapper">
+              <mat-icon>timeline</mat-icon>
+            </div>
+            <h3>Activity Correlation</h3>
+            <p>User activity timeline and pattern analysis</p>
           </mat-card-content>
         </mat-card>
 

@@ -30,7 +30,7 @@ export class TenantLoginComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    // ✅ ENTERPRISE FEATURE: Auto-redirect authenticated users
+    // ✅ FORTUNE 500 PATTERN: Auto-redirect authenticated users with valid tokens
     // Prevents users from viewing login page while logged in
     // Matches Fortune 500 behavior (Google, Microsoft, Salesforce)
     if (this.authService.isAuthenticated() && !this.sessionManagement.isTokenExpired()) {
@@ -39,10 +39,12 @@ export class TenantLoginComponent implements OnInit {
       return;
     }
 
-    // If token exists but is expired, clear it
+    // ✅ FORTUNE 500 PATTERN: Silent clearing of expired tokens without navigation
+    // If user has expired/invalid tokens, clear them silently since we're already on login page
+    // This prevents unwanted redirects when accessing /auth/login directly
     if (this.authService.isAuthenticated() && this.sessionManagement.isTokenExpired()) {
-      console.log('⚠️ Token expired - clearing auth state');
-      this.authService.logout();
+      console.log('⚠️ Token expired - clearing silently (already on login page)');
+      this.authService.clearAuthStateSilently();
     }
 
     // ✅ ENVIRONMENT-AWARE TENANT DETECTION

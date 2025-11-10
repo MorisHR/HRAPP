@@ -19,7 +19,11 @@ public class TenantDto
     // Employee Tier (replaces SubscriptionPlan)
     public EmployeeTier EmployeeTier { get; set; }
     public string EmployeeTierDisplay { get; set; } = string.Empty;
-    public decimal MonthlyPrice { get; set; }
+
+    /// <summary>
+    /// FORTUNE 500 PATTERN: Yearly subscription price in Mauritian Rupees
+    /// </summary>
+    public decimal YearlyPriceMUR { get; set; }
 
     // Resource Limits and Usage
     public int MaxUsers { get; set; }

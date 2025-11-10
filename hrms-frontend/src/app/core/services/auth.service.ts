@@ -227,8 +227,32 @@ export class AuthService {
    * UPDATED: Now calls backend to revoke refresh token and navigates based on user type
    * SECURITY FIX: Clears state synchronously before navigation to prevent guard race conditions
    */
-  logout(): void {
-    console.log('🚪 LOGOUT: Starting logout process');
+  /**
+   * FORTUNE 500 PATTERN: Silent auth state clearing without navigation
+   * Used when already on a login page and need to clear expired/invalid tokens
+   */
+  clearAuthStateSilently(): void {
+    console.log('🧹 SILENT CLEAR: Clearing auth state without navigation');
+
+    // Stop session management
+    this.sessionManagement.stopSession();
+
+    // Clear local auth state
+    this.clearAuthState();
+
+    // Revoke backend token (fire-and-forget)
+    this.http.post(
+      `${this.apiUrl}/auth/revoke`,
+      {},
+      { withCredentials: true }
+    ).subscribe({
+      next: () => console.log('✅ Token revoked (silent)'),
+      error: () => {} // Silently fail - user is logging out anyway
+    });
+  }
+
+  logout(navigate: boolean = true): void {
+    console.log('🚪 LOGOUT: Starting logout process (navigate:', navigate, ')');
 
     // Get user type before clearing state
     const user = this.userSignal();
@@ -260,6 +284,13 @@ export class AuthService {
       next: () => console.log('✅ Refresh token revoked successfully'),
       error: (err) => console.warn('⚠️ Token revocation failed (user logged out anyway):', err)
     });
+
+    // FORTUNE 500 PATTERN: Only navigate if requested
+    // When already on a login page, skip navigation to avoid redirect loops
+    if (!navigate) {
+      console.log('⏭️ LOGOUT: Skipping navigation (already on login page)');
+      return;
+    }
 
     // Navigate based on user type using replaceUrl to prevent back button issues
     // State is already cleared, so guards won't block navigation

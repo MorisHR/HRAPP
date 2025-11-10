@@ -17,7 +17,37 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatChipsModule } from '@angular/material/chips';
 import { BaseChartDirective } from 'ng2-charts';
-import { ChartConfiguration, ChartData } from 'chart.js';
+import {
+  Chart,
+  ChartConfiguration,
+  ChartData,
+  LinearScale,
+  CategoryScale,
+  BarController,
+  DoughnutController,
+  ArcElement,
+  BarElement,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend
+} from 'chart.js';
+
+// Register Chart.js components
+Chart.register(
+  LinearScale,
+  CategoryScale,
+  BarController,
+  DoughnutController,
+  ArcElement,
+  BarElement,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend
+);
 
 interface KpiCard {
   title: string;

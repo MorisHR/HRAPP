@@ -120,13 +120,13 @@ public class CreateTenantRequestValidator : AbstractValidator<CreateTenantReques
             .WithMessage("Maximum API calls per month cannot exceed 10,000,000")
             .WithName("Maximum API Calls Per Month");
 
-        // Monthly Price Validation
-        RuleFor(x => x.MonthlyPrice)
+        // Yearly Price Validation (FORTUNE 500 Pattern)
+        RuleFor(x => x.YearlyPriceMUR)
             .GreaterThanOrEqualTo(0)
-            .WithMessage("Monthly price must be zero or greater")
-            .LessThanOrEqualTo(100000)
-            .WithMessage("Monthly price cannot exceed $100,000")
-            .WithName("Monthly Price");
+            .WithMessage("Yearly price must be zero or greater (MUR)")
+            .LessThanOrEqualTo(10000000)
+            .WithMessage("Yearly price cannot exceed 10,000,000 MUR")
+            .WithName("Yearly Price (MUR)");
 
         // Admin User Name Validation
         RuleFor(x => x.AdminUserName)

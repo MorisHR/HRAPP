@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
@@ -89,7 +89,8 @@ export class TenantAuditLogsComponent implements OnInit {
   constructor(
     private auditLogService: AuditLogService,
     private dialog: MatDialog,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -99,6 +100,8 @@ export class TenantAuditLogsComponent implements OnInit {
 
   loadAuditLogs(): void {
     this.loading = true;
+    this.cdr.detectChanges();
+
     // IMPORTANT: Using getTenantAuditLogs() - backend auto-filters by tenant
     this.auditLogService.getTenantAuditLogs(this.filter).subscribe({
       next: (result: PagedResult<AuditLog>) => {
@@ -106,17 +109,21 @@ export class TenantAuditLogsComponent implements OnInit {
         this.totalCount = result.totalCount;
         this.pageNumber = result.pageNumber;
         this.loading = false;
+        this.cdr.detectChanges();
       },
       error: (error) => {
         console.error('Error loading audit logs', error);
         this.snackBar.open('Error loading audit logs', 'Close', { duration: 3000 });
         this.loading = false;
+        this.cdr.detectChanges();
       }
     });
   }
 
   loadStatistics(): void {
     this.loadingStats = true;
+    this.cdr.detectChanges();
+
     const startDate = this.filter.startDate || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
     const endDate = this.filter.endDate || new Date();
 
@@ -124,10 +131,12 @@ export class TenantAuditLogsComponent implements OnInit {
       next: (stats) => {
         this.statistics = stats;
         this.loadingStats = false;
+        this.cdr.detectChanges();
       },
       error: (error) => {
         console.error('Error loading statistics', error);
         this.loadingStats = false;
+        this.cdr.detectChanges();
       }
     });
   }

@@ -171,6 +171,31 @@ public class AuditLoggingMiddleware
                 try
                 {
                     await auditLogService.LogAsync(auditLog);
+
+                    // FORTUNE 500 ENHANCEMENT: Run anomaly detection after audit log is saved
+                    // This is done asynchronously to avoid blocking the audit logging pipeline
+                    var anomalyService = context.RequestServices.GetService<IAnomalyDetectionService>();
+                    if (anomalyService != null)
+                    {
+                        _ = Task.Run(async () =>
+                        {
+                            try
+                            {
+                                var anomalies = await anomalyService.DetectAnomaliesAsync(auditLog);
+                                if (anomalies.Any())
+                                {
+                                    _logger.LogWarning("Detected {Count} anomalies for audit log {AuditLogId}",
+                                        anomalies.Count, auditLog.Id);
+                                }
+                            }
+                            catch (Exception anomEx)
+                            {
+                                _logger.LogError(anomEx, "Failed to run anomaly detection for audit log {AuditLogId}",
+                                    auditLog.Id);
+                                // Don't fail the request if anomaly detection fails
+                            }
+                        });
+                    }
                 }
                 catch (Exception ex)
                 {

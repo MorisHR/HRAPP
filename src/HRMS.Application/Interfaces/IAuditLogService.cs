@@ -233,6 +233,79 @@ public interface IAuditLogService
     /// <param name="days">Number of days to analyze</param>
     /// <returns>Statistics object</returns>
     Task<AuditLogStatistics> GetStatisticsAsync(Guid? tenantId, int days = 30);
+
+    // ============================================
+    // AUDIT LOG VIEWER API METHODS
+    // ============================================
+
+    /// <summary>
+    /// Get paginated and filtered audit logs for the viewer UI
+    /// </summary>
+    Task<HRMS.Application.DTOs.AuditLog.PagedResult<HRMS.Application.DTOs.AuditLog.AuditLogDto>> GetAuditLogsAsync(
+        HRMS.Application.DTOs.AuditLog.AuditLogFilterDto filter);
+
+    /// <summary>
+    /// Get detailed audit log by ID
+    /// </summary>
+    Task<HRMS.Application.DTOs.AuditLog.AuditLogDetailDto?> GetAuditLogByIdAsync(Guid id);
+
+    /// <summary>
+    /// Get statistics with date range filter
+    /// </summary>
+    Task<HRMS.Application.DTOs.AuditLog.AuditLogStatisticsDto> GetStatisticsAsync(
+        DateTime? startDate,
+        DateTime? endDate,
+        Guid? tenantId);
+
+    /// <summary>
+    /// Export audit logs to CSV format
+    /// </summary>
+    Task<string> ExportToCsvAsync(HRMS.Application.DTOs.AuditLog.AuditLogFilterDto filter);
+
+    /// <summary>
+    /// Get user activity summary for a tenant
+    /// </summary>
+    Task<List<HRMS.Application.DTOs.AuditLog.UserActivityDto>> GetUserActivityAsync(
+        Guid tenantId,
+        DateTime startDate,
+        DateTime endDate);
+
+    // ============================================
+    // FORTUNE 500 ENHANCEMENT: SUPERADMIN ACTION LOGGING
+    // ============================================
+
+    /// <summary>
+    /// Log SuperAdmin platform administration actions with enhanced accountability
+    /// CRITICAL for SOC 2, GDPR, and audit compliance
+    /// Automatically enriches with IP address, user agent, correlation ID from HttpContext
+    /// </summary>
+    /// <param name="actionType">SuperAdmin action type (TENANT_CREATED, TENANT_SUSPENDED, etc.)</param>
+    /// <param name="superAdminId">ID of SuperAdmin performing the action</param>
+    /// <param name="superAdminEmail">Email of SuperAdmin (for reporting)</param>
+    /// <param name="targetTenantId">ID of tenant being affected (if applicable)</param>
+    /// <param name="targetTenantName">Name of tenant being affected (if applicable)</param>
+    /// <param name="description">Human-readable description of action</param>
+    /// <param name="oldValues">Previous state (for updates/deletions)</param>
+    /// <param name="newValues">New state (for creates/updates)</param>
+    /// <param name="reason">Business reason for action (required for sensitive operations)</param>
+    /// <param name="success">Whether operation succeeded</param>
+    /// <param name="errorMessage">Error message if operation failed</param>
+    /// <param name="additionalContext">Additional context (subscription details, pricing, etc.)</param>
+    /// <returns>Created audit log entry</returns>
+    Task<AuditLog> LogSuperAdminActionAsync(
+        AuditActionType actionType,
+        Guid superAdminId,
+        string superAdminEmail,
+        Guid? targetTenantId = null,
+        string? targetTenantName = null,
+        string? description = null,
+        string? oldValues = null,
+        string? newValues = null,
+        string? reason = null,
+        bool success = true,
+        string? errorMessage = null,
+        Dictionary<string, object>? additionalContext = null
+    );
 }
 
 /// <summary>
