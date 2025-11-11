@@ -82,8 +82,8 @@ public class Attendance : BaseEntity
     public bool IsSunday { get; set; }
     public bool IsPublicHoliday { get; set; }
 
-    public string? CreatedBy { get; set; }
-    public string? UpdatedBy { get; set; }
+    public new string? CreatedBy { get; set; }
+    public new string? UpdatedBy { get; set; }
 
     // Navigation
     public virtual Employee? Employee { get; set; }

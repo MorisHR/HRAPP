@@ -53,7 +53,7 @@ public class TenantManagementService
             if (await _masterDbContext.Tenants.AnyAsync(t => t.Subdomain == request.Subdomain.ToLower()))
             {
                 _logger.LogWarning("Tenant creation failed: Subdomain '{Subdomain}' already exists", request.Subdomain);
-                return (false, $"A tenant with subdomain '{request.Subdomain}' already exists. Please choose a different subdomain.", null);
+                return (false, $"A tenant with subdomain '{request.Subdomain}' already exists. Please choose a different subdomain.", (TenantDto?)null);
             }
 
             // Generate schema name
@@ -70,7 +70,7 @@ public class TenantManagementService
                 if (!dropped)
                 {
                     _logger.LogError("Failed to drop orphaned schema: {SchemaName}", schemaName);
-                    return (false, "Failed to clean up orphaned data. Please contact support.", null);
+                    return (false, "Failed to clean up orphaned data. Please contact support.", (TenantDto?)null);
                 }
 
                 _logger.LogInformation("Orphaned schema cleaned up successfully");
@@ -134,7 +134,7 @@ public class TenantManagementService
                 // Manually drop schema if it was partially created
                 await _schemaProvisioningService.DropTenantSchemaAsync(schemaName);
 
-                return (false, "Failed to create tenant database. The operation has been rolled back. Please try again.", null);
+                return (false, "Failed to create tenant database. The operation has been rolled back. Please try again.", (TenantDto?)null);
             }
 
             _logger.LogInformation("Schema created and migrations applied successfully");
@@ -202,7 +202,7 @@ public class TenantManagementService
 
             // Return user-friendly error message
             var errorMessage = ex.InnerException?.Message ?? ex.Message;
-            return (false, $"Tenant creation failed: {errorMessage}. All changes have been rolled back. Please try again or contact support if the problem persists.", null);
+            return (false, $"Tenant creation failed: {errorMessage}. All changes have been rolled back. Please try again or contact support if the problem persists.", (TenantDto?)null);
         }
         });
     }
@@ -483,7 +483,7 @@ public class TenantManagementService
                 if (tenant == null)
                 {
                     _logger.LogWarning("Activation failed: Invalid activation token");
-                    return (false, "Invalid activation token", null);
+                    return (false, "Invalid activation token", (string?)null);
                 }
 
                 // Check if already activated
@@ -497,7 +497,7 @@ public class TenantManagementService
                 if (tenant.ActivationTokenExpiry < DateTime.UtcNow)
                 {
                     _logger.LogWarning("Activation failed: Token expired for tenant {Subdomain}", tenant.Subdomain);
-                    return (false, "Activation link has expired. Please contact support.", null);
+                    return (false, "Activation link has expired. Please contact support.", (string?)null);
                 }
 
                 // Create tenant schema if not exists (in case it was only partially created)
@@ -509,7 +509,7 @@ public class TenantManagementService
                     if (!schemaCreated)
                     {
                         _logger.LogError("Failed to create tenant schema during activation");
-                        return (false, "Failed to provision tenant database. Please contact support.", null);
+                        return (false, "Failed to provision tenant database. Please contact support.", (string?)null);
                     }
                 }
 
@@ -531,7 +531,7 @@ public class TenantManagementService
             {
                 await transaction.RollbackAsync();
                 _logger.LogError(ex, "Error activating tenant");
-                return (false, "An error occurred during activation. Please try again.", null);
+                return (false, "An error occurred during activation. Please try again.", (string?)null);
             }
         });
     }

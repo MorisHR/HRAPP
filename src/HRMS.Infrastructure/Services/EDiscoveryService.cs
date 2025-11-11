@@ -47,7 +47,7 @@ public class EDiscoveryService : IEDiscoveryService
         };
     }
 
-    public async Task<byte[]> ExportToEmlxAsync(
+    public Task<byte[]> ExportToEmlxAsync(
         List<AuditLog> auditLogs,
         CancellationToken cancellationToken = default)
     {
@@ -66,10 +66,10 @@ public class EDiscoveryService : IEDiscoveryService
             sb.AppendLine($"Timestamp: {log.PerformedAt:O}");
             sb.AppendLine();
         }
-        return Encoding.UTF8.GetBytes(sb.ToString());
+        return Task.FromResult(Encoding.UTF8.GetBytes(sb.ToString()));
     }
 
-    public async Task<byte[]> ExportToPdfAsync(
+    public Task<byte[]> ExportToPdfAsync(
         List<AuditLog> auditLogs,
         string caseNumber,
         CancellationToken cancellationToken = default)
@@ -94,7 +94,7 @@ public class EDiscoveryService : IEDiscoveryService
             sb.AppendLine($"Entity: {log.EntityType}");
             sb.AppendLine();
         }
-        return Encoding.UTF8.GetBytes(sb.ToString());
+        return Task.FromResult(Encoding.UTF8.GetBytes(sb.ToString()));
     }
 
     public async Task<byte[]> GenerateChainOfCustodyReportAsync(
@@ -125,15 +125,15 @@ public class EDiscoveryService : IEDiscoveryService
         return Encoding.UTF8.GetBytes(sb.ToString());
     }
 
-    public async Task<byte[]> ExportToJsonAsync(
+    public Task<byte[]> ExportToJsonAsync(
         List<AuditLog> auditLogs,
         CancellationToken cancellationToken = default)
     {
         var json = JsonSerializer.Serialize(auditLogs, new JsonSerializerOptions { WriteIndented = true });
-        return Encoding.UTF8.GetBytes(json);
+        return Task.FromResult(Encoding.UTF8.GetBytes(json));
     }
 
-    public async Task<byte[]> ExportToCsvAsync(
+    public Task<byte[]> ExportToCsvAsync(
         List<AuditLog> auditLogs,
         CancellationToken cancellationToken = default)
     {
@@ -143,6 +143,6 @@ public class EDiscoveryService : IEDiscoveryService
         {
             sb.AppendLine($"{log.Id},{log.PerformedAt:O},{log.UserEmail},{log.ActionType},{log.EntityType},{log.Success},{log.IpAddress},{log.Geolocation}");
         }
-        return Encoding.UTF8.GetBytes(sb.ToString());
+        return Task.FromResult(Encoding.UTF8.GetBytes(sb.ToString()));
     }
 }

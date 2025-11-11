@@ -340,7 +340,7 @@ public class DepartmentService
     {
         var currentParentId = proposedParentId;
 
-        while (currentParentId != null)
+        while (currentParentId != Guid.Empty)
         {
             if (currentParentId == departmentId)
             {

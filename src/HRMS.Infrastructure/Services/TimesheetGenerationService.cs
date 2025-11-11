@@ -334,7 +334,7 @@ public class TimesheetGenerationService : ITimesheetGenerationService
         return 40m;
     }
 
-    private async Task<TimesheetEntry> GenerateTimesheetEntryForDateAsync(
+    private Task<TimesheetEntry> GenerateTimesheetEntryForDateAsync(
         Guid timesheetId,
         DateTime date,
         Attendance? attendance,
@@ -379,7 +379,7 @@ public class TimesheetGenerationService : ITimesheetGenerationService
             }
 
             entry.ActualHours = 8m;
-            return entry;
+            return Task.FromResult(entry);
         }
 
         // Handle attendance records
@@ -425,7 +425,7 @@ public class TimesheetGenerationService : ITimesheetGenerationService
             }
         }
 
-        return entry;
+        return Task.FromResult(entry);
     }
 
     private async Task ApplyOvertimeRulesAsync(Timesheet timesheet, Employee employee)

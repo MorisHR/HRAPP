@@ -69,11 +69,11 @@ public class GDPRComplianceService : IGDPRComplianceService
         };
     }
 
-    public async Task<DataBreachNotificationReport> GenerateDataBreachNotificationReportAsync(
+    public Task<DataBreachNotificationReport> GenerateDataBreachNotificationReportAsync(
         Guid incidentId,
         CancellationToken cancellationToken = default)
     {
-        return new DataBreachNotificationReport
+        return Task.FromResult(new DataBreachNotificationReport
         {
             IncidentId = incidentId,
             BreachDetectedAt = DateTime.UtcNow,
@@ -83,16 +83,16 @@ public class GDPRComplianceService : IGDPRComplianceService
             AffectedUsersCount = 0,
             RequiresRegulatoryNotification = false,
             RequiresUserNotification = false
-        };
+        });
     }
 
-    public async Task<ConsentAuditReport> GenerateConsentAuditReportAsync(
+    public Task<ConsentAuditReport> GenerateConsentAuditReportAsync(
         DateTime startDate,
         DateTime endDate,
         Guid? tenantId = null,
         CancellationToken cancellationToken = default)
     {
-        return new ConsentAuditReport
+        return Task.FromResult(new ConsentAuditReport
         {
             ReportGeneratedAt = DateTime.UtcNow,
             PeriodStart = startDate,
@@ -101,6 +101,6 @@ public class GDPRComplianceService : IGDPRComplianceService
             TotalConsents = 0,
             ActiveConsents = 0,
             WithdrawnConsents = 0
-        };
+        });
     }
 }

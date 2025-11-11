@@ -59,8 +59,8 @@ public class AttendanceMachine : BaseEntity
     public string? ZKTecoDeviceId { get; set; }
     public DateTime? LastSyncAt { get; set; }  // Alias for LastSyncTime
 
-    public string? CreatedBy { get; set; }
-    public string? UpdatedBy { get; set; }
+    public new string? CreatedBy { get; set; }
+    public new string? UpdatedBy { get; set; }
 
     // Navigation Properties
     public ICollection<Attendance> Attendances { get; set; } = new List<Attendance>();

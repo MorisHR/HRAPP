@@ -996,9 +996,10 @@ public class PayrollService : IPayrollService
 
         var currentYear = DateTime.UtcNow.Year;
         var leaveBalance = await _context.LeaveBalances
+            .Include(lb => lb.LeaveType)
             .Where(lb => lb.EmployeeId == employeeId)
             .Where(lb => lb.Year == currentYear)
-            .Where(lb => lb.LeaveType.TypeCode == LeaveTypeEnum.AnnualLeave)
+            .Where(lb => lb.LeaveType!.TypeCode == LeaveTypeEnum.AnnualLeave)
             .FirstOrDefaultAsync();
 
         if (leaveBalance == null || leaveBalance.AvailableDays <= 0)
@@ -1148,11 +1149,11 @@ public class PayrollService : IPayrollService
             .ToListAsync();
 
         decimal paidLeaveDays = leaves
-            .Where(la => la.LeaveType.IsPaid)
+            .Where(la => la.LeaveType != null && la.LeaveType.IsPaid)
             .Sum(la => la.TotalDays);
 
         decimal unpaidLeaveDays = leaves
-            .Where(la => !la.LeaveType.IsPaid)
+            .Where(la => la.LeaveType != null && !la.LeaveType.IsPaid)
             .Sum(la => la.TotalDays);
 
         return (workingDays, actualDaysWorked, paidLeaveDays, unpaidLeaveDays);

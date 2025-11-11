@@ -28,7 +28,7 @@ public class EmployeeDraft : BaseEntity
     /// <summary>
     /// User ID who created this draft
     /// </summary>
-    public Guid CreatedBy { get; set; }
+    public new Guid CreatedBy { get; set; }
 
     /// <summary>
     /// Name of user who created this draft
@@ -38,7 +38,7 @@ public class EmployeeDraft : BaseEntity
     /// <summary>
     /// When the draft was created
     /// </summary>
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public new DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     /// <summary>
     /// User ID who last edited this draft
@@ -68,12 +68,12 @@ public class EmployeeDraft : BaseEntity
     /// <summary>
     /// Soft delete flag
     /// </summary>
-    public bool IsDeleted { get; set; } = false;
+    public new bool IsDeleted { get; set; } = false;
 
     /// <summary>
     /// When the draft was deleted (if soft deleted)
     /// </summary>
-    public DateTime? DeletedAt { get; set; }
+    public new DateTime? DeletedAt { get; set; }
 
     /// <summary>
     /// Check if draft has expired

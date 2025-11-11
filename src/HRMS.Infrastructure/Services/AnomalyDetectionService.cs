@@ -196,10 +196,10 @@ public class AnomalyDetectionService : IAnomalyDetectionService
         );
     }
 
-    private async Task<DetectedAnomaly?> DetectMassDataExportAsync(AuditLog auditLog, CancellationToken cancellationToken)
+    private Task<DetectedAnomaly?> DetectMassDataExportAsync(AuditLog auditLog, CancellationToken cancellationToken)
     {
         if (auditLog.ActionType != AuditActionType.DATA_EXPORTED && auditLog.ActionType != AuditActionType.COMPLIANCE_DATA_EXPORT)
-            return null;
+            return Task.FromResult<DetectedAnomaly?>(null);
 
         // Try to extract record count from metadata
         int recordCount = 0;
@@ -217,27 +217,27 @@ public class AnomalyDetectionService : IAnomalyDetectionService
         }
 
         if (recordCount < _settings.MassExportRecordThreshold)
-            return null;
+            return Task.FromResult<DetectedAnomaly?>(null);
 
         var riskLevel = recordCount >= 1000 ? AnomalyRiskLevel.CRITICAL : AnomalyRiskLevel.HIGH;
 
-        return CreateAnomaly(
+        return Task.FromResult<DetectedAnomaly?>(CreateAnomaly(
             auditLog,
             AnomalyType.MASS_DATA_EXPORT,
             riskLevel,
             $"Mass data export detected: {recordCount} records exported",
             new { RecordCount = recordCount, EntityType = auditLog.EntityType },
             "MassDataExportRule"
-        );
+        ));
     }
 
-    private async Task<DetectedAnomaly?> DetectAfterHoursAccessAsync(AuditLog auditLog, CancellationToken cancellationToken)
+    private Task<DetectedAnomaly?> DetectAfterHoursAccessAsync(AuditLog auditLog, CancellationToken cancellationToken)
     {
         var hour = auditLog.PerformedAt.Hour;
         var isAfterHours = hour >= _settings.AfterHoursStartHour || hour < _settings.AfterHoursEndHour;
 
         if (!isAfterHours)
-            return null;
+            return Task.FromResult<DetectedAnomaly?>(null);
 
         // Only flag sensitive operations
         var sensitiveActions = new[]
@@ -251,26 +251,26 @@ public class AnomalyDetectionService : IAnomalyDetectionService
         };
 
         if (!sensitiveActions.Contains(auditLog.ActionType))
-            return null;
+            return Task.FromResult<DetectedAnomaly?>(null);
 
-        return CreateAnomaly(
+        return Task.FromResult<DetectedAnomaly?>(CreateAnomaly(
             auditLog,
             AnomalyType.AFTER_HOURS_ACCESS,
             AnomalyRiskLevel.MEDIUM,
             $"After-hours access detected: {auditLog.ActionType} at {auditLog.PerformedAt:HH:mm} UTC",
             new { Hour = hour, Action = auditLog.ActionType.ToString() },
             "AfterHoursAccessRule"
-        );
+        ));
     }
 
-    private async Task<DetectedAnomaly?> DetectLargeSalaryChangeAsync(AuditLog auditLog, CancellationToken cancellationToken)
+    private Task<DetectedAnomaly?> DetectLargeSalaryChangeAsync(AuditLog auditLog, CancellationToken cancellationToken)
     {
         if (auditLog.ActionType != AuditActionType.EMPLOYEE_SALARY_UPDATED)
-            return null;
+            return Task.FromResult<DetectedAnomaly?>(null);
 
         // Try to extract salary change from OldValues and NewValues
         if (string.IsNullOrEmpty(auditLog.OldValues) || string.IsNullOrEmpty(auditLog.NewValues))
-            return null;
+            return Task.FromResult<DetectedAnomaly?>(null);
 
         try
         {
@@ -278,36 +278,36 @@ public class AnomalyDetectionService : IAnomalyDetectionService
             var newValues = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(auditLog.NewValues);
 
             if (oldValues == null || newValues == null)
-                return null;
+                return Task.FromResult<DetectedAnomaly?>(null);
 
             if (!oldValues.ContainsKey("Salary") || !newValues.ContainsKey("Salary"))
-                return null;
+                return Task.FromResult<DetectedAnomaly?>(null);
 
             var oldSalary = oldValues["Salary"].GetDecimal();
             var newSalary = newValues["Salary"].GetDecimal();
 
             if (oldSalary == 0)
-                return null;
+                return Task.FromResult<DetectedAnomaly?>(null);
 
             var changePercent = Math.Abs((newSalary - oldSalary) / oldSalary * 100);
 
             if (changePercent < _settings.SalaryChangePercentageThreshold)
-                return null;
+                return Task.FromResult<DetectedAnomaly?>(null);
 
             var riskLevel = changePercent >= 100 ? AnomalyRiskLevel.CRITICAL : AnomalyRiskLevel.HIGH;
 
-            return CreateAnomaly(
+            return Task.FromResult<DetectedAnomaly?>(CreateAnomaly(
                 auditLog,
                 AnomalyType.LARGE_SALARY_CHANGE,
                 riskLevel,
                 $"Large salary change detected: {changePercent:F1}% change (from {oldSalary:C} to {newSalary:C})",
                 new { OldSalary = oldSalary, NewSalary = newSalary, ChangePercent = changePercent },
                 "LargeSalaryChangeRule"
-            );
+            ));
         }
         catch
         {
-            return null;
+            return Task.FromResult<DetectedAnomaly?>(null);
         }
     }
 
@@ -379,30 +379,30 @@ public class AnomalyDetectionService : IAnomalyDetectionService
         );
     }
 
-    private async Task<DetectedAnomaly?> DetectPrivilegeEscalationAsync(AuditLog auditLog, CancellationToken cancellationToken)
+    private Task<DetectedAnomaly?> DetectPrivilegeEscalationAsync(AuditLog auditLog, CancellationToken cancellationToken)
     {
         if (auditLog.ActionType != AuditActionType.EMPLOYEE_ROLE_CHANGED &&
             auditLog.ActionType != AuditActionType.PERMISSION_GRANTED &&
             auditLog.ActionType != AuditActionType.PERMISSION_REVOKED)
-            return null;
+            return Task.FromResult<DetectedAnomaly?>(null);
 
         // Check if user modified their own permissions
         if (auditLog.UserId == auditLog.EntityId)
         {
-            return CreateAnomaly(
+            return Task.FromResult<DetectedAnomaly?>(CreateAnomaly(
                 auditLog,
                 AnomalyType.PRIVILEGE_ESCALATION,
                 AnomalyRiskLevel.CRITICAL,
                 "Privilege escalation detected: User modified their own permissions",
                 new { SelfModification = true },
                 "PrivilegeEscalationRule"
-            );
+            ));
         }
 
-        return null;
+        return Task.FromResult<DetectedAnomaly?>(null);
     }
 
-    private async Task<DetectedAnomaly?> DetectSecuritySettingChangesAsync(AuditLog auditLog, CancellationToken cancellationToken)
+    private Task<DetectedAnomaly?> DetectSecuritySettingChangesAsync(AuditLog auditLog, CancellationToken cancellationToken)
     {
         var securityActions = new[]
         {
@@ -411,18 +411,18 @@ public class AnomalyDetectionService : IAnomalyDetectionService
         };
 
         if (!securityActions.Contains(auditLog.ActionType))
-            return null;
+            return Task.FromResult<DetectedAnomaly?>(null);
 
         var riskLevel = auditLog.ActionType == AuditActionType.SECURITY_SETTING_CHANGED ? AnomalyRiskLevel.HIGH : AnomalyRiskLevel.MEDIUM;
 
-        return CreateAnomaly(
+        return Task.FromResult<DetectedAnomaly?>(CreateAnomaly(
             auditLog,
             AnomalyType.SECURITY_SETTING_DISABLED,
             riskLevel,
             $"Security setting change detected: {auditLog.ActionType}",
             new { Action = auditLog.ActionType.ToString() },
             "SecuritySettingChangesRule"
-        );
+        ));
     }
 
     private async Task<DetectedAnomaly?> DetectUnusualDataAccessAsync(AuditLog auditLog, CancellationToken cancellationToken)
@@ -685,12 +685,12 @@ public class AnomalyDetectionService : IAnomalyDetectionService
         return false;
     }
 
-    private async Task SendAnomalyNotificationAsync(DetectedAnomaly anomaly, CancellationToken cancellationToken)
+    private Task SendAnomalyNotificationAsync(DetectedAnomaly anomaly, CancellationToken cancellationToken)
     {
         try
         {
             if (_settings.NotificationRecipients == null || !_settings.NotificationRecipients.Any())
-                return;
+                return Task.CompletedTask;
 
             // Send emails to configured recipients
             // NOTE: This would integrate with IEmailService in a production environment
@@ -705,5 +705,6 @@ public class AnomalyDetectionService : IAnomalyDetectionService
         {
             _logger.LogError(ex, "Failed to send anomaly notification for {AnomalyId}", anomaly.Id);
         }
+        return Task.CompletedTask;
     }
 }

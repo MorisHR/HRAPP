@@ -27,20 +27,20 @@ public class SectorComplianceService : ISectorComplianceService
         _serviceProvider = serviceProvider;
     }
 
-    public async Task<Dictionary<string, Dictionary<string, object>>> GetEffectiveRulesForTenantAsync(string tenantSchemaName)
+    public Task<Dictionary<string, Dictionary<string, object>>> GetEffectiveRulesForTenantAsync(string tenantSchemaName)
     {
         _logger.LogInformation("Getting effective compliance rules for tenant: {TenantSchema}", tenantSchemaName);
 
         // This is a placeholder - full implementation would query tenant context
-        return new Dictionary<string, Dictionary<string, object>>();
+        return Task.FromResult(new Dictionary<string, Dictionary<string, object>>());
     }
 
-    public async Task<Dictionary<string, object>?> GetEffectiveRuleByCategoryAsync(string tenantSchemaName, string ruleCategory)
+    public Task<Dictionary<string, object>?> GetEffectiveRuleByCategoryAsync(string tenantSchemaName, string ruleCategory)
     {
         _logger.LogInformation("Getting effective rule for tenant {TenantSchema}, category: {Category}", tenantSchemaName, ruleCategory);
 
         // Placeholder implementation
-        return null;
+        return Task.FromResult<Dictionary<string, object>?>(null);
     }
 
     public async Task<(bool IsValid, List<string> Errors)> ValidateCustomRuleAsync(int sectorId, string ruleCategory, Dictionary<string, object> customConfig)
@@ -100,18 +100,18 @@ public class SectorComplianceService : ISectorComplianceService
         await Task.CompletedTask;
     }
 
-    public async Task<SectorComplianceReportDto> GenerateComplianceReportAsync(string tenantSchemaName)
+    public Task<SectorComplianceReportDto> GenerateComplianceReportAsync(string tenantSchemaName)
     {
         _logger.LogInformation("Generating compliance report for tenant: {TenantSchema}", tenantSchemaName);
 
-        return new SectorComplianceReportDto
+        return Task.FromResult(new SectorComplianceReportDto
         {
             ReportGeneratedAt = DateTime.UtcNow,
             Summary = new ComplianceSummaryDto
             {
                 IsFullyCompliant = true
             }
-        };
+        });
     }
 
     public async Task NotifyTenantsOfRuleChangeAsync(int sectorId, string ruleCategory)
@@ -122,19 +122,19 @@ public class SectorComplianceService : ISectorComplianceService
         await Task.CompletedTask;
     }
 
-    public async Task<TenantSectorConfigDto?> GetTenantSectorConfigAsync(string tenantSchemaName)
+    public Task<TenantSectorConfigDto?> GetTenantSectorConfigAsync(string tenantSchemaName)
     {
         _logger.LogInformation("Getting tenant sector config for: {TenantSchema}", tenantSchemaName);
 
         // Placeholder
-        return null;
+        return Task.FromResult<TenantSectorConfigDto?>(null);
     }
 
-    public async Task<List<CustomComplianceRuleDto>> GetTenantCustomRulesAsync(string tenantSchemaName)
+    public Task<List<CustomComplianceRuleDto>> GetTenantCustomRulesAsync(string tenantSchemaName)
     {
         _logger.LogInformation("Getting custom rules for tenant: {TenantSchema}", tenantSchemaName);
 
-        return new List<CustomComplianceRuleDto>();
+        return Task.FromResult(new List<CustomComplianceRuleDto>());
     }
 
     // Validation helpers

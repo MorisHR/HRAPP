@@ -264,14 +264,14 @@ public class ReportService : IReportService
                 var publicHolidayOvertimeHours = g.Where(a => a.IsPublicHoliday).Sum(a => a.OvertimeHours);
 
                 // Calculate overtime pay (assuming hourly rate)
-                var hourlyRate = employee.BasicSalary / 173.33m; // Standard monthly hours
+                var hourlyRate = employee?.BasicSalary / 173.33m ?? 0m; // Standard monthly hours
                 var totalOvertimePay = g.Sum(a => a.OvertimeHours * hourlyRate * (a.OvertimeRate ?? 1.5m));
 
                 return new EmployeeOvertimeDto
                 {
-                    EmployeeId = employee.Id,
-                    EmployeeName = $"{employee.FirstName} {employee.LastName}",
-                    EmployeeCode = employee.EmployeeCode,
+                    EmployeeId = employee?.Id ?? Guid.Empty,
+                    EmployeeName = employee != null ? $"{employee.FirstName} {employee.LastName}" : "Unknown",
+                    EmployeeCode = employee?.EmployeeCode ?? "Unknown",
                     Department = employee.Department?.Name ?? "",
                     RegularOvertimeHours = regularOvertimeHours,
                     SundayOvertimeHours = sundayOvertimeHours,

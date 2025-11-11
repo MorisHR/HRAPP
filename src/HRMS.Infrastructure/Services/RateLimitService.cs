@@ -291,7 +291,7 @@ public class RateLimitService : IRateLimitService
         }
     }
 
-    public async Task<bool> RecordViolationAsync(string ipAddress, string endpoint)
+    public Task<bool> RecordViolationAsync(string ipAddress, string endpoint)
     {
         try
         {
@@ -325,7 +325,7 @@ public class RateLimitService : IRateLimitService
                     // Clear violations after blacklisting
                     violations.Clear();
 
-                    return true;
+                    return Task.FromResult(true);
                 }
             }
 
@@ -351,12 +351,12 @@ public class RateLimitService : IRateLimitService
                 );
             }
 
-            return false;
+            return Task.FromResult(false);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error recording violation for IP {IpAddress}", ipAddress);
-            return false;
+            return Task.FromResult(false);
         }
     }
 

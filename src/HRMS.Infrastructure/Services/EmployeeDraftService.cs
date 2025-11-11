@@ -85,11 +85,13 @@ public class EmployeeDraftService : IEmployeeDraftService
         if (request.Id.HasValue)
         {
             // Update existing draft
-            draft = await _context.EmployeeDrafts
+            var existingDraft = await _context.EmployeeDrafts
                 .FirstOrDefaultAsync(d => d.Id == request.Id.Value && !d.IsDeleted);
 
-            if (draft == null)
+            if (existingDraft == null)
                 throw new KeyNotFoundException($"Draft {request.Id} not found");
+
+            draft = existingDraft;
 
             draft.FormDataJson = request.FormDataJson;
             draft.DraftName = request.DraftName;
