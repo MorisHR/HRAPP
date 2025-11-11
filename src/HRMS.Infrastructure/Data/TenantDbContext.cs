@@ -56,6 +56,12 @@ public class TenantDbContext : DbContext
     public DbSet<DeviceSyncLog> DeviceSyncLogs { get; set; }
     public DbSet<AttendanceAnomaly> AttendanceAnomalies { get; set; }
 
+    // Device API Key Authentication (Fortune 500-grade security)
+    public DbSet<DeviceApiKey> DeviceApiKeys { get; set; }
+
+    // Biometric Attendance Capture (Fortune 500-grade)
+    public DbSet<BiometricPunchRecord> BiometricPunchRecords { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -810,6 +816,101 @@ public class TenantDbContext : DbContext
                   .HasForeignKey(e => e.ExpectedLocationId)
                   .OnDelete(DeleteBehavior.SetNull);
 
+            entity.HasQueryFilter(e => !e.IsDeleted);
+        });
+
+        // ==============================================
+        // DEVICE API KEY AUTHENTICATION
+        // ==============================================
+
+        // Configure DeviceApiKey entity
+        modelBuilder.Entity<DeviceApiKey>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => e.DeviceId);
+            entity.HasIndex(e => e.TenantId);
+            entity.HasIndex(e => e.ApiKeyHash).IsUnique();
+            entity.HasIndex(e => new { e.DeviceId, e.IsActive });
+            entity.HasIndex(e => e.ExpiresAt);
+            entity.HasIndex(e => e.LastUsedAt);
+            entity.HasIndex(e => new { e.IsActive, e.ExpiresAt });
+
+            entity.Property(e => e.ApiKeyHash).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.Description).IsRequired().HasMaxLength(500);
+            entity.Property(e => e.AllowedIpAddresses).HasColumnType("jsonb");
+
+            // Relationship with AttendanceMachine (Device)
+            entity.HasOne(e => e.Device)
+                  .WithMany()
+                  .HasForeignKey(e => e.DeviceId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            // Computed properties are ignored
+            entity.Ignore(e => e.IsValid);
+            entity.Ignore(e => e.IsExpired);
+            entity.Ignore(e => e.DaysUntilExpiration);
+            entity.Ignore(e => e.IsExpiringSoon);
+            entity.Ignore(e => e.IsStale);
+
+            entity.HasQueryFilter(e => !e.IsDeleted);
+        });
+
+        // ==============================================
+        // BIOMETRIC ATTENDANCE CAPTURE SYSTEM
+        // ==============================================
+
+        // Configure BiometricPunchRecord entity
+        modelBuilder.Entity<BiometricPunchRecord>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+
+            // Performance indexes for Fortune 500-grade query optimization
+            entity.HasIndex(e => e.TenantId);
+            entity.HasIndex(e => e.DeviceId);
+            entity.HasIndex(e => e.EmployeeId);
+            entity.HasIndex(e => e.PunchTime);
+            entity.HasIndex(e => e.ProcessingStatus);
+            entity.HasIndex(e => new { e.TenantId, e.DeviceId, e.PunchTime });
+            entity.HasIndex(e => new { e.EmployeeId, e.PunchTime });
+            entity.HasIndex(e => new { e.ProcessingStatus, e.PunchTime });
+            entity.HasIndex(e => new { e.DeviceId, e.DeviceUserId, e.PunchTime });
+            entity.HasIndex(e => e.AttendanceId);
+            entity.HasIndex(e => e.HashChain);
+
+            // String field constraints
+            entity.Property(e => e.DeviceUserId).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.DeviceSerialNumber).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.PunchType).IsRequired().HasMaxLength(50);
+            entity.Property(e => e.VerificationMethod).IsRequired().HasMaxLength(50);
+            entity.Property(e => e.PhotoPath).HasMaxLength(500);
+            entity.Property(e => e.ProcessingStatus).IsRequired().HasMaxLength(50);
+            entity.Property(e => e.ProcessingError).HasMaxLength(2000);
+            entity.Property(e => e.HashChain).IsRequired().HasMaxLength(256);
+
+            // JSON field for raw data (PostgreSQL JSONB for efficient queries)
+            entity.Property(e => e.RawData).HasColumnType("jsonb");
+
+            // Decimal precision for GPS coordinates
+            entity.Property(e => e.Latitude).HasColumnType("decimal(10,8)");
+            entity.Property(e => e.Longitude).HasColumnType("decimal(11,8)");
+
+            // Foreign key relationships
+            entity.HasOne(e => e.Device)
+                  .WithMany()
+                  .HasForeignKey(e => e.DeviceId)
+                  .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(e => e.Employee)
+                  .WithMany()
+                  .HasForeignKey(e => e.EmployeeId)
+                  .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasOne(e => e.Attendance)
+                  .WithMany()
+                  .HasForeignKey(e => e.AttendanceId)
+                  .OnDelete(DeleteBehavior.SetNull);
+
+            // Soft delete query filter
             entity.HasQueryFilter(e => !e.IsDeleted);
         });
     }

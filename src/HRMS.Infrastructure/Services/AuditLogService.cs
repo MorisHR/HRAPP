@@ -1296,4 +1296,166 @@ public class AuditLogService : IAuditLogService
             // Don't throw - monitoring failure shouldn't break audit logging
         }
     }
+
+    // ============================================
+    // DEVICE API KEY AUTHENTICATION LOGGING
+    // ============================================
+
+    public async Task<AuditLog> LogDeviceApiKeyCreatedAsync(
+        Guid apiKeyId,
+        Guid deviceId,
+        string description,
+        DateTime? expiresAt)
+    {
+        var log = new AuditLog
+        {
+            Id = Guid.NewGuid(),
+            ActionType = AuditActionType.RECORD_CREATED,
+            Category = AuditCategory.SYSTEM_EVENT,
+            Severity = AuditSeverity.INFO,
+            EntityType = "DeviceApiKey",
+            EntityId = apiKeyId,
+            Success = true,
+            AdditionalMetadata = JsonSerializer.Serialize(new
+            {
+                DeviceId = deviceId,
+                Description = description,
+                ExpiresAt = expiresAt
+            }),
+            PerformedAt = DateTime.UtcNow
+        };
+
+        return await LogAsync(log);
+    }
+
+    public async Task<AuditLog> LogDeviceApiKeyAuthenticationSuccessAsync(
+        Guid apiKeyId,
+        Guid deviceId,
+        string ipAddress)
+    {
+        var log = new AuditLog
+        {
+            Id = Guid.NewGuid(),
+            ActionType = AuditActionType.LOGIN_SUCCESS,
+            Category = AuditCategory.AUTHENTICATION,
+            Severity = AuditSeverity.INFO,
+            EntityType = "DeviceApiKey",
+            EntityId = apiKeyId,
+            Success = true,
+            IpAddress = ipAddress,
+            AdditionalMetadata = JsonSerializer.Serialize(new
+            {
+                DeviceId = deviceId,
+                AuthenticationMethod = "API_KEY"
+            }),
+            PerformedAt = DateTime.UtcNow
+        };
+
+        return await LogAsync(log);
+    }
+
+    public async Task<AuditLog> LogDeviceApiKeyAuthenticationFailedAsync(
+        Guid? apiKeyId,
+        string ipAddress,
+        string reason)
+    {
+        var log = new AuditLog
+        {
+            Id = Guid.NewGuid(),
+            ActionType = AuditActionType.LOGIN_FAILED,
+            Category = AuditCategory.AUTHENTICATION,
+            Severity = AuditSeverity.WARNING,
+            EntityType = "DeviceApiKey",
+            EntityId = apiKeyId,
+            Success = false,
+            IpAddress = ipAddress,
+            ErrorMessage = reason,
+            AdditionalMetadata = JsonSerializer.Serialize(new
+            {
+                AuthenticationMethod = "API_KEY",
+                FailureReason = reason
+            }),
+            PerformedAt = DateTime.UtcNow
+        };
+
+        return await LogAsync(log);
+    }
+
+    public async Task<AuditLog> LogDeviceApiKeyRateLimitExceededAsync(
+        Guid apiKeyId,
+        string ipAddress,
+        int limitPerMinute)
+    {
+        var log = new AuditLog
+        {
+            Id = Guid.NewGuid(),
+            ActionType = AuditActionType.ACCESS_DENIED,
+            Category = AuditCategory.SECURITY_EVENT,
+            Severity = AuditSeverity.WARNING,
+            EntityType = "DeviceApiKey",
+            EntityId = apiKeyId,
+            Success = false,
+            IpAddress = ipAddress,
+            ErrorMessage = "Rate limit exceeded",
+            AdditionalMetadata = JsonSerializer.Serialize(new
+            {
+                LimitPerMinute = limitPerMinute,
+                Reason = "RATE_LIMIT_EXCEEDED"
+            }),
+            PerformedAt = DateTime.UtcNow
+        };
+
+        return await LogAsync(log);
+    }
+
+    public async Task<AuditLog> LogDeviceApiKeyRevokedAsync(
+        Guid apiKeyId,
+        Guid deviceId)
+    {
+        var log = new AuditLog
+        {
+            Id = Guid.NewGuid(),
+            ActionType = AuditActionType.RECORD_UPDATED,
+            Category = AuditCategory.SYSTEM_EVENT,
+            Severity = AuditSeverity.INFO,
+            EntityType = "DeviceApiKey",
+            EntityId = apiKeyId,
+            Success = true,
+            AdditionalMetadata = JsonSerializer.Serialize(new
+            {
+                DeviceId = deviceId,
+                Action = "REVOKED"
+            }),
+            PerformedAt = DateTime.UtcNow
+        };
+
+        return await LogAsync(log);
+    }
+
+    public async Task<AuditLog> LogDeviceApiKeyRotatedAsync(
+        Guid oldApiKeyId,
+        Guid newApiKeyId,
+        Guid deviceId)
+    {
+        var log = new AuditLog
+        {
+            Id = Guid.NewGuid(),
+            ActionType = AuditActionType.RECORD_UPDATED,
+            Category = AuditCategory.SYSTEM_EVENT,
+            Severity = AuditSeverity.INFO,
+            EntityType = "DeviceApiKey",
+            EntityId = oldApiKeyId,
+            Success = true,
+            AdditionalMetadata = JsonSerializer.Serialize(new
+            {
+                OldApiKeyId = oldApiKeyId,
+                NewApiKeyId = newApiKeyId,
+                DeviceId = deviceId,
+                Action = "ROTATED"
+            }),
+            PerformedAt = DateTime.UtcNow
+        };
+
+        return await LogAsync(log);
+    }
 }

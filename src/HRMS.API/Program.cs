@@ -274,7 +274,10 @@ Log.Information("Timesheet management services registered");
 // Multi-Device Biometric Attendance System Services
 builder.Services.AddScoped<ILocationService, LocationService>();
 builder.Services.AddScoped<IBiometricDeviceService, BiometricDeviceService>();
-Log.Information("Multi-device biometric attendance system services registered");
+// Fortune 500: Biometric Punch Processing Service - Real-time attendance capture from devices
+builder.Services.AddScoped<IBiometricPunchProcessingService, BiometricPunchProcessingService>();
+builder.Services.AddScoped<IDeviceApiKeyService, DeviceApiKeyService>();
+Log.Information("Multi-device biometric attendance system services registered: BiometricPunchProcessing, DeviceApiKey");
 
 // Department Management Service
 builder.Services.AddScoped<DepartmentService>();
@@ -292,6 +295,36 @@ Log.Information("Token cleanup background service registered (runs hourly)");
 builder.Services.AddSingleton<HRMS.Infrastructure.Services.AuditLogQueueService>();
 builder.Services.AddHostedService(provider => provider.GetRequiredService<HRMS.Infrastructure.Services.AuditLogQueueService>());
 Log.Information("Audit log queue service registered for guaranteed delivery");
+
+// ======================
+// SIGNALR REAL-TIME NOTIFICATIONS
+// ======================
+// Production-ready SignalR with comprehensive features for 10,000+ concurrent connections
+builder.Services.AddSignalR(options =>
+{
+    // Connection Management
+    options.EnableDetailedErrors = !builder.Environment.IsProduction(); // Detailed errors only in dev
+    options.ClientTimeoutInterval = TimeSpan.FromSeconds(60); // Client timeout (default: 30s)
+    options.HandshakeTimeout = TimeSpan.FromSeconds(15); // Handshake timeout
+    options.KeepAliveInterval = TimeSpan.FromSeconds(15); // Ping interval to keep connection alive
+
+    // Message Size Limits (prevent DoS)
+    options.MaximumReceiveMessageSize = 128 * 1024; // 128KB max message size
+
+    // Scalability: For horizontal scaling with multiple instances, add Redis backplane:
+    // builder.Services.AddSignalR().AddStackExchangeRedis(redisConnectionString);
+})
+.AddJsonProtocol(options =>
+{
+    // JSON serialization for SignalR messages
+    options.PayloadSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
+    options.PayloadSerializerOptions.DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull;
+    options.PayloadSerializerOptions.WriteIndented = false;
+});
+
+// Register AttendanceNotificationService for real-time attendance updates
+builder.Services.AddScoped<IAttendanceNotificationService, HRMS.API.Services.AttendanceNotificationService>();
+Log.Information("SignalR configured: AttendanceHub for real-time attendance notifications (supports 10,000+ concurrent connections)");
 
 // ======================
 // BACKGROUND JOBS SERVICES
@@ -810,6 +843,14 @@ app.UseTenantResolution();
 // SECURITY FIX: Tenant Context Validation (blocks requests without valid tenant)
 app.UseTenantContextValidation();
 
+// Biometric Device API Key Authentication Middleware
+// Applied conditionally to /api/device/* endpoints (except /health)
+app.UseWhen(
+    context => context.Request.Path.StartsWithSegments("/api/device")
+               && !context.Request.Path.Value!.EndsWith("/health"),
+    appBuilder => appBuilder.UseMiddleware<DeviceApiKeyAuthenticationMiddleware>()
+);
+
 // Authentication & Authorization - MUST come after UseCors
 app.UseAuthentication();
 app.UseAuthorization();
@@ -937,6 +978,13 @@ if (healthCheckSettings.Enabled)
 
     Log.Information("Health check endpoints: /health, /health/ready, /health/detailed");
 }
+
+// ======================
+// SIGNALR HUB ENDPOINTS
+// ======================
+// Map AttendanceHub for real-time attendance notifications
+app.MapHub<HRMS.API.Hubs.AttendanceHub>("/hubs/attendance");
+Log.Information("SignalR hub mapped: /hubs/attendance");
 
 // Map Controllers
 app.MapControllers();

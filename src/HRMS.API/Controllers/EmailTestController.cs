@@ -13,7 +13,7 @@ namespace HRMS.API.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/admin/[controller]")]
-[Authorize(Roles = nameof(UserRole.SuperAdmin))]
+[Authorize(Roles = "SuperAdmin")]
 public class EmailTestController : ControllerBase
 {
     private readonly IEmailService _emailService;

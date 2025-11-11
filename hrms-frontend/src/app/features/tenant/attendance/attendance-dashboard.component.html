@@ -1,0 +1,366 @@
+<div class="attendance-dashboard" [class.dark-mode]="isDark()">
+  <!-- Header -->
+  <div class="dashboard-header">
+    <div class="header-content">
+      <div class="title-section">
+        <mat-icon class="header-icon">access_time</mat-icon>
+        <div>
+          <h1>Real-Time Attendance Dashboard</h1>
+          <p class="subtitle">Live punch monitoring from biometric devices</p>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <!-- Connection Status -->
+        <div class="connection-status" [ngClass]="connectionState()">
+          <mat-icon>{{ isConnected() ? 'cloud_done' : 'cloud_off' }}</mat-icon>
+          <span>{{ connectionState() | titlecase }}</span>
+        </div>
+
+        <!-- Action Buttons -->
+        <button mat-icon-button (click)="refresh()" matTooltip="Refresh Data">
+          <mat-icon>refresh</mat-icon>
+        </button>
+
+        <button mat-icon-button (click)="exportToCSV()" matTooltip="Export to CSV">
+          <mat-icon>download</mat-icon>
+        </button>
+
+        <button mat-icon-button *ngIf="!isConnected()" (click)="reconnect()" matTooltip="Reconnect">
+          <mat-icon>sync</mat-icon>
+        </button>
+      </div>
+    </div>
+
+    <!-- Error Banner -->
+    <div class="error-banner" *ngIf="error()">
+      <mat-icon>error</mat-icon>
+      <span>{{ error() }}</span>
+      <button mat-icon-button (click)="error.set(null)">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+
+    <!-- Connection Error Banner -->
+    <div class="error-banner warning" *ngIf="connectionError()">
+      <mat-icon>warning</mat-icon>
+      <span>Connection Error: {{ connectionError() }}</span>
+      <button mat-button (click)="reconnect()">Reconnect</button>
+    </div>
+  </div>
+
+  <!-- Loading Overlay -->
+  <div class="loading-overlay" *ngIf="loading()">
+    <mat-spinner></mat-spinner>
+    <p>Connecting to real-time feed...</p>
+  </div>
+
+  <!-- Main Content -->
+  <div class="dashboard-content" *ngIf="!loading()">
+    <!-- Statistics Cards -->
+    <div class="stats-grid">
+      <mat-card class="stat-card" *ngFor="let card of statCards()" [ngClass]="card.color">
+        <mat-card-content>
+          <div class="stat-icon">
+            <mat-icon>{{ card.icon }}</mat-icon>
+          </div>
+          <div class="stat-details">
+            <div class="stat-label">{{ card.title }}</div>
+            <div class="stat-value">
+              {{ card.value }}{{ card.suffix || '' }}
+              <mat-icon class="trend-icon" *ngIf="card.trend === 'up'">trending_up</mat-icon>
+              <mat-icon class="trend-icon" *ngIf="card.trend === 'down'">trending_down</mat-icon>
+            </div>
+          </div>
+          <div class="stat-pulse" *ngIf="card.trend === 'up'"></div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Device Status Panel -->
+    <mat-card class="device-panel">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>devices</mat-icon>
+          Device Status
+          <span class="device-health" [ngClass]="deviceStats().healthPercentage >= 80 ? 'healthy' : 'unhealthy'">
+            {{ deviceStats().healthPercentage }}% Healthy
+          </span>
+        </mat-card-title>
+        <mat-card-subtitle>
+          {{ deviceStats().online }} online · {{ deviceStats().offline }} offline · {{ deviceStats().total }} total
+          <span class="last-update" *ngIf="lastDeviceUpdate()">
+            · Updated {{ formatLastSync(lastDeviceUpdate()!.toISOString()) }}
+          </span>
+        </mat-card-subtitle>
+      </mat-card-header>
+
+      <mat-card-content>
+        <div class="device-grid" *ngIf="devices().length > 0; else noDevices">
+          <div class="device-card" *ngFor="let device of devices()" [ngClass]="device.status.toLowerCase()">
+            <div class="device-header">
+              <div class="device-info">
+                <mat-icon [ngClass]="device.isOnline ? 'online' : 'offline'">
+                  {{ getDeviceStatusIcon(device) }}
+                </mat-icon>
+                <div>
+                  <div class="device-name">{{ device.name }}</div>
+                  <div class="device-location">{{ device.location }}</div>
+                </div>
+              </div>
+              <mat-chip [ngClass]="device.isOnline ? 'online-chip' : 'offline-chip'">
+                {{ device.status }}
+              </mat-chip>
+            </div>
+
+            <mat-divider></mat-divider>
+
+            <div class="device-stats">
+              <div class="device-stat">
+                <mat-icon>touch_app</mat-icon>
+                <span>{{ device.punchCountToday }} punches</span>
+              </div>
+              <div class="device-stat">
+                <mat-icon>schedule</mat-icon>
+                <span>{{ formatLastSync(device.lastSyncTime) }}</span>
+              </div>
+            </div>
+
+            <div class="device-actions">
+              <button mat-icon-button (click)="testDevice(device)" matTooltip="Test Connection">
+                <mat-icon>wifi_tethering</mat-icon>
+              </button>
+              <button mat-icon-button (click)="syncDevice(device)" matTooltip="Sync Now">
+                <mat-icon>sync</mat-icon>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <ng-template #noDevices>
+          <div class="empty-state">
+            <mat-icon>devices_other</mat-icon>
+            <p>No devices configured</p>
+          </div>
+        </ng-template>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Filters Section -->
+    <mat-card class="filters-card">
+      <mat-card-content>
+        <div class="filters-row">
+          <!-- Search -->
+          <mat-form-field appearance="outline" class="filter-field">
+            <mat-label>Search</mat-label>
+            <input matInput [(ngModel)]="searchQuery" (ngModelChange)="applyFilters()"
+                   placeholder="Employee name, code, or device">
+            <mat-icon matPrefix>search</mat-icon>
+          </mat-form-field>
+
+          <!-- Device Filter -->
+          <mat-form-field appearance="outline" class="filter-field">
+            <mat-label>Device</mat-label>
+            <mat-select [(ngModel)]="selectedDevice" (ngModelChange)="applyFilters()">
+              <mat-option value="all">All Devices</mat-option>
+              <mat-option *ngFor="let device of deviceOptions()" [value]="device.deviceId">
+                {{ device.name }}
+              </mat-option>
+            </mat-select>
+            <mat-icon matPrefix>devices</mat-icon>
+          </mat-form-field>
+
+          <!-- Verification Method Filter -->
+          <mat-form-field appearance="outline" class="filter-field">
+            <mat-label>Verification Method</mat-label>
+            <mat-select [(ngModel)]="selectedVerificationMethod" (ngModelChange)="applyFilters()">
+              <mat-option value="all">All Methods</mat-option>
+              <mat-option *ngFor="let method of verificationMethods" [value]="method">
+                {{ method }}
+              </mat-option>
+            </mat-select>
+            <mat-icon matPrefix>verified_user</mat-icon>
+          </mat-form-field>
+
+          <!-- Punch Type Filter -->
+          <mat-form-field appearance="outline" class="filter-field">
+            <mat-label>Punch Type</mat-label>
+            <mat-select [(ngModel)]="selectedPunchType" (ngModelChange)="applyFilters()">
+              <mat-option value="all">All Types</mat-option>
+              <mat-option *ngFor="let type of punchTypes" [value]="type">
+                {{ type }}
+              </mat-option>
+            </mat-select>
+            <mat-icon matPrefix>touch_app</mat-icon>
+          </mat-form-field>
+
+          <!-- Clear Filters -->
+          <button mat-raised-button (click)="clearFilters()" class="clear-filters-btn">
+            <mat-icon>clear</mat-icon>
+            Clear
+          </button>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Recent Punches Table -->
+    <mat-card class="table-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>list</mat-icon>
+          Recent Punches
+          <mat-chip class="live-indicator">
+            <mat-icon>fiber_manual_record</mat-icon>
+            LIVE
+          </mat-chip>
+        </mat-card-title>
+        <mat-card-subtitle>
+          Showing last {{ dataSource.data.length }} punches
+        </mat-card-subtitle>
+      </mat-card-header>
+
+      <mat-card-content>
+        <div class="table-container">
+          <table mat-table [dataSource]="dataSource" matSort class="punches-table">
+            <!-- Timestamp Column -->
+            <ng-container matColumnDef="timestamp">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Time</th>
+              <td mat-cell *matCellDef="let punch" [class.new-punch]="punch.isNew">
+                <div class="time-cell">
+                  <div class="time">{{ formatTime(punch.timestamp) }}</div>
+                  <div class="date">{{ formatDate(punch.timestamp) }}</div>
+                </div>
+              </td>
+            </ng-container>
+
+            <!-- Employee Column -->
+            <ng-container matColumnDef="employeeName">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Employee</th>
+              <td mat-cell *matCellDef="let punch" [class.new-punch]="punch.isNew">
+                <div class="employee-cell">
+                  <mat-icon class="employee-avatar">person</mat-icon>
+                  <div>
+                    <div class="employee-name">{{ punch.employeeName }}</div>
+                    <div class="employee-code" *ngIf="punch.employeeCode">{{ punch.employeeCode }}</div>
+                  </div>
+                </div>
+              </td>
+            </ng-container>
+
+            <!-- Device Column -->
+            <ng-container matColumnDef="deviceName">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Device</th>
+              <td mat-cell *matCellDef="let punch" [class.new-punch]="punch.isNew">
+                <div class="device-cell">
+                  <mat-icon>devices</mat-icon>
+                  <div>
+                    <div class="device-name">{{ punch.deviceName }}</div>
+                    <div class="device-location" *ngIf="punch.deviceLocation">{{ punch.deviceLocation }}</div>
+                  </div>
+                </div>
+              </td>
+            </ng-container>
+
+            <!-- Punch Type Column -->
+            <ng-container matColumnDef="punchType">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Type</th>
+              <td mat-cell *matCellDef="let punch" [class.new-punch]="punch.isNew">
+                <mat-chip [ngClass]="getPunchTypeColor(punch.punchType)">
+                  {{ punch.punchType }}
+                </mat-chip>
+              </td>
+            </ng-container>
+
+            <!-- Verification Method Column -->
+            <ng-container matColumnDef="verificationMethod">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Method</th>
+              <td mat-cell *matCellDef="let punch" [class.new-punch]="punch.isNew">
+                <div class="method-cell">
+                  <mat-icon>{{ getVerificationMethodIcon(punch.verificationMethod) }}</mat-icon>
+                  <span>{{ punch.verificationMethod }}</span>
+                </div>
+              </td>
+            </ng-container>
+
+            <!-- Verification Quality Column -->
+            <ng-container matColumnDef="verificationQuality">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Quality</th>
+              <td mat-cell *matCellDef="let punch" [class.new-punch]="punch.isNew">
+                <div class="quality-cell">
+                  <mat-progress-bar
+                    mode="determinate"
+                    [value]="punch.verificationQuality"
+                    [ngClass]="getQualityColor(punch.verificationQuality)">
+                  </mat-progress-bar>
+                  <span class="quality-value">{{ punch.verificationQuality }}%</span>
+                </div>
+              </td>
+            </ng-container>
+
+            <!-- Status Column -->
+            <ng-container matColumnDef="status">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
+              <td mat-cell *matCellDef="let punch" [class.new-punch]="punch.isNew">
+                <mat-chip [ngClass]="getPunchStatusColor(punch.status)">
+                  {{ punch.status }}
+                </mat-chip>
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="punch-row"></tr>
+
+            <!-- No Data Row -->
+            <tr class="mat-row no-data-row" *matNoDataRow>
+              <td class="mat-cell" [attr.colspan]="displayedColumns.length">
+                <div class="empty-state">
+                  <mat-icon>schedule</mat-icon>
+                  <p>No punch records available</p>
+                  <p class="hint">Waiting for real-time data...</p>
+                </div>
+              </td>
+            </tr>
+          </table>
+        </div>
+
+        <!-- Paginator -->
+        <mat-paginator
+          [pageSizeOptions]="[10, 25, 50, 100]"
+          [pageSize]="25"
+          showFirstLastButtons>
+        </mat-paginator>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Real-Time Feed Panel (Mobile View) -->
+    <div class="live-feed-mobile" *ngIf="recentPunches().length > 0">
+      <h3>
+        <mat-icon>fiber_manual_record</mat-icon>
+        Live Feed
+      </h3>
+      <div class="feed-list">
+        <div class="feed-item" *ngFor="let punch of recentPunches().slice(0, 10)" [class.new-punch]="punch.isNew">
+          <div class="feed-header">
+            <mat-icon>person</mat-icon>
+            <span class="employee-name">{{ punch.employeeName }}</span>
+            <mat-chip [ngClass]="getPunchTypeColor(punch.punchType)" class="feed-chip">
+              {{ punch.punchType }}
+            </mat-chip>
+          </div>
+          <div class="feed-details">
+            <span><mat-icon>schedule</mat-icon> {{ formatTime(punch.timestamp) }}</span>
+            <span><mat-icon>devices</mat-icon> {{ punch.deviceName }}</span>
+            <span><mat-icon>{{ getVerificationMethodIcon(punch.verificationMethod) }}</mat-icon> {{ punch.verificationMethod }}</span>
+          </div>
+          <div class="feed-quality">
+            <mat-progress-bar
+              mode="determinate"
+              [value]="punch.verificationQuality"
+              [ngClass]="getQualityColor(punch.verificationQuality)">
+            </mat-progress-bar>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -199,8 +199,28 @@ export const routes: Routes = [
         path: 'audit-logs',
         loadComponent: () => import('./features/tenant/audit-logs/tenant-audit-logs.component').then(m => m.TenantAuditLogsComponent),
         data: { title: 'Audit Trail' }
+      },
+      // ✅ FIXED: Added missing tenant routes (attendance, leave, payroll, reports)
+      {
+        path: 'attendance',
+        loadComponent: () => import('./features/tenant/attendance/attendance-dashboard.component').then(m => m.AttendanceDashboardComponent),
+        data: { title: 'Attendance Management' }
+      },
+      {
+        path: 'leave',
+        loadComponent: () => import('./features/tenant/leave/leave-dashboard.component').then(m => m.LeaveDashboardComponent),
+        data: { title: 'Leave Management' }
+      },
+      {
+        path: 'payroll',
+        loadComponent: () => import('./features/tenant/payroll/payroll-dashboard.component').then(m => m.PayrollDashboardComponent),
+        data: { title: 'Payroll Management' }
+      },
+      {
+        path: 'reports',
+        loadComponent: () => import('./features/tenant/reports/reports-dashboard.component').then(m => m.ReportsDashboardComponent),
+        data: { title: 'Reports & Analytics' }
       }
-      // TODO: Add more tenant routes (attendance, leave, payroll, reports)
     ]
   },
 

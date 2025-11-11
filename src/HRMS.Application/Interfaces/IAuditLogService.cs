@@ -306,6 +306,58 @@ public interface IAuditLogService
         string? errorMessage = null,
         Dictionary<string, object>? additionalContext = null
     );
+
+    // ============================================
+    // DEVICE API KEY AUTHENTICATION LOGGING
+    // ============================================
+
+    /// <summary>
+    /// Log device API key creation
+    /// </summary>
+    Task<AuditLog> LogDeviceApiKeyCreatedAsync(
+        Guid apiKeyId,
+        Guid deviceId,
+        string description,
+        DateTime? expiresAt);
+
+    /// <summary>
+    /// Log device API key authentication success
+    /// </summary>
+    Task<AuditLog> LogDeviceApiKeyAuthenticationSuccessAsync(
+        Guid apiKeyId,
+        Guid deviceId,
+        string ipAddress);
+
+    /// <summary>
+    /// Log device API key authentication failure
+    /// </summary>
+    Task<AuditLog> LogDeviceApiKeyAuthenticationFailedAsync(
+        Guid? apiKeyId,
+        string ipAddress,
+        string reason);
+
+    /// <summary>
+    /// Log device API key rate limit exceeded
+    /// </summary>
+    Task<AuditLog> LogDeviceApiKeyRateLimitExceededAsync(
+        Guid apiKeyId,
+        string ipAddress,
+        int limitPerMinute);
+
+    /// <summary>
+    /// Log device API key revocation
+    /// </summary>
+    Task<AuditLog> LogDeviceApiKeyRevokedAsync(
+        Guid apiKeyId,
+        Guid deviceId);
+
+    /// <summary>
+    /// Log device API key rotation
+    /// </summary>
+    Task<AuditLog> LogDeviceApiKeyRotatedAsync(
+        Guid oldApiKeyId,
+        Guid newApiKeyId,
+        Guid deviceId);
 }
 
 /// <summary>
