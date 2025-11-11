@@ -1,0 +1,438 @@
+<div class="subscription-dashboard">
+  <!-- Header -->
+  <div class="dashboard-header">
+    <h1>Subscription Management</h1>
+    <button mat-raised-button color="primary" (click)="refresh()">
+      <mat-icon>refresh</mat-icon>
+      Refresh
+    </button>
+  </div>
+
+  <!-- Loading State -->
+  @if (loading()) {
+    <div class="loading-container">
+      <mat-spinner></mat-spinner>
+      <p>Loading subscription data...</p>
+    </div>
+  }
+
+  <!-- Error State -->
+  @if (error()) {
+    <mat-card class="error-card">
+      <mat-card-content>
+        <mat-icon color="warn">error</mat-icon>
+        <p>{{ error() }}</p>
+        <button mat-button color="primary" (click)="refresh()">Retry</button>
+      </mat-card-content>
+    </mat-card>
+  }
+
+  <!-- Dashboard Content -->
+  @if (!loading() && !error() && analytics()) {
+    <!-- Revenue Analytics Cards -->
+    <div class="analytics-cards">
+      <mat-card class="metric-card">
+        <mat-card-header>
+          <mat-icon class="metric-icon arr">trending_up</mat-icon>
+          <div>
+            <mat-card-subtitle>Annual Recurring Revenue</mat-card-subtitle>
+            <mat-card-title>{{ formatCurrency(analytics()!.arr) }}</mat-card-title>
+          </div>
+        </mat-card-header>
+      </mat-card>
+
+      <mat-card class="metric-card">
+        <mat-card-header>
+          <mat-icon class="metric-icon mrr">attach_money</mat-icon>
+          <div>
+            <mat-card-subtitle>Monthly Recurring Revenue</mat-card-subtitle>
+            <mat-card-title>{{ formatCurrency(analytics()!.mrr) }}</mat-card-title>
+          </div>
+        </mat-card-header>
+      </mat-card>
+
+      <mat-card class="metric-card">
+        <mat-card-header>
+          <mat-icon class="metric-icon churn">timeline</mat-icon>
+          <div>
+            <mat-card-subtitle>Churn Rate</mat-card-subtitle>
+            <mat-card-title>{{ analytics()!.churnRate.toFixed(2) }}%</mat-card-title>
+          </div>
+        </mat-card-header>
+      </mat-card>
+
+      <mat-card class="metric-card">
+        <mat-card-header>
+          <mat-icon class="metric-icon ltv">monetization_on</mat-icon>
+          <div>
+            <mat-card-subtitle>Customer LTV</mat-card-subtitle>
+            <mat-card-title>{{ formatCurrency(analytics()!.ltv) }}</mat-card-title>
+          </div>
+        </mat-card-header>
+      </mat-card>
+
+      <mat-card class="metric-card">
+        <mat-card-header>
+          <mat-icon class="metric-icon active">group</mat-icon>
+          <div>
+            <mat-card-subtitle>Active Subscriptions</mat-card-subtitle>
+            <mat-card-title>{{ analytics()!.totalActiveSubscriptions }}</mat-card-title>
+          </div>
+        </mat-card-header>
+      </mat-card>
+
+      <mat-card class="metric-card">
+        <mat-card-header>
+          <mat-icon class="metric-icon revenue">account_balance</mat-icon>
+          <div>
+            <mat-card-subtitle>Total Revenue</mat-card-subtitle>
+            <mat-card-title>{{ formatCurrency(analytics()!.totalRevenue) }}</mat-card-title>
+          </div>
+        </mat-card-header>
+      </mat-card>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="charts-row">
+      <!-- Revenue Trend Chart -->
+      <mat-card class="chart-card">
+        <mat-card-header>
+          <mat-card-title>Monthly Revenue Trend</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          @if (revenueChartData()) {
+            <div class="chart-container">
+              <canvas
+                baseChart
+                [data]="revenueChartData()!"
+                [options]="revenueChartOptions"
+                type="line">
+              </canvas>
+            </div>
+          }
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Tier Distribution Chart -->
+      <mat-card class="chart-card">
+        <mat-card-header>
+          <mat-card-title>Subscription Tier Distribution</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          @if (tierChartData()) {
+            <div class="chart-container">
+              <canvas
+                baseChart
+                [data]="tierChartData()!"
+                [options]="tierChartOptions"
+                type="bar">
+              </canvas>
+            </div>
+          }
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Tabs for Different Views -->
+    <mat-card class="tabs-card">
+      <mat-tab-group>
+        <!-- Overdue Payments Tab -->
+        <mat-tab>
+          <ng-template mat-tab-label>
+            <mat-icon class="tab-icon">warning</mat-icon>
+            Overdue Payments
+            @if (overduePayments().length > 0) {
+              <span class="badge-count" [matBadge]="overduePayments().length" matBadgeColor="warn"></span>
+            }
+          </ng-template>
+
+          @if (overduePayments().length === 0) {
+            <div class="empty-state">
+              <mat-icon>check_circle</mat-icon>
+              <p>No overdue payments</p>
+            </div>
+          } @else {
+            <div class="table-container">
+              <table mat-table [dataSource]="overduePayments()" class="payments-table">
+                <ng-container matColumnDef="tenant">
+                  <th mat-header-cell *matHeaderCellDef>Tenant</th>
+                  <td mat-cell *matCellDef="let payment">
+                    <div class="tenant-cell">
+                      <strong>{{ payment.tenantName }}</strong>
+                      <small>{{ payment.tenantSubdomain }}</small>
+                    </div>
+                  </td>
+                </ng-container>
+
+                <ng-container matColumnDef="amount">
+                  <th mat-header-cell *matHeaderCellDef>Amount</th>
+                  <td mat-cell *matCellDef="let payment">
+                    {{ formatCurrency(payment.amount) }}
+                  </td>
+                </ng-container>
+
+                <ng-container matColumnDef="dueDate">
+                  <th mat-header-cell *matHeaderCellDef>Due Date</th>
+                  <td mat-cell *matCellDef="let payment">
+                    <div class="date-cell">
+                      <div>{{ formatDate(payment.dueDate) }}</div>
+                      <small class="overdue-text">{{ getDaysOverdue(payment.dueDate) }} days overdue</small>
+                    </div>
+                  </td>
+                </ng-container>
+
+                <ng-container matColumnDef="tier">
+                  <th mat-header-cell *matHeaderCellDef>Tier</th>
+                  <td mat-cell *matCellDef="let payment">
+                    <mat-chip [color]="getTierColor(payment.subscriptionTier)">
+                      {{ payment.subscriptionTier }}
+                    </mat-chip>
+                  </td>
+                </ng-container>
+
+                <ng-container matColumnDef="status">
+                  <th mat-header-cell *matHeaderCellDef>Status</th>
+                  <td mat-cell *matCellDef="let payment">
+                    <mat-chip [color]="getStatusColor(payment.status)">
+                      {{ payment.status }}
+                    </mat-chip>
+                  </td>
+                </ng-container>
+
+                <ng-container matColumnDef="actions">
+                  <th mat-header-cell *matHeaderCellDef>Actions</th>
+                  <td mat-cell *matCellDef="let payment">
+                    <div class="action-buttons">
+                      <button
+                        mat-icon-button
+                        color="primary"
+                        matTooltip="Record Payment"
+                        (click)="recordPayment(payment.id)">
+                        <mat-icon>payment</mat-icon>
+                      </button>
+                      <button
+                        mat-icon-button
+                        color="accent"
+                        matTooltip="Send Reminder"
+                        (click)="sendReminder(payment.id)">
+                        <mat-icon>email</mat-icon>
+                      </button>
+                      <button
+                        mat-icon-button
+                        matTooltip="View Details"
+                        (click)="viewPaymentDetails(payment)">
+                        <mat-icon>visibility</mat-icon>
+                      </button>
+                    </div>
+                  </td>
+                </ng-container>
+
+                <tr mat-header-row *matHeaderRowDef="paymentColumns"></tr>
+                <tr mat-row *matRowDef="let row; columns: paymentColumns;"></tr>
+              </table>
+            </div>
+          }
+        </mat-tab>
+
+        <!-- Pending Payments Tab -->
+        <mat-tab>
+          <ng-template mat-tab-label>
+            <mat-icon class="tab-icon">hourglass_empty</mat-icon>
+            Pending Payments
+            @if (pendingPayments().length > 0) {
+              <span class="badge-count" [matBadge]="pendingPayments().length" matBadgeColor="primary"></span>
+            }
+          </ng-template>
+
+          @if (pendingPayments().length === 0) {
+            <div class="empty-state">
+              <mat-icon>check_circle</mat-icon>
+              <p>No pending payments</p>
+            </div>
+          } @else {
+            <div class="table-container">
+              <table mat-table [dataSource]="pendingPayments()" class="payments-table">
+                <ng-container matColumnDef="tenant">
+                  <th mat-header-cell *matHeaderCellDef>Tenant</th>
+                  <td mat-cell *matCellDef="let payment">
+                    <div class="tenant-cell">
+                      <strong>{{ payment.tenantName }}</strong>
+                      <small>{{ payment.tenantSubdomain }}</small>
+                    </div>
+                  </td>
+                </ng-container>
+
+                <ng-container matColumnDef="amount">
+                  <th mat-header-cell *matHeaderCellDef>Amount</th>
+                  <td mat-cell *matCellDef="let payment">
+                    {{ formatCurrency(payment.amount) }}
+                  </td>
+                </ng-container>
+
+                <ng-container matColumnDef="dueDate">
+                  <th mat-header-cell *matHeaderCellDef>Due Date</th>
+                  <td mat-cell *matCellDef="let payment">
+                    <div class="date-cell">
+                      <div>{{ formatDate(payment.dueDate) }}</div>
+                      <small>{{ formatRelativeDate(payment.dueDate) }}</small>
+                    </div>
+                  </td>
+                </ng-container>
+
+                <ng-container matColumnDef="tier">
+                  <th mat-header-cell *matHeaderCellDef>Tier</th>
+                  <td mat-cell *matCellDef="let payment">
+                    <mat-chip [color]="getTierColor(payment.subscriptionTier)">
+                      {{ payment.subscriptionTier }}
+                    </mat-chip>
+                  </td>
+                </ng-container>
+
+                <ng-container matColumnDef="status">
+                  <th mat-header-cell *matHeaderCellDef>Status</th>
+                  <td mat-cell *matCellDef="let payment">
+                    <mat-chip [color]="getStatusColor(payment.status)">
+                      {{ payment.status }}
+                    </mat-chip>
+                  </td>
+                </ng-container>
+
+                <ng-container matColumnDef="actions">
+                  <th mat-header-cell *matHeaderCellDef>Actions</th>
+                  <td mat-cell *matCellDef="let payment">
+                    <div class="action-buttons">
+                      <button
+                        mat-icon-button
+                        color="primary"
+                        matTooltip="Record Payment"
+                        (click)="recordPayment(payment.id)">
+                        <mat-icon>payment</mat-icon>
+                      </button>
+                      <button
+                        mat-icon-button
+                        color="accent"
+                        matTooltip="Send Reminder"
+                        (click)="sendReminder(payment.id)">
+                        <mat-icon>email</mat-icon>
+                      </button>
+                      <button
+                        mat-icon-button
+                        matTooltip="View Details"
+                        (click)="viewPaymentDetails(payment)">
+                        <mat-icon>visibility</mat-icon>
+                      </button>
+                    </div>
+                  </td>
+                </ng-container>
+
+                <tr mat-header-row *matHeaderRowDef="paymentColumns"></tr>
+                <tr mat-row *matRowDef="let row; columns: paymentColumns;"></tr>
+              </table>
+            </div>
+          }
+        </mat-tab>
+
+        <!-- Upcoming Renewals Tab -->
+        <mat-tab>
+          <ng-template mat-tab-label>
+            <mat-icon class="tab-icon">event</mat-icon>
+            Upcoming Renewals (30 days)
+            @if (upcomingRenewals().length > 0) {
+              <span class="badge-count" [matBadge]="upcomingRenewals().length"></span>
+            }
+          </ng-template>
+
+          @if (upcomingRenewals().length === 0) {
+            <div class="empty-state">
+              <mat-icon>event_available</mat-icon>
+              <p>No upcoming renewals in the next 30 days</p>
+            </div>
+          } @else {
+            <div class="table-container">
+              <table mat-table [dataSource]="upcomingRenewals()" class="renewals-table">
+                <ng-container matColumnDef="tenant">
+                  <th mat-header-cell *matHeaderCellDef>Tenant</th>
+                  <td mat-cell *matCellDef="let renewal">
+                    <strong>{{ renewal.tenantName }}</strong>
+                  </td>
+                </ng-container>
+
+                <ng-container matColumnDef="renewalDate">
+                  <th mat-header-cell *matHeaderCellDef>Renewal Date</th>
+                  <td mat-cell *matCellDef="let renewal">
+                    <div class="date-cell">
+                      <div>{{ formatDate(renewal.renewalDate) }}</div>
+                      <small>{{ formatRelativeDate(renewal.renewalDate) }}</small>
+                    </div>
+                  </td>
+                </ng-container>
+
+                <ng-container matColumnDef="amount">
+                  <th mat-header-cell *matHeaderCellDef>Amount</th>
+                  <td mat-cell *matCellDef="let renewal">
+                    {{ formatCurrency(renewal.amount) }}
+                  </td>
+                </ng-container>
+
+                <ng-container matColumnDef="tier">
+                  <th mat-header-cell *matHeaderCellDef>Tier</th>
+                  <td mat-cell *matCellDef="let renewal">
+                    <mat-chip [color]="getTierColor(renewal.tier)">
+                      {{ renewal.tier }}
+                    </mat-chip>
+                  </td>
+                </ng-container>
+
+                <ng-container matColumnDef="daysUntil">
+                  <th mat-header-cell *matHeaderCellDef>Days Until</th>
+                  <td mat-cell *matCellDef="let renewal">
+                    <span class="days-badge">{{ renewal.daysUntilRenewal }}</span>
+                  </td>
+                </ng-container>
+
+                <tr mat-header-row *matHeaderRowDef="renewalColumns"></tr>
+                <tr mat-row *matRowDef="let row; columns: renewalColumns;"></tr>
+              </table>
+            </div>
+          }
+        </mat-tab>
+
+        <!-- Recently Suspended Tab -->
+        @if (overview()?.recentlySuspendedTenants) {
+          <mat-tab>
+            <ng-template mat-tab-label>
+              <mat-icon class="tab-icon">block</mat-icon>
+              Recently Suspended
+              @if (overview()!.recentlySuspendedTenants.length > 0) {
+                <span class="badge-count" [matBadge]="overview()!.recentlySuspendedTenants.length" matBadgeColor="warn"></span>
+              }
+            </ng-template>
+
+            @if (overview()!.recentlySuspendedTenants.length === 0) {
+              <div class="empty-state">
+                <mat-icon>check_circle</mat-icon>
+                <p>No recently suspended tenants</p>
+              </div>
+            } @else {
+              <div class="suspended-list">
+                @for (tenant of overview()!.recentlySuspendedTenants; track tenant.tenantId) {
+                  <mat-card class="suspended-card">
+                    <mat-card-header>
+                      <mat-icon mat-card-avatar color="warn">block</mat-icon>
+                      <mat-card-title>{{ tenant.tenantName }}</mat-card-title>
+                      <mat-card-subtitle>Suspended {{ tenant.daysSuspended }} days ago</mat-card-subtitle>
+                    </mat-card-header>
+                    <mat-card-content>
+                      <p><strong>Overdue Amount:</strong> {{ formatCurrency(tenant.overdueAmount) }}</p>
+                      <p><strong>Suspended Date:</strong> {{ formatDate(tenant.suspendedDate) }}</p>
+                    </mat-card-content>
+                  </mat-card>
+                }
+              </div>
+            }
+          </mat-tab>
+        }
+      </mat-tab-group>
+    </mat-card>
+  }
+</div>

@@ -223,6 +223,7 @@ export class AdminLayoutComponent implements OnInit {
   navItems: NavItem[] = [
     { label: 'Dashboard', icon: 'dashboard', route: '/admin/dashboard' },
     { label: 'Tenants', icon: 'business', route: '/admin/tenants' },
+    { label: 'Subscriptions', icon: 'payment', route: '/admin/subscriptions', description: 'Subscription & Payment Management' },
     { label: 'Audit Logs', icon: 'history', route: '/admin/audit-logs' },
     { label: 'Security Alerts', icon: 'security', route: '/admin/security-alerts' },
     { label: 'Anomaly Detection', icon: 'warning', route: '/admin/anomaly-detection' },

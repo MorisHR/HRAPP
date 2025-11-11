@@ -1,0 +1,374 @@
+{
+  "//": "========================================",
+  "//": "PRODUCTION CONFIGURATION EXAMPLE",
+  "//": "========================================",
+  "//": "This file shows the structure for production configuration.",
+  "//": "DO NOT commit actual secrets to version control.",
+  "//": "Use Google Secret Manager for sensitive values.",
+  "//": "See PRODUCTION_DEPLOYMENT.md for detailed setup instructions.",
+  "//": "========================================",
+
+  "ConnectionStrings": {
+    "//": "Set in Google Secret Manager as: ConnectionStrings__DefaultConnection",
+    "//": "Format: Host=YOUR_DB_HOST;Port=5432;Database=hrms_prod;Username=hrms_user;Password=SECRET;Pooling=true;Minimum Pool Size=10;Maximum Pool Size=200;Connection Lifetime=300;Connection Idle Lifetime=60;",
+    "DefaultConnection": ""
+  },
+
+  "JwtSettings": {
+    "//": "Set in Google Secret Manager as: JwtSettings__Secret",
+    "//": "Generate using: openssl rand -base64 64",
+    "Secret": "",
+    "Issuer": "HRMS.Production",
+    "Audience": "HRMS.Client",
+    "ExpirationMinutes": 60,
+    "RefreshTokenExpirationDays": 7
+  },
+
+  "EmailSettings": {
+    "//": "========================================",
+    "//": "OPTION 1: Gmail with App Password",
+    "//": "========================================",
+    "//": "SmtpServer": "smtp.gmail.com",
+    "//": "SmtpPort": 587,
+    "//": "SmtpUsername": "your-email@gmail.com (set in Secret Manager: EmailSettings__SmtpUsername)",
+    "//": "SmtpPassword": "16-char app password (set in Secret Manager: EmailSettings__SmtpPassword)",
+    "//": "EnableSsl": true,
+    "//": "Limitations: 500 emails/day, best for small-scale deployments",
+    "//": "",
+    "//": "========================================",
+    "//": "OPTION 2: SendGrid (Recommended)",
+    "//": "========================================",
+    "//": "SmtpServer": "smtp.sendgrid.net",
+    "//": "SmtpPort": 587,
+    "//": "SmtpUsername": "apikey (literally the word 'apikey')",
+    "//": "SmtpPassword": "SG.your_api_key_here (set in Secret Manager: EmailSettings__SmtpPassword)",
+    "//": "EnableSsl": true,
+    "//": "Benefits: 100 emails/day free, scalable pricing, delivery analytics",
+    "//": "",
+    "//": "========================================",
+    "//": "OPTION 3: AWS SES (Best for High Volume)",
+    "//": "========================================",
+    "//": "SmtpServer": "email-smtp.us-east-1.amazonaws.com (or your region)",
+    "//": "SmtpPort": 587,
+    "//": "SmtpUsername": "Your AWS SES SMTP username (set in Secret Manager)",
+    "//": "SmtpPassword": "Your AWS SES SMTP password (set in Secret Manager)",
+    "//": "EnableSsl": true,
+    "//": "Benefits: $0.10 per 1,000 emails, highly scalable, excellent deliverability",
+    "//": "",
+    "//": "========================================",
+    "//": "PRODUCTION CONFIGURATION",
+    "//": "========================================",
+    "SmtpServer": "smtp.sendgrid.net",
+    "SmtpPort": 587,
+    "SmtpUsername": "",
+    "SmtpPassword": "",
+    "FromEmail": "noreply@yourdomain.com",
+    "FromName": "MorisHR",
+    "EnableSsl": true,
+    "UseDefaultCredentials": false,
+    "EnableEmailSending": true,
+    "MaxRetryAttempts": 3,
+    "RetryDelaySeconds": 5
+  },
+
+  "AppSettings": {
+    "FrontendUrl": "https://app.yourdomain.com",
+    "ProductionUrl": "https://yourdomain.com",
+    "ActivationTokenExpiryHours": 24,
+    "TenantSubdomain": "{subdomain}.yourdomain.com"
+  },
+
+  "Redis": {
+    "//": "Set in Google Secret Manager as: Redis__ConnectionString",
+    "//": "Format: YOUR_REDIS_HOST:6379,password=YOUR_PASSWORD,ssl=true,abortConnect=false",
+    "ConnectionString": "",
+    "InstanceName": "HRMS_PROD_",
+    "DefaultCacheExpirationMinutes": 60
+  },
+
+  "GoogleCloud": {
+    "//": "Google Cloud Platform configuration",
+    "ProjectId": "your-gcp-project-id",
+    "SecretManagerEnabled": true,
+    "CloudSqlInstanceConnectionName": "project-id:region:instance-name",
+    "StorageBucket": "hrms-uploads-prod"
+  },
+
+  "Serilog": {
+    "MinimumLevel": {
+      "Default": "Information",
+      "Override": {
+        "Microsoft": "Warning",
+        "Microsoft.Hosting.Lifetime": "Information",
+        "Microsoft.EntityFrameworkCore": "Warning",
+        "Hangfire": "Information",
+        "HRMS": "Information",
+        "System": "Warning"
+      }
+    },
+    "WriteTo": [
+      {
+        "Name": "Console",
+        "Args": {
+          "outputTemplate": "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] [{SourceContext}] [{CorrelationId}] {Message:lj}{NewLine}{Exception}",
+          "theme": "Serilog.Sinks.SystemConsole.Themes.AnsiConsoleTheme::Code, Serilog.Sinks.Console"
+        }
+      },
+      {
+        "Name": "GoogleCloudLogging",
+        "Args": {
+          "projectId": "your-gcp-project-id",
+          "resourceType": "cloud_run_revision",
+          "logName": "hrms-api",
+          "labels": {
+            "environment": "production"
+          }
+        }
+      }
+    ],
+    "Enrich": [
+      "FromLogContext",
+      "WithMachineName",
+      "WithThreadId",
+      "WithEnvironmentName"
+    ]
+  },
+
+  "Logging": {
+    "LogLevel": {
+      "Default": "Warning",
+      "Microsoft.AspNetCore": "Error",
+      "Microsoft.EntityFrameworkCore": "Error"
+    }
+  },
+
+  "AllowedHosts": "*.yourdomain.com,yourdomain.com",
+
+  "Cors": {
+    "//": "Restrict CORS to your production domains only",
+    "AllowedOrigins": [
+      "https://app.yourdomain.com",
+      "https://admin.yourdomain.com",
+      "https://yourdomain.com"
+    ],
+    "AllowedDomains": [
+      "yourdomain.com"
+    ]
+  },
+
+  "IpRateLimiting": {
+    "EnableEndpointRateLimiting": true,
+    "StackBlockedRequests": false,
+    "RealIpHeader": "X-Real-IP",
+    "ClientIdHeader": "X-ClientId",
+    "HttpStatusCode": 429,
+    "IpWhitelist": [
+      "//": "Add your office/VPN IPs here for unrestricted access"
+    ],
+    "EndpointWhitelist": [
+      "get:/health",
+      "get:/health/ready",
+      "get:/"
+    ],
+    "GeneralRules": [
+      {
+        "Endpoint": "*",
+        "Period": "1m",
+        "Limit": 100
+      },
+      {
+        "Endpoint": "*",
+        "Period": "1h",
+        "Limit": 1000
+      }
+    ],
+    "QuotaExceededResponse": {
+      "Content": "{{ \"error\": \"Rate limit exceeded\", \"message\": \"Too many requests. Please try again later.\", \"retryAfter\": \"{0}\" }}",
+      "ContentType": "application/json",
+      "StatusCode": 429
+    }
+  },
+
+  "IpRateLimitPolicies": {
+    "IpRules": [
+      {
+        "Ip": "*",
+        "Rules": [
+          {
+            "Endpoint": "POST:/api/auth/login",
+            "Period": "15m",
+            "Limit": 5
+          },
+          {
+            "Endpoint": "POST:/api/auth/*",
+            "Period": "1h",
+            "Limit": 20
+          },
+          {
+            "Endpoint": "DELETE:*",
+            "Period": "1m",
+            "Limit": 10
+          },
+          {
+            "Endpoint": "POST:/api/tenants*",
+            "Period": "1h",
+            "Limit": 10
+          },
+          {
+            "Endpoint": "POST:/api/payroll/*/process",
+            "Period": "1h",
+            "Limit": 50
+          }
+        ]
+      }
+    ]
+  },
+
+  "Security": {
+    "RequireHttpsMetadata": true,
+    "EnableApiKeyValidation": true,
+    "//": "API keys for external integrations (optional)",
+    "AllowedApiKeys": []
+  },
+
+  "Hangfire": {
+    "//": "Background job processing configuration",
+    "WorkerCount": 10,
+    "DashboardEnabled": true,
+    "RequireAuthentication": true,
+    "//": "Access dashboard at: https://yourdomain.com/hangfire (SuperAdmin only)"
+  },
+
+  "HealthChecks": {
+    "Enabled": true,
+    "DetailedErrors": false,
+    "//": "Set DetailedErrors to false in production for security"
+  },
+
+  "Performance": {
+    "EnableResponseCompression": true,
+    "EnableResponseCaching": true,
+    "MaxRequestBodySize": 10485760,
+    "//": "MaxRequestBodySize in bytes (10MB default for file uploads)"
+  },
+
+  "SecurityAlerting": {
+    "Enabled": true,
+    "EmailEnabled": true,
+    "EmailRecipients": [
+      "security@yourdomain.com",
+      "admin@yourdomain.com"
+    ],
+    "EmailRecipients:CRITICAL": [
+      "security@yourdomain.com",
+      "admin@yourdomain.com",
+      "cto@yourdomain.com"
+    ],
+    "EmailRecipients:EMERGENCY": [
+      "security@yourdomain.com",
+      "admin@yourdomain.com",
+      "cto@yourdomain.com",
+      "ceo@yourdomain.com"
+    ],
+    "SmsEnabled": false,
+    "SmsRecipients": [],
+    "SlackEnabled": false,
+    "SlackWebhookUrl": "",
+    "SlackChannels": [
+      "#security-alerts",
+      "#critical-alerts"
+    ],
+    "SiemEnabled": false,
+    "SiemType": "Splunk",
+    "SiemEndpoint": "",
+    "FailedLoginThreshold": 5,
+    "AfterHoursStart": 18,
+    "AfterHoursEnd": 6,
+    "MassDataExportThreshold": 500
+  },
+
+  "RateLimit": {
+    "Enabled": true,
+    "UseRedis": true,
+    "RedisConnectionString": "",
+    "Algorithm": "SlidingWindow",
+    "GeneralLimit": 100,
+    "SuperAdminLimit": 30,
+    "AuthenticationLimit": 5,
+    "WindowSeconds": 60,
+    "WhitelistedIPs": [
+      "//": "Add trusted IPs (load balancers, monitoring tools, etc.)"
+    ],
+    "StatusCode": 429,
+    "EnableAutoBlacklist": true,
+    "BlacklistThreshold": 10,
+    "BlacklistDurationMinutes": 60,
+    "LogViolations": true,
+    "AlertOnViolations": true
+  },
+
+  "AnomalyDetection": {
+    "Enabled": true,
+    "FailedLoginThreshold": 5,
+    "FailedLoginWindowMinutes": 15,
+    "MassExportRecordThreshold": 100,
+    "EnableImpossibleTravelDetection": true,
+    "ImpossibleTravelKmPerHour": 800,
+    "ConcurrentSessionThreshold": 3,
+    "AfterHoursStartHour": 22,
+    "AfterHoursEndHour": 6,
+    "SalaryChangePercentageThreshold": 50,
+    "RapidActionThreshold": 10,
+    "RapidActionWindowSeconds": 60,
+    "AutoNotifyOnCritical": true,
+    "AutoNotifyOnHigh": true,
+    "NotificationRecipients": [
+      "security@yourdomain.com",
+      "compliance@yourdomain.com"
+    ]
+  },
+
+  "//": "========================================",
+  "//": "ENVIRONMENT-SPECIFIC SECRETS",
+  "//": "========================================",
+  "//": "The following secrets MUST be set in Google Secret Manager:",
+  "//": "",
+  "//": "1. ConnectionStrings__DefaultConnection",
+  "//": "   - PostgreSQL connection string with credentials",
+  "//": "",
+  "//": "2. JwtSettings__Secret",
+  "//": "   - Cryptographically secure random string (64+ chars)",
+  "//": "   - Generate: openssl rand -base64 64",
+  "//": "",
+  "//": "3. EmailSettings__SmtpUsername",
+  "//": "   - SMTP authentication username",
+  "//": "",
+  "//": "4. EmailSettings__SmtpPassword",
+  "//": "   - SMTP authentication password or API key",
+  "//": "",
+  "//": "5. Redis__ConnectionString",
+  "//": "   - Redis connection string with password",
+  "//": "",
+  "//": "========================================",
+  "//": "DEPLOYMENT CHECKLIST",
+  "//": "========================================",
+  "//": "Before deploying to production:",
+  "//": "",
+  "//": "[ ] Copy this file to appsettings.Production.json",
+  "//": "[ ] Replace all placeholder values with actual values",
+  "//": "[ ] Configure all secrets in Google Secret Manager",
+  "//": "[ ] Update domain names (yourdomain.com -> actual domain)",
+  "//": "[ ] Update email addresses with real addresses",
+  "//": "[ ] Configure SSL/TLS certificates",
+  "//": "[ ] Set up database with proper connection pooling",
+  "//": "[ ] Configure Redis for distributed caching",
+  "//": "[ ] Test email delivery from production SMTP",
+  "//": "[ ] Verify all health checks pass",
+  "//": "[ ] Run security vulnerability scan",
+  "//": "[ ] Configure monitoring and alerting",
+  "//": "[ ] Document all configuration changes",
+  "//": "[ ] Test disaster recovery procedures",
+  "//": "",
+  "//": "See PRODUCTION_DEPLOYMENT.md for detailed instructions",
+  "//": "========================================"
+}

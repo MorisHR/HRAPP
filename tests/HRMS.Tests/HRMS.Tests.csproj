@@ -25,6 +25,7 @@
     <ProjectReference Include="..\..\src\HRMS.Infrastructure\HRMS.Infrastructure.csproj" />
     <ProjectReference Include="..\..\src\HRMS.Application\HRMS.Application.csproj" />
     <ProjectReference Include="..\..\src\HRMS.Core\HRMS.Core.csproj" />
+    <ProjectReference Include="..\..\src\HRMS.BackgroundJobs\HRMS.BackgroundJobs.csproj" />
   </ItemGroup>
 
 </Project>

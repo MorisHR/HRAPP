@@ -1,0 +1,333 @@
+.subscription-dashboard {
+  padding: 0;
+
+  .dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+
+    h1 {
+      margin: 0;
+      font-size: 2rem;
+      font-weight: 500;
+    }
+
+    button {
+      mat-icon {
+        margin-right: 8px;
+      }
+    }
+  }
+
+  .loading-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 48px;
+    gap: 16px;
+
+    p {
+      color: rgba(0, 0, 0, 0.6);
+      font-size: 1rem;
+    }
+  }
+
+  .error-card {
+    mat-card-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      padding: 24px;
+
+      mat-icon {
+        font-size: 48px;
+        width: 48px;
+        height: 48px;
+      }
+
+      p {
+        color: rgba(0, 0, 0, 0.7);
+        text-align: center;
+      }
+    }
+  }
+
+  // Analytics Cards
+  .analytics-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+
+    .metric-card {
+      mat-card-header {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding: 16px;
+
+        .metric-icon {
+          font-size: 48px;
+          width: 48px;
+          height: 48px;
+          border-radius: 8px;
+          padding: 8px;
+
+          &.arr {
+            background-color: rgba(76, 175, 80, 0.1);
+            color: #4caf50;
+          }
+
+          &.mrr {
+            background-color: rgba(33, 150, 243, 0.1);
+            color: #2196f3;
+          }
+
+          &.churn {
+            background-color: rgba(255, 152, 0, 0.1);
+            color: #ff9800;
+          }
+
+          &.ltv {
+            background-color: rgba(156, 39, 176, 0.1);
+            color: #9c27b0;
+          }
+
+          &.active {
+            background-color: rgba(0, 188, 212, 0.1);
+            color: #00bcd4;
+          }
+
+          &.revenue {
+            background-color: rgba(233, 30, 99, 0.1);
+            color: #e91e63;
+          }
+        }
+
+        div {
+          flex: 1;
+        }
+
+        mat-card-subtitle {
+          font-size: 0.875rem;
+          margin-bottom: 4px;
+        }
+
+        mat-card-title {
+          font-size: 1.5rem;
+          font-weight: 600;
+          margin: 0;
+        }
+      }
+    }
+  }
+
+  // Charts
+  .charts-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+
+    .chart-card {
+      mat-card-header {
+        margin-bottom: 16px;
+      }
+
+      .chart-container {
+        height: 300px;
+        position: relative;
+      }
+    }
+  }
+
+  // Tabs Card
+  .tabs-card {
+    mat-tab-group {
+      ::ng-deep {
+        .mat-mdc-tab-labels {
+          padding: 16px;
+        }
+
+        .mat-mdc-tab {
+          min-width: 160px;
+
+          .tab-icon {
+            margin-right: 8px;
+          }
+
+          .badge-count {
+            margin-left: 8px;
+          }
+        }
+      }
+    }
+
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 48px;
+      gap: 16px;
+
+      mat-icon {
+        font-size: 64px;
+        width: 64px;
+        height: 64px;
+        color: rgba(0, 0, 0, 0.3);
+      }
+
+      p {
+        color: rgba(0, 0, 0, 0.6);
+        font-size: 1rem;
+      }
+    }
+
+    .table-container {
+      overflow-x: auto;
+      padding: 16px;
+
+      .payments-table,
+      .renewals-table {
+        width: 100%;
+
+        th {
+          font-weight: 600;
+          background-color: rgba(0, 0, 0, 0.02);
+        }
+
+        .tenant-cell {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+
+          strong {
+            font-size: 0.875rem;
+          }
+
+          small {
+            font-size: 0.75rem;
+            color: rgba(0, 0, 0, 0.6);
+          }
+        }
+
+        .date-cell {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+
+          div {
+            font-size: 0.875rem;
+          }
+
+          small {
+            font-size: 0.75rem;
+            color: rgba(0, 0, 0, 0.6);
+
+            &.overdue-text {
+              color: #f44336;
+              font-weight: 500;
+            }
+          }
+        }
+
+        .action-buttons {
+          display: flex;
+          gap: 4px;
+        }
+
+        .days-badge {
+          display: inline-block;
+          padding: 4px 12px;
+          background-color: rgba(33, 150, 243, 0.1);
+          color: #2196f3;
+          border-radius: 12px;
+          font-weight: 500;
+          font-size: 0.875rem;
+        }
+      }
+    }
+
+    .suspended-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 16px;
+      padding: 16px;
+
+      .suspended-card {
+        mat-card-header {
+          margin-bottom: 16px;
+        }
+
+        mat-card-content {
+          p {
+            margin: 8px 0;
+            font-size: 0.875rem;
+
+            strong {
+              font-weight: 600;
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+// Responsive Design
+@media (max-width: 768px) {
+  .subscription-dashboard {
+    .analytics-cards {
+      grid-template-columns: 1fr;
+    }
+
+    .charts-row {
+      grid-template-columns: 1fr;
+    }
+
+    .dashboard-header {
+      flex-direction: column;
+      gap: 16px;
+      align-items: flex-start;
+
+      h1 {
+        font-size: 1.5rem;
+      }
+    }
+  }
+}
+
+// Dark mode support
+:host-context(.dark-theme) {
+  .subscription-dashboard {
+    .loading-container p,
+    .error-card p,
+    .empty-state p {
+      color: rgba(255, 255, 255, 0.7);
+    }
+
+    .metric-card {
+      mat-card-subtitle {
+        color: rgba(255, 255, 255, 0.7);
+      }
+    }
+
+    .table-container {
+      .payments-table,
+      .renewals-table {
+        th {
+          background-color: rgba(255, 255, 255, 0.05);
+        }
+
+        .tenant-cell small,
+        .date-cell small {
+          color: rgba(255, 255, 255, 0.7);
+        }
+      }
+    }
+  }
+}

@@ -8,6 +8,10 @@ import { authInterceptor } from './core/interceptors/auth.interceptor';
 import { provideServiceWorker } from '@angular/service-worker';
 import { ChunkLoadingErrorHandler } from './core/error-handlers/chunk-loading-error.handler';
 
+// Chart.js configuration
+import { Chart, registerables } from 'chart.js';
+Chart.register(...registerables);
+
 export const appConfig: ApplicationConfig = {
   providers: [
     { provide: ErrorHandler, useClass: ChunkLoadingErrorHandler },

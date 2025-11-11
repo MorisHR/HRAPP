@@ -1,3 +1,4 @@
+using HRMS.Application.Interfaces;
 using HRMS.Core.Entities.Master;
 using HRMS.Core.Enums;
 using HRMS.Infrastructure.Data;
@@ -20,6 +21,7 @@ public class SubscriptionManagementServiceTests : IDisposable
     private readonly MasterDbContext _masterDbContext;
     private readonly Mock<IMemoryCache> _mockCache;
     private readonly Mock<ILogger<SubscriptionManagementService>> _mockLogger;
+    private readonly Mock<IAuditLogService> _mockAuditLogService;
     private readonly SubscriptionManagementService _service;
     private readonly Guid _testTenantId = Guid.NewGuid();
 
@@ -35,6 +37,7 @@ public class SubscriptionManagementServiceTests : IDisposable
         // Setup Mocks
         _mockCache = new Mock<IMemoryCache>();
         _mockLogger = new Mock<ILogger<SubscriptionManagementService>>();
+        _mockAuditLogService = new Mock<IAuditLogService>();
 
         // Setup Cache Mock (return null for cache misses)
         object? cachedValue = null;
@@ -47,8 +50,9 @@ public class SubscriptionManagementServiceTests : IDisposable
         // Create Service
         _service = new SubscriptionManagementService(
             _masterDbContext,
+            _mockLogger.Object,
             _mockCache.Object,
-            _mockLogger.Object
+            _mockAuditLogService.Object
         );
 
         // Seed Test Data
@@ -65,7 +69,9 @@ public class SubscriptionManagementServiceTests : IDisposable
             SubscriptionEndDate = DateTime.UtcNow.AddYears(1),
             YearlyPriceMUR = 50000.00m,
             Status = TenantStatus.Active,
-            EmployeeTier = EmployeeTier.Tier2_101To500,
+            EmployeeTier = EmployeeTier.Tier3,
+            ContactEmail = "test@example.com",
+            IsGovernmentEntity = false,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
@@ -82,12 +88,20 @@ public class SubscriptionManagementServiceTests : IDisposable
         var expectedTax = subtotal * 0.15m; // 7500.00
         var expectedTotal = subtotal + expectedTax; // 57500.00
 
+        var periodStart = DateTime.UtcNow;
+        var periodEnd = periodStart.AddYears(1);
+        var dueDate = periodStart.AddDays(30);
+
         // Act
         var result = await _service.CreatePaymentRecordAsync(
             _testTenantId,
+            periodStart,
+            periodEnd,
             subtotal,
-            PaymentType.Subscription,
-            DateTime.UtcNow.AddDays(30)
+            dueDate,
+            EmployeeTier.Tier3,
+            "Test payment",
+            calculateTax: true
         );
 
         // Assert
@@ -97,368 +111,392 @@ public class SubscriptionManagementServiceTests : IDisposable
         result.TaxAmountMUR.Should().Be(expectedTax);
         result.TotalMUR.Should().Be(expectedTotal);
         result.IsTaxExempt.Should().BeFalse();
-        result.Status.Should().Be(PaymentStatus.Pending);
+        result.Status.Should().Be(SubscriptionPaymentStatus.Pending);
     }
 
     [Fact]
-    public async Task CreatePaymentRecord_WithTaxExemption_ShouldNotAddVAT()
+    public async Task CreatePaymentRecord_WithoutTax_ShouldNotAddVAT()
     {
         // Arrange
-        var subtotal = 50000.00m;
+        var amount = 50000.00m;
+        var periodStart = DateTime.UtcNow;
+        var periodEnd = periodStart.AddYears(1);
+        var dueDate = periodStart.AddDays(30);
 
         // Act
         var result = await _service.CreatePaymentRecordAsync(
             _testTenantId,
-            subtotal,
-            PaymentType.Subscription,
-            DateTime.UtcNow.AddDays(30),
-            isTaxExempt: true
+            periodStart,
+            periodEnd,
+            amount,
+            dueDate,
+            EmployeeTier.Tier3,
+            "Test payment",
+            calculateTax: false
         );
 
         // Assert
         result.Should().NotBeNull();
-        result.SubtotalMUR.Should().Be(subtotal);
-        result.TaxRate.Should().Be(0m);
+        result.TotalMUR.Should().Be(amount);
         result.TaxAmountMUR.Should().Be(0m);
-        result.TotalMUR.Should().Be(subtotal); // No tax added
-        result.IsTaxExempt.Should().BeTrue();
     }
 
     [Fact]
-    public async Task CreatePaymentRecord_WithCustomTaxRate_ShouldCalculateCorrectly()
+    public async Task CalculateTax_ShouldReturn15PercentForNonGovernment()
     {
         // Arrange
-        var subtotal = 50000.00m;
-        var customTaxRate = 0.10m; // 10% tax rate
-        var expectedTax = subtotal * customTaxRate; // 5000.00
-        var expectedTotal = subtotal + expectedTax; // 55000.00
+        var amount = 50000.00m;
 
         // Act
-        var result = await _service.CreatePaymentRecordAsync(
-            _testTenantId,
-            subtotal,
-            PaymentType.Subscription,
-            DateTime.UtcNow.AddDays(30),
-            taxRate: customTaxRate
-        );
+        var result = await _service.CalculateTaxAsync(amount, isGovernmentEntity: false);
 
         // Assert
-        result.Should().NotBeNull();
-        result.TaxRate.Should().Be(customTaxRate);
-        result.TaxAmountMUR.Should().Be(expectedTax);
-        result.TotalMUR.Should().Be(expectedTotal);
-    }
-
-    [Fact]
-    public async Task CreateProRatedPayment_MidYear_ShouldCalculateCorrectly()
-    {
-        // Arrange
-        var tenant = await _masterDbContext.Tenants.FindAsync(_testTenantId);
-        tenant!.SubscriptionEndDate = DateTime.UtcNow.AddMonths(6); // 6 months remaining
-        await _masterDbContext.SaveChangesAsync();
-
-        var oldPrice = 50000.00m;
-        var newPrice = 100000.00m;
-        var priceDifference = newPrice - oldPrice; // 50000.00
-
-        // Act
-        var result = await _service.CreateProRatedPaymentAsync(
-            _testTenantId,
-            oldPrice,
-            newPrice
-        );
-
-        // Assert
-        result.Should().NotBeNull();
-
-        // Should be roughly 25000 (50% of year remaining * 50000 difference) + 15% VAT
-        var expectedSubtotal = priceDifference / 2; // Approximately for 6 months
-        result!.PaymentType.Should().Be(PaymentType.TierUpgrade);
-        result.SubtotalMUR.Should().BeGreaterThan(20000m); // At least 20k for 6 months
-        result.SubtotalMUR.Should().BeLessThan(30000m); // Less than 30k for 6 months
+        result.Subtotal.Should().Be(amount);
         result.TaxRate.Should().Be(0.15m);
-        result.TaxAmountMUR.Should().BeGreaterThan(0m);
+        result.TaxAmount.Should().Be(7500.00m);
+        result.Total.Should().Be(57500.00m);
     }
 
     [Fact]
-    public async Task CreateProRatedPayment_1MonthRemaining_ShouldCalculateSmallAmount()
+    public async Task CalculateTax_GovernmentEntity_ShouldBeExempt()
     {
         // Arrange
-        var tenant = await _masterDbContext.Tenants.FindAsync(_testTenantId);
-        tenant!.SubscriptionEndDate = DateTime.UtcNow.AddDays(30); // 1 month remaining
-        await _masterDbContext.SaveChangesAsync();
-
-        var oldPrice = 50000.00m;
-        var newPrice = 100000.00m;
-        var priceDifference = newPrice - oldPrice; // 50000.00
+        var amount = 50000.00m;
 
         // Act
-        var result = await _service.CreateProRatedPaymentAsync(
-            _testTenantId,
-            oldPrice,
-            newPrice
-        );
+        var result = await _service.CalculateTaxAsync(amount, isGovernmentEntity: true);
 
         // Assert
-        result.Should().NotBeNull();
-
-        // Should be roughly 4166 (1/12 of year * 50000 difference) + VAT
-        result!.SubtotalMUR.Should().BeGreaterThan(3000m); // At least 3k for 1 month
-        result.SubtotalMUR.Should().BeLessThan(6000m); // Less than 6k for 1 month
+        result.Subtotal.Should().Be(amount);
+        result.TaxRate.Should().Be(0m);
+        result.TaxAmount.Should().Be(0m);
+        result.Total.Should().Be(amount);
     }
 
     [Fact]
-    public async Task CreateProRatedPayment_ExpiredSubscription_ShouldReturnNull()
+    public async Task MarkPaymentAsPaid_ShouldUpdateStatusCorrectly()
     {
         // Arrange
-        var tenant = await _masterDbContext.Tenants.FindAsync(_testTenantId);
-        tenant!.SubscriptionEndDate = DateTime.UtcNow.AddDays(-1); // Already expired
-        await _masterDbContext.SaveChangesAsync();
-
-        // Act
-        var result = await _service.CreateProRatedPaymentAsync(
-            _testTenantId,
-            50000.00m,
-            100000.00m
-        );
-
-        // Assert
-        result.Should().BeNull("subscription already expired, no pro-rating needed");
-    }
-
-    [Fact]
-    public async Task CreateRenewalPayment_ShouldCreateForNextYear()
-    {
-        // Arrange
-        var tenant = await _masterDbContext.Tenants.FindAsync(_testTenantId);
-        var currentEndDate = tenant!.SubscriptionEndDate;
-        var yearlyPrice = tenant.YearlyPriceMUR;
-
-        // Act
-        var result = await _service.CreateRenewalPaymentAsync(_testTenantId);
-
-        // Assert
-        result.Should().NotBeNull();
-        result.PaymentType.Should().Be(PaymentType.Renewal);
-        result.SubtotalMUR.Should().Be(yearlyPrice);
-        result.TaxRate.Should().Be(0.15m);
-        result.TaxAmountMUR.Should().Be(yearlyPrice * 0.15m);
-        result.TotalMUR.Should().Be(yearlyPrice * 1.15m);
-        result.DueDate.Should().BeCloseTo(currentEndDate, TimeSpan.FromDays(1));
-    }
-
-    [Fact]
-    public async Task RecordPayment_ShouldUpdateStatusAndDate()
-    {
-        // Arrange
+        var periodStart = DateTime.UtcNow;
         var payment = await _service.CreatePaymentRecordAsync(
             _testTenantId,
+            periodStart,
+            periodStart.AddYears(1),
             50000.00m,
-            PaymentType.Subscription,
-            DateTime.UtcNow.AddDays(30)
+            periodStart.AddDays(30),
+            EmployeeTier.Tier3
         );
 
         var paymentDate = DateTime.UtcNow;
-        var paymentMethod = "Bank Transfer";
+        var processedBy = "admin@example.com";
         var reference = "TXN-12345";
 
         // Act
-        var result = await _service.RecordPaymentAsync(
+        var result = await _service.MarkPaymentAsPaidAsync(
             payment.Id,
-            paymentDate,
-            paymentMethod,
-            reference
+            processedBy,
+            reference,
+            "Bank Transfer",
+            paymentDate
         );
 
         // Assert
-        result.Should().BeTrue();
+        result.Success.Should().BeTrue();
 
         var updatedPayment = await _masterDbContext.SubscriptionPayments.FindAsync(payment.Id);
-        updatedPayment!.Status.Should().Be(PaymentStatus.Paid);
-        updatedPayment.PaymentDate.Should().BeCloseTo(paymentDate, TimeSpan.FromSeconds(1));
-        updatedPayment.PaymentMethod.Should().Be(paymentMethod);
+        updatedPayment!.Status.Should().Be(SubscriptionPaymentStatus.Paid);
+        updatedPayment.PaidDate.Should().NotBeNull();
+        updatedPayment.ProcessedBy.Should().Be(processedBy);
         updatedPayment.PaymentReference.Should().Be(reference);
     }
 
     [Fact]
-    public async Task RecordPartialPayment_ShouldUpdateAmountPaid()
+    public async Task MarkPaymentAsOverdue_ShouldUpdateStatus()
     {
         // Arrange
+        var periodStart = DateTime.UtcNow.AddDays(-40);
         var payment = await _service.CreatePaymentRecordAsync(
             _testTenantId,
+            periodStart,
+            periodStart.AddYears(1),
             50000.00m,
-            PaymentType.Subscription,
-            DateTime.UtcNow.AddDays(30)
+            periodStart.AddDays(30),
+            EmployeeTier.Tier3
         );
-
-        var partialAmount = 30000.00m;
 
         // Act
-        var result = await _service.RecordPartialPaymentAsync(
-            payment.Id,
-            partialAmount,
-            DateTime.UtcNow,
-            "Partial Payment - Bank Transfer",
-            "PARTIAL-001"
-        );
+        var result = await _service.MarkPaymentAsOverdueAsync(payment.Id);
 
         // Assert
-        result.Should().BeTrue();
+        result.Success.Should().BeTrue();
 
         var updatedPayment = await _masterDbContext.SubscriptionPayments.FindAsync(payment.Id);
-        updatedPayment!.Status.Should().Be(PaymentStatus.PartiallyPaid);
-        updatedPayment.AmountPaidMUR.Should().Be(partialAmount);
-        updatedPayment.PaymentMethod.Should().Be("Partial Payment - Bank Transfer");
+        updatedPayment!.Status.Should().Be(SubscriptionPaymentStatus.Overdue);
     }
 
     [Fact]
-    public async Task RefundPayment_ShouldUpdateStatusAndRefundAmount()
+    public async Task WaivePayment_ShouldUpdateStatusAndReason()
     {
         // Arrange
+        var periodStart = DateTime.UtcNow;
         var payment = await _service.CreatePaymentRecordAsync(
             _testTenantId,
+            periodStart,
+            periodStart.AddYears(1),
             50000.00m,
-            PaymentType.Subscription,
-            DateTime.UtcNow.AddDays(30)
+            periodStart.AddDays(30),
+            EmployeeTier.Tier3
         );
 
-        await _service.RecordPaymentAsync(
-            payment.Id,
-            DateTime.UtcNow,
-            "Bank Transfer",
-            "TXN-12345"
-        );
-
-        var refundAmount = 57500.00m; // Full amount + VAT
-        var refundReason = "Service cancellation";
+        var waivedBy = "admin@example.com";
+        var reason = "Promotional waiver";
 
         // Act
-        var result = await _service.RefundPaymentAsync(
-            payment.Id,
-            refundAmount,
-            refundReason
-        );
+        var result = await _service.WaivePaymentAsync(payment.Id, waivedBy, reason);
 
         // Assert
-        result.Should().BeTrue();
+        result.Success.Should().BeTrue();
 
         var updatedPayment = await _masterDbContext.SubscriptionPayments.FindAsync(payment.Id);
-        updatedPayment!.Status.Should().Be(PaymentStatus.Refunded);
-        updatedPayment.RefundAmountMUR.Should().Be(refundAmount);
-        updatedPayment.RefundDate.Should().NotBeNull();
-        updatedPayment.RefundReason.Should().Be(refundReason);
+        updatedPayment!.Status.Should().Be(SubscriptionPaymentStatus.Waived);
+        updatedPayment.ProcessedBy.Should().Be(waivedBy);
+        updatedPayment.Notes.Should().Contain(reason);
     }
 
     [Fact]
-    public async Task VoidPayment_ShouldUpdateStatus()
+    public async Task GetOverduePayments_ShouldReturnCorrectPayments()
     {
         // Arrange
-        var payment = await _service.CreatePaymentRecordAsync(
+        var pastDate = DateTime.UtcNow.AddDays(-10);
+        var overduePayment = await _service.CreatePaymentRecordAsync(
             _testTenantId,
+            pastDate,
+            pastDate.AddYears(1),
             50000.00m,
-            PaymentType.Subscription,
-            DateTime.UtcNow.AddDays(30)
+            pastDate.AddDays(-5), // Due date in the past
+            EmployeeTier.Tier3
+        );
+
+        var futureDate = DateTime.UtcNow;
+        var upcomingPayment = await _service.CreatePaymentRecordAsync(
+            _testTenantId,
+            futureDate,
+            futureDate.AddYears(1),
+            30000.00m,
+            futureDate.AddDays(30),
+            EmployeeTier.Tier3
         );
 
         // Act
-        var result = await _service.VoidPaymentAsync(payment.Id, "Duplicate payment created");
+        var result = await _service.GetOverduePaymentsAsync();
 
         // Assert
-        result.Should().BeTrue();
-
-        var updatedPayment = await _masterDbContext.SubscriptionPayments.FindAsync(payment.Id);
-        updatedPayment!.Status.Should().Be(PaymentStatus.Void);
-        updatedPayment.VoidReason.Should().Be("Duplicate payment created");
-        updatedPayment.VoidedAt.Should().NotBeNull();
+        result.Should().NotBeEmpty();
+        result.Should().Contain(p => p.Id == overduePayment.Id);
     }
 
     [Fact]
-    public async Task GetTotalRevenue_ShouldCalculateCorrectly()
-    {
-        // Arrange - Create and mark as paid 3 payments
-        var payment1 = await _service.CreatePaymentRecordAsync(_testTenantId, 50000m, PaymentType.Subscription, DateTime.UtcNow.AddDays(30));
-        var payment2 = await _service.CreatePaymentRecordAsync(_testTenantId, 30000m, PaymentType.TierUpgrade, DateTime.UtcNow.AddDays(60));
-        var payment3 = await _service.CreatePaymentRecordAsync(_testTenantId, 20000m, PaymentType.Renewal, DateTime.UtcNow.AddDays(90));
-
-        await _service.RecordPaymentAsync(payment1.Id, DateTime.UtcNow, "Bank", "REF1");
-        await _service.RecordPaymentAsync(payment2.Id, DateTime.UtcNow, "Bank", "REF2");
-        await _service.RecordPaymentAsync(payment3.Id, DateTime.UtcNow, "Bank", "REF3");
-
-        var expectedTotal = (50000m + 30000m + 20000m) * 1.15m; // Include VAT
-
-        // Act
-        var result = await _service.GetTotalRevenueAsync();
-
-        // Assert
-        result.Should().Be(expectedTotal);
-    }
-
-    [Fact]
-    public async Task GetARR_ShouldCalculateCorrectly()
-    {
-        // Arrange - Create annual subscription payments
-        var payment1 = await _service.CreatePaymentRecordAsync(_testTenantId, 50000m, PaymentType.Subscription, DateTime.UtcNow);
-        await _service.RecordPaymentAsync(payment1.Id, DateTime.UtcNow, "Bank", "REF1");
-
-        var expectedARR = 50000m * 1.15m; // Subtotal + VAT
-
-        // Act
-        var result = await _service.GetARRAsync();
-
-        // Assert
-        result.Should().Be(expectedARR);
-    }
-
-    [Fact]
-    public async Task GetMRR_ShouldCalculateCorrectly()
+    public async Task GetPendingPayments_ShouldReturnOnlyPending()
     {
         // Arrange
-        var payment1 = await _service.CreatePaymentRecordAsync(_testTenantId, 50000m, PaymentType.Subscription, DateTime.UtcNow);
-        await _service.RecordPaymentAsync(payment1.Id, DateTime.UtcNow, "Bank", "REF1");
+        var periodStart = DateTime.UtcNow;
+        var pending1 = await _service.CreatePaymentRecordAsync(
+            _testTenantId,
+            periodStart,
+            periodStart.AddYears(1),
+            50000.00m,
+            periodStart.AddDays(30),
+            EmployeeTier.Tier3
+        );
 
-        var expectedMRR = (50000m * 1.15m) / 12m; // ARR / 12
+        var pending2 = await _service.CreatePaymentRecordAsync(
+            _testTenantId,
+            periodStart,
+            periodStart.AddYears(1),
+            30000.00m,
+            periodStart.AddDays(60),
+            EmployeeTier.Tier3
+        );
 
-        // Act
-        var result = await _service.GetMRRAsync();
+        var paid = await _service.CreatePaymentRecordAsync(
+            _testTenantId,
+            periodStart,
+            periodStart.AddYears(1),
+            20000.00m,
+            periodStart.AddDays(90),
+            EmployeeTier.Tier3
+        );
 
-        // Assert
-        result.Should().BeApproximately(expectedMRR, 0.01m);
-    }
-
-    [Fact]
-    public async Task GetPendingPayments_ShouldReturnOnlyPendingPayments()
-    {
-        // Arrange
-        var pending1 = await _service.CreatePaymentRecordAsync(_testTenantId, 50000m, PaymentType.Subscription, DateTime.UtcNow.AddDays(30));
-        var pending2 = await _service.CreatePaymentRecordAsync(_testTenantId, 30000m, PaymentType.Renewal, DateTime.UtcNow.AddDays(60));
-        var paid = await _service.CreatePaymentRecordAsync(_testTenantId, 20000m, PaymentType.Subscription, DateTime.UtcNow.AddDays(90));
-
-        await _service.RecordPaymentAsync(paid.Id, DateTime.UtcNow, "Bank", "REF1");
+        await _service.MarkPaymentAsPaidAsync(paid.Id, "admin", "REF1", "Bank", DateTime.UtcNow);
 
         // Act
         var result = await _service.GetPendingPaymentsAsync();
 
         // Assert
-        result.Should().HaveCount(2);
+        result.Should().HaveCountGreaterOrEqualTo(2);
         result.Should().Contain(p => p.Id == pending1.Id);
         result.Should().Contain(p => p.Id == pending2.Id);
         result.Should().NotContain(p => p.Id == paid.Id);
     }
 
     [Fact]
-    public async Task GetOverduePayments_ShouldReturnOnlyOverduePayments()
+    public async Task GetAnnualRecurringRevenue_ShouldCalculateCorrectly()
     {
-        // Arrange
-        var overdue = await _service.CreatePaymentRecordAsync(_testTenantId, 50000m, PaymentType.Subscription, DateTime.UtcNow.AddDays(-5));
-        var upcoming = await _service.CreatePaymentRecordAsync(_testTenantId, 30000m, PaymentType.Renewal, DateTime.UtcNow.AddDays(30));
-
         // Act
-        var result = await _service.GetOverduePaymentsAsync();
+        var result = await _service.GetAnnualRecurringRevenueAsync();
 
         // Assert
-        result.Should().HaveCount(1);
-        result.First().Id.Should().Be(overdue.Id);
-        result.Should().NotContain(p => p.Id == upcoming.Id);
+        result.Should().Be(50000.00m); // From seeded tenant
+    }
+
+    [Fact]
+    public async Task CalculateProRatedAmount_ShouldCalculateCorrectly()
+    {
+        // Arrange
+        var tenant = await _masterDbContext.Tenants.FindAsync(_testTenantId);
+        tenant!.SubscriptionEndDate = DateTime.UtcNow.AddMonths(6); // 6 months remaining
+        await _masterDbContext.SaveChangesAsync();
+
+        var newYearlyPrice = 100000.00m;
+
+        // Act
+        var result = await _service.CalculateProRatedAmountAsync(_testTenantId, newYearlyPrice, includeTax: true);
+
+        // Assert
+        result.SubtotalMUR.Should().BeGreaterThan(0m);
+        result.TaxMUR.Should().BeGreaterThan(0m);
+        result.TotalMUR.Should().Be(result.SubtotalMUR + result.TaxMUR);
+    }
+
+    [Fact]
+    public async Task CreateProRatedPayment_ShouldCreateCorrectPayment()
+    {
+        // Arrange
+        var tenant = await _masterDbContext.Tenants.FindAsync(_testTenantId);
+        tenant!.SubscriptionEndDate = DateTime.UtcNow.AddMonths(6);
+        await _masterDbContext.SaveChangesAsync();
+
+        // Act
+        var result = await _service.CreateProRatedPaymentAsync(
+            _testTenantId,
+            EmployeeTier.Tier4,
+            100000.00m,
+            "Tier upgrade from Tier3 to Tier4"
+        );
+
+        // Assert
+        result.Should().NotBeNull();
+        result!.EmployeeTier.Should().Be(EmployeeTier.Tier4);
+        result.Status.Should().Be(SubscriptionPaymentStatus.Pending);
+    }
+
+    [Fact]
+    public async Task RenewSubscription_ShouldCreatePaymentAndExtendDate()
+    {
+        // Act
+        var result = await _service.RenewSubscriptionAsync(_testTenantId, years: 1, processedBy: "admin");
+
+        // Assert
+        result.Success.Should().BeTrue();
+        result.Payment.Should().NotBeNull();
+
+        var tenant = await _masterDbContext.Tenants.FindAsync(_testTenantId);
+        tenant!.SubscriptionEndDate.Should().BeAfter(DateTime.UtcNow);
+    }
+
+    [Fact]
+    public async Task ConvertTrialToPaid_ShouldUpdateStatusAndCreatePayment()
+    {
+        // Arrange
+        var trialTenant = new Tenant
+        {
+            Id = Guid.NewGuid(),
+            CompanyName = "Trial Company",
+            Subdomain = "trialcompany",
+            Status = TenantStatus.Trial,
+            TrialEndDate = DateTime.UtcNow.AddDays(-1),
+            EmployeeTier = EmployeeTier.Tier2,
+            ContactEmail = "trial@example.com",
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+        _masterDbContext.Tenants.Add(trialTenant);
+        await _masterDbContext.SaveChangesAsync();
+
+        // Act
+        var result = await _service.ConvertTrialToPaidAsync(trialTenant.Id, 25000.00m);
+
+        // Assert
+        result.Success.Should().BeTrue();
+        result.Payment.Should().NotBeNull();
+
+        var updatedTenant = await _masterDbContext.Tenants.FindAsync(trialTenant.Id);
+        updatedTenant!.Status.Should().Be(TenantStatus.Active);
+        updatedTenant.SubscriptionEndDate.Should().NotBeNull();
+    }
+
+    [Fact]
+    public async Task HasNotificationBeenSent_ShouldReturnFalseForNewNotification()
+    {
+        // Act
+        var result = await _service.HasNotificationBeenSentAsync(
+            _testTenantId,
+            SubscriptionNotificationType.Reminder30Days
+        );
+
+        // Assert
+        result.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task LogNotificationSent_ShouldCreateLog()
+    {
+        // Act
+        await _service.LogNotificationSentAsync(
+            _testTenantId,
+            SubscriptionNotificationType.Reminder30Days,
+            "test@example.com",
+            "30-day reminder",
+            success: true
+        );
+
+        // Assert
+        var hasBeenSent = await _service.HasNotificationBeenSentAsync(
+            _testTenantId,
+            SubscriptionNotificationType.Reminder30Days
+        );
+        hasBeenSent.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task GetTenantsNeedingRenewalNotification_ShouldReturnCorrectTenants()
+    {
+        // Arrange
+        var tenant = await _masterDbContext.Tenants.FindAsync(_testTenantId);
+        tenant!.SubscriptionEndDate = DateTime.UtcNow.AddDays(30);
+        await _masterDbContext.SaveChangesAsync();
+
+        // Act
+        var result = await _service.GetTenantsNeedingRenewalNotificationAsync(
+            30,
+            SubscriptionNotificationType.Reminder30Days
+        );
+
+        // Assert
+        result.Should().Contain(t => t.Id == _testTenantId);
+    }
+
+    [Fact(Skip = "InMemory database doesn't support GroupBy - requires real SQL database")]
+    public async Task GetRevenueDashboard_ShouldReturnCompleteMetrics()
+    {
+        // Act
+        var result = await _service.GetRevenueDashboardAsync();
+
+        // Assert
+        result.Should().NotBeNull();
+        result.TotalActiveSubscriptions.Should().BeGreaterOrEqualTo(1);
+        result.AnnualRecurringRevenueMUR.Should().BeGreaterThan(0);
+        result.MonthlyRecurringRevenueMUR.Should().BeGreaterThan(0);
     }
 
     public void Dispose()

@@ -852,6 +852,7 @@ public class EmailService : IEmailService
     {
         var urgencyColor = daysRemaining <= 7 ? "#dc3545" : "#ffc107";
         var urgencyText = daysRemaining <= 7 ? "Urgent:" : "Notice:";
+        var loginUrl = _configuration["AppSettings:ProductionUrl"] ?? _frontendUrl;
 
         return $@"
 <!DOCTYPE html>
@@ -865,10 +866,10 @@ public class EmailService : IEmailService
     <table role=""presentation"" style=""width: 100%; border-collapse: collapse;"">
         <tr>
             <td align=""center"" style=""padding: 40px 0;"">
-                <table role=""presentation"" style=""width: 600px; border-collapse: collapse; background-color: #ffffff; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);"">
+                <table role=""presentation"" style=""width: 600px; max-width: 100%; border-collapse: collapse; background-color: #ffffff; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);"">
                     <tr>
                         <td style=""background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 30px; text-align: center;"">
-                            <h1 style=""color: #ffffff; margin: 0; font-size: 28px; font-weight: bold;"">Subscription Reminder</h1>
+                            <h1 style=""color: #ffffff; margin: 0; font-size: 28px; font-weight: bold;"">Subscription Renewal Reminder</h1>
                         </td>
                     </tr>
                     <tr>
@@ -876,12 +877,377 @@ public class EmailService : IEmailService
                             <h2 style=""color: #333333; margin: 0 0 20px 0; font-size: 24px;"">Hi {firstName},</h2>
                             <div style=""background-color: #fff3cd; border-left: 4px solid {urgencyColor}; padding: 20px; margin: 20px 0;"">
                                 <p style=""color: #856404; font-size: 16px; margin: 0; font-weight: bold;"">
-                                    {urgencyText} Your MorisHR subscription for {tenantName} will expire in {daysRemaining} day{(daysRemaining != 1 ? "s" : "")}.
+                                    {urgencyText} Your MorisHR subscription for <strong>{tenantName}</strong> will expire in {daysRemaining} day{(daysRemaining != 1 ? "s" : "")}.
                                 </p>
                             </div>
                             <p style=""color: #666666; font-size: 16px; line-height: 1.6; margin: 20px 0;"">
-                                To ensure uninterrupted access to your HRMS, please renew your subscription before it expires.
+                                To ensure uninterrupted access to your HRMS and avoid service disruption, please renew your subscription before it expires.
                             </p>
+
+                            <h3 style=""color: #333333; margin: 30px 0 15px 0; font-size: 18px;"">What Happens Next?</h3>
+                            <ul style=""color: #666666; font-size: 14px; line-height: 1.8; margin: 0; padding-left: 20px;"">
+                                <li>Your subscription will expire in {daysRemaining} day{(daysRemaining != 1 ? "s" : "")}</li>
+                                <li>After expiry, you'll have a {(daysRemaining <= 7 ? "3-day" : "7-day")} grace period</li>
+                                <li>During grace period, access will be limited</li>
+                                <li>After grace period, your account will be suspended</li>
+                            </ul>
+
+                            <table role=""presentation"" style=""margin: 30px 0;"">
+                                <tr>
+                                    <td align=""center"">
+                                        <a href=""{loginUrl}/subscription/renew"" style=""display: inline-block; padding: 16px 40px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #ffffff; text-decoration: none; border-radius: 5px; font-size: 16px; font-weight: bold;"">
+                                            Renew Subscription Now
+                                        </a>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style=""background-color: #f8f9fa; padding: 30px; text-align: center; border-top: 1px solid #e9ecef;"">
+                            <p style=""color: #6c757d; font-size: 12px; margin: 0 0 10px 0;"">
+                                Need help? Contact us at <a href=""mailto:support@morishr.com"" style=""color: #667eea; text-decoration: none;"">support@morishr.com</a>
+                            </p>
+                            <p style=""color: #6c757d; font-size: 12px; margin: 0;"">
+                                &copy; 2025 MorisHR. All rights reserved.
+                            </p>
+                            <p style=""color: #999; font-size: 10px; margin: 10px 0 0 0;"">
+                                You are receiving this email because you are an administrator of {tenantName}.<br/>
+                                To update your notification preferences, please log in to your account.
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>";
+    }
+
+    public async Task<bool> SendSubscriptionExpiredAsync(
+        string toEmail,
+        string tenantName,
+        string adminFirstName,
+        DateTime expiryDate,
+        int gracePeriodDays)
+    {
+        try
+        {
+            var subject = $"URGENT: Subscription Expired - {tenantName}";
+            var htmlBody = GetSubscriptionExpiredTemplate(adminFirstName, tenantName, expiryDate, gracePeriodDays);
+
+            return await SendEmailWithMailKitAsync(toEmail, subject, htmlBody);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to send subscription expired email to {Email}", toEmail);
+            return false;
+        }
+    }
+
+    public async Task<bool> SendAccountSuspendedAsync(
+        string toEmail,
+        string tenantName,
+        string adminFirstName,
+        DateTime suspensionDate,
+        string reason)
+    {
+        try
+        {
+            var subject = $"CRITICAL: Account Suspended - {tenantName}";
+            var htmlBody = GetAccountSuspendedTemplate(adminFirstName, tenantName, suspensionDate, reason);
+
+            return await SendEmailWithMailKitAsync(toEmail, subject, htmlBody);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to send account suspended email to {Email}", toEmail);
+            return false;
+        }
+    }
+
+    public async Task<bool> SendRenewalConfirmationAsync(
+        string toEmail,
+        string tenantName,
+        string adminFirstName,
+        DateTime newExpiryDate,
+        string planName)
+    {
+        try
+        {
+            var subject = $"Subscription Renewed Successfully - {tenantName}";
+            var htmlBody = GetRenewalConfirmationTemplate(adminFirstName, tenantName, newExpiryDate, planName);
+
+            return await SendEmailWithMailKitAsync(toEmail, subject, htmlBody);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to send renewal confirmation email to {Email}", toEmail);
+            return false;
+        }
+    }
+
+    private string GetSubscriptionExpiredTemplate(string firstName, string tenantName, DateTime expiryDate, int gracePeriodDays)
+    {
+        var loginUrl = _configuration["AppSettings:ProductionUrl"] ?? _frontendUrl;
+        var graceEndDate = expiryDate.AddDays(gracePeriodDays);
+
+        return $@"
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset=""utf-8"">
+    <meta name=""viewport"" content=""width=device-width, initial-scale=1.0"">
+    <title>Subscription Expired</title>
+</head>
+<body style=""margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f4f4f4;"">
+    <table role=""presentation"" style=""width: 100%; border-collapse: collapse;"">
+        <tr>
+            <td align=""center"" style=""padding: 40px 0;"">
+                <table role=""presentation"" style=""width: 600px; max-width: 100%; border-collapse: collapse; background-color: #ffffff; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);"">
+                    <tr>
+                        <td style=""background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); padding: 40px 30px; text-align: center;"">
+                            <h1 style=""color: #ffffff; margin: 0; font-size: 28px; font-weight: bold;"">⚠️ Subscription Expired</h1>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style=""padding: 40px 30px;"">
+                            <h2 style=""color: #333333; margin: 0 0 20px 0; font-size: 24px;"">Hi {firstName},</h2>
+                            <div style=""background-color: #f8d7da; border-left: 4px solid #dc3545; padding: 20px; margin: 20px 0;"">
+                                <p style=""color: #721c24; font-size: 16px; margin: 0; font-weight: bold;"">
+                                    Your MorisHR subscription for <strong>{tenantName}</strong> expired on {expiryDate:MMMM dd, yyyy}.
+                                </p>
+                            </div>
+
+                            <div style=""background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 20px; margin: 20px 0;"">
+                                <h3 style=""color: #856404; margin: 0 0 10px 0; font-size: 18px;"">Grace Period Active</h3>
+                                <p style=""color: #856404; font-size: 14px; margin: 0;"">
+                                    You have <strong>{gracePeriodDays} days</strong> of grace period until <strong>{graceEndDate:MMMM dd, yyyy}</strong>.<br/>
+                                    During this time, your access is limited to read-only operations.
+                                </p>
+                            </div>
+
+                            <h3 style=""color: #333333; margin: 30px 0 15px 0; font-size: 18px;"">Current Limitations:</h3>
+                            <ul style=""color: #666666; font-size: 14px; line-height: 1.8; margin: 0; padding-left: 20px;"">
+                                <li>❌ Cannot add or modify employee records</li>
+                                <li>❌ Cannot process payroll</li>
+                                <li>❌ Cannot mark attendance</li>
+                                <li>❌ Cannot approve leave requests</li>
+                                <li>✓ Can view existing data (read-only)</li>
+                                <li>✓ Can export critical reports</li>
+                            </ul>
+
+                            <div style=""background-color: #d1ecf1; border-left: 4px solid #0c5460; padding: 20px; margin: 30px 0;"">
+                                <h3 style=""color: #0c5460; margin: 0 0 10px 0; font-size: 18px;"">⚡ Act Now to Avoid Account Suspension</h3>
+                                <p style=""color: #0c5460; font-size: 14px; margin: 0;"">
+                                    If you don't renew before <strong>{graceEndDate:MMMM dd, yyyy}</strong>, your account will be suspended and you will lose access to all data.
+                                </p>
+                            </div>
+
+                            <table role=""presentation"" style=""margin: 30px 0;"">
+                                <tr>
+                                    <td align=""center"">
+                                        <a href=""{loginUrl}/subscription/renew"" style=""display: inline-block; padding: 16px 40px; background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); color: #ffffff; text-decoration: none; border-radius: 5px; font-size: 16px; font-weight: bold;"">
+                                            Renew Now to Restore Full Access
+                                        </a>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style=""background-color: #f8f9fa; padding: 30px; text-align: center; border-top: 1px solid #e9ecef;"">
+                            <p style=""color: #6c757d; font-size: 12px; margin: 0 0 10px 0;"">
+                                Need help? Contact us at <a href=""mailto:support@morishr.com"" style=""color: #667eea; text-decoration: none;"">support@morishr.com</a>
+                            </p>
+                            <p style=""color: #6c757d; font-size: 12px; margin: 0;"">
+                                &copy; 2025 MorisHR. All rights reserved.
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>";
+    }
+
+    private string GetAccountSuspendedTemplate(string firstName, string tenantName, DateTime suspensionDate, string reason)
+    {
+        var loginUrl = _configuration["AppSettings:ProductionUrl"] ?? _frontendUrl;
+
+        return $@"
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset=""utf-8"">
+    <meta name=""viewport"" content=""width=device-width, initial-scale=1.0"">
+    <title>Account Suspended</title>
+</head>
+<body style=""margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f4f4f4;"">
+    <table role=""presentation"" style=""width: 100%; border-collapse: collapse;"">
+        <tr>
+            <td align=""center"" style=""padding: 40px 0;"">
+                <table role=""presentation"" style=""width: 600px; max-width: 100%; border-collapse: collapse; background-color: #ffffff; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);"">
+                    <tr>
+                        <td style=""background: linear-gradient(135deg, #6c757d 0%, #495057 100%); padding: 40px 30px; text-align: center;"">
+                            <h1 style=""color: #ffffff; margin: 0; font-size: 28px; font-weight: bold;"">🚫 Account Suspended</h1>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style=""padding: 40px 30px;"">
+                            <h2 style=""color: #333333; margin: 0 0 20px 0; font-size: 24px;"">Hi {firstName},</h2>
+                            <div style=""background-color: #f8d7da; border-left: 4px solid #dc3545; padding: 20px; margin: 20px 0;"">
+                                <p style=""color: #721c24; font-size: 16px; margin: 0; font-weight: bold;"">
+                                    Your MorisHR account for <strong>{tenantName}</strong> has been suspended as of {suspensionDate:MMMM dd, yyyy}.
+                                </p>
+                            </div>
+
+                            <div style=""background-color: #e2e3e5; border-left: 4px solid #6c757d; padding: 20px; margin: 20px 0;"">
+                                <h3 style=""color: #383d41; margin: 0 0 10px 0; font-size: 18px;"">Reason for Suspension:</h3>
+                                <p style=""color: #383d41; font-size: 14px; margin: 0;"">
+                                    {reason}
+                                </p>
+                            </div>
+
+                            <h3 style=""color: #333333; margin: 30px 0 15px 0; font-size: 18px;"">What This Means:</h3>
+                            <ul style=""color: #666666; font-size: 14px; line-height: 1.8; margin: 0; padding-left: 20px;"">
+                                <li>❌ No access to the HRMS portal</li>
+                                <li>❌ All employee operations suspended</li>
+                                <li>❌ Payroll processing unavailable</li>
+                                <li>❌ Attendance tracking disabled</li>
+                                <li>⚠️ Your data is preserved for 30 days</li>
+                                <li>⚠️ After 30 days, data may be permanently deleted</li>
+                            </ul>
+
+                            <div style=""background-color: #d1ecf1; border-left: 4px solid #0c5460; padding: 20px; margin: 30px 0;"">
+                                <h3 style=""color: #0c5460; margin: 0 0 10px 0; font-size: 18px;"">How to Restore Access</h3>
+                                <p style=""color: #0c5460; font-size: 14px; margin: 0 0 10px 0;"">
+                                    To reactivate your account and restore full access:
+                                </p>
+                                <ol style=""color: #0c5460; font-size: 14px; margin: 0; padding-left: 20px;"">
+                                    <li>Contact our support team immediately</li>
+                                    <li>Renew your subscription</li>
+                                    <li>Complete any pending payment</li>
+                                    <li>Your account will be reactivated within 24 hours</li>
+                                </ol>
+                            </div>
+
+                            <table role=""presentation"" style=""margin: 30px 0;"">
+                                <tr>
+                                    <td align=""center"">
+                                        <a href=""mailto:support@morishr.com?subject=Account Reactivation Request - {tenantName}"" style=""display: inline-block; padding: 16px 40px; background: linear-gradient(135deg, #28a745 0%, #218838 100%); color: #ffffff; text-decoration: none; border-radius: 5px; font-size: 16px; font-weight: bold;"">
+                                            Contact Support to Reactivate
+                                        </a>
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <div style=""background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 30px 0;"">
+                                <p style=""color: #856404; font-size: 12px; margin: 0;"">
+                                    <strong>⏰ Important:</strong> Your data will be retained for 30 days. After this period, all data will be permanently deleted and cannot be recovered.
+                                </p>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style=""background-color: #f8f9fa; padding: 30px; text-align: center; border-top: 1px solid #e9ecef;"">
+                            <p style=""color: #6c757d; font-size: 12px; margin: 0 0 10px 0;"">
+                                Urgent assistance: <a href=""mailto:support@morishr.com"" style=""color: #667eea; text-decoration: none;"">support@morishr.com</a> | Phone: +230 5XXX XXXX
+                            </p>
+                            <p style=""color: #6c757d; font-size: 12px; margin: 0;"">
+                                &copy; 2025 MorisHR. All rights reserved.
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>";
+    }
+
+    private string GetRenewalConfirmationTemplate(string firstName, string tenantName, DateTime newExpiryDate, string planName)
+    {
+        var loginUrl = _configuration["AppSettings:ProductionUrl"] ?? _frontendUrl;
+        var daysUntilExpiry = (newExpiryDate - DateTime.UtcNow).Days;
+
+        return $@"
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset=""utf-8"">
+    <meta name=""viewport"" content=""width=device-width, initial-scale=1.0"">
+    <title>Subscription Renewed</title>
+</head>
+<body style=""margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f4f4f4;"">
+    <table role=""presentation"" style=""width: 100%; border-collapse: collapse;"">
+        <tr>
+            <td align=""center"" style=""padding: 40px 0;"">
+                <table role=""presentation"" style=""width: 600px; max-width: 100%; border-collapse: collapse; background-color: #ffffff; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);"">
+                    <tr>
+                        <td style=""background: linear-gradient(135deg, #28a745 0%, #218838 100%); padding: 40px 30px; text-align: center;"">
+                            <h1 style=""color: #ffffff; margin: 0; font-size: 28px; font-weight: bold;"">✅ Subscription Renewed!</h1>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style=""padding: 40px 30px;"">
+                            <h2 style=""color: #333333; margin: 0 0 20px 0; font-size: 24px;"">Congratulations, {firstName}!</h2>
+                            <div style=""background-color: #d4edda; border-left: 4px solid #28a745; padding: 20px; margin: 20px 0;"">
+                                <p style=""color: #155724; font-size: 16px; margin: 0; font-weight: bold;"">
+                                    Your MorisHR subscription for <strong>{tenantName}</strong> has been successfully renewed!
+                                </p>
+                            </div>
+
+                            <h3 style=""color: #333333; margin: 30px 0 15px 0; font-size: 18px;"">Renewal Details</h3>
+                            <table style=""width: 100%; border-collapse: collapse;"">
+                                <tr>
+                                    <td style=""padding: 10px; border-bottom: 1px solid #e9ecef; font-weight: bold; width: 40%;"">Plan:</td>
+                                    <td style=""padding: 10px; border-bottom: 1px solid #e9ecef;"">{planName}</td>
+                                </tr>
+                                <tr>
+                                    <td style=""padding: 10px; border-bottom: 1px solid #e9ecef; font-weight: bold;"">New Expiry Date:</td>
+                                    <td style=""padding: 10px; border-bottom: 1px solid #e9ecef;"">{newExpiryDate:MMMM dd, yyyy}</td>
+                                </tr>
+                                <tr>
+                                    <td style=""padding: 10px; border-bottom: 1px solid #e9ecef; font-weight: bold;"">Days Remaining:</td>
+                                    <td style=""padding: 10px; border-bottom: 1px solid #e9ecef;"">{daysUntilExpiry} days</td>
+                                </tr>
+                                <tr>
+                                    <td style=""padding: 10px; border-bottom: 1px solid #e9ecef; font-weight: bold;"">Status:</td>
+                                    <td style=""padding: 10px; border-bottom: 1px solid #e9ecef;""><strong style=""color: #28a745;"">✓ Active</strong></td>
+                                </tr>
+                            </table>
+
+                            <h3 style=""color: #333333; margin: 30px 0 15px 0; font-size: 18px;"">Full Access Restored</h3>
+                            <ul style=""color: #666666; font-size: 14px; line-height: 1.8; margin: 0; padding-left: 20px;"">
+                                <li>✅ All features and modules enabled</li>
+                                <li>✅ Employee management fully functional</li>
+                                <li>✅ Payroll processing available</li>
+                                <li>✅ Attendance tracking active</li>
+                                <li>✅ Leave management operational</li>
+                                <li>✅ Reports and analytics accessible</li>
+                            </ul>
+
+                            <div style=""background-color: #d1ecf1; border-left: 4px solid #0c5460; padding: 20px; margin: 30px 0;"">
+                                <h3 style=""color: #0c5460; margin: 0 0 10px 0; font-size: 18px;"">Thank You!</h3>
+                                <p style=""color: #0c5460; font-size: 14px; margin: 0;"">
+                                    Thank you for continuing to trust MorisHR for your human resource management needs. We're committed to providing you with the best HRMS experience.
+                                </p>
+                            </div>
+
+                            <table role=""presentation"" style=""margin: 30px 0;"">
+                                <tr>
+                                    <td align=""center"">
+                                        <a href=""{loginUrl}/dashboard"" style=""display: inline-block; padding: 16px 40px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #ffffff; text-decoration: none; border-radius: 5px; font-size: 16px; font-weight: bold;"">
+                                            Go to Dashboard
+                                        </a>
+                                    </td>
+                                </tr>
+                            </table>
                         </td>
                     </tr>
                     <tr>

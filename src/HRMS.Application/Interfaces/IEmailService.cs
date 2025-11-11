@@ -71,4 +71,22 @@ public interface IEmailService
     /// </summary>
     Task<bool> SendExpiryReminderAsync(string toEmail, string tenantName,
         int daysRemaining, string adminFirstName);
+
+    /// <summary>
+    /// Sends subscription expired notification (grace period started)
+    /// </summary>
+    Task<bool> SendSubscriptionExpiredAsync(string toEmail, string tenantName,
+        string adminFirstName, DateTime expiryDate, int gracePeriodDays);
+
+    /// <summary>
+    /// Sends account suspended notification
+    /// </summary>
+    Task<bool> SendAccountSuspendedAsync(string toEmail, string tenantName,
+        string adminFirstName, DateTime suspensionDate, string reason);
+
+    /// <summary>
+    /// Sends renewal confirmation email
+    /// </summary>
+    Task<bool> SendRenewalConfirmationAsync(string toEmail, string tenantName,
+        string adminFirstName, DateTime newExpiryDate, string planName);
 }

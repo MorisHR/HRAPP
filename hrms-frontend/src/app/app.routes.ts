@@ -109,6 +109,11 @@ export const routes: Routes = [
         path: 'activity-correlation',
         loadComponent: () => import('./features/admin/activity-correlation/activity-correlation.component').then(m => m.ActivityCorrelationComponent),
         data: { title: 'Activity Correlation' }
+      },
+      {
+        path: 'subscriptions',
+        loadComponent: () => import('./features/admin/subscription-management/subscription-dashboard.component').then(m => m.SubscriptionDashboardComponent),
+        data: { title: 'Subscription Management' }
       }
     ]
   },
