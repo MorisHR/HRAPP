@@ -97,7 +97,7 @@ public class SecurityAlertingService : ISecurityAlertingService
   "SecurityAlerting": {
     "EmailRecipients": ["security@company.com", "admin@company.com"],
     "SmsRecipients": ["+2301234567"],
-    "SlackWebhook": "https://hooks.slack.com/services/...",
+    "SlackWebhook": "https://hooks.slack.com/services/REPLACE_WITH_YOUR_WEBHOOK",
     "SiemEndpoint": "https://siem.company.com/api/events"
   }
 }
@@ -679,7 +679,7 @@ CREATE INDEX ix_audit_logs_legal_hold ON audit_logs(legal_hold_id) WHERE legal_h
     "Enabled": true,
     "EmailRecipients": ["security@company.com", "compliance@company.com"],
     "SmsRecipients": ["+2301234567"],
-    "SlackWebhook": "https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX",
+    "SlackWebhook": "https://hooks.slack.com/services/TXXXXXXXX/BXXXXXXXX/REPLACE_WITH_YOUR_WEBHOOK",
     "AlertThresholds": {
       "FailedLoginCount": 3,
       "FailedLoginWindowMinutes": 15,
