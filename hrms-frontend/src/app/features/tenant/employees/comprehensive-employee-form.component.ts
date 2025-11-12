@@ -28,6 +28,7 @@ import { DepartmentService, DepartmentDropdownDto } from '../organization/depart
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { AddressService } from '../../../services/address.service';
 import { DistrictDto, VillageDto } from '../../../models/address.models';
+import { SalaryComponentsService, SalaryComponentDto } from '../../../core/services/salary-components.service';
 
 @Component({
   selector: 'app-comprehensive-employee-form',
@@ -64,6 +65,7 @@ export class ComprehensiveEmployeeFormComponent implements OnInit, OnDestroy {
   private draftService = inject(EmployeeDraftService);
   private departmentService = inject(DepartmentService);
   private addressService = inject(AddressService);
+  private salaryComponentsService = inject(SalaryComponentsService);
   private snackBar = inject(MatSnackBar);
   private destroy$ = new Subject<void>();
 
@@ -81,6 +83,11 @@ export class ComprehensiveEmployeeFormComponent implements OnInit, OnDestroy {
   // Address data
   districts = signal<DistrictDto[]>([]);
   villages = signal<VillageDto[]>([]);
+
+  // Salary components
+  employeeId: string | null = null;
+  employeeSalaryComponents = signal<SalaryComponentDto[]>([]);
+  loadingSalaryComponents = signal(false);
 
   // Auto-save
   private autoSaveSubject$ = new Subject<void>();
@@ -103,8 +110,10 @@ export class ComprehensiveEmployeeFormComponent implements OnInit, OnDestroy {
     this.loadDistricts();
 
     if (employeeId) {
+      this.employeeId = employeeId;
       this.isEditMode.set(true);
       this.loadEmployee(employeeId);
+      this.loadEmployeeSalaryComponents(employeeId);
     } else if (draftId) {
       this.draftId.set(draftId);
       this.loadDraft(draftId);
@@ -532,5 +541,53 @@ export class ComprehensiveEmployeeFormComponent implements OnInit, OnDestroy {
       return `Saved at ${this.lastSaved()!.toLocaleTimeString()}`;
     }
     return 'Not saved';
+  }
+
+  // Salary Components Methods
+  private loadEmployeeSalaryComponents(employeeId: string): void {
+    this.loadingSalaryComponents.set(true);
+    this.salaryComponentsService.getEmployeeComponents(employeeId, true)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (components) => {
+          this.employeeSalaryComponents.set(components);
+          this.loadingSalaryComponents.set(false);
+        },
+        error: (error) => {
+          console.error('Error loading salary components:', error);
+          this.loadingSalaryComponents.set(false);
+          this.snackBar.open('Failed to load salary components', 'Close', { duration: 3000 });
+        }
+      });
+  }
+
+  openSalaryComponentsManagement(): void {
+    this.router.navigate(['/tenant/payroll/salary-components'], {
+      queryParams: { employeeId: this.employeeId }
+    });
+  }
+
+  formatCurrency(amount: number): string {
+    return `MUR ${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  }
+
+  formatDate(dateString: string): string {
+    return new Date(dateString).toLocaleDateString();
+  }
+
+  getTotalAllowances(): number {
+    return this.employeeSalaryComponents()
+      .filter(c => c.componentType === 'Allowance' && c.isActive)
+      .reduce((sum, c) => sum + c.amount, 0);
+  }
+
+  getTotalDeductions(): number {
+    return this.employeeSalaryComponents()
+      .filter(c => c.componentType === 'Deduction' && c.isActive)
+      .reduce((sum, c) => sum + c.amount, 0);
+  }
+
+  getNetAdjustment(): number {
+    return this.getTotalAllowances() - this.getTotalDeductions();
   }
 }

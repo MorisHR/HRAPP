@@ -37,6 +37,8 @@ public class BiometricPunchProcessingService : IBiometricPunchProcessingService
     private readonly TenantDbContext _context;
     private readonly ILogger<BiometricPunchProcessingService> _logger;
     private readonly IAuditLogService _auditLogService;
+    private readonly IFileStorageService _fileStorageService;
+    private readonly ICurrentUserService _currentUserService;
 
     // Anti-fraud constants
     private const int DUPLICATE_WINDOW_MINUTES = 15;
@@ -48,11 +50,15 @@ public class BiometricPunchProcessingService : IBiometricPunchProcessingService
     public BiometricPunchProcessingService(
         TenantDbContext context,
         ILogger<BiometricPunchProcessingService> logger,
-        IAuditLogService auditLogService)
+        IAuditLogService auditLogService,
+        IFileStorageService fileStorageService,
+        ICurrentUserService currentUserService)
     {
         _context = context;
         _logger = logger;
         _auditLogService = auditLogService;
+        _fileStorageService = fileStorageService;
+        _currentUserService = currentUserService;
     }
 
     /// <summary>
@@ -428,6 +434,72 @@ public class BiometricPunchProcessingService : IBiometricPunchProcessingService
             successCount, failCount);
     }
 
+    /// <summary>
+    /// Get punch records for a specific device with pagination
+    /// Used by biometric devices to sync their punch history
+    /// </summary>
+    public async Task<HRMS.Application.DTOs.AuditLog.PagedResult<BiometricPunchRecordDto>> GetPunchesByDeviceAsync(
+        Guid deviceId,
+        DateTime? startDate,
+        DateTime? endDate,
+        int page,
+        int pageSize)
+    {
+        _logger.LogInformation(
+            "Getting punches for device {DeviceId}, Date Range: {StartDate} to {EndDate}, Page: {Page}, PageSize: {PageSize}",
+            deviceId, startDate, endDate, page, pageSize);
+
+        // Validate pagination parameters
+        if (page < 1) page = 1;
+        if (pageSize < 1) pageSize = 10;
+        if (pageSize > 1000) pageSize = 1000; // Max 1000 records per page
+
+        // Build query
+        var query = _context.Set<BiometricPunchRecord>()
+            .Include(p => p.Employee)
+            .Include(p => p.Device)
+                .ThenInclude(d => d!.Location)
+            .Where(p => p.DeviceId == deviceId && !p.IsDeleted);
+
+        // Apply date range filters
+        if (startDate.HasValue)
+        {
+            query = query.Where(p => p.PunchTime >= startDate.Value.Date);
+        }
+
+        if (endDate.HasValue)
+        {
+            // Include the entire end date (up to 23:59:59)
+            var endOfDay = endDate.Value.Date.AddDays(1);
+            query = query.Where(p => p.PunchTime < endOfDay);
+        }
+
+        // Get total count before pagination
+        var totalCount = await query.CountAsync();
+
+        // Apply ordering and pagination
+        var punches = await query
+            .OrderByDescending(p => p.PunchTime) // Newest first
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        _logger.LogInformation(
+            "Found {TotalCount} total punches for device {DeviceId}, returning page {Page} with {Count} records",
+            totalCount, deviceId, page, punches.Count);
+
+        // Map to DTOs
+        var dtos = punches.Select(MapToPunchRecordDto).ToList();
+
+        return new HRMS.Application.DTOs.AuditLog.PagedResult<BiometricPunchRecordDto>
+        {
+            Items = dtos,
+            TotalCount = totalCount,
+            PageNumber = page,
+            PageSize = pageSize
+        };
+    }
+
     // ==========================================
     // PRIVATE HELPER METHODS
     // ==========================================
@@ -464,7 +536,7 @@ public class BiometricPunchProcessingService : IBiometricPunchProcessingService
         {
             try
             {
-                photoPath = await SavePhotoAsync(punchDto.PhotoBase64, employeeId, deviceId, punchDto.PunchTime);
+                photoPath = await SavePhotoAsync(punchDto.PhotoBase64, employeeId, deviceId, tenantId, punchDto.PunchTime);
             }
             catch (Exception ex)
             {
@@ -533,7 +605,7 @@ public class BiometricPunchProcessingService : IBiometricPunchProcessingService
                 IsSunday = date.DayOfWeek == DayOfWeek.Sunday,
                 IsPublicHoliday = await IsPublicHolidayAsync(date),
                 CreatedAt = DateTime.UtcNow,
-                CreatedBy = "System",
+                CreatedBy = _currentUserService.GetAuditUsername(),
                 IsDeleted = false
             };
 
@@ -644,20 +716,74 @@ public class BiometricPunchProcessingService : IBiometricPunchProcessingService
     }
 
     /// <summary>
-    /// Save photo from base64 string
+    /// Save photo from base64 string to Google Cloud Storage
     /// </summary>
-    private async Task<string> SavePhotoAsync(string base64Photo, Guid? employeeId, Guid deviceId, DateTime punchTime)
+    private async Task<string> SavePhotoAsync(string base64Photo, Guid? employeeId, Guid deviceId, Guid tenantId, DateTime punchTime)
     {
-        // This is a placeholder - in production, you'd integrate with IFileStorageService
-        // For now, we'll just return a placeholder path
-        var timestamp = punchTime.ToString("yyyyMMddHHmmss");
-        var filename = $"{employeeId ?? Guid.NewGuid()}_{deviceId}_{timestamp}.jpg";
-        var path = $"biometric-photos/{punchTime:yyyy/MM/dd}/{filename}";
+        try
+        {
+            // Decode base64 to bytes
+            byte[] photoBytes;
+            try
+            {
+                // Remove data URI prefix if present (e.g., "data:image/jpeg;base64,")
+                var base64Data = base64Photo;
+                if (base64Photo.Contains(","))
+                {
+                    base64Data = base64Photo.Split(',')[1];
+                }
 
-        // TODO: Integrate with IFileStorageService to save to blob storage
-        _logger.LogInformation("Photo would be saved to: {Path}", path);
+                photoBytes = Convert.FromBase64String(base64Data);
 
-        return path;
+                _logger.LogInformation(
+                    "Decoded photo: {Size} bytes for EmployeeId={EmployeeId}, DeviceId={DeviceId}",
+                    photoBytes.Length, employeeId, deviceId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to decode base64 photo string");
+                throw new InvalidOperationException("Invalid base64 photo data", ex);
+            }
+
+            // Generate structured filename
+            var timestamp = punchTime.ToString("yyyyMMddHHmmss");
+            var userId = employeeId?.ToString() ?? "unknown";
+            var filename = $"{timestamp}_{userId}.jpg";
+
+            // Build folder path: biometric-photos/{tenantId}/{deviceId}
+            var folder = $"biometric-photos/{tenantId}/{deviceId}";
+
+            _logger.LogInformation(
+                "Uploading photo to Google Cloud Storage: Folder={Folder}, FileName={FileName}",
+                folder, filename);
+
+            // Upload to Google Cloud Storage
+            using (var photoStream = new MemoryStream(photoBytes))
+            {
+                var cloudPath = await _fileStorageService.UploadFileAsync(
+                    photoStream,
+                    filename,
+                    folder,
+                    "image/jpeg");
+
+                _logger.LogInformation(
+                    "Photo uploaded successfully to: {CloudPath}",
+                    cloudPath);
+
+                return cloudPath;
+            }
+        }
+        catch (Exception ex)
+        {
+            // Log error but don't fail the entire punch processing
+            _logger.LogError(ex,
+                "Failed to save photo for EmployeeId={EmployeeId}, DeviceId={DeviceId}: {Error}",
+                employeeId, deviceId, ex.Message);
+
+            // Return a placeholder path indicating storage failure
+            // This allows the punch to still be recorded even if photo storage fails
+            return $"storage-failed/{deviceId}_{punchTime:yyyyMMddHHmmss}.jpg";
+        }
     }
 
     /// <summary>

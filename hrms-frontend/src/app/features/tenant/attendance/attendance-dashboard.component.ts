@@ -10,7 +10,7 @@ import { MatPaginatorModule, MatPaginator } from '@angular/material/paginator';
 import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
-import { MatChipsModule } from '@angular/material/chip';
+import { MatChipsModule } from '@angular/material/chips';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
@@ -22,6 +22,8 @@ import { Subject, takeUntil } from 'rxjs';
 import { AttendanceRealtimeService } from '../../../core/services/attendance-realtime.service';
 import { DeviceStatusService } from '../../../core/services/device-status.service';
 import { ThemeService } from '../../../core/services/theme.service';
+import { DevicePunchCaptureService, DeviceHealthDto, PunchHistoryDto } from '../../../core/services/device-punch-capture.service';
+import { AttendanceMachinesService, AttendanceMachineDto } from '../../../core/services/attendance-machines.service';
 import {
   PunchRecord,
   BiometricDevice,
@@ -81,6 +83,8 @@ interface StatCard {
 export class AttendanceDashboardComponent implements OnInit, OnDestroy {
   private realtimeService = inject(AttendanceRealtimeService);
   private deviceService = inject(DeviceStatusService);
+  private punchCaptureService = inject(DevicePunchCaptureService);
+  private attendanceMachinesService = inject(AttendanceMachinesService);
   private themeService = inject(ThemeService);
   private snackBar = inject(MatSnackBar);
   private destroy$ = new Subject<void>();
@@ -112,6 +116,14 @@ export class AttendanceDashboardComponent implements OnInit, OnDestroy {
   selectedDevice = signal<string>('all');
   selectedVerificationMethod = signal<string>('all');
   selectedPunchType = signal<string>('all');
+
+  // Device health and status
+  deviceHealth = signal<DeviceHealthDto | null>(null);
+  healthCheckLoading = signal<boolean>(false);
+  attendanceMachines = signal<AttendanceMachineDto[]>([]);
+  machinesLoading = signal<boolean>(false);
+  punchHistory = signal<PunchHistoryDto[]>([]);
+  punchHistoryLoading = signal<boolean>(false);
 
   // Table data source
   dataSource = new MatTableDataSource<PunchRecord>([]);
@@ -233,6 +245,12 @@ export class AttendanceDashboardComponent implements OnInit, OnDestroy {
       // Start device polling
       this.deviceService.startPolling();
 
+      // Load attendance machines
+      await this.loadAttendanceMachines();
+
+      // Check device health
+      await this.checkDeviceHealth();
+
       // Connect to SignalR hub
       await this.realtimeService.connect();
 
@@ -251,6 +269,42 @@ export class AttendanceDashboardComponent implements OnInit, OnDestroy {
       this.error.set(error instanceof Error ? error.message : 'Initialization failed');
       this.loading.set(false);
       this.showNotification('Failed to connect to attendance system', 'error');
+    }
+  }
+
+  /**
+   * Load attendance machines
+   */
+  private async loadAttendanceMachines(): Promise<void> {
+    try {
+      this.machinesLoading.set(true);
+      const response = await this.attendanceMachinesService.getMachines(true).toPromise();
+      if (response) {
+        this.attendanceMachines.set(response.data);
+        console.log(`✅ Loaded ${response.total} attendance machines`);
+      }
+    } catch (error) {
+      console.error('❌ Failed to load attendance machines:', error);
+    } finally {
+      this.machinesLoading.set(false);
+    }
+  }
+
+  /**
+   * Check device health status
+   */
+  private async checkDeviceHealth(): Promise<void> {
+    try {
+      this.healthCheckLoading.set(true);
+      const health = await this.punchCaptureService.getHealth().toPromise();
+      if (health) {
+        this.deviceHealth.set(health);
+        console.log('✅ Device health check:', health.status);
+      }
+    } catch (error) {
+      console.error('❌ Device health check failed:', error);
+    } finally {
+      this.healthCheckLoading.set(false);
     }
   }
 
@@ -388,12 +442,82 @@ export class AttendanceDashboardComponent implements OnInit, OnDestroy {
       await Promise.all([
         this.realtimeService.refreshStats(),
         this.realtimeService.refreshPunches(),
-        this.deviceService.refresh().toPromise()
+        this.deviceService.refresh().toPromise(),
+        this.loadAttendanceMachines(),
+        this.checkDeviceHealth()
       ]);
       this.showNotification('Data refreshed successfully', 'success');
     } catch (error) {
       console.error('❌ Failed to refresh data:', error);
       this.showNotification('Failed to refresh data', 'error');
+    }
+  }
+
+  /**
+   * Load punch history for a specific machine
+   */
+  async loadPunchHistory(machineId: string, apiKey: string, hours: number = 24): Promise<void> {
+    try {
+      this.punchHistoryLoading.set(true);
+      const response = await this.punchCaptureService.getPunchHistory(apiKey, hours, 1, 50).toPromise();
+      if (response) {
+        this.punchHistory.set(response.data);
+        console.log(`✅ Loaded ${response.data.length} punch records`);
+      }
+    } catch (error) {
+      console.error('❌ Failed to load punch history:', error);
+      this.showNotification('Failed to load punch history', 'error');
+    } finally {
+      this.punchHistoryLoading.set(false);
+    }
+  }
+
+  /**
+   * Get machine status (online/offline)
+   */
+  getMachineStatus(machine: AttendanceMachineDto): 'online' | 'offline' | 'warning' {
+    if (!machine.lastSyncTime) {
+      return 'offline';
+    }
+
+    const lastSync = new Date(machine.lastSyncTime);
+    const now = new Date();
+    const minutesSinceSync = (now.getTime() - lastSync.getTime()) / (1000 * 60);
+
+    // Online: synced within last 30 minutes
+    if (minutesSinceSync <= 30) {
+      return 'online';
+    }
+
+    // Warning: synced within last hour
+    if (minutesSinceSync <= 60) {
+      return 'warning';
+    }
+
+    // Offline: no sync in over an hour
+    return 'offline';
+  }
+
+  /**
+   * Get formatted last sync time
+   */
+  getLastSyncDisplay(lastSyncTime?: string): string {
+    if (!lastSyncTime) {
+      return 'Never';
+    }
+
+    const lastSync = new Date(lastSyncTime);
+    const now = new Date();
+    const diffMs = now.getTime() - lastSync.getTime();
+    const diffMinutes = Math.floor(diffMs / (1000 * 60));
+
+    if (diffMinutes < 1) {
+      return 'Just now';
+    } else if (diffMinutes < 60) {
+      return `${diffMinutes}m ago`;
+    } else {
+      const diffHours = Math.floor(diffMinutes / 60);
+      return `${diffHours}h ago`;
     }
   }
 

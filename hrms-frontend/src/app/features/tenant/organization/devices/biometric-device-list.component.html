@@ -15,20 +15,20 @@
 
   <mat-card-content>
     <!-- Loading Spinner -->
-    <div *ngIf="loading" class="loading-container">
+    <div *ngIf="loading()" class="loading-container">
       <mat-spinner></mat-spinner>
-      <p>Loading biometric devices...</p>
+      <p>Loading attendance machines...</p>
     </div>
 
     <!-- Error Message -->
-    <div *ngIf="error" class="error-container">
+    <div *ngIf="error()" class="error-container">
       <mat-icon color="warn">error</mat-icon>
-      <p>{{ error }}</p>
+      <p>{{ error() }}</p>
     </div>
 
     <!-- Devices Table -->
-    <div *ngIf="!loading && !error" class="table-container">
-      <table mat-table [dataSource]="(devices$ | async) || []" class="devices-table">
+    <div *ngIf="!loading() && !error()" class="table-container">
+      <table mat-table [dataSource]="machines()" class="devices-table">
 
         <!-- Device Code Column -->
         <ng-container matColumnDef="code">
@@ -188,12 +188,12 @@
     </div>
 
     <!-- Device Statistics Summary -->
-    <div *ngIf="!loading && !error && (devices$ | async)?.length" class="statistics-summary">
+    <div *ngIf="!loading() && !error() && machines().length" class="statistics-summary">
       <div class="stat-card">
         <mat-icon>devices</mat-icon>
         <div class="stat-info">
-          <span class="stat-label">Total Devices</span>
-          <span class="stat-value">{{ (devices$ | async)?.length || 0 }}</span>
+          <span class="stat-label">Total Machines</span>
+          <span class="stat-value">{{ machines().length || 0 }}</span>
         </div>
       </div>
 
@@ -201,7 +201,7 @@
         <mat-icon>check_circle</mat-icon>
         <div class="stat-info">
           <span class="stat-label">Online</span>
-          <span class="stat-value">{{ getOnlineDeviceCount(devices$ | async) }}</span>
+          <span class="stat-value">{{ getOnlineDeviceCount() }}</span>
         </div>
       </div>
 
@@ -209,7 +209,7 @@
         <mat-icon>warning</mat-icon>
         <div class="stat-info">
           <span class="stat-label">Warning</span>
-          <span class="stat-value">{{ getWarningDeviceCount(devices$ | async) }}</span>
+          <span class="stat-value">{{ getWarningDeviceCount() }}</span>
         </div>
       </div>
 
@@ -217,7 +217,7 @@
         <mat-icon>cancel</mat-icon>
         <div class="stat-info">
           <span class="stat-label">Offline</span>
-          <span class="stat-value">{{ getOfflineDeviceCount(devices$ | async) }}</span>
+          <span class="stat-value">{{ getOfflineDeviceCount() }}</span>
         </div>
       </div>
     </div>

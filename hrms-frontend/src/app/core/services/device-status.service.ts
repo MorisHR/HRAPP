@@ -1,6 +1,6 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, interval, Subject, takeUntil, tap, catchError, of } from 'rxjs';
+import { Observable, interval, Subject, takeUntil, tap, catchError, of, map } from 'rxjs';
 import { BiometricDevice, DeviceStatus } from '../models/attendance.model';
 import { environment } from '../../../environments/environment';
 
@@ -70,19 +70,20 @@ export class DeviceStatusService {
     this.errorSignal.set(null);
 
     return this.http.get<any>(`${this.apiUrl}`).pipe(
-      tap(response => {
+      map(response => {
         // Handle backend response format: { success, data, message }
         const devices = response.success ? response.data : [];
         this.devicesSignal.set(devices || []);
         this.lastUpdateSignal.set(new Date());
         this.loadingSignal.set(false);
         console.log('✅ Devices loaded:', devices?.length || 0);
+        return devices as BiometricDevice[];
       }),
       catchError(error => {
         console.error('❌ Failed to load devices:', error);
         this.errorSignal.set(error.message || 'Failed to load devices');
         this.loadingSignal.set(false);
-        return of({ success: false, data: [] });
+        return of([] as BiometricDevice[]);
       })
     );
   }

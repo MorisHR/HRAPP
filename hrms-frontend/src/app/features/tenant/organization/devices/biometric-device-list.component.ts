@@ -1,7 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { Observable } from 'rxjs';
 import { MatCardModule } from '@angular/material/card';
 import { MatTableModule } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
@@ -10,6 +9,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { AttendanceMachinesService, AttendanceMachineDto } from '../../../../core/services/attendance-machines.service';
 import { BiometricDeviceService, BiometricDeviceDto, DeviceSyncStatusDto } from './biometric-device.service';
 
 @Component({
@@ -30,10 +30,11 @@ import { BiometricDeviceService, BiometricDeviceDto, DeviceSyncStatusDto } from 
   styleUrls: ['./biometric-device-list.component.scss']
 })
 export class BiometricDeviceListComponent implements OnInit {
-  devices$!: Observable<BiometricDeviceDto[]>;
-  loading = false;
-  error: string | null = null;
-  displayedColumns: string[] = ['code', 'name', 'location', 'ipAddress', 'status', 'lastSync', 'actions'];
+  // Using signals for reactive state management
+  machines = signal<AttendanceMachineDto[]>([]);
+  loading = signal<boolean>(false);
+  error = signal<string | null>(null);
+  displayedColumns: string[] = ['machineName', 'machineType', 'location', 'ipAddress', 'status', 'lastSync', 'actions'];
 
   // Connection testing state
   testingConnection: Set<string> = new Set();
@@ -42,6 +43,7 @@ export class BiometricDeviceListComponent implements OnInit {
   constructor(
     private router: Router,
     private snackBar: MatSnackBar,
+    private attendanceMachinesService: AttendanceMachinesService,
     private deviceService: BiometricDeviceService
   ) {}
 
@@ -49,11 +51,26 @@ export class BiometricDeviceListComponent implements OnInit {
     this.loadDevices();
   }
 
+  /**
+   * Load attendance machines using the new AttendanceMachinesService
+   */
   private loadDevices(): void {
-    this.loading = true;
-    this.error = null;
-    this.devices$ = this.deviceService.getDevices();
-    this.loading = false;
+    this.loading.set(true);
+    this.error.set(null);
+
+    this.attendanceMachinesService.getMachines(true).subscribe({
+      next: (response) => {
+        this.machines.set(response.data);
+        this.loading.set(false);
+        console.log(`Loaded ${response.total} attendance machines`);
+      },
+      error: (error) => {
+        console.error('Error loading machines:', error);
+        this.error.set('Failed to load attendance machines');
+        this.loading.set(false);
+        this.snackBar.open('Failed to load attendance machines', 'Close', { duration: 3000 });
+      }
+    });
   }
 
   /**
@@ -78,11 +95,11 @@ export class BiometricDeviceListComponent implements OnInit {
   }
 
   /**
-   * Delete device with confirmation
+   * Delete device with confirmation - Using AttendanceMachinesService
    */
   onDelete(id: string, deviceName: string): void {
     if (confirm(`Are you sure you want to delete the device "${deviceName}"? This action cannot be undone.`)) {
-      this.deviceService.deleteDevice(id).subscribe({
+      this.attendanceMachinesService.deleteMachine(id).subscribe({
         next: () => {
           this.snackBar.open('Device deleted successfully', 'Close', { duration: 3000 });
           this.loadDevices();
@@ -97,15 +114,21 @@ export class BiometricDeviceListComponent implements OnInit {
 
   /**
    * Test device connection
+   * Note: This still uses BiometricDeviceService as AttendanceMachinesService doesn't have test connection
    */
-  onTestConnection(device: BiometricDeviceDto): void {
+  onTestConnection(device: AttendanceMachineDto): void {
+    if (!device.ipAddress) {
+      this.snackBar.open('Device does not have an IP address configured', 'Close', { duration: 3000 });
+      return;
+    }
+
     this.testingConnection.add(device.id);
 
     const connectionData = {
-      ipAddress: device.ipAddress || '',
-      port: device.port,
-      connectionMethod: device.connectionMethod,
-      connectionTimeoutSeconds: device.connectionTimeoutSeconds
+      ipAddress: device.ipAddress,
+      port: device.port || 4370,
+      connectionMethod: 'TCP/IP',
+      connectionTimeoutSeconds: 30
     };
 
     this.deviceService.testConnection(connectionData).subscribe({
@@ -113,7 +136,7 @@ export class BiometricDeviceListComponent implements OnInit {
         this.testingConnection.delete(device.id);
         if (result.success) {
           this.snackBar.open(
-            `✓ Connection to ${device.machineName} successful`,
+            `Connection to ${device.machineName} successful`,
             'Close',
             {
               duration: 3000,
@@ -122,7 +145,7 @@ export class BiometricDeviceListComponent implements OnInit {
           );
         } else {
           this.snackBar.open(
-            `✗ Failed to connect to ${device.machineName}. ${result.message}`,
+            `Failed to connect to ${device.machineName}. ${result.message}`,
             'Close',
             {
               duration: 4000,
@@ -135,7 +158,7 @@ export class BiometricDeviceListComponent implements OnInit {
         this.testingConnection.delete(device.id);
         console.error('Connection test error:', error);
         this.snackBar.open(
-          `✗ Failed to test connection to ${device.machineName}`,
+          `Failed to test connection to ${device.machineName}`,
           'Close',
           {
             duration: 4000,
@@ -148,8 +171,9 @@ export class BiometricDeviceListComponent implements OnInit {
 
   /**
    * Manually trigger device sync
+   * Note: This still uses BiometricDeviceService for sync operations
    */
-  onSyncNow(device: BiometricDeviceDto): void {
+  onSyncNow(device: AttendanceMachineDto): void {
     this.syncingDevice.add(device.id);
 
     this.deviceService.syncDevice(device.id).subscribe({
@@ -157,7 +181,7 @@ export class BiometricDeviceListComponent implements OnInit {
         this.syncingDevice.delete(device.id);
         if (result.success) {
           this.snackBar.open(
-            `✓ Synced ${result.recordCount} records from ${device.machineName}`,
+            `Synced ${result.recordCount} records from ${device.machineName}`,
             'Close',
             {
               duration: 4000,
@@ -167,7 +191,7 @@ export class BiometricDeviceListComponent implements OnInit {
           this.loadDevices();
         } else {
           this.snackBar.open(
-            `✗ Sync failed for ${device.machineName}. ${result.message}`,
+            `Sync failed for ${device.machineName}. ${result.message}`,
             'Close',
             {
               duration: 4000,
@@ -180,7 +204,7 @@ export class BiometricDeviceListComponent implements OnInit {
         this.syncingDevice.delete(device.id);
         console.error('Sync error:', error);
         this.snackBar.open(
-          `✗ Failed to sync ${device.machineName}`,
+          `Failed to sync ${device.machineName}`,
           'Close',
           {
             duration: 4000,
@@ -208,7 +232,12 @@ export class BiometricDeviceListComponent implements OnInit {
   /**
    * Determine device status color
    */
-  getDeviceStatusClass(device: BiometricDeviceDto): string {
+  getDeviceStatusClass(device: AttendanceMachineDto): string {
+    // Check if device is active
+    if (!device.isActive) {
+      return 'offline';
+    }
+
     // Check if device has synced recently
     if (!device.lastSyncTime) {
       return 'offline';
@@ -218,13 +247,13 @@ export class BiometricDeviceListComponent implements OnInit {
     const now = new Date();
     const minutesSinceSync = (now.getTime() - lastSync.getTime()) / (1000 * 60);
 
-    // Online: synced within interval + grace period
-    if (minutesSinceSync <= device.syncIntervalMinutes * 2) {
+    // Online: synced within last 30 minutes
+    if (minutesSinceSync <= 30) {
       return 'online';
     }
 
-    // Warning: synced within offline threshold
-    if (minutesSinceSync <= device.offlineThresholdMinutes) {
+    // Warning: synced within last hour
+    if (minutesSinceSync <= 60) {
       return 'warning';
     }
 
@@ -235,7 +264,7 @@ export class BiometricDeviceListComponent implements OnInit {
   /**
    * Get human-readable device status text
    */
-  getDeviceStatusText(device: BiometricDeviceDto): string {
+  getDeviceStatusText(device: AttendanceMachineDto): string {
     const statusClass = this.getDeviceStatusClass(device);
 
     switch (statusClass) {
@@ -287,24 +316,21 @@ export class BiometricDeviceListComponent implements OnInit {
   /**
    * Get count of online devices
    */
-  getOnlineDeviceCount(devices: BiometricDeviceDto[] | null): number {
-    if (!devices) return 0;
-    return devices.filter(d => this.getDeviceStatusClass(d) === 'online').length;
+  getOnlineDeviceCount(): number {
+    return this.machines().filter(d => this.getDeviceStatusClass(d) === 'online').length;
   }
 
   /**
    * Get count of warning devices
    */
-  getWarningDeviceCount(devices: BiometricDeviceDto[] | null): number {
-    if (!devices) return 0;
-    return devices.filter(d => this.getDeviceStatusClass(d) === 'warning').length;
+  getWarningDeviceCount(): number {
+    return this.machines().filter(d => this.getDeviceStatusClass(d) === 'warning').length;
   }
 
   /**
    * Get count of offline devices
    */
-  getOfflineDeviceCount(devices: BiometricDeviceDto[] | null): number {
-    if (!devices) return 0;
-    return devices.filter(d => this.getDeviceStatusClass(d) === 'offline').length;
+  getOfflineDeviceCount(): number {
+    return this.machines().filter(d => this.getDeviceStatusClass(d) === 'offline').length;
   }
 }

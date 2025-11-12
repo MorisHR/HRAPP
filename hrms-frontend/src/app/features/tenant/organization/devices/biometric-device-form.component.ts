@@ -15,6 +15,7 @@ import { MatDividerModule } from '@angular/material/divider';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { LocationService, LocationDropdownDto } from '../locations/location.service';
+import { AttendanceMachinesService, CreateAttendanceMachineDto, UpdateAttendanceMachineDto } from '../../../../core/services/attendance-machines.service';
 import { BiometricDeviceService, CreateBiometricDeviceDto, UpdateBiometricDeviceDto, TestConnectionDto } from './biometric-device.service';
 
 // Device Types
@@ -80,6 +81,7 @@ export class BiometricDeviceFormComponent implements OnInit {
     private router: Router,
     private route: ActivatedRoute,
     private locationService: LocationService,
+    private attendanceMachinesService: AttendanceMachinesService,
     private deviceService: BiometricDeviceService,
     private snackBar: MatSnackBar
   ) {}
@@ -93,74 +95,23 @@ export class BiometricDeviceFormComponent implements OnInit {
 
   /**
    * Initialize reactive form with validators
+   * Simplified for AttendanceMachinesService DTO
    */
   private initForm(): void {
     this.deviceForm = this.fb.group({
-      // Device Information Section
-      deviceCode: ['', [Validators.required, Validators.maxLength(50)]],
+      // Basic Device Information
       machineName: ['', [Validators.required, Validators.maxLength(100)]],
-      locationId: ['', Validators.required],
-      deviceType: ['ZKTeco', Validators.required],
-      model: ['', Validators.maxLength(100)],
+      machineType: ['ZKTeco', Validators.required],
+      departmentId: [''],
+      locationId: [''],
 
-      // Network Configuration Section
-      connectionMethod: ['TCP/IP', Validators.required],
-      ipAddress: [
-        '',
-        [
-          Validators.required,
-          Validators.pattern(this.ipAddressPattern),
-          this.ipAddressValidator.bind(this)
-        ]
-      ],
-      port: [
-        4370,
-        [
-          Validators.required,
-          Validators.min(1),
-          Validators.max(65535)
-        ]
-      ],
-      macAddress: [
-        '',
-        [Validators.pattern(this.macAddressPattern)]
-      ],
+      // Network Configuration
+      ipAddress: ['', [Validators.pattern(this.ipAddressPattern), this.ipAddressValidator.bind(this)]],
+      port: [4370, [Validators.min(1), Validators.max(65535)]],
 
-      // Device Credentials Section (Optional)
-      username: ['', Validators.maxLength(50)],
-      password: ['', Validators.maxLength(100)],
-
-      // Sync Settings Section
-      syncEnabled: [true],
-      syncIntervalMinutes: [
-        15,
-        [
-          Validators.required,
-          Validators.min(1),
-          Validators.max(1440)
-        ]
-      ],
-      connectionTimeoutSeconds: [
-        30,
-        [
-          Validators.required,
-          Validators.min(5),
-          Validators.max(300)
-        ]
-      ],
-      offlineAlertEnabled: [true],
-      offlineThresholdMinutes: [
-        60,
-        [
-          Validators.required,
-          Validators.min(5),
-          Validators.max(1440)
-        ]
-      ],
-
-      // Device Identification Section (Optional)
+      // Device Identification (Optional)
+      zkTecoDeviceId: ['', Validators.maxLength(50)],
       serialNumber: ['', Validators.maxLength(100)],
-      firmwareVersion: ['', Validators.maxLength(50)],
 
       // Status
       isActive: [true]
@@ -192,52 +143,8 @@ export class BiometricDeviceFormComponent implements OnInit {
    * Setup form value change listeners
    */
   private setupFormListeners(): void {
-    // Enable/disable IP and Port based on connection method
-    this.deviceForm.get('connectionMethod')?.valueChanges.subscribe(method => {
-      const ipControl = this.deviceForm.get('ipAddress');
-      const portControl = this.deviceForm.get('port');
-
-      if (method === 'TCP/IP' || method === 'WiFi') {
-        ipControl?.setValidators([
-          Validators.required,
-          Validators.pattern(this.ipAddressPattern),
-          this.ipAddressValidator.bind(this)
-        ]);
-        portControl?.setValidators([
-          Validators.required,
-          Validators.min(1),
-          Validators.max(65535)
-        ]);
-      } else {
-        ipControl?.clearValidators();
-        portControl?.clearValidators();
-      }
-
-      ipControl?.updateValueAndValidity();
-      portControl?.updateValueAndValidity();
-    });
-
-    // Enable/disable sync interval based on sync enabled
-    this.deviceForm.get('syncEnabled')?.valueChanges.subscribe(enabled => {
-      const intervalControl = this.deviceForm.get('syncIntervalMinutes');
-
-      if (enabled) {
-        intervalControl?.enable();
-      } else {
-        intervalControl?.disable();
-      }
-    });
-
-    // Enable/disable offline threshold based on alert enabled
-    this.deviceForm.get('offlineAlertEnabled')?.valueChanges.subscribe(enabled => {
-      const thresholdControl = this.deviceForm.get('offlineThresholdMinutes');
-
-      if (enabled) {
-        thresholdControl?.enable();
-      } else {
-        thresholdControl?.disable();
-      }
-    });
+    // Simplified - no dynamic validators needed for AttendanceMachinesService
+    // All fields are optional except machineName and machineType
   }
 
   /**
@@ -271,39 +178,29 @@ export class BiometricDeviceFormComponent implements OnInit {
   }
 
   /**
-   * Load existing device data for editing
+   * Load existing device data for editing - Using AttendanceMachinesService
    */
   private loadDeviceData(id: string): void {
     this.loading = true;
 
-    this.deviceService.getDevice(id).subscribe({
-      next: (device) => {
+    this.attendanceMachinesService.getMachineById(id).subscribe({
+      next: (machine) => {
         this.deviceForm.patchValue({
-          deviceCode: device.deviceCode,
-          machineName: device.machineName,
-          locationId: device.locationId,
-          deviceType: device.deviceType,
-          model: device.model,
-          connectionMethod: device.connectionMethod,
-          ipAddress: device.ipAddress,
-          port: device.port,
-          macAddress: device.macAddress,
-          username: '',
-          password: '',
-          syncEnabled: device.syncEnabled,
-          syncIntervalMinutes: device.syncIntervalMinutes,
-          connectionTimeoutSeconds: device.connectionTimeoutSeconds,
-          offlineAlertEnabled: device.offlineAlertEnabled,
-          offlineThresholdMinutes: device.offlineThresholdMinutes,
-          serialNumber: device.serialNumber,
-          firmwareVersion: device.firmwareVersion,
-          isActive: device.isActive
+          machineName: machine.machineName,
+          machineType: machine.machineType,
+          departmentId: machine.departmentId,
+          locationId: machine.locationId,
+          ipAddress: machine.ipAddress,
+          port: machine.port,
+          zkTecoDeviceId: machine.zkTecoDeviceId,
+          serialNumber: machine.serialNumber,
+          isActive: machine.isActive
         });
         this.loading = false;
       },
       error: (error) => {
-        console.error('Error loading device:', error);
-        this.snackBar.open('Failed to load device data', 'Close', { duration: 3000 });
+        console.error('Error loading machine:', error);
+        this.snackBar.open('Failed to load machine data', 'Close', { duration: 3000 });
         this.loading = false;
       }
     });
@@ -311,13 +208,12 @@ export class BiometricDeviceFormComponent implements OnInit {
 
   /**
    * Test device connection
+   * Note: Uses BiometricDeviceService for connection testing
    */
   onTestConnection(): void {
     // Validate required network fields
     const ipAddress = this.deviceForm.get('ipAddress')?.value;
     const port = this.deviceForm.get('port')?.value;
-    const connectionMethod = this.deviceForm.get('connectionMethod')?.value;
-    const connectionTimeoutSeconds = this.deviceForm.get('connectionTimeoutSeconds')?.value;
 
     if (!ipAddress || !port) {
       this.snackBar.open('Please enter IP Address and Port to test connection', 'Close', {
@@ -339,8 +235,8 @@ export class BiometricDeviceFormComponent implements OnInit {
     const connectionData: TestConnectionDto = {
       ipAddress,
       port,
-      connectionMethod,
-      connectionTimeoutSeconds
+      connectionMethod: 'TCP/IP',
+      connectionTimeoutSeconds: 30
     };
 
     this.deviceService.testConnection(connectionData).subscribe({
@@ -348,7 +244,7 @@ export class BiometricDeviceFormComponent implements OnInit {
         this.testingConnection = false;
         if (result.success) {
           this.snackBar.open(
-            `✓ Successfully connected to device at ${ipAddress}:${port}`,
+            `Successfully connected to device at ${ipAddress}:${port}`,
             'Close',
             {
               duration: 5000,
@@ -357,7 +253,7 @@ export class BiometricDeviceFormComponent implements OnInit {
           );
         } else {
           this.snackBar.open(
-            `✗ Failed to connect to device at ${ipAddress}:${port}. ${result.message}`,
+            `Failed to connect to device at ${ipAddress}:${port}. ${result.message}`,
             'Close',
             {
               duration: 6000,
@@ -370,7 +266,7 @@ export class BiometricDeviceFormComponent implements OnInit {
         this.testingConnection = false;
         console.error('Connection test error:', error);
         this.snackBar.open(
-          `✗ Failed to connect to device at ${ipAddress}:${port}. Please check IP, port, and network settings.`,
+          `Failed to connect to device at ${ipAddress}:${port}. Please check IP, port, and network settings.`,
           'Close',
           {
             duration: 6000,
@@ -382,7 +278,7 @@ export class BiometricDeviceFormComponent implements OnInit {
   }
 
   /**
-   * Submit form to create or update device
+   * Submit form to create or update device - Using AttendanceMachinesService
    */
   onSubmit(): void {
     if (this.deviceForm.invalid) {
@@ -400,38 +296,29 @@ export class BiometricDeviceFormComponent implements OnInit {
     this.savingDevice = true;
     const formData = this.deviceForm.value;
 
-    // Prepare device DTO
-    const deviceDto = {
-      deviceCode: formData.deviceCode,
+    // Prepare machine DTO for AttendanceMachinesService
+    const machineDto: CreateAttendanceMachineDto | UpdateAttendanceMachineDto = {
       machineName: formData.machineName,
-      machineId: formData.deviceCode, // Use device code as machine ID
-      deviceType: formData.deviceType,
-      model: formData.model,
-      locationId: formData.locationId,
-      ipAddress: formData.ipAddress,
-      port: formData.port,
-      macAddress: formData.macAddress,
-      serialNumber: formData.serialNumber,
-      firmwareVersion: formData.firmwareVersion,
-      syncEnabled: formData.syncEnabled,
-      syncIntervalMinutes: formData.syncIntervalMinutes,
-      connectionMethod: formData.connectionMethod,
-      connectionTimeoutSeconds: formData.connectionTimeoutSeconds,
-      offlineAlertEnabled: formData.offlineAlertEnabled,
-      offlineThresholdMinutes: formData.offlineThresholdMinutes,
+      machineType: formData.machineType,
+      departmentId: formData.departmentId || undefined,
+      locationId: formData.locationId || undefined,
+      ipAddress: formData.ipAddress || undefined,
+      port: formData.port || undefined,
+      zkTecoDeviceId: formData.zkTecoDeviceId || undefined,
+      serialNumber: formData.serialNumber || undefined,
       isActive: formData.isActive
     };
 
     const saveOperation = this.isEditMode
-      ? this.deviceService.updateDevice(this.deviceId!, deviceDto as UpdateBiometricDeviceDto)
-      : this.deviceService.createDevice(deviceDto as CreateBiometricDeviceDto);
+      ? this.attendanceMachinesService.updateMachine(this.deviceId!, machineDto as UpdateAttendanceMachineDto)
+      : this.attendanceMachinesService.createMachine(machineDto as CreateAttendanceMachineDto);
 
     saveOperation.subscribe({
-      next: () => {
+      next: (response) => {
         this.savingDevice = false;
         const action = this.isEditMode ? 'updated' : 'created';
         this.snackBar.open(
-          `✓ Biometric device ${action} successfully`,
+          `Attendance machine ${action} successfully`,
           'Close',
           {
             duration: 3000,
@@ -443,8 +330,9 @@ export class BiometricDeviceFormComponent implements OnInit {
       error: (error) => {
         this.savingDevice = false;
         console.error('Save error:', error);
+        const errorMessage = error?.error?.message || `Failed to ${this.isEditMode ? 'update' : 'create'} machine`;
         this.snackBar.open(
-          `Failed to ${this.isEditMode ? 'update' : 'create'} device`,
+          errorMessage,
           'Close',
           {
             duration: 4000,
@@ -528,24 +416,23 @@ export class BiometricDeviceFormComponent implements OnInit {
   }
 
   /**
-   * Check if network fields should be enabled
+   * Check if network fields should be enabled (always true for TCP/IP devices)
    */
   isNetworkConfigRequired(): boolean {
-    const method = this.deviceForm.get('connectionMethod')?.value;
-    return method === 'TCP/IP' || method === 'WiFi';
+    return true; // Always show network config for attendance machines
   }
 
   /**
    * Get page title based on mode
    */
   getPageTitle(): string {
-    return this.isEditMode ? 'Edit Biometric Device' : 'Register New Biometric Device';
+    return this.isEditMode ? 'Edit Attendance Machine' : 'Register New Attendance Machine';
   }
 
   /**
    * Get submit button text based on mode
    */
   getSubmitButtonText(): string {
-    return this.isEditMode ? 'Update Device' : 'Register Device';
+    return this.isEditMode ? 'Update Machine' : 'Register Machine';
   }
 }

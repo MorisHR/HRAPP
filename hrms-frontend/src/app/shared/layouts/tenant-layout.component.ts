@@ -256,6 +256,7 @@ export class TenantLayoutComponent {
     { label: 'Timesheets', icon: 'schedule', route: '/tenant/timesheets/approvals' },
     { label: 'Payroll', icon: 'payments', route: '/tenant/payroll' },
     { label: 'Reports', icon: 'assessment', route: '/tenant/reports' },
+    { label: 'Billing', icon: 'credit_card', route: '/tenant/billing' },
     { label: 'Audit Logs', icon: 'history', route: '/tenant/audit-logs' },
     {
       label: 'Settings',

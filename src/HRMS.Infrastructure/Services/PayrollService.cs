@@ -20,6 +20,7 @@ public class PayrollService : IPayrollService
     private readonly ITenantService _tenantService;
     private readonly ISalaryComponentService _salaryComponentService;
     private readonly ILogger<PayrollService> _logger;
+    private readonly PayslipPdfGeneratorService _pdfGenerator;
 
     // Mauritius 2025 Constants
     private const decimal CSG_THRESHOLD = 50000m; // MUR 50,000
@@ -63,6 +64,7 @@ public class PayrollService : IPayrollService
         _tenantService = tenantService;
         _salaryComponentService = salaryComponentService;
         _logger = logger;
+        _pdfGenerator = new PayslipPdfGeneratorService();
     }
 
     // ==================== PAYROLL CYCLE MANAGEMENT ====================
@@ -1096,10 +1098,51 @@ public class PayrollService : IPayrollService
         return Encoding.UTF8.GetBytes(sb.ToString());
     }
 
-    public Task<byte[]> GeneratePayslipPdfAsync(Guid payslipId)
+    public async Task<byte[]> GeneratePayslipPdfAsync(Guid payslipId)
     {
-        // TODO: Implement PDF generation using iTextSharp or similar
-        throw new NotImplementedException("PDF generation not yet implemented");
+        _logger.LogInformation("Generating PDF for payslip {PayslipId}", payslipId);
+
+        try
+        {
+            // Fetch payslip with all related data
+            var payslip = await _context.Payslips
+                .Include(p => p.Employee)
+                    .ThenInclude(e => e.Department)
+                .Include(p => p.PayrollCycle)
+                .FirstOrDefaultAsync(p => p.Id == payslipId && !p.IsDeleted);
+
+            if (payslip == null)
+            {
+                _logger.LogError("Payslip {PayslipId} not found", payslipId);
+                throw new InvalidOperationException($"Payslip with ID {payslipId} not found");
+            }
+
+            if (payslip.Employee == null)
+            {
+                _logger.LogError("Employee data missing for payslip {PayslipId}", payslipId);
+                throw new InvalidOperationException("Employee data is missing for this payslip");
+            }
+
+            // Get company name from tenant service
+            var tenantId = _tenantService.GetCurrentTenantId();
+            var companyName = "Company Name"; // Default fallback
+
+            // Note: In production, tenant info would be fetched from MasterDbContext
+            // For now, using a fallback value as MasterDbContext is not injected here
+
+            // Generate PDF using QuestPDF
+            var pdfBytes = _pdfGenerator.GeneratePayslipPdf(payslip, payslip.Employee, companyName);
+
+            _logger.LogInformation("PDF generated successfully for payslip {PayslipId}, size: {Size} bytes",
+                payslipId, pdfBytes.Length);
+
+            return pdfBytes;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error generating PDF for payslip {PayslipId}", payslipId);
+            throw;
+        }
     }
 
     // ==================== HELPER METHODS ====================

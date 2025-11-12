@@ -22,6 +22,7 @@ public class AttendanceService : IAttendanceService
     private readonly ITenantService _tenantService;
     private readonly ILeaveService _leaveService;
     private readonly ILogger<AttendanceService> _logger;
+    private readonly ICurrentUserService _currentUserService;
 
     public AttendanceService(
         TenantDbContext tenantContext,
@@ -29,7 +30,8 @@ public class AttendanceService : IAttendanceService
         ISectorComplianceService sectorComplianceService,
         ITenantService tenantService,
         ILeaveService leaveService,
-        ILogger<AttendanceService> logger)
+        ILogger<AttendanceService> logger,
+        ICurrentUserService currentUserService)
     {
         _tenantContext = tenantContext;
         _masterContext = masterContext;
@@ -37,6 +39,7 @@ public class AttendanceService : IAttendanceService
         _tenantService = tenantService;
         _leaveService = leaveService;
         _logger = logger;
+        _currentUserService = currentUserService;
     }
 
     public async Task<Guid> RecordAttendanceAsync(CreateAttendanceDto dto, string createdBy)
@@ -485,7 +488,7 @@ public class AttendanceService : IAttendanceService
                     WorkingHours = 0,
                     OvertimeHours = 0,
                     CreatedAt = DateTime.UtcNow,
-                    CreatedBy = "System",
+                    CreatedBy = _currentUserService.GetAuditUsername(),
                     IsDeleted = false
                 };
                 _tenantContext.Attendances.Add(leaveAttendance);
@@ -513,7 +516,7 @@ public class AttendanceService : IAttendanceService
                 WorkingHours = 0,
                 OvertimeHours = 0,
                 CreatedAt = DateTime.UtcNow,
-                CreatedBy = "System",
+                CreatedBy = _currentUserService.GetAuditUsername(),
                 IsDeleted = false
             };
             _tenantContext.Attendances.Add(absence);

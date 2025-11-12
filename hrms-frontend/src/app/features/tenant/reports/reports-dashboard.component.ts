@@ -1,13 +1,37 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatSelectModule } from '@angular/material/select';
+import { MatInputModule } from '@angular/material/input';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatExpansionModule } from '@angular/material/expansion';
+import { MatDividerModule } from '@angular/material/divider';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { ReportsService, DashboardSummaryDto } from '../../../core/services/reports.service';
 
 @Component({
   selector: 'app-reports-dashboard',
   standalone: true,
-  imports: [CommonModule, MatCardModule, MatButtonModule, MatIconModule],
+  imports: [
+    CommonModule,
+    FormsModule,
+    MatCardModule,
+    MatButtonModule,
+    MatIconModule,
+    MatProgressSpinnerModule,
+    MatFormFieldModule,
+    MatSelectModule,
+    MatInputModule,
+    MatSnackBarModule,
+    MatExpansionModule,
+    MatDividerModule,
+    MatTooltipModule
+  ],
   template: `
     <div class="reports-dashboard">
       <div class="header">
@@ -15,85 +39,263 @@ import { MatIconModule } from '@angular/material/icon';
         <p class="subtitle">Generate insights and reports from your HR data</p>
       </div>
 
-      <div class="dashboard-grid">
-        <mat-card class="report-card">
-          <mat-card-header>
-            <mat-icon class="card-icon attendance">event_available</mat-icon>
-            <div>
-              <h3>Attendance Reports</h3>
-              <p>Daily, weekly, and monthly attendance</p>
-            </div>
-          </mat-card-header>
-        </mat-card>
-
-        <mat-card class="report-card">
-          <mat-card-header>
-            <mat-icon class="card-icon leave">beach_access</mat-icon>
-            <div>
-              <h3>Leave Reports</h3>
-              <p>Leave balances and history</p>
-            </div>
-          </mat-card-header>
-        </mat-card>
-
-        <mat-card class="report-card">
-          <mat-card-header>
-            <mat-icon class="card-icon payroll">payments</mat-icon>
-            <div>
-              <h3>Payroll Reports</h3>
-              <p>Salary analysis and tax reports</p>
-            </div>
-          </mat-card-header>
-        </mat-card>
-
-        <mat-card class="report-card">
-          <mat-card-header>
-            <mat-icon class="card-icon employee">people</mat-icon>
-            <div>
-              <h3>Employee Reports</h3>
-              <p>Headcount and demographics</p>
-            </div>
-          </mat-card-header>
-        </mat-card>
-
-        <mat-card class="report-card">
-          <mat-card-header>
-            <mat-icon class="card-icon performance">trending_up</mat-icon>
-            <div>
-              <h3>Performance Reports</h3>
-              <p>Reviews and KPI tracking</p>
-            </div>
-          </mat-card-header>
-        </mat-card>
-
-        <mat-card class="report-card">
-          <mat-card-header>
-            <mat-icon class="card-icon compliance">verified_user</mat-icon>
-            <div>
-              <h3>Compliance Reports</h3>
-              <p>Statutory and regulatory reports</p>
-            </div>
-          </mat-card-header>
-        </mat-card>
-      </div>
-
-      <mat-card class="coming-soon-card">
+      <!-- Dashboard KPIs Section -->
+      <mat-card class="kpi-card" *ngIf="dashboardData()">
+        <mat-card-header>
+          <mat-icon class="header-icon">dashboard</mat-icon>
+          <div>
+            <mat-card-title>Dashboard Overview</mat-card-title>
+            <mat-card-subtitle>Real-time HR metrics</mat-card-subtitle>
+          </div>
+        </mat-card-header>
         <mat-card-content>
-          <mat-icon class="construction-icon">construction</mat-icon>
-          <h2>Reports & Analytics Dashboard</h2>
-          <p>This feature is under development and will be available soon.</p>
-          <p class="feature-list">Upcoming features include:</p>
-          <ul>
-            <li>Pre-built report templates</li>
-            <li>Custom report builder</li>
-            <li>Data visualization and charts</li>
-            <li>Export to PDF, Excel, CSV</li>
-            <li>Scheduled report delivery</li>
-            <li>Real-time analytics dashboards</li>
-            <li>Comparative analysis tools</li>
-          </ul>
+          <div class="kpi-grid">
+            <div class="kpi-item">
+              <mat-icon class="kpi-icon employee">people</mat-icon>
+              <div class="kpi-content">
+                <div class="kpi-value">{{ dashboardData()?.totalEmployees }}</div>
+                <div class="kpi-label">Total Employees</div>
+              </div>
+            </div>
+            <div class="kpi-item">
+              <mat-icon class="kpi-icon success">verified_user</mat-icon>
+              <div class="kpi-content">
+                <div class="kpi-value">{{ dashboardData()?.activeEmployees }}</div>
+                <div class="kpi-label">Active Employees</div>
+              </div>
+            </div>
+            <div class="kpi-item">
+              <mat-icon class="kpi-icon department">business</mat-icon>
+              <div class="kpi-content">
+                <div class="kpi-value">{{ dashboardData()?.totalDepartments }}</div>
+                <div class="kpi-label">Departments</div>
+              </div>
+            </div>
+            <div class="kpi-item">
+              <mat-icon class="kpi-icon warning">pending_actions</mat-icon>
+              <div class="kpi-content">
+                <div class="kpi-value">{{ dashboardData()?.pendingLeaveRequests }}</div>
+                <div class="kpi-label">Pending Leaves</div>
+              </div>
+            </div>
+            <div class="kpi-item">
+              <mat-icon class="kpi-icon attendance">event_available</mat-icon>
+              <div class="kpi-content">
+                <div class="kpi-value">{{ dashboardData()?.todayAttendance }}%</div>
+                <div class="kpi-label">Today's Attendance</div>
+              </div>
+            </div>
+            <div class="kpi-item">
+              <mat-icon class="kpi-icon payroll">payments</mat-icon>
+              <div class="kpi-content">
+                <div class="kpi-value">Rs {{ (dashboardData()?.monthlyPayroll || 0) | number:'1.0-0' }}</div>
+                <div class="kpi-label">Monthly Payroll</div>
+              </div>
+            </div>
+          </div>
+        </mat-card-content>
+        <mat-card-actions>
+          <button mat-button (click)="loadDashboardData()" [disabled]="isLoadingDashboard()">
+            <mat-icon>refresh</mat-icon> Refresh
+          </button>
+        </mat-card-actions>
+      </mat-card>
+
+      <!-- Loading State for Dashboard -->
+      <mat-card *ngIf="isLoadingDashboard() && !dashboardData()" class="loading-card">
+        <mat-card-content>
+          <mat-spinner diameter="40"></mat-spinner>
+          <p>Loading dashboard data...</p>
         </mat-card-content>
       </mat-card>
+
+      <mat-divider class="section-divider"></mat-divider>
+
+      <!-- Report Generation Section -->
+      <h2 class="section-title">Generate Reports</h2>
+
+      <mat-accordion class="reports-accordion">
+
+        <!-- Payroll Reports -->
+        <mat-expansion-panel>
+          <mat-expansion-panel-header>
+            <mat-panel-title>
+              <mat-icon class="panel-icon payroll">payments</mat-icon>
+              Payroll Reports
+            </mat-panel-title>
+            <mat-panel-description>
+              Salary summaries, deductions, and bank transfers
+            </mat-panel-description>
+          </mat-expansion-panel-header>
+
+          <div class="report-controls">
+            <mat-form-field appearance="outline">
+              <mat-label>Month</mat-label>
+              <mat-select [(ngModel)]="payrollMonth">
+                <mat-option *ngFor="let month of months" [value]="month.value">
+                  {{ month.label }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Year</mat-label>
+              <mat-select [(ngModel)]="payrollYear">
+                <mat-option *ngFor="let year of years" [value]="year">
+                  {{ year }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+
+          <div class="report-actions">
+            <button mat-raised-button color="primary"
+                    (click)="generatePayrollReport('excel')"
+                    [disabled]="isLoadingPayroll()"
+                    matTooltip="Export monthly payroll summary to Excel">
+              <mat-icon>table_chart</mat-icon>
+              <span *ngIf="!isLoadingPayroll()">Monthly Payroll Summary (Excel)</span>
+              <mat-spinner *ngIf="isLoadingPayroll()" diameter="20"></mat-spinner>
+            </button>
+
+            <button mat-raised-button color="accent"
+                    (click)="generateStatutoryDeductions()"
+                    [disabled]="isLoadingPayroll()"
+                    matTooltip="Export statutory deductions report">
+              <mat-icon>account_balance</mat-icon>
+              Statutory Deductions (Excel)
+            </button>
+
+            <button mat-raised-button
+                    (click)="generateBankTransferList()"
+                    [disabled]="isLoadingPayroll()"
+                    matTooltip="Export bank transfer list for payroll">
+              <mat-icon>account_balance_wallet</mat-icon>
+              Bank Transfer List (Excel)
+            </button>
+          </div>
+        </mat-expansion-panel>
+
+        <!-- Attendance Reports -->
+        <mat-expansion-panel>
+          <mat-expansion-panel-header>
+            <mat-panel-title>
+              <mat-icon class="panel-icon attendance">event_available</mat-icon>
+              Attendance Reports
+            </mat-panel-title>
+            <mat-panel-description>
+              Monthly registers, overtime, and attendance analysis
+            </mat-panel-description>
+          </mat-expansion-panel-header>
+
+          <div class="report-controls">
+            <mat-form-field appearance="outline">
+              <mat-label>Month</mat-label>
+              <mat-select [(ngModel)]="attendanceMonth">
+                <mat-option *ngFor="let month of months" [value]="month.value">
+                  {{ month.label }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Year</mat-label>
+              <mat-select [(ngModel)]="attendanceYear">
+                <mat-option *ngFor="let year of years" [value]="year">
+                  {{ year }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+
+          <div class="report-actions">
+            <button mat-raised-button color="primary"
+                    (click)="generateAttendanceReport('excel')"
+                    [disabled]="isLoadingAttendance()"
+                    matTooltip="Export monthly attendance register">
+              <mat-icon>table_chart</mat-icon>
+              <span *ngIf="!isLoadingAttendance()">Monthly Attendance Register (Excel)</span>
+              <mat-spinner *ngIf="isLoadingAttendance()" diameter="20"></mat-spinner>
+            </button>
+
+            <button mat-raised-button color="accent"
+                    (click)="generateOvertimeReport()"
+                    [disabled]="isLoadingAttendance()"
+                    matTooltip="Export overtime report">
+              <mat-icon>schedule</mat-icon>
+              Overtime Report (Excel)
+            </button>
+          </div>
+        </mat-expansion-panel>
+
+        <!-- Leave Reports -->
+        <mat-expansion-panel>
+          <mat-expansion-panel-header>
+            <mat-panel-title>
+              <mat-icon class="panel-icon leave">beach_access</mat-icon>
+              Leave Reports
+            </mat-panel-title>
+            <mat-panel-description>
+              Leave balances and utilization reports
+            </mat-panel-description>
+          </mat-expansion-panel-header>
+
+          <div class="report-controls">
+            <mat-form-field appearance="outline">
+              <mat-label>Year</mat-label>
+              <mat-select [(ngModel)]="leaveYear">
+                <mat-option *ngFor="let year of years" [value]="year">
+                  {{ year }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+
+          <div class="report-actions">
+            <button mat-raised-button color="primary"
+                    (click)="generateLeaveReport('excel')"
+                    [disabled]="isLoadingLeave()"
+                    matTooltip="Export leave balance report">
+              <mat-icon>table_chart</mat-icon>
+              <span *ngIf="!isLoadingLeave()">Leave Balance Report (Excel)</span>
+              <mat-spinner *ngIf="isLoadingLeave()" diameter="20"></mat-spinner>
+            </button>
+          </div>
+        </mat-expansion-panel>
+
+        <!-- Employee Reports -->
+        <mat-expansion-panel>
+          <mat-expansion-panel-header>
+            <mat-panel-title>
+              <mat-icon class="panel-icon employee">people</mat-icon>
+              Employee Reports
+            </mat-panel-title>
+            <mat-panel-description>
+              Headcount, demographics, and expatriate tracking
+            </mat-panel-description>
+          </mat-expansion-panel-header>
+
+          <div class="report-actions">
+            <button mat-raised-button color="primary"
+                    (click)="generateEmployeeReport('headcount')"
+                    [disabled]="isLoadingEmployee()"
+                    matTooltip="Export headcount and demographics report">
+              <mat-icon>table_chart</mat-icon>
+              <span *ngIf="!isLoadingEmployee()">Headcount Report (Excel)</span>
+              <mat-spinner *ngIf="isLoadingEmployee()" diameter="20"></mat-spinner>
+            </button>
+
+            <button mat-raised-button color="accent"
+                    (click)="generateEmployeeReport('expatriates')"
+                    [disabled]="isLoadingEmployee()"
+                    matTooltip="Export expatriate tracking report">
+              <mat-icon>flight_takeoff</mat-icon>
+              Expatriate Report (Excel)
+            </button>
+          </div>
+        </mat-expansion-panel>
+
+      </mat-accordion>
     </div>
   `,
   styles: [`
@@ -130,110 +332,460 @@ import { MatIconModule } from '@angular/material/icon';
       margin: 0;
     }
 
-    .dashboard-grid {
+    /* KPI Card Styles */
+    .kpi-card {
+      margin-bottom: 32px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+
+    .kpi-card .header-icon {
+      font-size: 32px;
+      width: 32px;
+      height: 32px;
+      margin-right: 12px;
+      color: white;
+    }
+
+    .kpi-card mat-card-title {
+      color: white;
+      font-size: 20px;
+      font-weight: 600;
+    }
+
+    .kpi-card mat-card-subtitle {
+      color: rgba(255, 255, 255, 0.8);
+    }
+
+    .kpi-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
       gap: 20px;
+      margin-top: 20px;
+    }
+
+    .kpi-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      backdrop-filter: blur(10px);
+      transition: all 0.3s ease;
+    }
+
+    .kpi-item:hover {
+      background: rgba(255, 255, 255, 0.15);
+      transform: translateY(-2px);
+    }
+
+    .kpi-icon {
+      font-size: 40px;
+      width: 40px;
+      height: 40px;
+      opacity: 0.9;
+    }
+
+    .kpi-icon.employee { color: #fff59d; }
+    .kpi-icon.success { color: #81c784; }
+    .kpi-icon.department { color: #90caf9; }
+    .kpi-icon.warning { color: #ffcc80; }
+    .kpi-icon.attendance { color: #a5d6a7; }
+    .kpi-icon.payroll { color: #ffab91; }
+
+    .kpi-content {
+      flex: 1;
+    }
+
+    .kpi-value {
+      font-size: 28px;
+      font-weight: 700;
+      line-height: 1;
+      margin-bottom: 4px;
+      color: white;
+    }
+
+    .kpi-label {
+      font-size: 12px;
+      opacity: 0.9;
+      color: rgba(255, 255, 255, 0.9);
+    }
+
+    .loading-card {
+      text-align: center;
+      padding: 40px;
       margin-bottom: 32px;
     }
 
-    .report-card {
-      cursor: pointer;
-      transition: transform 0.2s, box-shadow 0.2s;
+    .loading-card mat-spinner {
+      margin: 0 auto 16px;
     }
 
-    .report-card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+    .section-divider {
+      margin: 40px 0;
     }
 
-    .report-card mat-card-header {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      padding: 20px;
-    }
-
-    .card-icon {
-      font-size: 48px;
-      width: 48px;
-      height: 48px;
-    }
-
-    .card-icon.attendance { color: #4caf50; }
-    .card-icon.leave { color: #2196f3; }
-    .card-icon.payroll { color: #ff9800; }
-    .card-icon.employee { color: #9c27b0; }
-    .card-icon.performance { color: #00bcd4; }
-    .card-icon.compliance { color: #f44336; }
-
-    .report-card h3 {
-      margin: 0 0 4px 0;
-      font-size: 16px;
-      font-weight: 600;
-      color: #333;
-    }
-
-    .report-card p {
-      margin: 0;
-      font-size: 13px;
-      color: #666;
-    }
-
-    .coming-soon-card {
-      text-align: center;
-      padding: 48px 24px;
-      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-    }
-
-    .construction-icon {
-      font-size: 72px;
-      width: 72px;
-      height: 72px;
-      color: #ff9800;
-      margin-bottom: 16px;
-    }
-
-    .coming-soon-card h2 {
+    .section-title {
+      font-size: 24px;
+      font-weight: 500;
       color: #1a237e;
-      margin: 0 0 16px 0;
-      font-size: 28px;
-    }
-
-    .coming-soon-card p {
-      color: #555;
-      font-size: 16px;
       margin: 0 0 24px 0;
     }
 
-    .feature-list {
-      font-weight: 600;
-      margin: 24px 0 12px 0;
+    /* Accordion Styles */
+    .reports-accordion {
+      margin-bottom: 32px;
     }
 
-    .coming-soon-card ul {
-      list-style: none;
-      padding: 0;
-      max-width: 500px;
-      margin: 0 auto;
-      text-align: left;
+    .reports-accordion .mat-expansion-panel {
+      margin-bottom: 16px;
     }
 
-    .coming-soon-card li {
-      padding: 8px 0;
-      color: #333;
-      position: relative;
-      padding-left: 28px;
+    .panel-icon {
+      margin-right: 12px;
+      font-size: 24px;
+      width: 24px;
+      height: 24px;
     }
 
-    .coming-soon-card li:before {
-      content: '✓';
-      position: absolute;
-      left: 0;
-      color: #4caf50;
-      font-weight: bold;
-      font-size: 18px;
+    .panel-icon.payroll { color: #ff9800; }
+    .panel-icon.attendance { color: #4caf50; }
+    .panel-icon.leave { color: #2196f3; }
+    .panel-icon.employee { color: #9c27b0; }
+
+    /* Report Controls */
+    .report-controls {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+
+    .report-controls mat-form-field {
+      min-width: 150px;
+    }
+
+    /* Report Actions */
+    .report-actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .report-actions button {
+      min-width: 200px;
+    }
+
+    .report-actions button mat-icon {
+      margin-right: 8px;
+    }
+
+    .report-actions button mat-spinner {
+      display: inline-block;
+      margin-right: 8px;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .reports-dashboard {
+        padding: 16px;
+      }
+
+      .kpi-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .report-controls {
+        flex-direction: column;
+      }
+
+      .report-controls mat-form-field {
+        width: 100%;
+      }
+
+      .report-actions {
+        flex-direction: column;
+      }
+
+      .report-actions button {
+        width: 100%;
+      }
     }
   `]
 })
-export class ReportsDashboardComponent {}
+export class ReportsDashboardComponent implements OnInit {
+  // Signals for reactive state management
+  dashboardData = signal<DashboardSummaryDto | null>(null);
+  isLoadingDashboard = signal(false);
+  isLoadingPayroll = signal(false);
+  isLoadingAttendance = signal(false);
+  isLoadingLeave = signal(false);
+  isLoadingEmployee = signal(false);
+
+  // Date selection properties
+  currentDate = new Date();
+  payrollMonth = this.currentDate.getMonth() + 1;
+  payrollYear = this.currentDate.getFullYear();
+  attendanceMonth = this.currentDate.getMonth() + 1;
+  attendanceYear = this.currentDate.getFullYear();
+  leaveYear = this.currentDate.getFullYear();
+
+  // Month and year options
+  months = [
+    { value: 1, label: 'January' },
+    { value: 2, label: 'February' },
+    { value: 3, label: 'March' },
+    { value: 4, label: 'April' },
+    { value: 5, label: 'May' },
+    { value: 6, label: 'June' },
+    { value: 7, label: 'July' },
+    { value: 8, label: 'August' },
+    { value: 9, label: 'September' },
+    { value: 10, label: 'October' },
+    { value: 11, label: 'November' },
+    { value: 12, label: 'December' }
+  ];
+
+  years: number[] = [];
+
+  constructor(
+    private reportsService: ReportsService,
+    private snackBar: MatSnackBar
+  ) {
+    // Generate year options (current year and previous 5 years)
+    const currentYear = this.currentDate.getFullYear();
+    for (let i = 0; i <= 5; i++) {
+      this.years.push(currentYear - i);
+    }
+  }
+
+  ngOnInit(): void {
+    this.loadDashboardData();
+  }
+
+  // ==================== DASHBOARD KPIs ====================
+
+  /**
+   * Load dashboard summary data with KPIs
+   */
+  loadDashboardData(): void {
+    this.isLoadingDashboard.set(true);
+    this.reportsService.getDashboard().subscribe({
+      next: (data: DashboardSummaryDto) => {
+        this.dashboardData.set(data);
+        this.isLoadingDashboard.set(false);
+      },
+      error: (error: any) => {
+        console.error('Error loading dashboard data:', error);
+        this.showError('Failed to load dashboard data');
+        this.isLoadingDashboard.set(false);
+      }
+    });
+  }
+
+  // ==================== PAYROLL REPORTS ====================
+
+  /**
+   * Generate payroll report (Excel/PDF)
+   */
+  generatePayrollReport(format: 'excel' | 'pdf'): void {
+    if (format === 'excel') {
+      this.isLoadingPayroll.set(true);
+      this.reportsService.exportMonthlyPayroll(this.payrollMonth, this.payrollYear).subscribe({
+        next: (blob: Blob) => {
+          const filename = `Payroll_Report_${this.getMonthName(this.payrollMonth)}_${this.payrollYear}.xlsx`;
+          this.reportsService.downloadFile(blob, filename);
+          this.showSuccess(`Payroll report downloaded successfully`);
+          this.isLoadingPayroll.set(false);
+        },
+        error: (error: any) => {
+          console.error('Error generating payroll report:', error);
+          this.showError('Failed to generate payroll report');
+          this.isLoadingPayroll.set(false);
+        }
+      });
+    }
+  }
+
+  /**
+   * Generate statutory deductions report
+   */
+  generateStatutoryDeductions(): void {
+    this.isLoadingPayroll.set(true);
+    this.reportsService.exportStatutoryDeductions(this.payrollMonth, this.payrollYear).subscribe({
+      next: (blob: Blob) => {
+        const filename = `Statutory_Deductions_${this.getMonthName(this.payrollMonth)}_${this.payrollYear}.xlsx`;
+        this.reportsService.downloadFile(blob, filename);
+        this.showSuccess(`Statutory deductions report downloaded successfully`);
+        this.isLoadingPayroll.set(false);
+      },
+      error: (error: any) => {
+        console.error('Error generating statutory deductions report:', error);
+        this.showError('Failed to generate statutory deductions report');
+        this.isLoadingPayroll.set(false);
+      }
+    });
+  }
+
+  /**
+   * Generate bank transfer list
+   */
+  generateBankTransferList(): void {
+    this.isLoadingPayroll.set(true);
+    this.reportsService.exportBankTransferList(this.payrollMonth, this.payrollYear).subscribe({
+      next: (blob: Blob) => {
+        const filename = `Bank_Transfer_List_${this.getMonthName(this.payrollMonth)}_${this.payrollYear}.xlsx`;
+        this.reportsService.downloadFile(blob, filename);
+        this.showSuccess(`Bank transfer list downloaded successfully`);
+        this.isLoadingPayroll.set(false);
+      },
+      error: (error: any) => {
+        console.error('Error generating bank transfer list:', error);
+        this.showError('Failed to generate bank transfer list');
+        this.isLoadingPayroll.set(false);
+      }
+    });
+  }
+
+  // ==================== ATTENDANCE REPORTS ====================
+
+  /**
+   * Generate attendance report (Excel/PDF)
+   */
+  generateAttendanceReport(format: 'excel' | 'pdf'): void {
+    if (format === 'excel') {
+      this.isLoadingAttendance.set(true);
+      this.reportsService.exportAttendanceRegister(this.attendanceMonth, this.attendanceYear).subscribe({
+        next: (blob: Blob) => {
+          const filename = `Attendance_Register_${this.getMonthName(this.attendanceMonth)}_${this.attendanceYear}.xlsx`;
+          this.reportsService.downloadFile(blob, filename);
+          this.showSuccess(`Attendance report downloaded successfully`);
+          this.isLoadingAttendance.set(false);
+        },
+        error: (error: any) => {
+          console.error('Error generating attendance report:', error);
+          this.showError('Failed to generate attendance report');
+          this.isLoadingAttendance.set(false);
+        }
+      });
+    }
+  }
+
+  /**
+   * Generate overtime report
+   */
+  generateOvertimeReport(): void {
+    this.isLoadingAttendance.set(true);
+    this.reportsService.exportOvertimeReport(this.attendanceMonth, this.attendanceYear).subscribe({
+      next: (blob: Blob) => {
+        const filename = `Overtime_Report_${this.getMonthName(this.attendanceMonth)}_${this.attendanceYear}.xlsx`;
+        this.reportsService.downloadFile(blob, filename);
+        this.showSuccess(`Overtime report downloaded successfully`);
+        this.isLoadingAttendance.set(false);
+      },
+      error: (error: any) => {
+        console.error('Error generating overtime report:', error);
+        this.showError('Failed to generate overtime report');
+        this.isLoadingAttendance.set(false);
+      }
+    });
+  }
+
+  // ==================== LEAVE REPORTS ====================
+
+  /**
+   * Generate leave report (Excel/PDF)
+   */
+  generateLeaveReport(format: 'excel' | 'pdf'): void {
+    if (format === 'excel') {
+      this.isLoadingLeave.set(true);
+      this.reportsService.exportLeaveBalance(this.leaveYear).subscribe({
+        next: (blob: Blob) => {
+          const filename = `Leave_Balance_Report_${this.leaveYear}.xlsx`;
+          this.reportsService.downloadFile(blob, filename);
+          this.showSuccess(`Leave report downloaded successfully`);
+          this.isLoadingLeave.set(false);
+        },
+        error: (error: any) => {
+          console.error('Error generating leave report:', error);
+          this.showError('Failed to generate leave report');
+          this.isLoadingLeave.set(false);
+        }
+      });
+    }
+  }
+
+  // ==================== EMPLOYEE REPORTS ====================
+
+  /**
+   * Generate employee report
+   */
+  generateEmployeeReport(type: 'headcount' | 'expatriates'): void {
+    this.isLoadingEmployee.set(true);
+
+    if (type === 'headcount') {
+      this.reportsService.exportHeadcount().subscribe({
+        next: (blob: Blob) => {
+          const filename = `Headcount_Report_${new Date().toISOString().split('T')[0]}.xlsx`;
+          this.reportsService.downloadFile(blob, filename);
+          this.showSuccess(`Headcount report downloaded successfully`);
+          this.isLoadingEmployee.set(false);
+        },
+        error: (error: any) => {
+          console.error('Error generating headcount report:', error);
+          this.showError('Failed to generate headcount report');
+          this.isLoadingEmployee.set(false);
+        }
+      });
+    } else if (type === 'expatriates') {
+      this.reportsService.exportExpatriates().subscribe({
+        next: (blob: Blob) => {
+          const filename = `Expatriate_Report_${new Date().toISOString().split('T')[0]}.xlsx`;
+          this.reportsService.downloadFile(blob, filename);
+          this.showSuccess(`Expatriate report downloaded successfully`);
+          this.isLoadingEmployee.set(false);
+        },
+        error: (error: any) => {
+          console.error('Error generating expatriate report:', error);
+          this.showError('Failed to generate expatriate report');
+          this.isLoadingEmployee.set(false);
+        }
+      });
+    }
+  }
+
+  // ==================== HELPER METHODS ====================
+
+  /**
+   * Get month name from month number
+   */
+  private getMonthName(month: number): string {
+    const monthObj = this.months.find(m => m.value === month);
+    return monthObj ? monthObj.label : 'Unknown';
+  }
+
+  /**
+   * Show success message
+   */
+  private showSuccess(message: string): void {
+    this.snackBar.open(message, 'Close', {
+      duration: 3000,
+      horizontalPosition: 'end',
+      verticalPosition: 'top',
+      panelClass: ['success-snackbar']
+    });
+  }
+
+  /**
+   * Show error message
+   */
+  private showError(message: string): void {
+    this.snackBar.open(message, 'Close', {
+      duration: 5000,
+      horizontalPosition: 'end',
+      verticalPosition: 'top',
+      panelClass: ['error-snackbar']
+    });
+  }
+}

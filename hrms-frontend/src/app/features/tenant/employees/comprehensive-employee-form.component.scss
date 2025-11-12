@@ -477,6 +477,211 @@ mat-spinner {
       }
     }
   }
+
+  // Salary Components Section
+  .salary-components-section {
+    padding: 16px;
+
+    .loading-state,
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 48px 24px;
+      text-align: center;
+
+      mat-icon {
+        font-size: 64px;
+        width: 64px;
+        height: 64px;
+        color: #bbb;
+        margin-bottom: 16px;
+      }
+
+      mat-spinner {
+        margin-bottom: 16px;
+      }
+
+      p {
+        color: #666;
+        font-size: 16px;
+        margin: 0 0 16px 0;
+      }
+    }
+
+    .components-list {
+      .components-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+
+        h3 {
+          margin: 0;
+          font-size: 20px;
+          font-weight: 600;
+          color: $text-primary;
+        }
+      }
+
+      .component-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 16px;
+        margin-bottom: 24px;
+
+        .component-card {
+          border-left: 4px solid $accent-color;
+          transition: all 0.3s ease;
+
+          &:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            transform: translateY(-2px);
+          }
+
+          mat-card-content {
+            padding: 16px !important;
+
+            .component-header {
+              display: flex;
+              justify-content: space-between;
+              align-items: flex-start;
+              margin-bottom: 16px;
+
+              .component-info {
+                flex: 1;
+
+                h4 {
+                  margin: 0 0 8px 0;
+                  font-size: 18px;
+                  font-weight: 600;
+                  color: $text-primary;
+                }
+
+                mat-chip {
+                  font-size: 11px;
+                  height: 24px;
+                  padding: 0 10px;
+
+                  &.chip-allowance {
+                    background-color: #e8f5e9;
+                    color: #2e7d32;
+                  }
+
+                  &.chip-deduction {
+                    background-color: #ffebee;
+                    color: #c62828;
+                  }
+                }
+              }
+
+              .component-amount {
+                font-size: 22px;
+                font-weight: 700;
+                color: $accent-color;
+              }
+            }
+
+            .component-details {
+              display: flex;
+              flex-direction: column;
+              gap: 8px;
+              margin-bottom: 12px;
+
+              .detail-row {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                font-size: 14px;
+                color: $text-secondary;
+
+                mat-icon {
+                  font-size: 18px;
+                  width: 18px;
+                  height: 18px;
+
+                  &.approved {
+                    color: $success-color;
+                  }
+
+                  &.pending {
+                    color: $warning-color;
+                  }
+                }
+              }
+            }
+
+            .component-description {
+              border-top: 1px solid $border-color;
+              padding-top: 12px;
+              margin-top: 12px;
+
+              p {
+                margin: 0;
+                font-size: 13px;
+                color: $text-secondary;
+                font-style: italic;
+              }
+            }
+          }
+        }
+      }
+
+      .components-summary {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 16px;
+        padding: 16px;
+        background: linear-gradient(135deg, #f5f7fa 0%, #e8eaf6 100%);
+        border-radius: 8px;
+
+        .summary-item {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          padding: 12px;
+          background: white;
+          border-radius: 6px;
+
+          mat-icon {
+            font-size: 32px;
+            width: 32px;
+            height: 32px;
+          }
+
+          &.allowances mat-icon {
+            color: $success-color;
+          }
+
+          &.deductions mat-icon {
+            color: $error-color;
+          }
+
+          &.net mat-icon {
+            color: $accent-color;
+          }
+
+          div {
+            display: flex;
+            flex-direction: column;
+
+            .label {
+              font-size: 12px;
+              color: $text-secondary;
+              margin-bottom: 4px;
+            }
+
+            .value {
+              font-size: 18px;
+              font-weight: 700;
+              color: $text-primary;
+            }
+          }
+        }
+      }
+    }
+  }
 }
 
 // Print Styles

@@ -41,6 +41,12 @@ public class TenantDto
     public DateTime? SubscriptionEndDate { get; set; }
     public DateTime? TrialEndDate { get; set; }
 
+    /// <summary>
+    /// Grace period start date (when subscription expired)
+    /// FORTUNE 500: 14-day grace period before suspension
+    /// </summary>
+    public DateTime? GracePeriodStartDate { get; set; }
+
     // Suspension/Deletion Info
     public string? SuspensionReason { get; set; }
     public DateTime? SuspensionDate { get; set; }

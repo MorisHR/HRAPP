@@ -143,6 +143,13 @@ builder.Services.AddDbContext<MasterDbContext>((serviceProvider, options) =>
 builder.Services.AddHttpContextAccessor();
 
 // ======================
+// CURRENT USER SERVICE (AUTH CONTEXT)
+// ======================
+// COMPLIANCE FIX: Provides current authenticated user for audit trails (SOX/GDPR)
+builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
+Log.Information("Current user service registered for audit trail tracking");
+
+// ======================
 // TENANT DBCONTEXT
 // ======================
 builder.Services.AddScoped<TenantDbContext>(serviceProvider =>
@@ -1046,3 +1053,6 @@ finally
 {
     Log.CloseAndFlush();
 }
+
+// Make the implicit Program class public so test projects can access it
+public partial class Program { }

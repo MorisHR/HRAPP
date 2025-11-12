@@ -213,13 +213,29 @@ export const routes: Routes = [
       },
       {
         path: 'payroll',
-        loadComponent: () => import('./features/tenant/payroll/payroll-dashboard.component').then(m => m.PayrollDashboardComponent),
-        data: { title: 'Payroll Management' }
+        children: [
+          {
+            path: '',
+            loadComponent: () => import('./features/tenant/payroll/payroll-dashboard.component').then(m => m.PayrollDashboardComponent),
+            data: { title: 'Payroll Management' }
+          },
+          {
+            path: 'salary-components',
+            loadComponent: () => import('./features/tenant/payroll/salary-components.component').then(m => m.SalaryComponentsComponent),
+            data: { title: 'Salary Components' }
+          }
+        ]
       },
       {
         path: 'reports',
         loadComponent: () => import('./features/tenant/reports/reports-dashboard.component').then(m => m.ReportsDashboardComponent),
         data: { title: 'Reports & Analytics' }
+      },
+      // Billing & Subscription Management
+      {
+        path: 'billing',
+        loadComponent: () => import('./features/tenant/billing/billing-overview.component').then(m => m.BillingOverviewComponent),
+        data: { title: 'Billing & Subscription' }
       }
     ]
   },

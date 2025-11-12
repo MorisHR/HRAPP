@@ -12,11 +12,16 @@ public class EmployeeService : IEmployeeService
 {
     private readonly TenantDbContext _context;
     private readonly ILogger<EmployeeService> _logger;
+    private readonly ICurrentUserService _currentUserService;
 
-    public EmployeeService(TenantDbContext context, ILogger<EmployeeService> logger)
+    public EmployeeService(
+        TenantDbContext context,
+        ILogger<EmployeeService> logger,
+        ICurrentUserService currentUserService)
     {
         _context = context;
         _logger = logger;
+        _currentUserService = currentUserService;
     }
 
     public async Task<EmployeeDto> CreateEmployeeAsync(CreateEmployeeRequest request)
@@ -105,8 +110,8 @@ public class EmployeeService : IEmployeeService
 
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow,
-            CreatedBy = "System", // TODO: Get from auth context
-            UpdatedBy = "System"
+            CreatedBy = _currentUserService.GetAuditUsername(),
+            UpdatedBy = _currentUserService.GetAuditUsername()
         };
 
         // Validate expatriate-specific requirements
@@ -132,8 +137,8 @@ public class EmployeeService : IEmployeeService
                 IsPrimary = contactDto.IsPrimary,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow,
-                CreatedBy = "System",
-                UpdatedBy = "System"
+                CreatedBy = _currentUserService.GetAuditUsername(),
+                UpdatedBy = _currentUserService.GetAuditUsername()
             };
             employee.EmergencyContacts.Add(contact);
         }
@@ -268,7 +273,7 @@ public class EmployeeService : IEmployeeService
         employee.CasualLeaveBalance = request.CasualLeaveBalance;
 
         employee.UpdatedAt = DateTime.UtcNow;
-        employee.UpdatedBy = "System"; // TODO: Get from auth context
+        employee.UpdatedBy = _currentUserService.GetAuditUsername();
 
         // Validate expatriate requirements after update
         var validationError = ValidateExpatriateMandatoryFields(employee);
@@ -297,8 +302,8 @@ public class EmployeeService : IEmployeeService
                 IsPrimary = contactDto.IsPrimary,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow,
-                CreatedBy = "System",
-                UpdatedBy = "System"
+                CreatedBy = _currentUserService.GetAuditUsername(),
+                UpdatedBy = _currentUserService.GetAuditUsername()
             };
             employee.EmergencyContacts.Add(contact);
         }
@@ -320,7 +325,7 @@ public class EmployeeService : IEmployeeService
         employee.IsDeleted = true;
         employee.IsActive = false;
         employee.UpdatedAt = DateTime.UtcNow;
-        employee.UpdatedBy = "System"; // TODO: Get from auth context
+        employee.UpdatedBy = _currentUserService.GetAuditUsername();
 
         await _context.SaveChangesAsync();
 
@@ -435,7 +440,7 @@ public class EmployeeService : IEmployeeService
             employee.VisaNumber = newVisaNumber;
 
         employee.UpdatedAt = DateTime.UtcNow;
-        employee.UpdatedBy = "System"; // TODO: Get from auth context
+        employee.UpdatedBy = _currentUserService.GetAuditUsername();
 
         await _context.SaveChangesAsync();
 

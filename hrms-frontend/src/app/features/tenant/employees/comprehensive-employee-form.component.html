@@ -649,7 +649,115 @@
             </div>
           </mat-expansion-panel>
 
-          <!-- ========== SECTION 8: ADDITIONAL INFORMATION ========== -->
+          <!-- ========== SECTION 8: SALARY COMPONENTS ========== -->
+          <mat-expansion-panel *ngIf="isEditMode() && employeeId">
+            <mat-expansion-panel-header>
+              <mat-panel-title>
+                <mat-icon>account_balance_wallet</mat-icon>
+                Salary Components
+              </mat-panel-title>
+              <mat-panel-description>
+                Manage allowances and deductions
+              </mat-panel-description>
+            </mat-expansion-panel-header>
+
+            <div class="salary-components-section">
+              <!-- Loading State -->
+              <div *ngIf="loadingSalaryComponents()" class="loading-state">
+                <mat-spinner diameter="30"></mat-spinner>
+                <p>Loading salary components...</p>
+              </div>
+
+              <!-- Empty State -->
+              <div *ngIf="!loadingSalaryComponents() && employeeSalaryComponents().length === 0" class="empty-state">
+                <mat-icon>inbox</mat-icon>
+                <p>No salary components assigned yet</p>
+                <button mat-raised-button color="primary" (click)="openSalaryComponentsManagement()">
+                  <mat-icon>add</mat-icon>
+                  Add Components
+                </button>
+              </div>
+
+              <!-- Components List -->
+              <div *ngIf="!loadingSalaryComponents() && employeeSalaryComponents().length > 0" class="components-list">
+                <div class="components-header">
+                  <h3>Active Components</h3>
+                  <button mat-raised-button color="primary" (click)="openSalaryComponentsManagement()">
+                    <mat-icon>settings</mat-icon>
+                    Manage All
+                  </button>
+                </div>
+
+                <div class="component-cards">
+                  <mat-card *ngFor="let component of employeeSalaryComponents()" class="component-card">
+                    <mat-card-content>
+                      <div class="component-header">
+                        <div class="component-info">
+                          <h4>{{ component.componentName }}</h4>
+                          <mat-chip [class]="component.componentType === 'Allowance' ? 'chip-allowance' : 'chip-deduction'">
+                            {{ component.componentType }}
+                          </mat-chip>
+                        </div>
+                        <div class="component-amount">
+                          {{ formatCurrency(component.amount) }}
+                        </div>
+                      </div>
+                      <div class="component-details">
+                        <div class="detail-row">
+                          <mat-icon>event</mat-icon>
+                          <span>Effective: {{ formatDate(component.effectiveDate) }}</span>
+                        </div>
+                        <div class="detail-row" *ngIf="component.endDate">
+                          <mat-icon>event_busy</mat-icon>
+                          <span>End: {{ formatDate(component.endDate) }}</span>
+                        </div>
+                        <div class="detail-row">
+                          <mat-icon>{{ component.isRecurring ? 'loop' : 'event_note' }}</mat-icon>
+                          <span>{{ component.isRecurring ? 'Recurring' : 'One-time' }}</span>
+                        </div>
+                        <div class="detail-row" *ngIf="component.requiresApproval">
+                          <mat-icon [class]="component.isApproved ? 'approved' : 'pending'">
+                            {{ component.isApproved ? 'check_circle' : 'schedule' }}
+                          </mat-icon>
+                          <span>{{ component.isApproved ? 'Approved' : 'Pending Approval' }}</span>
+                        </div>
+                      </div>
+                      <div class="component-description" *ngIf="component.description">
+                        <p>{{ component.description }}</p>
+                      </div>
+                    </mat-card-content>
+                  </mat-card>
+                </div>
+
+                <!-- Summary -->
+                <div class="components-summary">
+                  <div class="summary-item allowances">
+                    <mat-icon>add_circle</mat-icon>
+                    <div>
+                      <span class="label">Total Allowances</span>
+                      <span class="value">{{ formatCurrency(getTotalAllowances()) }}</span>
+                    </div>
+                  </div>
+                  <div class="summary-item deductions">
+                    <mat-icon>remove_circle</mat-icon>
+                    <div>
+                      <span class="label">Total Deductions</span>
+                      <span class="value">{{ formatCurrency(getTotalDeductions()) }}</span>
+                    </div>
+                  </div>
+                  <div class="summary-item net">
+                    <mat-icon>account_balance</mat-icon>
+                    <div>
+                      <span class="label">Net Adjustment</span>
+                      <span class="value">{{ formatCurrency(getNetAdjustment()) }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </mat-expansion-panel>
+
+          <!-- ========== SECTION 9: ADDITIONAL INFORMATION ========== -->
           <mat-expansion-panel>
             <mat-expansion-panel-header>
               <mat-panel-title>

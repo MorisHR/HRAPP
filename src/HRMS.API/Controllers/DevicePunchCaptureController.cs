@@ -451,7 +451,10 @@ public class DevicePunchCaptureController : ControllerBase
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public async Task<IActionResult> GetPunchHistory([FromQuery] int hours = 24)
+    public async Task<IActionResult> GetPunchHistory(
+        [FromQuery] int hours = 24,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 50)
     {
         try
         {
@@ -480,27 +483,46 @@ public class DevicePunchCaptureController : ControllerBase
             var fromDate = toDate.AddHours(-hours);
 
             _logger.LogInformation(
-                "Punch history requested by device {DeviceId}: {Hours} hours ({FromDate} to {ToDate})",
-                deviceId, hours, fromDate, toDate);
+                "Punch history requested by device {DeviceId}: {Hours} hours ({FromDate} to {ToDate}), Page: {Page}, PageSize: {PageSize}",
+                deviceId, hours, fromDate, toDate, page, pageSize);
 
-            // Note: We'll need to add a method to get punches by device ID
-            // For now, we'll return a placeholder response
-            // TODO: Implement GetPunchesByDeviceAsync in IBiometricPunchProcessingService
+            // Get punches from service with pagination
+            var result = await _punchProcessingService.GetPunchesByDeviceAsync(
+                deviceId,
+                fromDate,
+                toDate,
+                page,
+                pageSize);
+
+            _logger.LogInformation(
+                "Retrieved {Count} punches (Total: {TotalCount}, Page: {Page}/{TotalPages}) for device {DeviceId}",
+                result.Items.Count, result.TotalCount, result.PageNumber, result.TotalPages, deviceId);
 
             return Ok(new
             {
                 success = true,
-                data = new List<object>(), // Placeholder
-                total = 0,
-                hours = hours,
-                fromDate = fromDate,
-                toDate = toDate,
-                message = "Punch history retrieval - implementation pending"
+                data = result.Items,
+                pagination = new
+                {
+                    currentPage = result.PageNumber,
+                    pageSize = result.PageSize,
+                    totalRecords = result.TotalCount,
+                    totalPages = result.TotalPages,
+                    hasNextPage = result.HasNextPage,
+                    hasPreviousPage = result.HasPreviousPage
+                },
+                filters = new
+                {
+                    hours = hours,
+                    startDate = fromDate,
+                    endDate = toDate
+                },
+                message = $"Retrieved {result.Items.Count} punch records"
             });
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error retrieving punch history");
+            _logger.LogError(ex, "Error retrieving punch history for device");
             return StatusCode(StatusCodes.Status500InternalServerError, new
             {
                 success = false,

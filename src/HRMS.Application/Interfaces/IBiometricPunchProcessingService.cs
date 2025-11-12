@@ -90,4 +90,32 @@ public interface IBiometricPunchProcessingService
     /// <param name="tenantId">Tenant ID</param>
     /// <returns>Task</returns>
     Task ReprocessFailedPunchesAsync(Guid tenantId);
+
+    /// <summary>
+    /// Get punch records for a specific device with pagination
+    /// Used by biometric devices to sync their punch history
+    ///
+    /// DEVICE SYNC ENDPOINT:
+    /// This endpoint allows devices to retrieve their captured punches
+    /// for local storage synchronization, audit purposes, or offline operations.
+    ///
+    /// FEATURES:
+    /// - Paginated results for efficient data transfer
+    /// - Optional date range filtering
+    /// - Ordered by newest punches first (descending)
+    /// - Includes employee info (if matched)
+    /// - Shows processing status
+    /// </summary>
+    /// <param name="deviceId">Device ID</param>
+    /// <param name="startDate">Optional start date (inclusive)</param>
+    /// <param name="endDate">Optional end date (inclusive)</param>
+    /// <param name="page">Page number (1-based)</param>
+    /// <param name="pageSize">Number of records per page</param>
+    /// <returns>Paginated list of punch records</returns>
+    Task<HRMS.Application.DTOs.AuditLog.PagedResult<BiometricPunchRecordDto>> GetPunchesByDeviceAsync(
+        Guid deviceId,
+        DateTime? startDate,
+        DateTime? endDate,
+        int page,
+        int pageSize);
 }

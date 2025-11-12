@@ -10,7 +10,8 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { DepartmentService, DepartmentDropdownDto, DepartmentDto } from './services/department.service';
+import { DepartmentService, DepartmentDropdownDto } from './services/department.service';
+import { EmployeeService } from '../../../../core/services/employee.service';
 
 interface Employee {
   id: string;
@@ -288,6 +289,7 @@ interface Employee {
 export class DepartmentFormComponent implements OnInit {
   private fb = inject(FormBuilder);
   private departmentService = inject(DepartmentService);
+  private employeeService = inject(EmployeeService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
 
@@ -366,14 +368,23 @@ export class DepartmentFormComponent implements OnInit {
   }
 
   loadEmployees(): void {
-    // TODO: Replace with actual employee service call
-    // For now, using mock data - this should be replaced with:
-    // this.employeeService.getDropdown().subscribe(...)
-
-    // Mock employees for now
-    this.employees.set([
-      { id: '1', fullName: 'Loading employees...' }
-    ]);
+    // Load employees for department head dropdown
+    this.employeeService.getEmployees().subscribe({
+      next: (response: any) => {
+        // Handle the API response format: { success: true, data: [...] }
+        const employeeData = response.data || response;
+        const employees = employeeData.map((emp: any) => ({
+          id: emp.id,
+          fullName: emp.fullName || `${emp.firstName || ''} ${emp.lastName || ''}`.trim()
+        }));
+        this.employees.set(employees);
+      },
+      error: (err) => {
+        console.error('Error loading employees:', err);
+        // Keep empty array on error
+        this.employees.set([]);
+      }
+    });
   }
 
   onSubmit(): void {
