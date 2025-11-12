@@ -176,7 +176,10 @@ builder.Services.AddScoped<TenantDbContext>(serviceProvider =>
     var interceptor = serviceProvider.GetRequiredService<HRMS.Infrastructure.Persistence.Interceptors.AuditLoggingSaveChangesInterceptor>();
     optionsBuilder.AddInterceptors(interceptor);
 
-    return new TenantDbContext(optionsBuilder.Options, tenantSchema);
+    // SECURITY: Get encryption service for column-level encryption
+    var encryptionService = serviceProvider.GetRequiredService<IEncryptionService>();
+
+    return new TenantDbContext(optionsBuilder.Options, tenantSchema, encryptionService);
 });
 
 // ======================
@@ -217,6 +220,20 @@ if (string.IsNullOrEmpty(jwtSecret) || jwtSecret.Length < 32)
 }
 
 var key = Encoding.UTF8.GetBytes(jwtSecret);
+
+// ======================
+// COLUMN-LEVEL ENCRYPTION SERVICE (P0-CRITICAL SECURITY)
+// ======================
+// AES-256-GCM encryption for sensitive PII data (bank accounts, salaries, tax IDs)
+// Key management via Google Secret Manager (production) or appsettings.json (development)
+builder.Services.AddSingleton<IEncryptionService>(serviceProvider =>
+{
+    var logger = serviceProvider.GetRequiredService<ILogger<AesEncryptionService>>();
+    var config = serviceProvider.GetRequiredService<IConfiguration>();
+    var secretManagerService = serviceProvider.GetService<GoogleSecretManagerService>();
+    return new AesEncryptionService(logger, config, secretManagerService);
+});
+Log.Information("Column-level encryption service registered: AES-256-GCM for PII protection");
 
 // ======================
 // APPLICATION SERVICES
@@ -280,6 +297,10 @@ Log.Information("Timesheet management services registered");
 
 // Multi-Device Biometric Attendance System Services
 builder.Services.AddScoped<ILocationService, LocationService>();
+
+// Geographic Location Service - Mauritius districts, villages, postal codes (Master DB)
+builder.Services.AddScoped<IGeographicLocationService, GeographicLocationService>();
+Log.Information("Geographic location service registered for Mauritius address reference data");
 builder.Services.AddScoped<IBiometricDeviceService, BiometricDeviceService>();
 // Fortune 500: Biometric Punch Processing Service - Real-time attendance capture from devices
 builder.Services.AddScoped<IBiometricPunchProcessingService, BiometricPunchProcessingService>();

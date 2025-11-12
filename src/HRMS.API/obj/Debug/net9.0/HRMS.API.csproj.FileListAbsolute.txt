@@ -1,12 +1,3 @@
-/workspaces/HRAPP/src/HRMS.API/obj/Debug/net9.0/HRMS.API.csproj.AssemblyReference.cache
-/workspaces/HRAPP/src/HRMS.API/obj/Debug/net9.0/rpswa.dswa.cache.json
-/workspaces/HRAPP/src/HRMS.API/obj/Debug/net9.0/HRMS.API.GeneratedMSBuildEditorConfig.editorconfig
-/workspaces/HRAPP/src/HRMS.API/obj/Debug/net9.0/HRMS.API.AssemblyInfoInputs.cache
-/workspaces/HRAPP/src/HRMS.API/obj/Debug/net9.0/HRMS.API.AssemblyInfo.cs
-/workspaces/HRAPP/src/HRMS.API/obj/Debug/net9.0/HRMS.API.csproj.CoreCompileInputs.cache
-/workspaces/HRAPP/src/HRMS.API/obj/Debug/net9.0/HRMS.API.MvcApplicationPartsAssemblyInfo.cs
-/workspaces/HRAPP/src/HRMS.API/obj/Debug/net9.0/HRMS.API.MvcApplicationPartsAssemblyInfo.cache
-/workspaces/HRAPP/src/HRMS.API/obj/Debug/net9.0/HRMS.API.sourcelink.json
 /workspaces/HRAPP/src/HRMS.API/bin/Debug/net9.0/appsettings.Development.json
 /workspaces/HRAPP/src/HRMS.API/bin/Debug/net9.0/appsettings.json
 /workspaces/HRAPP/src/HRMS.API/bin/Debug/net9.0/appsettings.Production.json
@@ -163,6 +154,7 @@
 /workspaces/HRAPP/src/HRMS.API/bin/Debug/net9.0/System.IdentityModel.Tokens.Jwt.dll
 /workspaces/HRAPP/src/HRMS.API/bin/Debug/net9.0/System.IO.Packaging.dll
 /workspaces/HRAPP/src/HRMS.API/bin/Debug/net9.0/System.Management.dll
+/workspaces/HRAPP/src/HRMS.API/bin/Debug/net9.0/System.Net.WebSockets.WebSocketProtocol.dll
 /workspaces/HRAPP/src/HRMS.API/bin/Debug/net9.0/ca/Hangfire.Core.resources.dll
 /workspaces/HRAPP/src/HRMS.API/bin/Debug/net9.0/de/Hangfire.Core.resources.dll
 /workspaces/HRAPP/src/HRMS.API/bin/Debug/net9.0/es/Hangfire.Core.resources.dll
@@ -281,6 +273,15 @@
 /workspaces/HRAPP/src/HRMS.API/bin/Debug/net9.0/HRMS.Infrastructure.pdb
 /workspaces/HRAPP/src/HRMS.API/bin/Debug/net9.0/HRMS.BackgroundJobs.pdb
 /workspaces/HRAPP/src/HRMS.API/bin/Debug/net9.0/HRMS.Core.pdb
+/workspaces/HRAPP/src/HRMS.API/obj/Debug/net9.0/HRMS.API.csproj.AssemblyReference.cache
+/workspaces/HRAPP/src/HRMS.API/obj/Debug/net9.0/rpswa.dswa.cache.json
+/workspaces/HRAPP/src/HRMS.API/obj/Debug/net9.0/HRMS.API.GeneratedMSBuildEditorConfig.editorconfig
+/workspaces/HRAPP/src/HRMS.API/obj/Debug/net9.0/HRMS.API.AssemblyInfoInputs.cache
+/workspaces/HRAPP/src/HRMS.API/obj/Debug/net9.0/HRMS.API.AssemblyInfo.cs
+/workspaces/HRAPP/src/HRMS.API/obj/Debug/net9.0/HRMS.API.csproj.CoreCompileInputs.cache
+/workspaces/HRAPP/src/HRMS.API/obj/Debug/net9.0/HRMS.API.MvcApplicationPartsAssemblyInfo.cs
+/workspaces/HRAPP/src/HRMS.API/obj/Debug/net9.0/HRMS.API.MvcApplicationPartsAssemblyInfo.cache
+/workspaces/HRAPP/src/HRMS.API/obj/Debug/net9.0/HRMS.API.sourcelink.json
 /workspaces/HRAPP/src/HRMS.API/obj/Debug/net9.0/rjimswa.dswa.cache.json
 /workspaces/HRAPP/src/HRMS.API/obj/Debug/net9.0/rjsmrazor.dswa.cache.json
 /workspaces/HRAPP/src/HRMS.API/obj/Debug/net9.0/rjsmcshtml.dswa.cache.json
@@ -295,4 +296,3 @@
 /workspaces/HRAPP/src/HRMS.API/obj/Debug/net9.0/HRMS.API.pdb
 /workspaces/HRAPP/src/HRMS.API/obj/Debug/net9.0/HRMS.API.genruntimeconfig.cache
 /workspaces/HRAPP/src/HRMS.API/obj/Debug/net9.0/ref/HRMS.API.dll
-/workspaces/HRAPP/src/HRMS.API/bin/Debug/net9.0/System.Net.WebSockets.WebSocketProtocol.dll

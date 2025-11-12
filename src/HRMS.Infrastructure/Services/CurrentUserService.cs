@@ -130,4 +130,51 @@ public class CurrentUserService : ICurrentUserService
         // For background jobs, API key auth, or unauthenticated requests
         return "System";
     }
+
+    /// <summary>
+    /// Gets all roles assigned to the current user
+    /// Tries multiple claim types for compatibility (role, roles, http://schemas.microsoft.com/ws/2008/06/identity/claims/role)
+    /// </summary>
+    public IEnumerable<string> Roles
+    {
+        get
+        {
+            var user = _httpContextAccessor.HttpContext?.User;
+            if (user == null || !user.Identity?.IsAuthenticated == true)
+                return Enumerable.Empty<string>();
+
+            // Get all role claims (there can be multiple)
+            var roles = user.FindAll(ClaimTypes.Role)
+                          .Select(c => c.Value)
+                          .Concat(user.FindAll("role").Select(c => c.Value))
+                          .Concat(user.FindAll("roles").Select(c => c.Value))
+                          .Distinct()
+                          .ToList();
+
+            return roles;
+        }
+    }
+
+    /// <summary>
+    /// Checks if the current user has a specific role (case-insensitive)
+    /// </summary>
+    public bool HasRole(string role)
+    {
+        if (string.IsNullOrWhiteSpace(role))
+            return false;
+
+        return Roles.Any(r => r.Equals(role, StringComparison.OrdinalIgnoreCase));
+    }
+
+    /// <summary>
+    /// Checks if the current user has any of the specified roles (case-insensitive)
+    /// </summary>
+    public bool HasAnyRole(params string[] roles)
+    {
+        if (roles == null || roles.Length == 0)
+            return false;
+
+        var userRoles = Roles.Select(r => r.ToLowerInvariant()).ToHashSet();
+        return roles.Any(role => userRoles.Contains(role.ToLowerInvariant()));
+    }
 }

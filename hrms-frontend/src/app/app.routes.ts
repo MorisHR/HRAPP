@@ -114,6 +114,22 @@ export const routes: Routes = [
         path: 'subscriptions',
         loadComponent: () => import('./features/admin/subscription-management/subscription-dashboard.component').then(m => m.SubscriptionDashboardComponent),
         data: { title: 'Subscription Management' }
+      },
+      // Location Management Routes (Super Admin)
+      {
+        path: 'locations',
+        loadComponent: () => import('./features/admin/locations/location-list.component').then(m => m.LocationListComponent),
+        data: { title: 'Location Management' }
+      },
+      {
+        path: 'locations/new',
+        loadComponent: () => import('./features/admin/locations/location-form.component').then(m => m.LocationFormComponent),
+        data: { title: 'Create Location' }
+      },
+      {
+        path: 'locations/:id/edit',
+        loadComponent: () => import('./features/admin/locations/location-form.component').then(m => m.LocationFormComponent),
+        data: { title: 'Edit Location' }
       }
     ]
   },

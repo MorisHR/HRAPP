@@ -108,8 +108,19 @@ hrms-frontend/tmp/
 *.pem
 appsettings.Production.json
 appsettings.Staging.json
+appsettings.*.json
+!appsettings.json
+!appsettings.Development.json
+!appsettings.*.template.json
 secrets.json
 credentials.json
+**/appsettings.local.json
+**/appsettings.*.local.json
+
+# .NET User Secrets
+# ============================================
+**/secrets.json
+UserSecretsId
 
 # Environment Files
 # ============================================
@@ -120,6 +131,19 @@ credentials.json
 .env.development.local
 .env.test.local
 .env.production.local
+**/.env
+**/.env.*
+!**/.env.example
+!**/.env.template
+
+# Frontend Environment Files (Allow templates only)
+# ============================================
+# Allow only template files, block actual environment files
+**/environment.ts
+**/environment.prod.ts
+**/environment.*.ts
+!**/environment.ts.template
+!**/environment.prod.ts.template
 
 # ============================================
 # UPLOADED FILES & LOGS - DATA LOSS RISK

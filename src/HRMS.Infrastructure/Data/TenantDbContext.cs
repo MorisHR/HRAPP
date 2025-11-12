@@ -1,20 +1,38 @@
 using Microsoft.EntityFrameworkCore;
 using HRMS.Core.Entities.Tenant;
+using HRMS.Application.Interfaces;
+using HRMS.Infrastructure.Persistence.ValueConverters;
 
 namespace HRMS.Infrastructure.Data;
 
 /// <summary>
 /// Tenant Database Context - handles tenant-specific entities
 /// Schema: Dynamic (tenant_{id}) - isolated per tenant
+///
+/// SECURITY: Column-level encryption enabled for sensitive PII data
+/// - Encrypted fields use AES-256-GCM via IEncryptionService
+/// - Encryption is transparent (automatic encrypt on save, decrypt on load)
+/// - Supports key rotation and graceful migration
 /// </summary>
 public class TenantDbContext : DbContext
 {
     private readonly string _tenantSchema;
+    private readonly IEncryptionService? _encryptionService;
 
     public TenantDbContext(DbContextOptions<TenantDbContext> options, string tenantSchema)
         : base(options)
     {
         _tenantSchema = tenantSchema;
+    }
+
+    public TenantDbContext(
+        DbContextOptions<TenantDbContext> options,
+        string tenantSchema,
+        IEncryptionService? encryptionService)
+        : base(options)
+    {
+        _tenantSchema = tenantSchema;
+        _encryptionService = encryptionService;
     }
 
     public DbSet<Employee> Employees { get; set; }
@@ -85,6 +103,73 @@ public class TenantDbContext : DbContext
             entity.Property(e => e.MiddleName).HasMaxLength(100);
             entity.Property(e => e.Email).IsRequired().HasMaxLength(100);
             entity.Property(e => e.PhoneNumber).HasMaxLength(20);
+
+            // ==============================================
+            // COLUMN-LEVEL ENCRYPTION (P0-CRITICAL SECURITY)
+            // ==============================================
+            // Apply AES-256-GCM encryption to sensitive PII fields
+            // Encrypted columns will store Base64-encoded ciphertext
+            // IMPORTANT: Encrypted fields cannot be efficiently indexed or searched
+            // Use hashed columns for searchable encrypted data
+            if (_encryptionService != null)
+            {
+                // Bank details (highly sensitive)
+                entity.Property(e => e.BankAccountNumber)
+                    .HasConversion(new EncryptedStringConverter(_encryptionService))
+                    .HasMaxLength(500); // Increased for encrypted data
+
+                entity.Property(e => e.BankName)
+                    .HasConversion(new EncryptedStringConverter(_encryptionService))
+                    .HasMaxLength(500);
+
+                // Salary (financial PII)
+                entity.Property(e => e.BasicSalary)
+                    .HasConversion(new EncryptedDecimalConverter(_encryptionService))
+                    .HasColumnType("text"); // Store encrypted decimal as text
+
+                // Government IDs (identity theft risk)
+                entity.Property(e => e.TaxIdNumber)
+                    .HasConversion(new EncryptedStringConverter(_encryptionService))
+                    .HasMaxLength(500);
+
+                entity.Property(e => e.PassportNumber)
+                    .HasConversion(new EncryptedStringConverter(_encryptionService))
+                    .HasMaxLength(500);
+
+                entity.Property(e => e.NationalIdCard)
+                    .HasConversion(new EncryptedStringConverter(_encryptionService))
+                    .HasMaxLength(500);
+
+                // Address (physical security risk)
+                entity.Property(e => e.AddressLine1)
+                    .HasConversion(new EncryptedStringConverter(_encryptionService))
+                    .HasMaxLength(1000);
+
+                entity.Property(e => e.AddressLine2)
+                    .HasConversion(new EncryptedStringConverter(_encryptionService))
+                    .HasMaxLength(1000);
+            }
+
+            // Add CHECK constraints for data validation
+            entity.HasCheckConstraint(
+                "chk_Employees_PasswordHash_Length",
+                "\"PasswordHash\" IS NULL OR LENGTH(\"PasswordHash\") >= 32");
+
+            entity.HasCheckConstraint(
+                "chk_Employees_BasicSalary_NonNegative",
+                "\"BasicSalary\" >= 0");
+
+            entity.HasCheckConstraint(
+                "chk_Employees_AnnualLeaveBalance_NonNegative",
+                "\"AnnualLeaveBalance\" >= 0");
+
+            entity.HasCheckConstraint(
+                "chk_Employees_SickLeaveBalance_NonNegative",
+                "\"SickLeaveBalance\" >= 0");
+
+            entity.HasCheckConstraint(
+                "chk_Employees_CasualLeaveBalance_NonNegative",
+                "\"CasualLeaveBalance\" >= 0");
 
             // Address (Mauritius Compliant)
             entity.Property(e => e.AddressLine1).IsRequired().HasMaxLength(500);
@@ -204,6 +289,26 @@ public class TenantDbContext : DbContext
             entity.Property(e => e.Address).HasMaxLength(500);
             entity.Property(e => e.Country).HasMaxLength(100);
 
+            // ==============================================
+            // COLUMN-LEVEL ENCRYPTION (Emergency Contact PII)
+            // ==============================================
+            if (_encryptionService != null)
+            {
+                // Contact phone numbers (sensitive PII)
+                entity.Property(e => e.PhoneNumber)
+                    .HasConversion(new EncryptedStringConverter(_encryptionService))
+                    .HasMaxLength(500);
+
+                entity.Property(e => e.AlternatePhoneNumber)
+                    .HasConversion(new EncryptedStringConverter(_encryptionService))
+                    .HasMaxLength(500);
+
+                // Contact address (physical security)
+                entity.Property(e => e.Address)
+                    .HasConversion(new EncryptedStringConverter(_encryptionService))
+                    .HasMaxLength(1000);
+            }
+
             // Relationship with Employee
             entity.HasOne(e => e.Employee)
                   .WithMany(emp => emp.EmergencyContacts)
@@ -230,11 +335,24 @@ public class TenantDbContext : DbContext
             entity.HasKey(e => e.Id);
             entity.HasIndex(e => new { e.EmployeeId, e.LeaveTypeId, e.Year }).IsUnique();
 
+            // Add composite index for leave balance queries
+            entity.HasIndex(e => new { e.EmployeeId, e.Year, e.LeaveTypeId })
+                  .HasFilter("\"IsDeleted\" = false");
+
             entity.Property(e => e.TotalEntitlement).HasColumnType("decimal(10,2)");
             entity.Property(e => e.UsedDays).HasColumnType("decimal(10,2)");
             entity.Property(e => e.PendingDays).HasColumnType("decimal(10,2)");
             entity.Property(e => e.CarriedForward).HasColumnType("decimal(10,2)");
             entity.Property(e => e.Accrued).HasColumnType("decimal(10,2)");
+
+            // Add CHECK constraints
+            entity.HasCheckConstraint(
+                "chk_LeaveBalances_Days_NonNegative",
+                "\"TotalEntitlement\" >= 0 AND \"UsedDays\" >= 0 AND \"PendingDays\" >= 0");
+
+            entity.HasCheckConstraint(
+                "chk_LeaveBalances_Accrual_NonNegative",
+                "\"CarriedForward\" >= 0 AND \"Accrued\" >= 0");
 
             entity.HasOne(e => e.Employee)
                   .WithMany()
@@ -327,6 +445,15 @@ public class TenantDbContext : DbContext
             entity.Property(e => e.DailySalary).HasColumnType("decimal(18,2)");
             entity.Property(e => e.TotalEncashmentAmount).HasColumnType("decimal(18,2)");
 
+            // Add CHECK constraints
+            entity.HasCheckConstraint(
+                "chk_LeaveEncashments_Days_NonNegative",
+                "\"UnusedAnnualLeaveDays\" >= 0 AND \"UnusedSickLeaveDays\" >= 0 AND \"TotalEncashableDays\" >= 0");
+
+            entity.HasCheckConstraint(
+                "chk_LeaveEncashments_Amount_NonNegative",
+                "\"DailySalary\" >= 0 AND \"TotalEncashmentAmount\" >= 0");
+
             entity.HasOne(e => e.Employee)
                   .WithMany()
                   .HasForeignKey(e => e.EmployeeId)
@@ -372,10 +499,30 @@ public class TenantDbContext : DbContext
             entity.HasIndex(e => e.LocationId);
             entity.HasIndex(e => new { e.EmployeeId, e.DeviceId, e.Date });
 
+            // Add composite indexes for performance
+            entity.HasIndex(e => new { e.EmployeeId, e.Date, e.Status })
+                  .HasFilter("\"IsDeleted\" = false");
+
+            entity.HasIndex(e => new { e.DeviceId, e.Date })
+                  .HasFilter("\"IsDeleted\" = false");
+
             entity.Property(e => e.WorkingHours).HasColumnType("decimal(10,2)");
             entity.Property(e => e.OvertimeHours).HasColumnType("decimal(10,2)");
             entity.Property(e => e.OvertimeRate).HasColumnType("decimal(10,2)");
             entity.Property(e => e.Remarks).HasMaxLength(500);
+
+            // Add CHECK constraints
+            entity.HasCheckConstraint(
+                "chk_Attendances_WorkingHours_NonNegative",
+                "\"WorkingHours\" >= 0");
+
+            entity.HasCheckConstraint(
+                "chk_Attendances_OvertimeHours_NonNegative",
+                "\"OvertimeHours\" >= 0");
+
+            entity.HasCheckConstraint(
+                "chk_Attendances_OvertimeRate_NonNegative",
+                "\"OvertimeRate\" >= 0");
 
             // Multi-device tracking fields
             entity.Property(e => e.PunchSource).HasMaxLength(50);
@@ -471,6 +618,13 @@ public class TenantDbContext : DbContext
             entity.HasIndex(e => new { e.Month, e.Year }).IsUnique();
             entity.HasIndex(e => e.Status);
 
+            // Add composite indexes for payroll reports
+            entity.HasIndex(e => new { e.Year, e.Month })
+                  .HasFilter("\"IsDeleted\" = false");
+
+            entity.HasIndex(e => new { e.Status, e.PaymentDate })
+                  .HasFilter("\"IsDeleted\" = false");
+
             entity.Property(e => e.TotalGrossSalary).HasColumnType("decimal(18,2)");
             entity.Property(e => e.TotalDeductions).HasColumnType("decimal(18,2)");
             entity.Property(e => e.TotalNetSalary).HasColumnType("decimal(18,2)");
@@ -486,6 +640,19 @@ public class TenantDbContext : DbContext
             entity.Property(e => e.TotalOvertimePay).HasColumnType("decimal(18,2)");
             entity.Property(e => e.Notes).HasMaxLength(2000);
 
+            // Add CHECK constraints
+            entity.HasCheckConstraint(
+                "chk_PayrollCycles_Salary_NonNegative",
+                "\"TotalGrossSalary\" >= 0 AND \"TotalDeductions\" >= 0 AND \"TotalNetSalary\" >= 0");
+
+            entity.HasCheckConstraint(
+                "chk_PayrollCycles_Month_Valid",
+                "\"Month\" >= 1 AND \"Month\" <= 12");
+
+            entity.HasCheckConstraint(
+                "chk_PayrollCycles_Year_Valid",
+                "\"Year\" > 1900");
+
             entity.HasQueryFilter(e => !e.IsDeleted);
         });
 
@@ -500,8 +667,39 @@ public class TenantDbContext : DbContext
 
             entity.Property(e => e.PayslipNumber).IsRequired().HasMaxLength(100);
 
-            // Earnings
-            entity.Property(e => e.BasicSalary).HasColumnType("decimal(18,2)");
+            // ==============================================
+            // COLUMN-LEVEL ENCRYPTION (Payslip Financial Data)
+            // ==============================================
+            // Encrypt salary components to protect employee financial data
+            if (_encryptionService != null)
+            {
+                // Core earnings (highly sensitive)
+                entity.Property(e => e.BasicSalary)
+                    .HasConversion(new EncryptedDecimalConverter(_encryptionService))
+                    .HasColumnType("text");
+
+                entity.Property(e => e.TotalGrossSalary)
+                    .HasConversion(new EncryptedDecimalConverter(_encryptionService))
+                    .HasColumnType("text");
+
+                entity.Property(e => e.TotalDeductions)
+                    .HasConversion(new EncryptedDecimalConverter(_encryptionService))
+                    .HasColumnType("text");
+
+                entity.Property(e => e.NetSalary)
+                    .HasConversion(new EncryptedDecimalConverter(_encryptionService))
+                    .HasColumnType("text");
+            }
+            else
+            {
+                // Fallback to standard decimal columns if encryption not enabled
+                entity.Property(e => e.BasicSalary).HasColumnType("decimal(18,2)");
+                entity.Property(e => e.TotalGrossSalary).HasColumnType("decimal(18,2)");
+                entity.Property(e => e.TotalDeductions).HasColumnType("decimal(18,2)");
+                entity.Property(e => e.NetSalary).HasColumnType("decimal(18,2)");
+            }
+
+            // Allowances (standard decimal - not encrypted for reporting performance)
             entity.Property(e => e.HousingAllowance).HasColumnType("decimal(18,2)");
             entity.Property(e => e.TransportAllowance).HasColumnType("decimal(18,2)");
             entity.Property(e => e.MealAllowance).HasColumnType("decimal(18,2)");
@@ -513,7 +711,6 @@ public class TenantDbContext : DbContext
             entity.Property(e => e.LeaveEncashment).HasColumnType("decimal(18,2)");
             entity.Property(e => e.GratuityPayment).HasColumnType("decimal(18,2)");
             entity.Property(e => e.Commission).HasColumnType("decimal(18,2)");
-            entity.Property(e => e.TotalGrossSalary).HasColumnType("decimal(18,2)");
 
             // Attendance
             entity.Property(e => e.PaidLeaveDays).HasColumnType("decimal(10,2)");
@@ -545,6 +742,23 @@ public class TenantDbContext : DbContext
             entity.Property(e => e.BankAccountNumber).HasMaxLength(100);
             entity.Property(e => e.Remarks).HasMaxLength(1000);
 
+            // Add CHECK constraints
+            entity.HasCheckConstraint(
+                "chk_Payslips_Salary_NonNegative",
+                "\"BasicSalary\" >= 0 AND \"TotalGrossSalary\" >= 0 AND \"TotalDeductions\" >= 0");
+
+            entity.HasCheckConstraint(
+                "chk_Payslips_Overtime_NonNegative",
+                "\"OvertimeHours\" >= 0 AND \"OvertimePay\" >= 0");
+
+            entity.HasCheckConstraint(
+                "chk_Payslips_LeaveDays_NonNegative",
+                "\"PaidLeaveDays\" >= 0 AND \"UnpaidLeaveDays\" >= 0");
+
+            entity.HasCheckConstraint(
+                "chk_Payslips_Allowances_NonNegative",
+                "\"HousingAllowance\" >= 0 AND \"TransportAllowance\" >= 0 AND \"MealAllowance\" >= 0 AND \"MobileAllowance\" >= 0 AND \"OtherAllowances\" >= 0");
+
             // Relationships
             entity.HasOne(e => e.PayrollCycle)
                   .WithMany(p => p.Payslips)
@@ -574,6 +788,11 @@ public class TenantDbContext : DbContext
             entity.Property(e => e.CalculationMethod).HasMaxLength(50);
             entity.Property(e => e.PercentageBase).HasMaxLength(50);
 
+            // Add CHECK constraint
+            entity.HasCheckConstraint(
+                "chk_SalaryComponents_Amount_NonNegative",
+                "\"Amount\" >= 0");
+
             // Relationship
             entity.HasOne(e => e.Employee)
                   .WithMany()
@@ -592,6 +811,13 @@ public class TenantDbContext : DbContext
             entity.HasIndex(e => e.TenantId);
             entity.HasIndex(e => new { e.PeriodStart, e.PeriodEnd });
 
+            // Add composite indexes for approval workflow
+            entity.HasIndex(e => new { e.Status, e.PeriodStart })
+                  .HasFilter("\"IsDeleted\" = false");
+
+            entity.HasIndex(e => new { e.EmployeeId, e.Status, e.PeriodStart })
+                  .HasFilter("\"IsDeleted\" = false");
+
             entity.Property(e => e.TotalRegularHours).HasColumnType("decimal(10,2)");
             entity.Property(e => e.TotalOvertimeHours).HasColumnType("decimal(10,2)");
             entity.Property(e => e.TotalHolidayHours).HasColumnType("decimal(10,2)");
@@ -601,6 +827,11 @@ public class TenantDbContext : DbContext
             entity.Property(e => e.ApprovedByName).HasMaxLength(200);
             entity.Property(e => e.RejectionReason).HasMaxLength(1000);
             entity.Property(e => e.Notes).HasMaxLength(2000);
+
+            // Add CHECK constraints
+            entity.HasCheckConstraint(
+                "chk_Timesheets_Hours_NonNegative",
+                "\"TotalRegularHours\" >= 0 AND \"TotalOvertimeHours\" >= 0 AND \"TotalHolidayHours\" >= 0 AND \"TotalSickLeaveHours\" >= 0 AND \"TotalAnnualLeaveHours\" >= 0 AND \"TotalAbsentHours\" >= 0");
 
             entity.HasOne(e => e.Employee)
                   .WithMany()
@@ -619,6 +850,10 @@ public class TenantDbContext : DbContext
             entity.HasIndex(e => e.AttendanceId);
             entity.HasIndex(e => e.Date);
 
+            // Add composite index for filtering entries
+            entity.HasIndex(e => new { e.TimesheetId, e.Date })
+                  .HasFilter("\"IsDeleted\" = false");
+
             entity.Property(e => e.ActualHours).HasColumnType("decimal(10,2)");
             entity.Property(e => e.RegularHours).HasColumnType("decimal(10,2)");
             entity.Property(e => e.OvertimeHours).HasColumnType("decimal(10,2)");
@@ -626,6 +861,11 @@ public class TenantDbContext : DbContext
             entity.Property(e => e.SickLeaveHours).HasColumnType("decimal(10,2)");
             entity.Property(e => e.AnnualLeaveHours).HasColumnType("decimal(10,2)");
             entity.Property(e => e.Notes).HasMaxLength(1000);
+
+            // Add CHECK constraints
+            entity.HasCheckConstraint(
+                "chk_TimesheetEntries_Hours_NonNegative",
+                "\"ActualHours\" >= 0 AND \"RegularHours\" >= 0 AND \"OvertimeHours\" >= 0 AND \"HolidayHours\" >= 0 AND \"SickLeaveHours\" >= 0 AND \"AnnualLeaveHours\" >= 0");
 
             entity.HasOne(e => e.Timesheet)
                   .WithMany(t => t.Entries)
@@ -790,6 +1030,11 @@ public class TenantDbContext : DbContext
             entity.Property(e => e.NotificationRecipientsJson).HasColumnType("jsonb");
             entity.Property(e => e.AutoResolutionRule).HasMaxLength(200);
 
+            // Add CHECK constraint
+            entity.HasCheckConstraint(
+                "chk_AttendanceAnomalies_Description_NotEmpty",
+                "\"AnomalyDescription\" IS NULL OR LENGTH(TRIM(\"AnomalyDescription\")) > 0");
+
             // Relationships
             entity.HasOne(e => e.Employee)
                   .WithMany(emp => emp.AttendanceAnomalies)
@@ -838,6 +1083,15 @@ public class TenantDbContext : DbContext
             entity.Property(e => e.ApiKeyHash).IsRequired().HasMaxLength(100);
             entity.Property(e => e.Description).IsRequired().HasMaxLength(500);
             entity.Property(e => e.AllowedIpAddresses).HasColumnType("jsonb");
+
+            // Add CHECK constraints
+            entity.HasCheckConstraint(
+                "chk_DeviceApiKeys_Hash_Length",
+                "LENGTH(\"ApiKeyHash\") >= 64");
+
+            entity.HasCheckConstraint(
+                "chk_DeviceApiKeys_Description_NotEmpty",
+                "LENGTH(TRIM(\"Description\")) > 0");
 
             // Relationship with AttendanceMachine (Device)
             entity.HasOne(e => e.Device)

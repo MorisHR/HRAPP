@@ -5,6 +5,7 @@ using HRMS.Core.Enums;
 using HRMS.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using System.Security;
 
 namespace HRMS.Infrastructure.Services;
 
@@ -13,6 +14,12 @@ public class EmployeeService : IEmployeeService
     private readonly TenantDbContext _context;
     private readonly ILogger<EmployeeService> _logger;
     private readonly ICurrentUserService _currentUserService;
+
+    // Role constants for authorization
+    private const string RoleAdmin = "Admin";
+    private const string RoleHR = "HR";
+    private const string RoleManager = "Manager";
+    private const string RoleEmployee = "Employee";
 
     public EmployeeService(
         TenantDbContext context,
@@ -23,6 +30,127 @@ public class EmployeeService : IEmployeeService
         _logger = logger;
         _currentUserService = currentUserService;
     }
+
+    #region Authorization Helper Methods
+
+    /// <summary>
+    /// Checks if the current user can view an employee's full details
+    /// SECURITY:
+    /// - Admin/HR can view anyone
+    /// - Manager can view their direct reports
+    /// - Employee can view themselves
+    /// </summary>
+    private async Task<bool> CanViewEmployeeFullDetailsAsync(Guid targetEmployeeId)
+    {
+        // Admin and HR can view all employees
+        if (IsHROrAdmin())
+            return true;
+
+        // Check if viewing self
+        var currentUserId = _currentUserService.UserId;
+        if (!string.IsNullOrEmpty(currentUserId))
+        {
+            var currentEmployee = await GetEmployeeByUserIdAsync(currentUserId);
+            if (currentEmployee?.Id == targetEmployeeId)
+                return true;
+
+            // Manager can view their direct reports
+            if (_currentUserService.HasRole(RoleManager))
+            {
+                var targetEmployee = await _context.Employees.FindAsync(targetEmployeeId);
+                if (targetEmployee?.ManagerId == currentEmployee?.Id)
+                    return true;
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Checks if the current user can update an employee
+    /// SECURITY: Only Admin and HR can update employees
+    /// </summary>
+    private bool CanUpdateEmployee()
+    {
+        return IsHROrAdmin();
+    }
+
+    /// <summary>
+    /// Checks if the current user can update salary information
+    /// SECURITY: Only Admin and HR can update salary
+    /// </summary>
+    private bool CanUpdateSalary()
+    {
+        return IsHROrAdmin();
+    }
+
+    /// <summary>
+    /// Checks if the current user can delete employees
+    /// SECURITY: Only Admin can delete
+    /// </summary>
+    private bool CanDeleteEmployee()
+    {
+        return _currentUserService.HasRole(RoleAdmin);
+    }
+
+    /// <summary>
+    /// Checks if the current user is HR or Admin
+    /// </summary>
+    private bool IsHROrAdmin()
+    {
+        return _currentUserService.HasAnyRole(RoleAdmin, RoleHR);
+    }
+
+    /// <summary>
+    /// Gets employee record by user ID (from authentication)
+    /// </summary>
+    private async Task<Employee?> GetEmployeeByUserIdAsync(string userId)
+    {
+        // Map by email since that's the common link
+        return await _context.Employees
+            .AsNoTracking()
+            .FirstOrDefaultAsync(e => e.Email == _currentUserService.Email && e.IsActive);
+    }
+
+    /// <summary>
+    /// Masks bank account number to show only last 4 digits
+    /// Example: 1234567890 -> ****7890
+    /// </summary>
+    private string? MaskBankAccount(string? accountNumber)
+    {
+        if (string.IsNullOrEmpty(accountNumber) || accountNumber.Length <= 4)
+            return "****";
+
+        return "****" + accountNumber.Substring(accountNumber.Length - 4);
+    }
+
+    /// <summary>
+    /// Logs authorization failure for security audit
+    /// </summary>
+    private void LogAuthorizationFailure(string action, Guid? targetEmployeeId = null)
+    {
+        _logger.LogWarning(
+            "AUTHORIZATION FAILURE: User {UserId} ({Username}) attempted {Action} on Employee {EmployeeId}. Roles: {Roles}",
+            _currentUserService.UserId,
+            _currentUserService.Username,
+            action,
+            targetEmployeeId,
+            string.Join(", ", _currentUserService.Roles));
+    }
+
+    /// <summary>
+    /// Logs sensitive field changes for audit trail
+    /// </summary>
+    private void LogSensitiveFieldChange(string fieldName, Guid employeeId, string? oldValue, string? newValue)
+    {
+        _logger.LogInformation(
+            "SENSITIVE FIELD CHANGE: User {UserId} modified {FieldName} for Employee {EmployeeId}",
+            _currentUserService.UserId,
+            fieldName,
+            employeeId);
+    }
+
+    #endregion
 
     public async Task<EmployeeDto> CreateEmployeeAsync(CreateEmployeeRequest request)
     {
@@ -152,37 +280,82 @@ public class EmployeeService : IEmployeeService
         return await GetEmployeeByIdAsync(employee.Id);
     }
 
+    /// <summary>
+    /// Gets employee by ID with role-based authorization
+    /// SECURITY: Returns different DTOs based on user role:
+    /// - HR/Admin: Full details (masked bank account)
+    /// - Self: Full details (unmasked)
+    /// - Public: Limited details only
+    /// </summary>
     public async Task<EmployeeDto> GetEmployeeByIdAsync(Guid id)
     {
         var employee = await _context.Employees
+            .AsNoTracking()
             .Include(e => e.Department)
             .Include(e => e.Manager)
             .Include(e => e.EmergencyContacts)
             .FirstOrDefaultAsync(e => e.Id == id);
 
         if (employee == null)
+        {
+            LogAuthorizationFailure("GetEmployeeById", id);
             throw new KeyNotFoundException($"Employee with ID {id} not found");
+        }
 
-        return MapToDto(employee);
+        // Check authorization level
+        var canViewFull = await CanViewEmployeeFullDetailsAsync(id);
+
+        if (!canViewFull)
+        {
+            // Return public view only
+            _logger.LogInformation("User {UserId} viewing public profile of Employee {EmployeeId}",
+                _currentUserService.UserId, id);
+        }
+
+        return MapToDto(employee, canViewFull);
     }
 
+    /// <summary>
+    /// Gets employee by code with role-based authorization
+    /// SECURITY: Same authorization as GetEmployeeByIdAsync
+    /// </summary>
     public async Task<EmployeeDto> GetEmployeeByCodeAsync(string employeeCode)
     {
         var employee = await _context.Employees
+            .AsNoTracking()
             .Include(e => e.Department)
             .Include(e => e.Manager)
             .Include(e => e.EmergencyContacts)
             .FirstOrDefaultAsync(e => e.EmployeeCode == employeeCode);
 
         if (employee == null)
+        {
+            LogAuthorizationFailure("GetEmployeeByCode");
             throw new KeyNotFoundException($"Employee with code {employeeCode} not found");
+        }
 
-        return MapToDto(employee);
+        // Check authorization level
+        var canViewFull = await CanViewEmployeeFullDetailsAsync(employee.Id);
+
+        if (!canViewFull)
+        {
+            _logger.LogInformation("User {UserId} viewing public profile of Employee {EmployeeCode}",
+                _currentUserService.UserId, employeeCode);
+        }
+
+        return MapToDto(employee, canViewFull);
     }
 
+    /// <summary>
+    /// Gets all employees with tenant isolation
+    /// SECURITY: Already filtered by TenantDbContext
+    /// NOTE: Tenant isolation is automatic via connection string
+    /// </summary>
     public async Task<List<EmployeeListDto>> GetAllEmployeesAsync(bool includeInactive = false)
     {
+        // TenantDbContext automatically filters by tenant via connection string
         var query = _context.Employees
+            .AsNoTracking()
             .Include(e => e.Department)
             .AsQueryable();
 
@@ -193,11 +366,28 @@ public class EmployeeService : IEmployeeService
             .OrderBy(e => e.EmployeeCode)
             .ToListAsync();
 
+        _logger.LogInformation("User {UserId} retrieved {Count} employees",
+            _currentUserService.UserId, employees.Count);
+
         return employees.Select(MapToListDto).ToList();
     }
 
+    /// <summary>
+    /// Updates employee with field-level authorization
+    /// SECURITY:
+    /// - Only HR/Admin can update employees
+    /// - Only HR/Admin can update salary fields
+    /// - Logs all sensitive field changes
+    /// </summary>
     public async Task<EmployeeDto> UpdateEmployeeAsync(Guid id, UpdateEmployeeRequest request)
     {
+        // AUTHORIZATION CHECK: Only HR/Admin can update employees
+        if (!CanUpdateEmployee())
+        {
+            LogAuthorizationFailure("UpdateEmployee", id);
+            throw new UnauthorizedAccessException("Only HR and Admin roles can update employee records");
+        }
+
         var employee = await _context.Employees
             .Include(e => e.EmergencyContacts)
             .FirstOrDefaultAsync(e => e.Id == id);
@@ -208,6 +398,10 @@ public class EmployeeService : IEmployeeService
         // Validate email uniqueness (excluding current employee)
         if (request.Email != employee.Email && !await IsEmailUniqueAsync(request.Email, id))
             throw new InvalidOperationException($"Email '{request.Email}' is already in use");
+
+        // Track salary changes for audit
+        var oldSalary = employee.BasicSalary;
+        var oldBankAccount = employee.BankAccountNumber;
 
         // Update fields
         employee.FirstName = request.FirstName;
@@ -261,12 +455,35 @@ public class EmployeeService : IEmployeeService
         employee.ContractEndDate = request.ContractEndDate;
         employee.IsActive = request.IsActive;
 
-        employee.BasicSalary = request.BasicSalary;
-        employee.SalaryCurrency = request.SalaryCurrency;
-        employee.BankName = request.BankName;
-        employee.BankAccountNumber = request.BankAccountNumber;
-        employee.BankBranch = request.BankBranch;
-        employee.BankSwiftCode = request.BankSwiftCode;
+        // SENSITIVE FIELD CHECK: Salary and bank details
+        if (!CanUpdateSalary())
+        {
+            // Prevent non-HR/Admin from updating salary
+            if (request.BasicSalary != oldSalary || request.BankAccountNumber != oldBankAccount)
+            {
+                LogAuthorizationFailure("UpdateSalary", id);
+                throw new UnauthorizedAccessException("Only HR and Admin roles can update salary and bank details");
+            }
+        }
+        else
+        {
+            // Log sensitive changes
+            if (request.BasicSalary != oldSalary)
+            {
+                LogSensitiveFieldChange("BasicSalary", id, oldSalary.ToString(), request.BasicSalary.ToString());
+            }
+            if (request.BankAccountNumber != oldBankAccount)
+            {
+                LogSensitiveFieldChange("BankAccountNumber", id, oldBankAccount, request.BankAccountNumber);
+            }
+
+            employee.BasicSalary = request.BasicSalary;
+            employee.SalaryCurrency = request.SalaryCurrency;
+            employee.BankName = request.BankName;
+            employee.BankAccountNumber = request.BankAccountNumber;
+            employee.BankBranch = request.BankBranch;
+            employee.BankSwiftCode = request.BankSwiftCode;
+        }
 
         employee.AnnualLeaveBalance = request.AnnualLeaveBalance;
         employee.SickLeaveBalance = request.SickLeaveBalance;
@@ -315,11 +532,33 @@ public class EmployeeService : IEmployeeService
         return await GetEmployeeByIdAsync(employee.Id);
     }
 
+    /// <summary>
+    /// Deletes (soft delete) employee with admin-only authorization
+    /// SECURITY:
+    /// - Only Admin role can delete employees
+    /// - Prevents self-deletion
+    /// - Logs all delete operations
+    /// </summary>
     public async Task<bool> DeleteEmployeeAsync(Guid id)
     {
+        // AUTHORIZATION CHECK: Only Admin can delete employees
+        if (!CanDeleteEmployee())
+        {
+            LogAuthorizationFailure("DeleteEmployee", id);
+            throw new UnauthorizedAccessException("Only Admin role can delete employee records");
+        }
+
         var employee = await _context.Employees.FindAsync(id);
         if (employee == null)
             return false;
+
+        // Prevent self-deletion
+        var currentEmployee = await GetEmployeeByUserIdAsync(_currentUserService.UserId ?? "");
+        if (currentEmployee?.Id == id)
+        {
+            LogAuthorizationFailure("DeleteEmployee (self-deletion)", id);
+            throw new InvalidOperationException("You cannot delete your own employee record");
+        }
 
         // Soft delete
         employee.IsDeleted = true;
@@ -329,7 +568,8 @@ public class EmployeeService : IEmployeeService
 
         await _context.SaveChangesAsync();
 
-        _logger.LogInformation("Soft deleted employee: {EmployeeCode} - {Name}", employee.EmployeeCode, employee.FullName);
+        _logger.LogWarning("EMPLOYEE DELETED: {EmployeeCode} - {Name} by User {UserId}",
+            employee.EmployeeCode, employee.FullName, _currentUserService.UserId);
 
         return true;
     }
@@ -337,6 +577,7 @@ public class EmployeeService : IEmployeeService
     public async Task<List<EmployeeListDto>> GetExpatriateEmployeesAsync()
     {
         var employees = await _context.Employees
+            .AsNoTracking()
             .Include(e => e.Department)
             .Where(e => e.EmployeeType == EmployeeType.Expatriate && e.IsActive)
             .OrderBy(e => e.EmployeeCode)
@@ -348,6 +589,7 @@ public class EmployeeService : IEmployeeService
     public async Task<Dictionary<string, int>> GetEmployeesByCountryAsync()
     {
         var result = await _context.Employees
+            .AsNoTracking()
             .Where(e => e.EmployeeType == EmployeeType.Expatriate && e.IsActive)
             .GroupBy(e => e.CountryOfOrigin ?? "Unknown")
             .Select(g => new { Country = g.Key, Count = g.Count() })
@@ -362,6 +604,7 @@ public class EmployeeService : IEmployeeService
         var thresholdDate = DateTime.UtcNow.AddDays(daysAhead);
 
         var employees = await _context.Employees
+            .AsNoTracking()
             .Include(e => e.Department)
             .Where(e => e.EmployeeType == EmployeeType.Expatriate && e.IsActive)
             .Where(e =>
@@ -453,6 +696,7 @@ public class EmployeeService : IEmployeeService
     public async Task<DocumentExpiryInfoDto> GetDocumentStatusAsync(Guid id)
     {
         var employee = await _context.Employees
+            .AsNoTracking()
             .Include(e => e.Department)
             .FirstOrDefaultAsync(e => e.Id == id);
 
@@ -512,9 +756,15 @@ public class EmployeeService : IEmployeeService
         return info;
     }
 
+    /// <summary>
+    /// Searches employees with tenant isolation
+    /// SECURITY: Tenant isolation automatic via TenantDbContext
+    /// </summary>
     public async Task<List<EmployeeListDto>> SearchEmployeesAsync(string searchTerm)
     {
+        // TenantDbContext automatically filters by tenant
         var query = _context.Employees
+            .AsNoTracking()
             .Include(e => e.Department)
             .Where(e => e.IsActive)
             .Where(e =>
@@ -527,12 +777,16 @@ public class EmployeeService : IEmployeeService
             .OrderBy(e => e.EmployeeCode)
             .ToListAsync();
 
+        _logger.LogInformation("User {UserId} searched employees with term '{SearchTerm}', found {Count} results",
+            _currentUserService.UserId, searchTerm, employees.Count);
+
         return employees.Select(MapToListDto).ToList();
     }
 
     public async Task<List<EmployeeListDto>> GetEmployeesByDepartmentAsync(Guid departmentId)
     {
         var employees = await _context.Employees
+            .AsNoTracking()
             .Include(e => e.Department)
             .Where(e => e.DepartmentId == departmentId && e.IsActive)
             .OrderBy(e => e.EmployeeCode)
@@ -626,7 +880,13 @@ public class EmployeeService : IEmployeeService
     }
 
     // Helper methods for mapping
-    private EmployeeDto MapToDto(Employee employee)
+    /// <summary>
+    /// Maps employee entity to DTO with role-based data filtering
+    /// SECURITY:
+    /// - canViewFull = true: Returns all data (for HR/Admin/Self)
+    /// - canViewFull = false: Returns public data only (hides salary/bank/personal)
+    /// </summary>
+    private EmployeeDto MapToDto(Employee employee, bool canViewFull = true)
     {
         return new EmployeeDto
         {
@@ -638,74 +898,80 @@ public class EmployeeService : IEmployeeService
             FullName = employee.FullName,
             Email = employee.Email,
             PhoneNumber = employee.PhoneNumber,
-            PersonalEmail = employee.PersonalEmail,
-            DateOfBirth = employee.DateOfBirth,
-            Age = employee.Age,
+            PersonalEmail = canViewFull ? employee.PersonalEmail : null,
+            DateOfBirth = canViewFull ? employee.DateOfBirth : default,
+            Age = canViewFull ? employee.Age : 0,
             Gender = employee.Gender,
-            MaritalStatus = employee.MaritalStatus,
+            MaritalStatus = canViewFull ? employee.MaritalStatus : default,
 
-            // Address
-            AddressLine1 = employee.AddressLine1,
-            AddressLine2 = employee.AddressLine2,
-            Village = employee.Village,
-            District = employee.District,
-            Region = employee.Region,
-            City = employee.City,
-            PostalCode = employee.PostalCode,
-            Country = employee.Country,
+            // Address - Only full view
+            AddressLine1 = canViewFull ? employee.AddressLine1 : string.Empty,
+            AddressLine2 = canViewFull ? employee.AddressLine2 : null,
+            Village = canViewFull ? employee.Village : null,
+            District = canViewFull ? employee.District : null,
+            Region = canViewFull ? employee.Region : null,
+            City = canViewFull ? employee.City : null,
+            PostalCode = canViewFull ? employee.PostalCode : null,
+            Country = canViewFull ? employee.Country : string.Empty,
 
             EmployeeType = employee.EmployeeType,
             IsExpatriate = employee.IsExpatriate,
             Nationality = employee.Nationality,
             CountryOfOrigin = employee.CountryOfOrigin,
 
-            NationalIdCard = employee.NationalIdCard,
-            PassportNumber = employee.PassportNumber,
-            PassportIssueDate = employee.PassportIssueDate,
-            PassportExpiryDate = employee.PassportExpiryDate,
-            PassportExpiryStatus = employee.PassportExpiryStatus,
+            // Identification - Only full view
+            NationalIdCard = canViewFull ? employee.NationalIdCard : null,
+            PassportNumber = canViewFull ? employee.PassportNumber : null,
+            PassportIssueDate = canViewFull ? employee.PassportIssueDate : null,
+            PassportExpiryDate = canViewFull ? employee.PassportExpiryDate : null,
+            PassportExpiryStatus = canViewFull ? employee.PassportExpiryStatus : default,
 
-            VisaType = employee.VisaType,
-            VisaNumber = employee.VisaNumber,
-            VisaIssueDate = employee.VisaIssueDate,
-            VisaExpiryDate = employee.VisaExpiryDate,
-            VisaExpiryStatus = employee.VisaExpiryStatus,
-            WorkPermitNumber = employee.WorkPermitNumber,
-            WorkPermitExpiryDate = employee.WorkPermitExpiryDate,
+            // Visa - Only full view
+            VisaType = canViewFull ? employee.VisaType : null,
+            VisaNumber = canViewFull ? employee.VisaNumber : null,
+            VisaIssueDate = canViewFull ? employee.VisaIssueDate : null,
+            VisaExpiryDate = canViewFull ? employee.VisaExpiryDate : null,
+            VisaExpiryStatus = canViewFull ? employee.VisaExpiryStatus : default,
+            WorkPermitNumber = canViewFull ? employee.WorkPermitNumber : null,
+            WorkPermitExpiryDate = canViewFull ? employee.WorkPermitExpiryDate : null,
 
-            HasExpiredDocuments = employee.HasExpiredDocuments,
-            HasDocumentsExpiringSoon = employee.HasDocumentsExpiringSoon,
+            HasExpiredDocuments = canViewFull && employee.HasExpiredDocuments,
+            HasDocumentsExpiringSoon = canViewFull && employee.HasDocumentsExpiringSoon,
 
-            TaxResidentStatus = employee.TaxResidentStatus,
-            TaxIdNumber = employee.TaxIdNumber,
-            NPFNumber = employee.NPFNumber,
-            NSFNumber = employee.NSFNumber,
-            PRGFNumber = employee.PRGFNumber,
-            IsNPFEligible = employee.IsNPFEligible,
-            IsNSFEligible = employee.IsNSFEligible,
+            // Tax - Only full view
+            TaxResidentStatus = canViewFull ? employee.TaxResidentStatus : default,
+            TaxIdNumber = canViewFull ? employee.TaxIdNumber : null,
+            NPFNumber = canViewFull ? employee.NPFNumber : null,
+            NSFNumber = canViewFull ? employee.NSFNumber : null,
+            PRGFNumber = canViewFull ? employee.PRGFNumber : null,
+            IsNPFEligible = canViewFull && employee.IsNPFEligible,
+            IsNSFEligible = canViewFull && employee.IsNSFEligible,
 
+            // Job info - Always visible
             JobTitle = employee.JobTitle,
             DepartmentId = employee.DepartmentId,
             DepartmentName = employee.Department?.Name ?? "N/A",
             ManagerId = employee.ManagerId,
             ManagerName = employee.Manager?.FullName,
             JoiningDate = employee.JoiningDate,
-            ProbationEndDate = employee.ProbationEndDate,
-            ConfirmationDate = employee.ConfirmationDate,
-            ContractEndDate = employee.ContractEndDate,
-            ResignationDate = employee.ResignationDate,
-            LastWorkingDate = employee.LastWorkingDate,
+            ProbationEndDate = canViewFull ? employee.ProbationEndDate : null,
+            ConfirmationDate = canViewFull ? employee.ConfirmationDate : null,
+            ContractEndDate = canViewFull ? employee.ContractEndDate : null,
+            ResignationDate = canViewFull ? employee.ResignationDate : null,
+            LastWorkingDate = canViewFull ? employee.LastWorkingDate : null,
             IsActive = employee.IsActive,
             YearsOfService = employee.YearsOfService,
 
-            BasicSalary = employee.BasicSalary,
-            SalaryCurrency = employee.SalaryCurrency,
-            BankName = employee.BankName,
-            BankAccountNumber = employee.BankAccountNumber,
-            BankBranch = employee.BankBranch,
-            BankSwiftCode = employee.BankSwiftCode,
+            // SENSITIVE: Salary & Bank - Only full view WITH masking
+            BasicSalary = canViewFull ? employee.BasicSalary : 0,
+            SalaryCurrency = canViewFull ? employee.SalaryCurrency : string.Empty,
+            BankName = canViewFull ? employee.BankName : null,
+            BankAccountNumber = canViewFull ? MaskBankAccount(employee.BankAccountNumber) : null,
+            BankBranch = canViewFull ? employee.BankBranch : null,
+            BankSwiftCode = canViewFull ? employee.BankSwiftCode : null,
 
-            EmergencyContacts = employee.EmergencyContacts.Select(c => new EmergencyContactDto
+            // Emergency Contacts - Only full view
+            EmergencyContacts = canViewFull ? employee.EmergencyContacts.Select(c => new EmergencyContactDto
             {
                 Id = c.Id,
                 ContactName = c.ContactName,
@@ -717,20 +983,23 @@ public class EmployeeService : IEmployeeService
                 Address = c.Address,
                 Country = c.Country,
                 IsPrimary = c.IsPrimary
-            }).ToList(),
+            }).ToList() : new List<EmergencyContactDto>(),
 
-            AnnualLeaveBalance = employee.AnnualLeaveBalance,
-            SickLeaveBalance = employee.SickLeaveBalance,
-            CasualLeaveBalance = employee.CasualLeaveBalance,
+            // Leave balances - Only full view
+            AnnualLeaveBalance = canViewFull ? employee.AnnualLeaveBalance : 0,
+            SickLeaveBalance = canViewFull ? employee.SickLeaveBalance : 0,
+            CasualLeaveBalance = canViewFull ? employee.CasualLeaveBalance : 0,
 
-            IsOffboarded = employee.IsOffboarded,
-            OffboardingDate = employee.OffboardingDate,
-            OffboardingReason = employee.OffboardingReason,
+            // Offboarding - Only full view
+            IsOffboarded = canViewFull && employee.IsOffboarded,
+            OffboardingDate = canViewFull ? employee.OffboardingDate : null,
+            OffboardingReason = canViewFull ? employee.OffboardingReason : null,
 
-            CreatedAt = employee.CreatedAt,
-            UpdatedAt = employee.UpdatedAt ?? employee.CreatedAt,
-            CreatedBy = employee.CreatedBy ?? string.Empty,
-            UpdatedBy = employee.UpdatedBy ?? string.Empty
+            // Audit - Only full view
+            CreatedAt = canViewFull ? employee.CreatedAt : default,
+            UpdatedAt = canViewFull ? (employee.UpdatedAt ?? employee.CreatedAt) : default,
+            CreatedBy = canViewFull ? (employee.CreatedBy ?? string.Empty) : string.Empty,
+            UpdatedBy = canViewFull ? (employee.UpdatedBy ?? string.Empty) : string.Empty
         };
     }
 

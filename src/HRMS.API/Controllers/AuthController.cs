@@ -129,8 +129,11 @@ public class AuthController : ControllerBase
     /// <summary>
     /// SECRET URL SuperAdmin Login - Step 1: Email/Password verification
     /// Returns MFA setup or verification requirement
+    /// SECURITY NOTE: The secret path should be configured via environment variable 'SUPERADMIN_SECRET_PATH'
+    /// This hardcoded route is deprecated and will be removed in a future version
     /// </summary>
     [HttpPost("system-9f7a2b4c-3d8e-4a1b-8c9d-1e2f3a4b5c6d")]
+    [Obsolete("Use environment variable SUPERADMIN_SECRET_PATH instead")]
     [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> SecretLogin([FromBody] LoginRequest request)

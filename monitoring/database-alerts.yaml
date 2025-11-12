@@ -1,0 +1,695 @@
+# Database Monitoring Alerts Configuration
+# Compatible with: Prometheus AlertManager, CloudWatch, Azure Monitor, Custom Monitoring
+# Version: 1.0
+# Last Updated: 2025-11-12
+
+################################################################################
+# CRITICAL ALERTS - Immediate Action Required
+################################################################################
+
+critical_alerts:
+  # Database Availability
+  - alert: DatabaseDown
+    severity: CRITICAL
+    description: "PostgreSQL database is not responding"
+    condition: "pg_up == 0"
+    duration: "1m"
+    actions:
+      - page_oncall
+      - send_email
+      - send_sms
+      - create_incident
+    notification_channels:
+      - email: security@morishr.com
+      - email: admin@morishr.com
+      - email: cto@morishr.com
+      - sms: "+1-XXX-XXX-XXXX"
+      - slack: "#critical-alerts"
+    runbook: "https://docs.morishr.com/runbooks/database-down"
+
+  # Migration Failure
+  - alert: MigrationFailed
+    severity: CRITICAL
+    description: "Database migration failed during execution"
+    condition: "migration_status == 'failed'"
+    duration: "0s"
+    actions:
+      - page_oncall
+      - send_email
+      - rollback_migration
+      - create_incident
+    notification_channels:
+      - email: engineering@morishr.com
+      - email: dba@morishr.com
+      - slack: "#database-alerts"
+    runbook: "https://docs.morishr.com/runbooks/migration-failure"
+
+  # Data Integrity Violation
+  - alert: ConstraintViolationDetected
+    severity: CRITICAL
+    description: "Database constraint violation detected - data integrity at risk"
+    condition: "constraint_violations > 0"
+    duration: "1m"
+    actions:
+      - page_oncall
+      - send_email
+      - lock_affected_tables
+      - create_incident
+    notification_channels:
+      - email: security@morishr.com
+      - email: dba@morishr.com
+      - slack: "#critical-alerts"
+    runbook: "https://docs.morishr.com/runbooks/constraint-violation"
+
+  # Encryption Key Access Failure
+  - alert: EncryptionKeyAccessFailed
+    severity: CRITICAL
+    description: "Unable to access encryption keys from Secret Manager"
+    condition: "encryption_key_access_failures > 5 in 5m"
+    duration: "2m"
+    actions:
+      - page_oncall
+      - send_email
+      - enable_passthrough_mode  # Fallback for reads only
+      - create_incident
+    notification_channels:
+      - email: security@morishr.com
+      - email: cto@morishr.com
+      - slack: "#security-alerts"
+    runbook: "https://docs.morishr.com/runbooks/encryption-key-failure"
+
+  # Connection Pool Exhausted
+  - alert: ConnectionPoolExhausted
+    severity: CRITICAL
+    description: "Database connection pool is exhausted - service degradation imminent"
+    condition: "pg_stat_activity_count >= 480"  # 96% of MaxPoolSize (500)
+    duration: "2m"
+    actions:
+      - page_oncall
+      - send_email
+      - scale_connection_pool
+      - kill_idle_connections
+    notification_channels:
+      - email: engineering@morishr.com
+      - email: oncall@morishr.com
+      - slack: "#critical-alerts"
+    runbook: "https://docs.morishr.com/runbooks/connection-pool-exhausted"
+
+  # Disk Space Critical
+  - alert: DiskSpaceCritical
+    severity: CRITICAL
+    description: "Database disk space below 10% - immediate action required"
+    condition: "disk_usage_percent > 90"
+    duration: "5m"
+    actions:
+      - page_oncall
+      - send_email
+      - archive_old_data
+      - expand_disk
+    notification_channels:
+      - email: infrastructure@morishr.com
+      - email: dba@morishr.com
+      - slack: "#critical-alerts"
+    runbook: "https://docs.morishr.com/runbooks/disk-space-critical"
+
+  # Replication Lag Critical
+  - alert: ReplicationLagCritical
+    severity: CRITICAL
+    description: "Database replication lag exceeds 5 minutes"
+    condition: "pg_replication_lag_seconds > 300"
+    duration: "2m"
+    actions:
+      - page_oncall
+      - send_email
+      - failover_to_replica  # If primary is stuck
+    notification_channels:
+      - email: dba@morishr.com
+      - email: infrastructure@morishr.com
+      - slack: "#database-alerts"
+    runbook: "https://docs.morishr.com/runbooks/replication-lag"
+
+  # Deadlock Storm
+  - alert: DeadlockStorm
+    severity: CRITICAL
+    description: "Excessive database deadlocks detected"
+    condition: "pg_stat_database_deadlocks > 10 in 5m"
+    duration: "1m"
+    actions:
+      - page_oncall
+      - send_email
+      - analyze_deadlocks
+      - restart_affected_services
+    notification_channels:
+      - email: engineering@morishr.com
+      - email: dba@morishr.com
+      - slack: "#critical-alerts"
+    runbook: "https://docs.morishr.com/runbooks/deadlock-storm"
+
+################################################################################
+# WARNING ALERTS - Investigate Soon
+################################################################################
+
+warning_alerts:
+  # Query Performance Degradation
+  - alert: QueryPerformanceDegraded
+    severity: WARNING
+    description: "Query response times increased by >50% compared to baseline"
+    condition: "avg_query_duration_ms > baseline_avg * 1.5"
+    duration: "10m"
+    actions:
+      - send_email
+      - analyze_query_plans
+      - check_index_usage
+    notification_channels:
+      - email: engineering@morishr.com
+      - slack: "#database-alerts"
+    runbook: "https://docs.morishr.com/runbooks/query-performance"
+
+  # Index Not Being Used
+  - alert: IndexNotUsed
+    severity: WARNING
+    description: "Critical index has zero scans after 24 hours"
+    condition: "pg_stat_user_indexes.idx_scan == 0 AND index_age > 24h"
+    duration: "1h"
+    actions:
+      - send_email
+      - analyze_query_patterns
+    notification_channels:
+      - email: dba@morishr.com
+      - slack: "#database-alerts"
+    runbook: "https://docs.morishr.com/runbooks/unused-index"
+
+  # High Lock Wait Times
+  - alert: HighLockWaitTimes
+    severity: WARNING
+    description: "Queries waiting on locks for extended periods"
+    condition: "pg_locks_waiting_count > 5"
+    duration: "5m"
+    actions:
+      - send_email
+      - identify_blocking_queries
+      - analyze_lock_contention
+    notification_channels:
+      - email: engineering@morishr.com
+      - slack: "#database-alerts"
+    runbook: "https://docs.morishr.com/runbooks/lock-contention"
+
+  # Constraint Violations Attempted
+  - alert: ConstraintViolationAttempts
+    severity: WARNING
+    description: "Multiple attempts to violate unique constraints"
+    condition: "constraint_violation_attempts > 10 in 10m"
+    duration: "5m"
+    actions:
+      - send_email
+      - analyze_application_logs
+      - check_data_quality
+    notification_channels:
+      - email: engineering@morishr.com
+      - slack: "#data-quality-alerts"
+    runbook: "https://docs.morishr.com/runbooks/constraint-violations"
+
+  # Encryption Overhead High
+  - alert: EncryptionOverheadHigh
+    severity: WARNING
+    description: "Encryption/decryption operations taking longer than expected"
+    condition: "avg_encryption_duration_ms > 100"
+    duration: "15m"
+    actions:
+      - send_email
+      - analyze_encryption_performance
+      - check_secret_manager_latency
+    notification_channels:
+      - email: engineering@morishr.com
+      - slack: "#performance-alerts"
+    runbook: "https://docs.morishr.com/runbooks/encryption-performance"
+
+  # Connection Pool High
+  - alert: ConnectionPoolHigh
+    severity: WARNING
+    description: "Database connection pool usage above 70%"
+    condition: "pg_stat_activity_count > 350"
+    duration: "10m"
+    actions:
+      - send_email
+      - analyze_connection_usage
+      - optimize_connection_lifecycle
+    notification_channels:
+      - email: engineering@morishr.com
+      - slack: "#database-alerts"
+    runbook: "https://docs.morishr.com/runbooks/connection-pool-high"
+
+  # Disk Space Warning
+  - alert: DiskSpaceWarning
+    severity: WARNING
+    description: "Database disk space below 20%"
+    condition: "disk_usage_percent > 80"
+    duration: "15m"
+    actions:
+      - send_email
+      - plan_cleanup
+      - estimate_growth_rate
+    notification_channels:
+      - email: infrastructure@morishr.com
+      - slack: "#infrastructure-alerts"
+    runbook: "https://docs.morishr.com/runbooks/disk-space-planning"
+
+  # Slow Query Detected
+  - alert: SlowQueryDetected
+    severity: WARNING
+    description: "Query running longer than expected threshold"
+    condition: "query_duration_seconds > 30"
+    duration: "1m"
+    actions:
+      - send_email
+      - log_query_plan
+      - analyze_indexes
+    notification_channels:
+      - email: engineering@morishr.com
+      - slack: "#performance-alerts"
+    runbook: "https://docs.morishr.com/runbooks/slow-queries"
+
+  # Cache Hit Ratio Low
+  - alert: CacheHitRatioLow
+    severity: WARNING
+    description: "Database cache hit ratio below 90%"
+    condition: "pg_cache_hit_ratio < 90"
+    duration: "20m"
+    actions:
+      - send_email
+      - analyze_query_patterns
+      - consider_memory_increase
+    notification_channels:
+      - email: dba@morishr.com
+      - slack: "#database-alerts"
+    runbook: "https://docs.morishr.com/runbooks/cache-optimization"
+
+  # Long Running Transaction
+  - alert: LongRunningTransaction
+    severity: WARNING
+    description: "Transaction running for more than 10 minutes"
+    condition: "max(pg_stat_activity.xact_duration_seconds) > 600"
+    duration: "5m"
+    actions:
+      - send_email
+      - identify_transaction
+      - consider_termination
+    notification_channels:
+      - email: engineering@morishr.com
+      - slack: "#database-alerts"
+    runbook: "https://docs.morishr.com/runbooks/long-transactions"
+
+  # Table Bloat Detected
+  - alert: TableBloatDetected
+    severity: WARNING
+    description: "Significant table bloat detected - vacuum recommended"
+    condition: "table_bloat_percent > 30"
+    duration: "1h"
+    actions:
+      - send_email
+      - schedule_vacuum
+      - analyze_table_statistics
+    notification_channels:
+      - email: dba@morishr.com
+      - slack: "#database-maintenance"
+    runbook: "https://docs.morishr.com/runbooks/table-bloat"
+
+################################################################################
+# INFO ALERTS - FYI / Audit Trail
+################################################################################
+
+info_alerts:
+  # Migration Completed
+  - alert: MigrationCompleted
+    severity: INFO
+    description: "Database migration completed successfully"
+    condition: "migration_status == 'completed'"
+    duration: "0s"
+    actions:
+      - send_email
+      - log_success
+      - update_documentation
+    notification_channels:
+      - email: engineering@morishr.com
+      - slack: "#deployments"
+    runbook: "https://docs.morishr.com/runbooks/migration-success"
+
+  # New Index Created
+  - alert: NewIndexCreated
+    severity: INFO
+    description: "New database index created"
+    condition: "new_index_detected == true"
+    duration: "0s"
+    actions:
+      - send_email
+      - log_creation
+      - monitor_index_usage
+    notification_channels:
+      - email: dba@morishr.com
+      - slack: "#database-changes"
+    runbook: "https://docs.morishr.com/runbooks/index-monitoring"
+
+  # Constraint Added
+  - alert: ConstraintAdded
+    severity: INFO
+    description: "New database constraint added"
+    condition: "new_constraint_detected == true"
+    duration: "0s"
+    actions:
+      - send_email
+      - log_addition
+      - update_schema_docs
+    notification_channels:
+      - email: dba@morishr.com
+      - slack: "#database-changes"
+
+  # Database Statistics Updated
+  - alert: DatabaseStatsUpdated
+    severity: INFO
+    description: "Database statistics have been updated"
+    condition: "stats_update_completed == true"
+    duration: "0s"
+    actions:
+      - log_completion
+    notification_channels:
+      - slack: "#database-maintenance"
+
+  # Backup Completed
+  - alert: BackupCompleted
+    severity: INFO
+    description: "Database backup completed successfully"
+    condition: "backup_status == 'success'"
+    duration: "0s"
+    actions:
+      - send_email
+      - verify_backup
+      - update_backup_log
+    notification_channels:
+      - email: dba@morishr.com
+      - slack: "#backups"
+
+  # Encryption Service Health Check
+  - alert: EncryptionServiceHealthy
+    severity: INFO
+    description: "Encryption service health check passed"
+    condition: "encryption_health_check == 'pass'"
+    duration: "0s"
+    frequency: "1h"  # Send once per hour
+    actions:
+      - log_status
+    notification_channels:
+      - slack: "#security-monitoring"
+
+################################################################################
+# ENCRYPTION-SPECIFIC ALERTS
+################################################################################
+
+encryption_alerts:
+  # Passthrough Mode Activated
+  - alert: PassthroughModeActivated
+    severity: CRITICAL
+    description: "Encryption passthrough mode activated - encryption bypassed!"
+    condition: "encryption_passthrough_mode == true"
+    duration: "0s"
+    actions:
+      - page_oncall
+      - send_email
+      - send_sms
+      - create_security_incident
+      - disable_writes  # Prevent writing unencrypted sensitive data
+    notification_channels:
+      - email: security@morishr.com
+      - email: cto@morishr.com
+      - email: ceo@morishr.com
+      - sms: "+1-XXX-XXX-XXXX"
+      - slack: "#security-critical"
+    runbook: "https://docs.morishr.com/runbooks/encryption-passthrough"
+
+  # Encryption Key Retrieval Latency
+  - alert: EncryptionKeyLatencyHigh
+    severity: WARNING
+    description: "High latency when retrieving encryption keys"
+    condition: "avg_key_retrieval_ms > 500"
+    duration: "10m"
+    actions:
+      - send_email
+      - check_secret_manager_health
+      - analyze_network_latency
+    notification_channels:
+      - email: engineering@morishr.com
+      - slack: "#performance-alerts"
+    runbook: "https://docs.morishr.com/runbooks/key-retrieval-latency"
+
+  # Failed Decryption Attempts
+  - alert: FailedDecryptionAttempts
+    severity: CRITICAL
+    description: "Multiple failed decryption attempts detected - possible data corruption"
+    condition: "decryption_failures > 10 in 5m"
+    duration: "2m"
+    actions:
+      - page_oncall
+      - send_email
+      - analyze_encrypted_data
+      - check_key_version
+      - create_incident
+    notification_channels:
+      - email: security@morishr.com
+      - email: dba@morishr.com
+      - slack: "#security-alerts"
+    runbook: "https://docs.morishr.com/runbooks/decryption-failures"
+
+  # Encryption Success Rate Low
+  - alert: EncryptionSuccessRateLow
+    severity: CRITICAL
+    description: "Encryption success rate below 95%"
+    condition: "encryption_success_rate < 95"
+    duration: "5m"
+    actions:
+      - page_oncall
+      - send_email
+      - check_encryption_service
+      - verify_key_access
+    notification_channels:
+      - email: security@morishr.com
+      - email: engineering@morishr.com
+      - slack: "#security-alerts"
+    runbook: "https://docs.morishr.com/runbooks/encryption-failures"
+
+################################################################################
+# MIGRATION-SPECIFIC ALERTS
+################################################################################
+
+migration_alerts:
+  # Migration Taking Too Long
+  - alert: MigrationTimeout
+    severity: CRITICAL
+    description: "Database migration running longer than expected"
+    condition: "migration_duration_minutes > 30"
+    duration: "1m"
+    actions:
+      - page_oncall
+      - send_email
+      - check_migration_progress
+      - consider_termination
+    notification_channels:
+      - email: engineering@morishr.com
+      - email: dba@morishr.com
+      - slack: "#critical-alerts"
+    runbook: "https://docs.morishr.com/runbooks/migration-timeout"
+
+  # Migration Lock Detected
+  - alert: MigrationLockDetected
+    severity: WARNING
+    description: "Migration is holding locks that may affect application"
+    condition: "migration_locks_count > 0"
+    duration: "5m"
+    actions:
+      - send_email
+      - monitor_application_health
+      - analyze_lock_impact
+    notification_channels:
+      - email: engineering@morishr.com
+      - slack: "#database-alerts"
+    runbook: "https://docs.morishr.com/runbooks/migration-locks"
+
+  # Index Creation Progress
+  - alert: IndexCreationSlow
+    severity: INFO
+    description: "Index creation taking longer than expected"
+    condition: "index_creation_duration_minutes > 10"
+    duration: "2m"
+    actions:
+      - send_email
+      - monitor_progress
+    notification_channels:
+      - email: dba@morishr.com
+      - slack: "#database-alerts"
+
+################################################################################
+# ALERT ROUTING AND ESCALATION
+################################################################################
+
+routing:
+  default_channel: "#database-alerts"
+
+  severity_routing:
+    CRITICAL:
+      - page_oncall_immediately
+      - send_email_immediately
+      - send_sms
+      - post_to_slack_critical
+      - create_pagerduty_incident
+    WARNING:
+      - send_email_within_5min
+      - post_to_slack
+      - create_jira_ticket
+    INFO:
+      - post_to_slack
+      - log_to_elasticsearch
+
+  escalation_policy:
+    - level: 1
+      timeout: 15m
+      contacts:
+        - oncall_engineer
+      channels:
+        - pagerduty
+        - email
+    - level: 2
+      timeout: 30m
+      contacts:
+        - oncall_manager
+        - dba_team
+      channels:
+        - pagerduty
+        - email
+        - sms
+    - level: 3
+      timeout: 60m
+      contacts:
+        - cto
+        - vp_engineering
+      channels:
+        - pagerduty
+        - email
+        - sms
+        - phone_call
+
+  business_hours:
+    start: "06:00"
+    end: "22:00"
+    timezone: "UTC"
+
+  after_hours_escalation:
+    enabled: true
+    immediate_page_for:
+      - CRITICAL
+    delay_for:
+      - WARNING  # Delay 30 minutes
+      - INFO     # No page, email only
+
+################################################################################
+# MONITORING METRICS
+################################################################################
+
+metrics:
+  collection_interval: "10s"
+  retention_period: "90d"
+
+  custom_metrics:
+    - name: migration_duration_seconds
+      type: gauge
+      description: "Duration of current migration in seconds"
+      labels: [migration_name, database, schema]
+
+    - name: constraint_violations_total
+      type: counter
+      description: "Total number of constraint violations attempted"
+      labels: [constraint_name, table_name, schema]
+
+    - name: encryption_operations_total
+      type: counter
+      description: "Total encryption/decryption operations"
+      labels: [operation_type, success]
+
+    - name: encryption_duration_seconds
+      type: histogram
+      description: "Duration of encryption/decryption operations"
+      labels: [operation_type]
+      buckets: [0.01, 0.05, 0.1, 0.5, 1.0, 5.0]
+
+    - name: index_scan_count
+      type: gauge
+      description: "Number of scans for each index"
+      labels: [index_name, table_name, schema]
+
+    - name: query_duration_seconds
+      type: histogram
+      description: "Query execution duration"
+      labels: [query_type]
+      buckets: [0.1, 0.5, 1.0, 5.0, 10.0, 30.0, 60.0]
+
+################################################################################
+# INTEGRATION SETTINGS
+################################################################################
+
+integrations:
+  prometheus:
+    enabled: true
+    scrape_interval: "15s"
+    alertmanager_url: "http://alertmanager:9093"
+
+  cloudwatch:
+    enabled: false
+    region: "us-east-1"
+    namespace: "HRMS/Database"
+
+  azure_monitor:
+    enabled: false
+    workspace_id: ""
+
+  slack:
+    enabled: true
+    webhook_url_secret: "SLACK_WEBHOOK_URL"  # Store in Secret Manager
+    default_channel: "#database-alerts"
+
+  pagerduty:
+    enabled: true
+    integration_key_secret: "PAGERDUTY_KEY"  # Store in Secret Manager
+    service_id: ""
+
+  email:
+    enabled: true
+    smtp_server: "mail.smtp2go.com"
+    smtp_port: 2525
+    from_address: "alerts@morishr.com"
+
+  sms:
+    enabled: false
+    provider: "twilio"
+    account_sid_secret: "TWILIO_ACCOUNT_SID"
+    auth_token_secret: "TWILIO_AUTH_TOKEN"
+
+################################################################################
+# ALERT SUPPRESSION
+################################################################################
+
+suppression:
+  # Suppress alerts during maintenance windows
+  maintenance_windows:
+    - name: "Weekly Maintenance"
+      schedule: "Sun 02:00-04:00 UTC"
+      suppress_alerts:
+        - QueryPerformanceDegraded
+        - SlowQueryDetected
+        - TableBloatDetected
+
+  # Suppress duplicate alerts
+  deduplication:
+    enabled: true
+    window: "5m"
+
+  # Alert rate limiting
+  rate_limiting:
+    max_alerts_per_hour: 50
+    max_critical_alerts_per_hour: 10

@@ -10,356 +10,108 @@ namespace HRMS.Infrastructure.Data.Migrations.Tenant
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            // Apply changes to both tenant schemas
-            foreach (var schema in new[] { "tenant_default", "tenant_siraaj" })
-            {
-                // ===================================
-                // STEP 1: RENAME COLUMNS
-                // ===================================
+            // ===================================
+            // STEP 1: RENAME COLUMNS
+            // ===================================
 
-                // Rename: State → Region
-                migrationBuilder.RenameColumn(
-                    name: "State",
-                    schema: schema,
-                    table: "Locations",
-                    newName: "Region");
+            // NOTE: The following column renames were removed because these columns
+            // were already created with the correct names in migration 20251106053857_AddMultiDeviceBiometricAttendanceSystem
+            // - Region (not State)
+            // - AddressLine1 (not Address)
+            // - Phone (not ContactPhone)
+            // - Email (not ContactEmail)
+            // - AddressLine2 already exists
 
-                // Rename: Address → AddressLine1
-                migrationBuilder.RenameColumn(
-                    name: "Address",
-                    schema: schema,
-                    table: "Locations",
-                    newName: "AddressLine1");
+            // ===================================
+            // STEP 2: ADD NEW COLUMNS
+            // ===================================
 
-                // Rename: ContactPhone → Phone
-                migrationBuilder.RenameColumn(
-                    name: "ContactPhone",
-                    schema: schema,
-                    table: "Locations",
-                    newName: "Phone");
+            // NOTE: AddressLine2, WorkingHoursJson, LocationManagerId, and CapacityHeadcount
+            // were already added in migration 20251106053857, skipping
 
-                // Rename: ContactEmail → Email
-                migrationBuilder.RenameColumn(
-                    name: "ContactEmail",
-                    schema: schema,
-                    table: "Locations",
-                    newName: "Email");
+            // Add: District (Mauritius-specific) - This is the only new column
+            migrationBuilder.AddColumn<string>(
+                name: "District",
+                schema: "tenant_default",
+                table: "Locations",
+                type: "character varying(100)",
+                maxLength: 100,
+                nullable: true);
 
-                // ===================================
-                // STEP 2: ADD NEW COLUMNS
-                // ===================================
+            // ===================================
+            // STEP 3: ALTER COLUMN TYPES & CONSTRAINTS
+            // ===================================
 
-                // Add: AddressLine2
-                migrationBuilder.AddColumn<string>(
-                    name: "AddressLine2",
-                    schema: schema,
-                    table: "Locations",
-                    type: "character varying(500)",
-                    maxLength: 500,
-                    nullable: true);
+            // NOTE: The following AlterColumn operations were removed because these columns
+            // were already created with the correct types in migration 20251106053857:
+            // - LocationType: Already character varying(100), nullable
+            // - Latitude: Already numeric(10,8)
+            // - Longitude: Already numeric(11,8)
 
-                // Add: District (Mauritius-specific)
-                migrationBuilder.AddColumn<string>(
-                    name: "District",
-                    schema: schema,
-                    table: "Locations",
-                    type: "character varying(100)",
-                    maxLength: 100,
-                    nullable: true);
+            // ===================================
+            // STEP 4: DROP UNUSED COLUMNS
+            // ===================================
 
-                // Add: WorkingHoursJson (JSONB type for flexibility)
-                migrationBuilder.AddColumn<string>(
-                    name: "WorkingHoursJson",
-                    schema: schema,
-                    table: "Locations",
-                    type: "jsonb",
-                    nullable: true);
+            // NOTE: The following DropColumn operations were removed because these columns
+            // never existed in the Locations table (they were not in migration 20251106053857):
+            // - ContactPerson
+            // - IsHeadOffice
 
-                // Add: LocationManagerId
-                migrationBuilder.AddColumn<Guid>(
-                    name: "LocationManagerId",
-                    schema: schema,
-                    table: "Locations",
-                    type: "uuid",
-                    nullable: true);
+            // ===================================
+            // STEP 5: CREATE INDEXES
+            // ===================================
 
-                // Add: CapacityHeadcount
-                migrationBuilder.AddColumn<int>(
-                    name: "CapacityHeadcount",
-                    schema: schema,
-                    table: "Locations",
-                    type: "integer",
-                    nullable: true);
+            // Index on District for Mauritius location queries - This is NEW
+            migrationBuilder.CreateIndex(
+                name: "IX_Locations_District",
+                schema: "tenant_default",
+                table: "Locations",
+                column: "District");
 
-                // ===================================
-                // STEP 3: ALTER COLUMN TYPES & CONSTRAINTS
-                // ===================================
+            // Index on Region for broader regional queries - This is NEW
+            migrationBuilder.CreateIndex(
+                name: "IX_Locations_Region",
+                schema: "tenant_default",
+                table: "Locations",
+                column: "Region");
 
-                // LocationType: Make nullable, adjust max length
-                migrationBuilder.AlterColumn<string>(
-                    name: "LocationType",
-                    schema: schema,
-                    table: "Locations",
-                    type: "character varying(100)",
-                    maxLength: 100,
-                    nullable: true,
-                    oldClrType: typeof(string),
-                    oldType: "character varying(50)",
-                    oldMaxLength: 50,
-                    oldNullable: false);
-
-                // Latitude: Change precision from (10,7) to (10,8)
-                migrationBuilder.AlterColumn<decimal>(
-                    name: "Latitude",
-                    schema: schema,
-                    table: "Locations",
-                    type: "numeric(10,8)",
-                    precision: 10,
-                    scale: 8,
-                    nullable: true,
-                    oldClrType: typeof(decimal),
-                    oldType: "numeric(10,7)",
-                    oldPrecision: 10,
-                    oldScale: 7,
-                    oldNullable: true);
-
-                // Longitude: Change precision from (10,7) to (11,8)
-                migrationBuilder.AlterColumn<decimal>(
-                    name: "Longitude",
-                    schema: schema,
-                    table: "Locations",
-                    type: "numeric(11,8)",
-                    precision: 11,
-                    scale: 8,
-                    nullable: true,
-                    oldClrType: typeof(decimal),
-                    oldType: "numeric(10,7)",
-                    oldPrecision: 10,
-                    oldScale: 7,
-                    oldNullable: true);
-
-                // ===================================
-                // STEP 4: DROP UNUSED COLUMNS
-                // ===================================
-
-                // Drop: ContactPerson (not in entity model)
-                migrationBuilder.DropColumn(
-                    name: "ContactPerson",
-                    schema: schema,
-                    table: "Locations");
-
-                // Drop: IsHeadOffice (not in entity model)
-                migrationBuilder.DropColumn(
-                    name: "IsHeadOffice",
-                    schema: schema,
-                    table: "Locations");
-
-                // ===================================
-                // STEP 5: CREATE INDEXES
-                // ===================================
-
-                // Index on District for Mauritius location queries
-                migrationBuilder.CreateIndex(
-                    name: $"IX_Locations_District_{schema}",
-                    schema: schema,
-                    table: "Locations",
-                    column: "District");
-
-                // Index on Region for broader regional queries
-                migrationBuilder.CreateIndex(
-                    name: $"IX_Locations_Region_{schema}",
-                    schema: schema,
-                    table: "Locations",
-                    column: "Region");
-
-                // Index on LocationManagerId for manager queries
-                migrationBuilder.CreateIndex(
-                    name: $"IX_Locations_LocationManagerId_{schema}",
-                    schema: schema,
-                    table: "Locations",
-                    column: "LocationManagerId");
-
-                // ===================================
-                // STEP 6: ADD FOREIGN KEY
-                // ===================================
-
-                // Foreign Key: LocationManagerId → Employees.Id
-                migrationBuilder.AddForeignKey(
-                    name: $"FK_Locations_Employees_LocationManagerId_{schema}",
-                    schema: schema,
-                    table: "Locations",
-                    column: "LocationManagerId",
-                    principalSchema: schema,
-                    principalTable: "Employees",
-                    principalColumn: "Id",
-                    onDelete: ReferentialAction.SetNull);
-            }
+            // NOTE: IX_Locations_LocationManagerId and FK_Locations_Employees_LocationManagerId
+            // already exist from migration 20251106053857, skipping
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            // Rollback changes for both tenant schemas
-            foreach (var schema in new[] { "tenant_default", "tenant_siraaj" })
-            {
-                // ===================================
-                // STEP 1: DROP FOREIGN KEY
-                // ===================================
+            // ===================================
+            // STEP 1: DROP INDEXES
+            // ===================================
 
-                migrationBuilder.DropForeignKey(
-                    name: $"FK_Locations_Employees_LocationManagerId_{schema}",
-                    schema: schema,
-                    table: "Locations");
+            // Drop only the indexes we actually created
+            migrationBuilder.DropIndex(
+                name: "IX_Locations_Region",
+                schema: "tenant_default",
+                table: "Locations");
 
-                // ===================================
-                // STEP 2: DROP INDEXES
-                // ===================================
+            migrationBuilder.DropIndex(
+                name: "IX_Locations_District",
+                schema: "tenant_default",
+                table: "Locations");
 
-                migrationBuilder.DropIndex(
-                    name: $"IX_Locations_LocationManagerId_{schema}",
-                    schema: schema,
-                    table: "Locations");
+            // ===================================
+            // STEP 2: DROP NEW COLUMNS
+            // ===================================
 
-                migrationBuilder.DropIndex(
-                    name: $"IX_Locations_Region_{schema}",
-                    schema: schema,
-                    table: "Locations");
+            // Drop only the District column we actually added
+            migrationBuilder.DropColumn(
+                name: "District",
+                schema: "tenant_default",
+                table: "Locations");
 
-                migrationBuilder.DropIndex(
-                    name: $"IX_Locations_District_{schema}",
-                    schema: schema,
-                    table: "Locations");
-
-                // ===================================
-                // STEP 3: RE-ADD DROPPED COLUMNS
-                // ===================================
-
-                // Re-add: IsHeadOffice
-                migrationBuilder.AddColumn<bool>(
-                    name: "IsHeadOffice",
-                    schema: schema,
-                    table: "Locations",
-                    type: "boolean",
-                    nullable: false,
-                    defaultValue: false);
-
-                // Re-add: ContactPerson
-                migrationBuilder.AddColumn<string>(
-                    name: "ContactPerson",
-                    schema: schema,
-                    table: "Locations",
-                    type: "character varying(200)",
-                    maxLength: 200,
-                    nullable: true);
-
-                // ===================================
-                // STEP 4: REVERT COLUMN TYPE CHANGES
-                // ===================================
-
-                // Revert Longitude precision
-                migrationBuilder.AlterColumn<decimal>(
-                    name: "Longitude",
-                    schema: schema,
-                    table: "Locations",
-                    type: "numeric(10,7)",
-                    precision: 10,
-                    scale: 7,
-                    nullable: true,
-                    oldClrType: typeof(decimal),
-                    oldType: "numeric(11,8)",
-                    oldPrecision: 11,
-                    oldScale: 8,
-                    oldNullable: true);
-
-                // Revert Latitude precision
-                migrationBuilder.AlterColumn<decimal>(
-                    name: "Latitude",
-                    schema: schema,
-                    table: "Locations",
-                    type: "numeric(10,7)",
-                    precision: 10,
-                    scale: 7,
-                    nullable: true,
-                    oldClrType: typeof(decimal),
-                    oldType: "numeric(10,8)",
-                    oldPrecision: 10,
-                    oldScale: 8,
-                    oldNullable: true);
-
-                // Revert LocationType
-                migrationBuilder.AlterColumn<string>(
-                    name: "LocationType",
-                    schema: schema,
-                    table: "Locations",
-                    type: "character varying(50)",
-                    maxLength: 50,
-                    nullable: false,
-                    oldClrType: typeof(string),
-                    oldType: "character varying(100)",
-                    oldMaxLength: 100,
-                    oldNullable: true);
-
-                // ===================================
-                // STEP 5: DROP NEW COLUMNS
-                // ===================================
-
-                migrationBuilder.DropColumn(
-                    name: "CapacityHeadcount",
-                    schema: schema,
-                    table: "Locations");
-
-                migrationBuilder.DropColumn(
-                    name: "LocationManagerId",
-                    schema: schema,
-                    table: "Locations");
-
-                migrationBuilder.DropColumn(
-                    name: "WorkingHoursJson",
-                    schema: schema,
-                    table: "Locations");
-
-                migrationBuilder.DropColumn(
-                    name: "District",
-                    schema: schema,
-                    table: "Locations");
-
-                migrationBuilder.DropColumn(
-                    name: "AddressLine2",
-                    schema: schema,
-                    table: "Locations");
-
-                // ===================================
-                // STEP 6: RENAME COLUMNS BACK
-                // ===================================
-
-                // Revert: Email → ContactEmail
-                migrationBuilder.RenameColumn(
-                    name: "Email",
-                    schema: schema,
-                    table: "Locations",
-                    newName: "ContactEmail");
-
-                // Revert: Phone → ContactPhone
-                migrationBuilder.RenameColumn(
-                    name: "Phone",
-                    schema: schema,
-                    table: "Locations",
-                    newName: "ContactPhone");
-
-                // Revert: AddressLine1 → Address
-                migrationBuilder.RenameColumn(
-                    name: "AddressLine1",
-                    schema: schema,
-                    table: "Locations",
-                    newName: "Address");
-
-                // Revert: Region → State
-                migrationBuilder.RenameColumn(
-                    name: "Region",
-                    schema: schema,
-                    table: "Locations",
-                    newName: "State");
-            }
+            // NOTE: We don't drop or revert any other columns because we didn't add or modify them
+            // - AddressLine2, LocationManagerId, CapacityHeadcount, WorkingHoursJson: Already existed
+            // - LocationType, Latitude, Longitude: Not modified
+            // - ContactPerson, IsHeadOffice: Never existed
+            // - Email, Phone, AddressLine1, Region: Already had these names
         }
     }
 }

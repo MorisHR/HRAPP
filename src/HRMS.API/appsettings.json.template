@@ -1,0 +1,268 @@
+{
+  "ConnectionStrings": {
+    // SECURITY: Set Password via environment variable or Secret Manager
+    // Environment variable format: ConnectionStrings__DefaultConnection="Host=...;Password=YOUR_PASSWORD;..."
+    // Or set individual parts: ConnectionStrings__Password="YOUR_PASSWORD"
+    // PRODUCTION: Use SSL Mode=Require;Trust Server Certificate=false
+    "DefaultConnection": "Host=localhost;Port=5432;Database=hrms_db;Username=postgres;Password=YOUR_DB_PASSWORD;MaxPoolSize=500;MinPoolSize=50;ConnectionIdleLifetime=300;ConnectionPruningInterval=10;CommandTimeout=60;Pooling=true;SSL Mode=Prefer"
+  },
+  "JwtSettings": {
+    // SECURITY: JWT Secret MUST be set via Secret Manager or User Secrets
+    // Generate a secure random string (minimum 32 characters)
+    // Example: openssl rand -base64 32
+    // Set via: dotnet user-secrets set "JwtSettings:Secret" "YOUR_GENERATED_SECRET"
+    "Secret": "",
+    "Issuer": "HRMS.API",
+    "Audience": "HRMS.Client",
+    "ExpirationMinutes": 60,
+    "RefreshTokenExpirationDays": 7
+  },
+  "EmailSettings": {
+    // ========================================
+    // SMTP2GO CONFIGURATION (RECOMMENDED)
+    // ========================================
+    // Free tier: 1,000 emails/month, 200/day, no credit card required
+    // Setup: See docs/SMTP2GO_SETUP.md for complete instructions
+    // 1. Create account at https://www.smtp2go.com/pricing/
+    // 2. Verify sender email in dashboard
+    // 3. Create SMTP user and get credentials
+    // 4. Set SmtpUsername and SmtpPassword via User Secrets or Secret Manager
+    //
+    // ALTERNATIVE PROVIDERS:
+    // - MailHog (localhost:1025) - Local development testing
+    // - Gmail (smtp.gmail.com:587) - 500 emails/day with App Password
+    // - SendGrid (smtp.sendgrid.net:587) - No longer has free tier
+    // - AWS SES (email-smtp.REGION.amazonaws.com:587) - $0.10 per 1,000 emails
+    // ========================================
+
+    "SmtpServer": "mail.smtp2go.com", // Change to "localhost" for MailHog testing
+    "SmtpPort": 2525, // SMTP2GO ports: 2525 (recommended), 587, 80, 8025
+    "SmtpUsername": "YOUR_SMTP_USERNAME", // SECURITY: SET VIA USER SECRETS OR SECRET MANAGER
+    "SmtpPassword": "", // SECURITY: SET IN GOOGLE SECRET MANAGER OR USER SECRETS - NEVER COMMIT PASSWORDS
+    "FromEmail": "noreply@yourdomain.com", // Verified sender email in SMTP2GO
+    "FromName": "HRMS - Your Company", // Display name shown in recipient's inbox
+    "EnableSsl": true, // Must be true for SMTP2GO (and all production providers)
+    "UseDefaultCredentials": false, // Keep false
+    "EnableEmailSending": true, // Set to false to disable all email sending
+    "MaxRetryAttempts": 3, // Number of retry attempts for failed emails
+    "RetryDelaySeconds": 5 // Delay between retry attempts (seconds)
+  },
+  "AppSettings": {
+    "FrontendUrl": "http://localhost:4200",
+    "ProductionUrl": "https://yourdomain.com",
+    "ActivationTokenExpiryHours": 24,
+    "TenantSubdomain": "{subdomain}.yourdomain.com"
+  },
+  "Redis": {
+    // SECURITY: Set connection string via environment variable in production
+    // Redis password should be set via Secret Manager
+    "ConnectionString": "",
+    "InstanceName": "HRMS_",
+    "DefaultCacheExpirationMinutes": 60
+  },
+  "GoogleCloud": {
+    // Google Cloud Platform Configuration
+    // Set ProjectId in production environment
+    "ProjectId": "",
+    "SecretManagerEnabled": false,
+    "CloudSqlInstanceConnectionName": "",
+    "StorageBucket": "hrms-uploads"
+  },
+  "Serilog": {
+    "MinimumLevel": {
+      "Default": "Information",
+      "Override": {
+        "Microsoft": "Warning",
+        "Microsoft.Hosting.Lifetime": "Information",
+        "HRMS": "Information"
+      }
+    },
+    "WriteTo": [
+      {
+        "Name": "Console"
+      },
+      {
+        "Name": "File",
+        "Args": {
+          "path": "Logs/hrms-.log",
+          "rollingInterval": "Day",
+          "retainedFileCountLimit": 30,
+          "outputTemplate": "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] [{CorrelationId}] {Message:lj}{NewLine}{Exception}"
+        }
+      }
+    ],
+    "Enrich": [
+      "FromLogContext",
+      "WithMachineName",
+      "WithThreadId"
+    ]
+  },
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    }
+  },
+  "AllowedHosts": "*",
+  "Cors": {
+    "AllowedOrigins": [],
+    "AllowedDomains": []
+  },
+  "IpRateLimiting": {
+    "EnableEndpointRateLimiting": true,
+    "StackBlockedRequests": false,
+    "RealIpHeader": "X-Real-IP",
+    "ClientIdHeader": "X-ClientId",
+    "HttpStatusCode": 429,
+    "IpWhitelist": [],
+    "EndpointWhitelist": [
+      "get:/health",
+      "get:/health/ready",
+      "get:/"
+    ],
+    "GeneralRules": [
+      {
+        "Endpoint": "*",
+        "Period": "1m",
+        "Limit": 100
+      },
+      {
+        "Endpoint": "*",
+        "Period": "1h",
+        "Limit": 1000
+      }
+    ],
+    "QuotaExceededResponse": {
+      "Content": "{{ \"error\": \"Rate limit exceeded\", \"message\": \"Too many requests. Please try again later.\", \"retryAfter\": \"{0}\" }}",
+      "ContentType": "application/json",
+      "StatusCode": 429
+    }
+  },
+  "IpRateLimitPolicies": {
+    "IpRules": [
+      {
+        "Ip": "*",
+        "Rules": [
+          {
+            "Endpoint": "POST:/api/auth/login",
+            "Period": "15m",
+            "Limit": 5
+          },
+          {
+            "Endpoint": "POST:/api/auth/*",
+            "Period": "1h",
+            "Limit": 20
+          },
+          {
+            "Endpoint": "DELETE:*",
+            "Period": "1m",
+            "Limit": 10
+          },
+          {
+            "Endpoint": "POST:/api/tenants*",
+            "Period": "1h",
+            "Limit": 10
+          },
+          {
+            "Endpoint": "POST:/api/payroll/*/process",
+            "Period": "1h",
+            "Limit": 50
+          }
+        ]
+      }
+    ]
+  },
+  "Security": {
+    "RequireHttpsMetadata": true,
+    "EnableApiKeyValidation": false,
+    "AllowedApiKeys": []
+  },
+  "Hangfire": {
+    "WorkerCount": 5,
+    "DashboardEnabled": false,
+    "RequireAuthentication": true
+  },
+  "HealthChecks": {
+    "Enabled": true,
+    "DetailedErrors": false
+  },
+  "Performance": {
+    "EnableResponseCompression": true,
+    "EnableResponseCaching": true,
+    "MaxRequestBodySize": 10485760
+  },
+  "SecurityAlerting": {
+    "Enabled": true,
+    "EmailEnabled": true,
+    "EmailRecipients": [
+      "security@yourdomain.com",
+      "admin@yourdomain.com"
+    ],
+    "EmailRecipients:CRITICAL": [
+      "security@yourdomain.com",
+      "admin@yourdomain.com",
+      "cto@yourdomain.com"
+    ],
+    "EmailRecipients:EMERGENCY": [
+      "security@yourdomain.com",
+      "admin@yourdomain.com",
+      "cto@yourdomain.com",
+      "ceo@yourdomain.com"
+    ],
+    "SmsEnabled": false,
+    "SmsRecipients": [],
+    "SlackEnabled": false,
+    "SlackWebhookUrl": "",
+    "SlackChannels": [
+      "#security-alerts",
+      "#critical-alerts"
+    ],
+    "SiemEnabled": false,
+    "SiemType": "Splunk",
+    "SiemEndpoint": "",
+    "FailedLoginThreshold": 5,
+    "AfterHoursStart": 18,
+    "AfterHoursEnd": 6,
+    "MassDataExportThreshold": 500
+  },
+  "RateLimit": {
+    "Enabled": true,
+    "UseRedis": false,
+    "RedisConnectionString": "",
+    "Algorithm": "SlidingWindow",
+    "GeneralLimit": 100,
+    "SuperAdminLimit": 30,
+    "AuthenticationLimit": 5,
+    "WindowSeconds": 60,
+    "WhitelistedIPs": [
+      "127.0.0.1",
+      "::1"
+    ],
+    "StatusCode": 429,
+    "EnableAutoBlacklist": true,
+    "BlacklistThreshold": 10,
+    "BlacklistDurationMinutes": 60,
+    "LogViolations": true,
+    "AlertOnViolations": true
+  },
+  "AnomalyDetection": {
+    "Enabled": true,
+    "FailedLoginThreshold": 5,
+    "FailedLoginWindowMinutes": 15,
+    "MassExportRecordThreshold": 100,
+    "EnableImpossibleTravelDetection": true,
+    "ImpossibleTravelKmPerHour": 800,
+    "ConcurrentSessionThreshold": 3,
+    "AfterHoursStartHour": 22,
+    "AfterHoursEndHour": 6,
+    "SalaryChangePercentageThreshold": 50,
+    "RapidActionThreshold": 10,
+    "RapidActionWindowSeconds": 60,
+    "AutoNotifyOnCritical": true,
+    "AutoNotifyOnHigh": true,
+    "NotificationRecipients": [
+      "security@yourdomain.com",
+      "compliance@yourdomain.com"
+    ]
+  }
+}

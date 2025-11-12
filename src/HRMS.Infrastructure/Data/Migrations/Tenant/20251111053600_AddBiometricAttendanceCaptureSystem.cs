@@ -11,52 +11,9 @@ namespace HRMS.Infrastructure.Data.Migrations.Tenant
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.RenameColumn(
-                name: "Address",
-                schema: "tenant_default",
-                table: "Employees",
-                newName: "AddressLine1");
-
-            migrationBuilder.AddColumn<string>(
-                name: "AddressLine2",
-                schema: "tenant_default",
-                table: "Employees",
-                type: "character varying(500)",
-                maxLength: 500,
-                nullable: true);
-
-            migrationBuilder.AddColumn<string>(
-                name: "Country",
-                schema: "tenant_default",
-                table: "Employees",
-                type: "character varying(100)",
-                maxLength: 100,
-                nullable: false,
-                defaultValue: "");
-
-            migrationBuilder.AddColumn<string>(
-                name: "District",
-                schema: "tenant_default",
-                table: "Employees",
-                type: "character varying(100)",
-                maxLength: 100,
-                nullable: true);
-
-            migrationBuilder.AddColumn<string>(
-                name: "Region",
-                schema: "tenant_default",
-                table: "Employees",
-                type: "character varying(100)",
-                maxLength: 100,
-                nullable: true);
-
-            migrationBuilder.AddColumn<string>(
-                name: "Village",
-                schema: "tenant_default",
-                table: "Employees",
-                type: "character varying(100)",
-                maxLength: 100,
-                nullable: true);
+            // NOTE: Employee address changes (Address → AddressLine1, add AddressLine2, Village, District, Region, Country)
+            // are handled by migration 20251107041234_UpgradeEmployeeAddressForMauritiusCompliance.
+            // Removed duplicate operations to prevent migration conflicts.
 
             migrationBuilder.CreateTable(
                 name: "BiometricPunchRecords",
@@ -273,36 +230,9 @@ namespace HRMS.Infrastructure.Data.Migrations.Tenant
                 name: "DeviceApiKeys",
                 schema: "tenant_default");
 
-            migrationBuilder.DropColumn(
-                name: "AddressLine2",
-                schema: "tenant_default",
-                table: "Employees");
-
-            migrationBuilder.DropColumn(
-                name: "Country",
-                schema: "tenant_default",
-                table: "Employees");
-
-            migrationBuilder.DropColumn(
-                name: "District",
-                schema: "tenant_default",
-                table: "Employees");
-
-            migrationBuilder.DropColumn(
-                name: "Region",
-                schema: "tenant_default",
-                table: "Employees");
-
-            migrationBuilder.DropColumn(
-                name: "Village",
-                schema: "tenant_default",
-                table: "Employees");
-
-            migrationBuilder.RenameColumn(
-                name: "AddressLine1",
-                schema: "tenant_default",
-                table: "Employees",
-                newName: "Address");
+            // NOTE: Employee address rollback (drop AddressLine2, Village, District, Region, Country, rename AddressLine1 → Address)
+            // is handled by migration 20251107041234_UpgradeEmployeeAddressForMauritiusCompliance.
+            // Removed duplicate operations to prevent migration conflicts.
         }
     }
 }

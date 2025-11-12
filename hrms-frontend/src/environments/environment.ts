@@ -3,5 +3,6 @@ export const environment = {
   apiUrl: 'https://repulsive-toad-7vjj6xv99745hrvj-5090.app.github.dev/api',
   appName: 'HRMS',
   version: '1.0.0',
-  superAdminSecretPath: 'system-9f7a2b4c-3d8e-4a1b-8c9d-1e2f3a4b5c6d'
+  // SECURITY: Rotated on 2025-11-12 - Previous path was exposed in Git history
+  superAdminSecretPath: 'system-732c44d0-d59b-494c-9fc0-bf1d65add4e5'
 };

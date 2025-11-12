@@ -20,7 +20,14 @@ public class PayrollService : IPayrollService
     private readonly ITenantService _tenantService;
     private readonly ISalaryComponentService _salaryComponentService;
     private readonly ILogger<PayrollService> _logger;
+    private readonly ICurrentUserService _currentUserService;
     private readonly PayslipPdfGeneratorService _pdfGenerator;
+
+    // Role constants for authorization
+    private const string RoleAdmin = "Admin";
+    private const string RoleHR = "HR";
+    private const string RoleManager = "Manager";
+    private const string RoleEmployee = "Employee";
 
     // Mauritius 2025 Constants
     private const decimal CSG_THRESHOLD = 50000m; // MUR 50,000
@@ -58,14 +65,196 @@ public class PayrollService : IPayrollService
         TenantDbContext context,
         ITenantService tenantService,
         ISalaryComponentService salaryComponentService,
-        ILogger<PayrollService> logger)
+        ILogger<PayrollService> logger,
+        ICurrentUserService currentUserService)
     {
         _context = context;
         _tenantService = tenantService;
         _salaryComponentService = salaryComponentService;
         _logger = logger;
+        _currentUserService = currentUserService;
         _pdfGenerator = new PayslipPdfGeneratorService();
     }
+
+    #region Authorization Helper Methods
+
+    /// <summary>
+    /// Checks if the current user is HR or Admin
+    /// SECURITY: HR and Admin have full access to payroll operations
+    /// </summary>
+    private bool IsHROrAdmin()
+    {
+        return _currentUserService.HasAnyRole(RoleAdmin, RoleHR);
+    }
+
+    /// <summary>
+    /// Checks if the current user can view a specific payslip
+    /// SECURITY:
+    /// - Admin/HR can view all payslips
+    /// - Manager can view payslips for their direct reports
+    /// - Employee can view only their own payslips
+    /// </summary>
+    private async Task<bool> CanViewPayslipAsync(Guid payslipId)
+    {
+        // Admin and HR can view all payslips
+        if (IsHROrAdmin())
+            return true;
+
+        // Get the payslip to check employee ownership
+        var payslip = await _context.Payslips
+            .AsNoTracking()
+            .FirstOrDefaultAsync(p => p.Id == payslipId && !p.IsDeleted);
+
+        if (payslip == null)
+            return false;
+
+        // Get current user's employee record
+        var currentEmployee = await GetEmployeeByUserIdAsync(_currentUserService.UserId ?? "");
+        if (currentEmployee == null)
+            return false;
+
+        // Employee can view their own payslip
+        if (payslip.EmployeeId == currentEmployee.Id)
+            return true;
+
+        // Manager can view direct reports' payslips
+        if (_currentUserService.HasRole(RoleManager))
+        {
+            var targetEmployee = await _context.Employees
+                .AsNoTracking()
+                .FirstOrDefaultAsync(e => e.Id == payslip.EmployeeId);
+
+            if (targetEmployee?.ManagerId == currentEmployee.Id)
+                return true;
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Checks if the current user can view payslips for a specific employee
+    /// SECURITY: Same rules as CanViewPayslipAsync but checks employee directly
+    /// </summary>
+    private async Task<bool> CanViewEmployeePayslipsAsync(Guid employeeId)
+    {
+        // Admin and HR can view all
+        if (IsHROrAdmin())
+            return true;
+
+        // Get current user's employee record
+        var currentEmployee = await GetEmployeeByUserIdAsync(_currentUserService.UserId ?? "");
+        if (currentEmployee == null)
+            return false;
+
+        // Employee can view their own payslips
+        if (employeeId == currentEmployee.Id)
+            return true;
+
+        // Manager can view direct reports' payslips
+        if (_currentUserService.HasRole(RoleManager))
+        {
+            var targetEmployee = await _context.Employees
+                .AsNoTracking()
+                .FirstOrDefaultAsync(e => e.Id == employeeId);
+
+            if (targetEmployee?.ManagerId == currentEmployee.Id)
+                return true;
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Checks if the current user can generate payroll
+    /// SECURITY: Only Admin and HR can generate payroll
+    /// </summary>
+    private bool CanGeneratePayroll()
+    {
+        return IsHROrAdmin();
+    }
+
+    /// <summary>
+    /// Checks if the current user can approve payroll
+    /// SECURITY: Only Admin and HR can approve payroll
+    /// </summary>
+    private bool CanApprovePayroll()
+    {
+        return IsHROrAdmin();
+    }
+
+    /// <summary>
+    /// Gets employee record by user ID (from authentication)
+    /// </summary>
+    private async Task<Employee?> GetEmployeeByUserIdAsync(string userId)
+    {
+        if (string.IsNullOrEmpty(userId))
+            return null;
+
+        // Map by email since that's the common link
+        return await _context.Employees
+            .AsNoTracking()
+            .FirstOrDefaultAsync(e => e.Email == _currentUserService.Email && e.IsActive);
+    }
+
+    /// <summary>
+    /// Gets list of employee IDs that the current user can view payroll for
+    /// SECURITY: Returns filtered list based on user role
+    /// </summary>
+    private async Task<List<Guid>> GetAuthorizedEmployeeIdsAsync()
+    {
+        // Admin and HR can view all
+        if (IsHROrAdmin())
+            return new List<Guid>(); // Empty list means no filtering needed
+
+        var currentEmployee = await GetEmployeeByUserIdAsync(_currentUserService.UserId ?? "");
+        if (currentEmployee == null)
+            return new List<Guid>(); // No access
+
+        var authorizedIds = new List<Guid> { currentEmployee.Id };
+
+        // Manager can view direct reports
+        if (_currentUserService.HasRole(RoleManager))
+        {
+            var directReports = await _context.Employees
+                .AsNoTracking()
+                .Where(e => e.ManagerId == currentEmployee.Id && e.IsActive)
+                .Select(e => e.Id)
+                .ToListAsync();
+
+            authorizedIds.AddRange(directReports);
+        }
+
+        return authorizedIds;
+    }
+
+    /// <summary>
+    /// Logs authorization failure for security audit
+    /// </summary>
+    private void LogAuthorizationFailure(string operation, Guid? resourceId = null)
+    {
+        _logger.LogWarning(
+            "AUTHORIZATION FAILURE: User {UserId} ({Username}) attempted {Operation} on {ResourceId}. Roles: {Roles}",
+            _currentUserService.UserId,
+            _currentUserService.Username,
+            operation,
+            resourceId,
+            string.Join(", ", _currentUserService.Roles));
+    }
+
+    /// <summary>
+    /// Logs sensitive payroll operations for audit trail
+    /// </summary>
+    private void LogSensitiveOperation(string operation, Guid? resourceId = null, string? additionalInfo = null)
+    {
+        _logger.LogInformation(
+            "PAYROLL OPERATION: User {UserId} performed {Operation} on {ResourceId}. Additional Info: {Info}",
+            _currentUserService.UserId,
+            operation,
+            resourceId,
+            additionalInfo ?? "N/A");
+    }
+
+    #endregion
 
     // ==================== PAYROLL CYCLE MANAGEMENT ====================
 
@@ -105,6 +294,7 @@ public class PayrollService : IPayrollService
     public async Task<PayrollCycleDto?> GetPayrollCycleAsync(Guid id)
     {
         var cycle = await _context.PayrollCycles
+            .AsNoTracking()
             .Where(p => p.Id == id && !p.IsDeleted)
             .FirstOrDefaultAsync();
 
@@ -144,9 +334,26 @@ public class PayrollService : IPayrollService
         };
     }
 
+    /// <summary>
+    /// Gets all payroll cycles with role-based filtering
+    /// SECURITY:
+    /// - Admin/HR: View all cycles
+    /// - Manager: View cycles (limited to summary info)
+    /// - Employee: View cycles (limited to summary info)
+    /// - Public: No access
+    /// </summary>
     public async Task<List<PayrollCycleSummaryDto>> GetPayrollCyclesAsync(int? year = null)
     {
-        var query = _context.PayrollCycles.Where(p => !p.IsDeleted);
+        // AUTHORIZATION CHECK: Users must be authenticated
+        if (!_currentUserService.IsAuthenticated)
+        {
+            LogAuthorizationFailure("GetPayrollCycles");
+            throw new UnauthorizedAccessException("Authentication required to view payroll cycles");
+        }
+
+        var query = _context.PayrollCycles
+            .AsNoTracking()
+            .Where(p => !p.IsDeleted);
 
         if (year.HasValue)
             query = query.Where(p => p.Year == year.Value);
@@ -155,6 +362,9 @@ public class PayrollService : IPayrollService
             .OrderByDescending(p => p.Year)
             .ThenByDescending(p => p.Month)
             .ToListAsync();
+
+        _logger.LogInformation("User {UserId} retrieved {Count} payroll cycles",
+            _currentUserService.UserId, cycles.Count);
 
         return cycles.Select(c => new PayrollCycleSummaryDto
         {
@@ -174,8 +384,20 @@ public class PayrollService : IPayrollService
         }).ToList();
     }
 
+    /// <summary>
+    /// Processes payroll for a cycle
+    /// SECURITY: Only Admin and HR can generate/process payroll
+    /// </summary>
     public async Task ProcessPayrollAsync(Guid payrollCycleId, ProcessPayrollDto dto, string processedBy)
     {
+        // AUTHORIZATION CHECK: Only HR/Admin can generate payroll
+        if (!CanGeneratePayroll())
+        {
+            LogAuthorizationFailure("ProcessPayroll", payrollCycleId);
+            throw new UnauthorizedAccessException("Only HR and Admin roles can generate/process payroll");
+        }
+
+        LogSensitiveOperation("ProcessPayroll", payrollCycleId, $"EmployeeCount: {dto.EmployeeIds?.Count ?? 0}");
         _logger.LogInformation("Processing payroll cycle {CycleId}", payrollCycleId);
 
         var cycle = await _context.PayrollCycles
@@ -362,8 +584,19 @@ public class PayrollService : IPayrollService
         return payslip;
     }
 
+    /// <summary>
+    /// Approves or rejects a payroll cycle
+    /// SECURITY: Only Admin and HR can approve payroll
+    /// </summary>
     public async Task ApprovePayrollAsync(Guid payrollCycleId, ApprovePayrollDto dto, string approvedBy)
     {
+        // AUTHORIZATION CHECK: Only HR/Admin can approve payroll
+        if (!CanApprovePayroll())
+        {
+            LogAuthorizationFailure("ApprovePayroll", payrollCycleId);
+            throw new UnauthorizedAccessException("Only HR and Admin roles can approve payroll");
+        }
+
         var cycle = await _context.PayrollCycles
             .FirstOrDefaultAsync(p => p.Id == payrollCycleId && !p.IsDeleted);
 
@@ -383,6 +616,7 @@ public class PayrollService : IPayrollService
             cycle.ApprovedAt = DateTime.UtcNow;
             cycle.PaymentDate = dto.PaymentDate.Value;
 
+            LogSensitiveOperation("ApprovePayroll", payrollCycleId, $"Approved, PaymentDate: {dto.PaymentDate.Value:yyyy-MM-dd}");
             _logger.LogInformation("Payroll cycle {CycleId} approved by {ApprovedBy}", payrollCycleId, approvedBy);
         }
         else
@@ -390,6 +624,7 @@ public class PayrollService : IPayrollService
             cycle.Status = PayrollCycleStatus.Draft;
             cycle.Notes = dto.Notes;
 
+            LogSensitiveOperation("RejectPayroll", payrollCycleId, $"Rejected, Reason: {dto.Notes}");
             _logger.LogInformation("Payroll cycle {CycleId} rejected by {ApprovedBy}", payrollCycleId, approvedBy);
         }
 
@@ -447,9 +682,25 @@ public class PayrollService : IPayrollService
 
     // ==================== PAYSLIP OPERATIONS ====================
 
+    /// <summary>
+    /// Gets payslip details with role-based authorization
+    /// SECURITY:
+    /// - Admin/HR: Can view all payslips
+    /// - Manager: Can view payslips for direct reports
+    /// - Employee: Can view only their own payslips
+    /// - Public: No access
+    /// </summary>
     public async Task<PayslipDetailsDto?> GetPayslipAsync(Guid payslipId)
     {
+        // AUTHORIZATION CHECK: Verify user can view this payslip
+        if (!await CanViewPayslipAsync(payslipId))
+        {
+            LogAuthorizationFailure("GetPayslip", payslipId);
+            throw new UnauthorizedAccessException("You are not authorized to view this payslip");
+        }
+
         var payslip = await _context.Payslips
+            .AsNoTracking()
             .Include(p => p.Employee)
             .ThenInclude(e => e.Department)
             .Where(p => p.Id == payslipId && !p.IsDeleted)
@@ -457,6 +708,9 @@ public class PayrollService : IPayrollService
 
         if (payslip == null)
             return null;
+
+        _logger.LogInformation("User {UserId} accessed payslip {PayslipId} for employee {EmployeeId}",
+            _currentUserService.UserId, payslipId, payslip.EmployeeId);
 
         return new PayslipDetailsDto
         {
@@ -517,13 +771,43 @@ public class PayrollService : IPayrollService
         };
     }
 
+    /// <summary>
+    /// Gets all payslips for a cycle with role-based filtering
+    /// SECURITY:
+    /// - Admin/HR: Can view all payslips
+    /// - Manager: Can view only their direct reports' payslips
+    /// - Employee: Can view only their own payslip
+    /// - Public: No access
+    /// </summary>
     public async Task<List<PayslipDto>> GetPayslipsForCycleAsync(Guid payrollCycleId)
     {
-        var payslips = await _context.Payslips
+        // AUTHORIZATION CHECK: Must be authenticated
+        if (!_currentUserService.IsAuthenticated)
+        {
+            LogAuthorizationFailure("GetPayslipsForCycle", payrollCycleId);
+            throw new UnauthorizedAccessException("Authentication required to view payslips");
+        }
+
+        var query = _context.Payslips
+            .AsNoTracking()
             .Include(p => p.Employee)
-            .Where(p => p.PayrollCycleId == payrollCycleId && !p.IsDeleted)
+            .Where(p => p.PayrollCycleId == payrollCycleId && !p.IsDeleted);
+
+        // Apply role-based filtering
+        var authorizedEmployeeIds = await GetAuthorizedEmployeeIdsAsync();
+
+        // If not empty, filter by authorized employee IDs (non-HR/Admin users)
+        if (authorizedEmployeeIds.Any())
+        {
+            query = query.Where(p => authorizedEmployeeIds.Contains(p.EmployeeId));
+        }
+
+        var payslips = await query
             .OrderBy(p => p.Employee.EmployeeCode)
             .ToListAsync();
+
+        _logger.LogInformation("User {UserId} retrieved {Count} payslips for cycle {CycleId}",
+            _currentUserService.UserId, payslips.Count, payrollCycleId);
 
         return payslips.Select(p => new PayslipDto
         {
@@ -547,9 +831,26 @@ public class PayrollService : IPayrollService
         }).ToList();
     }
 
+    /// <summary>
+    /// Gets all payslips for a specific employee with authorization
+    /// SECURITY:
+    /// - Admin/HR: Can view all employee payslips
+    /// - Manager: Can view direct reports' payslips
+    /// - Employee: Can view only their own payslips
+    /// - Public: No access
+    /// </summary>
     public async Task<List<EmployeePayslipDto>> GetEmployeePayslipsAsync(Guid employeeId, int? year = null)
     {
-        var query = _context.Payslips.Where(p => p.EmployeeId == employeeId && !p.IsDeleted);
+        // AUTHORIZATION CHECK: Verify user can view this employee's payslips
+        if (!await CanViewEmployeePayslipsAsync(employeeId))
+        {
+            LogAuthorizationFailure("GetEmployeePayslips", employeeId);
+            throw new UnauthorizedAccessException("You are not authorized to view this employee's payslips");
+        }
+
+        var query = _context.Payslips
+            .AsNoTracking()
+            .Where(p => p.EmployeeId == employeeId && !p.IsDeleted);
 
         if (year.HasValue)
             query = query.Where(p => p.Year == year.Value);
@@ -558,6 +859,9 @@ public class PayrollService : IPayrollService
             .OrderByDescending(p => p.Year)
             .ThenByDescending(p => p.Month)
             .ToListAsync();
+
+        _logger.LogInformation("User {UserId} retrieved {Count} payslips for employee {EmployeeId}",
+            _currentUserService.UserId, payslips.Count, employeeId);
 
         return payslips.Select(p => new EmployeePayslipDto
         {
@@ -1013,9 +1317,25 @@ public class PayrollService : IPayrollService
 
     // ==================== REPORTS & EXPORTS ====================
 
+    /// <summary>
+    /// Gets payroll summary with role-based filtering
+    /// SECURITY:
+    /// - Admin/HR: Full summary with all employees
+    /// - Manager: Summary filtered to direct reports only
+    /// - Employee: Summary filtered to self only
+    /// - Public: No access
+    /// </summary>
     public async Task<PayrollSummaryDto> GetPayrollSummaryAsync(Guid payrollCycleId)
     {
+        // AUTHORIZATION CHECK: Must be authenticated
+        if (!_currentUserService.IsAuthenticated)
+        {
+            LogAuthorizationFailure("GetPayrollSummary", payrollCycleId);
+            throw new UnauthorizedAccessException("Authentication required to view payroll summary");
+        }
+
         var cycle = await _context.PayrollCycles
+            .AsNoTracking()
             .Include(p => p.Payslips)
             .ThenInclude(ps => ps.Employee)
             .ThenInclude(e => e.Department)
@@ -1024,38 +1344,53 @@ public class PayrollService : IPayrollService
         if (cycle == null)
             throw new InvalidOperationException("Payroll cycle not found");
 
+        // Apply role-based filtering to payslips
+        var authorizedEmployeeIds = await GetAuthorizedEmployeeIdsAsync();
+        var filteredPayslips = cycle.Payslips.AsEnumerable();
+
+        // If not empty, filter by authorized employee IDs (non-HR/Admin users)
+        if (authorizedEmployeeIds.Any())
+        {
+            filteredPayslips = filteredPayslips.Where(p => authorizedEmployeeIds.Contains(p.EmployeeId));
+        }
+
+        var payslipList = filteredPayslips.ToList();
+
+        _logger.LogInformation("User {UserId} accessed payroll summary for cycle {CycleId}, viewing {Count} payslips",
+            _currentUserService.UserId, payrollCycleId, payslipList.Count);
+
         var summary = new PayrollSummaryDto
         {
             PayrollCycleId = cycle.Id,
             Month = cycle.Month,
             Year = cycle.Year,
             PeriodDisplay = $"{CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(cycle.Month)} {cycle.Year}",
-            TotalEmployees = cycle.EmployeeCount,
-            ProcessedEmployees = cycle.Payslips.Count,
-            PaidEmployees = cycle.Payslips.Count(p => p.PaymentStatus == PaymentStatus.Paid),
-            PendingPayments = cycle.Payslips.Count(p => p.PaymentStatus == PaymentStatus.Pending),
-            TotalBasicSalary = cycle.Payslips.Sum(p => p.BasicSalary),
-            TotalAllowances = cycle.Payslips.Sum(p => p.OtherAllowances),
-            TotalOvertimePay = cycle.TotalOvertimePay,
-            TotalGrossSalary = cycle.TotalGrossSalary,
-            TotalNPFEmployee = cycle.TotalNPFEmployee,
-            TotalNSFEmployee = cycle.TotalNSFEmployee,
-            TotalCSGEmployee = cycle.TotalCSGEmployee,
-            TotalPAYE = cycle.TotalPAYE,
-            TotalStatutoryDeductions = cycle.TotalCSGEmployee + cycle.TotalNSFEmployee + cycle.TotalPAYE,
-            TotalNPFEmployer = cycle.TotalNPFEmployer,
-            TotalNSFEmployer = cycle.TotalNSFEmployer,
-            TotalCSGEmployer = cycle.TotalCSGEmployer,
-            TotalPRGF = cycle.TotalPRGF,
-            TotalTrainingLevy = cycle.TotalTrainingLevy,
-            TotalEmployerContributions = cycle.TotalCSGEmployer + cycle.TotalNSFEmployer + cycle.TotalPRGF + cycle.TotalTrainingLevy,
-            TotalDeductions = cycle.TotalDeductions,
-            TotalNetSalary = cycle.TotalNetSalary,
-            TotalCostToCompany = cycle.TotalGrossSalary + cycle.TotalCSGEmployer + cycle.TotalNSFEmployer + cycle.TotalPRGF + cycle.TotalTrainingLevy
+            TotalEmployees = payslipList.Count,
+            ProcessedEmployees = payslipList.Count,
+            PaidEmployees = payslipList.Count(p => p.PaymentStatus == PaymentStatus.Paid),
+            PendingPayments = payslipList.Count(p => p.PaymentStatus == PaymentStatus.Pending),
+            TotalBasicSalary = payslipList.Sum(p => p.BasicSalary),
+            TotalAllowances = payslipList.Sum(p => p.OtherAllowances),
+            TotalOvertimePay = payslipList.Sum(p => p.OvertimePay),
+            TotalGrossSalary = payslipList.Sum(p => p.TotalGrossSalary),
+            TotalNPFEmployee = payslipList.Sum(p => p.NPF_Employee),
+            TotalNSFEmployee = payslipList.Sum(p => p.NSF_Employee),
+            TotalCSGEmployee = payslipList.Sum(p => p.CSG_Employee),
+            TotalPAYE = payslipList.Sum(p => p.PAYE_Tax),
+            TotalStatutoryDeductions = payslipList.Sum(p => p.CSG_Employee + p.NSF_Employee + p.PAYE_Tax),
+            TotalNPFEmployer = payslipList.Sum(p => p.NPF_Employer),
+            TotalNSFEmployer = payslipList.Sum(p => p.NSF_Employer),
+            TotalCSGEmployer = payslipList.Sum(p => p.CSG_Employer),
+            TotalPRGF = payslipList.Sum(p => p.PRGF_Contribution),
+            TotalTrainingLevy = payslipList.Sum(p => p.TrainingLevy),
+            TotalEmployerContributions = payslipList.Sum(p => p.CSG_Employer + p.NSF_Employer + p.PRGF_Contribution + p.TrainingLevy),
+            TotalDeductions = payslipList.Sum(p => p.TotalDeductions),
+            TotalNetSalary = payslipList.Sum(p => p.NetSalary),
+            TotalCostToCompany = payslipList.Sum(p => p.TotalGrossSalary + p.CSG_Employer + p.NSF_Employer + p.PRGF_Contribution + p.TrainingLevy)
         };
 
-        // Department breakdown
-        var departmentGroups = cycle.Payslips
+        // Department breakdown (using filtered payslips)
+        var departmentGroups = payslipList
             .GroupBy(p => p.Employee.Department?.Name ?? "Unassigned")
             .Select(g => new DepartmentPayrollSummary
             {
@@ -1076,6 +1411,7 @@ public class PayrollService : IPayrollService
     public async Task<byte[]> GenerateBankTransferFileAsync(Guid payrollCycleId)
     {
         var payslips = await _context.Payslips
+            .AsNoTracking()
             .Include(p => p.Employee)
             .Where(p => p.PayrollCycleId == payrollCycleId && !p.IsDeleted)
             .Where(p => !string.IsNullOrEmpty(p.BankAccountNumber))
@@ -1106,6 +1442,7 @@ public class PayrollService : IPayrollService
         {
             // Fetch payslip with all related data
             var payslip = await _context.Payslips
+                .AsNoTracking()
                 .Include(p => p.Employee)
                     .ThenInclude(e => e.Department)
                 .Include(p => p.PayrollCycle)

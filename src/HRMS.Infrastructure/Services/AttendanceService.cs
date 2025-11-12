@@ -6,6 +6,7 @@ using HRMS.Core.Interfaces;
 using HRMS.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using System.Security;
 using System.Text.Json;
 
 namespace HRMS.Infrastructure.Services;
@@ -23,6 +24,12 @@ public class AttendanceService : IAttendanceService
     private readonly ILeaveService _leaveService;
     private readonly ILogger<AttendanceService> _logger;
     private readonly ICurrentUserService _currentUserService;
+
+    // Role constants for authorization
+    private const string RoleAdmin = "Admin";
+    private const string RoleHR = "HR";
+    private const string RoleManager = "Manager";
+    private const string RoleEmployee = "Employee";
 
     public AttendanceService(
         TenantDbContext tenantContext,
@@ -42,9 +49,123 @@ public class AttendanceService : IAttendanceService
         _currentUserService = currentUserService;
     }
 
+    #region Authorization Helper Methods
+
+    /// <summary>
+    /// Checks if the current user is HR or Admin
+    /// </summary>
+    private bool IsHROrAdmin()
+    {
+        return _currentUserService.HasAnyRole(RoleAdmin, RoleHR);
+    }
+
+    /// <summary>
+    /// Checks if the current user can view an employee's attendance
+    /// SECURITY:
+    /// - Admin/HR can view all
+    /// - Manager can view direct reports
+    /// - Employee can view their own
+    /// </summary>
+    private async Task<bool> CanViewAttendanceAsync(Guid employeeId)
+    {
+        // Admin and HR can view all attendance
+        if (IsHROrAdmin())
+            return true;
+
+        // Get current employee record
+        var currentEmployee = await GetCurrentEmployeeAsync();
+        if (currentEmployee == null)
+            return false;
+
+        // Employee can view their own attendance
+        if (currentEmployee.Id == employeeId)
+            return true;
+
+        // Manager can view direct reports' attendance
+        if (_currentUserService.HasRole(RoleManager))
+        {
+            var targetEmployee = await _tenantContext.Employees
+                .AsNoTracking()
+                .FirstOrDefaultAsync(e => e.Id == employeeId);
+
+            if (targetEmployee?.ManagerId == currentEmployee.Id)
+                return true;
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Checks if the current user can modify an employee's attendance record
+    /// SECURITY: Only Admin/HR can modify attendance records
+    /// Note: Employees can record punches but not modify existing records
+    /// </summary>
+    private bool CanModifyAttendance()
+    {
+        // Only Admin/HR can modify attendance records
+        return IsHROrAdmin();
+    }
+
+    /// <summary>
+    /// Logs authorization failure for security audit
+    /// </summary>
+    private void LogAuthorizationFailure(string operation, Guid? resourceId = null)
+    {
+        _logger.LogWarning(
+            "AUTHORIZATION FAILURE: User {UserId} ({Username}) attempted {Operation} on resource {ResourceId}. Roles: {Roles}",
+            _currentUserService.UserId,
+            _currentUserService.Username,
+            operation,
+            resourceId,
+            string.Join(", ", _currentUserService.Roles));
+    }
+
+    /// <summary>
+    /// Logs attendance modification for audit trail
+    /// </summary>
+    private void LogAttendanceModification(string action, Guid attendanceId, Guid employeeId)
+    {
+        _logger.LogInformation(
+            "ATTENDANCE MODIFICATION: User {UserId} performed {Action} on Attendance {AttendanceId} for Employee {EmployeeId}",
+            _currentUserService.UserId,
+            action,
+            attendanceId,
+            employeeId);
+    }
+
+    /// <summary>
+    /// Gets the current employee record by user ID
+    /// </summary>
+    private async Task<Employee?> GetCurrentEmployeeAsync()
+    {
+        if (string.IsNullOrEmpty(_currentUserService.Email))
+            return null;
+
+        return await _tenantContext.Employees
+            .AsNoTracking()
+            .FirstOrDefaultAsync(e => e.Email == _currentUserService.Email && e.IsActive);
+    }
+
+    #endregion
+
+    /// <summary>
+    /// Records attendance/punch with role-based authorization
+    /// SECURITY: Users can only record their own punches unless Admin/HR
+    /// </summary>
     public async Task<Guid> RecordAttendanceAsync(CreateAttendanceDto dto, string createdBy)
     {
         _logger.LogInformation("Recording attendance for employee {EmployeeId} on {Date}", dto.EmployeeId, dto.Date);
+
+        // AUTHORIZATION CHECK: Verify user can record punch for this employee
+        if (!IsHROrAdmin())
+        {
+            var currentEmployee = await GetCurrentEmployeeAsync();
+            if (currentEmployee == null || currentEmployee.Id != dto.EmployeeId)
+            {
+                LogAuthorizationFailure("RecordAttendance", dto.EmployeeId);
+                throw new UnauthorizedAccessException("You can only record attendance for yourself. Contact HR to record attendance for others.");
+            }
+        }
 
         // Validate employee exists
         var employee = await _tenantContext.Employees.FindAsync(dto.EmployeeId);
@@ -118,14 +239,21 @@ public class AttendanceService : IAttendanceService
         _tenantContext.Attendances.Add(attendance);
         await _tenantContext.SaveChangesAsync();
 
+        // Audit log for attendance recording
+        LogAttendanceModification("RecordAttendance", attendance.Id, dto.EmployeeId);
         _logger.LogInformation("Attendance recorded: {AttendanceId} for employee {EmployeeId}", attendance.Id, dto.EmployeeId);
 
         return attendance.Id;
     }
 
+    /// <summary>
+    /// Gets attendance by ID with role-based authorization
+    /// SECURITY: Verifies user can access this specific attendance record
+    /// </summary>
     public async Task<AttendanceDetailsDto?> GetAttendanceByIdAsync(Guid id)
     {
         var attendance = await _tenantContext.Attendances
+            .AsNoTracking()
             .Include(a => a.Employee)
                 .ThenInclude(e => e!.Department)
             .FirstOrDefaultAsync(a => a.Id == id);
@@ -135,9 +263,26 @@ public class AttendanceService : IAttendanceService
             return null;
         }
 
+        // AUTHORIZATION CHECK: Verify user can view this attendance record
+        if (!await CanViewAttendanceAsync(attendance.EmployeeId))
+        {
+            LogAuthorizationFailure("GetAttendanceById", id);
+            throw new UnauthorizedAccessException($"You do not have permission to view attendance record {id}");
+        }
+
+        _logger.LogInformation("User {UserId} retrieved attendance {AttendanceId} for employee {EmployeeId}",
+            _currentUserService.UserId, id, attendance.EmployeeId);
+
         return MapToDetailsDto(attendance);
     }
 
+    /// <summary>
+    /// Gets attendances with role-based filtering
+    /// SECURITY:
+    /// - Admin/HR: Can view all attendances
+    /// - Manager: Can only view their direct reports
+    /// - Employee: Can only view their own attendance
+    /// </summary>
     public async Task<List<AttendanceListDto>> GetAttendancesAsync(
         DateTime? fromDate = null,
         DateTime? toDate = null,
@@ -146,9 +291,46 @@ public class AttendanceService : IAttendanceService
         AttendanceStatus? status = null)
     {
         var query = _tenantContext.Attendances
+            .AsNoTracking()
             .Include(a => a.Employee)
                 .ThenInclude(e => e!.Department)
             .AsQueryable();
+
+        // AUTHORIZATION FILTER: Apply role-based filtering
+        if (!IsHROrAdmin())
+        {
+            var currentEmployee = await GetCurrentEmployeeAsync();
+            if (currentEmployee == null)
+            {
+                LogAuthorizationFailure("GetAttendances");
+                throw new UnauthorizedAccessException("Unable to identify current employee");
+            }
+
+            if (_currentUserService.HasRole(RoleManager))
+            {
+                // Manager can view their direct reports
+                var directReportIds = await _tenantContext.Employees
+                    .AsNoTracking()
+                    .Where(e => e.ManagerId == currentEmployee.Id)
+                    .Select(e => e.Id)
+                    .ToListAsync();
+
+                // Include self
+                directReportIds.Add(currentEmployee.Id);
+                query = query.Where(a => directReportIds.Contains(a.EmployeeId));
+
+                _logger.LogInformation("Manager {UserId} viewing attendance for {Count} direct reports",
+                    _currentUserService.UserId, directReportIds.Count);
+            }
+            else
+            {
+                // Employee can only view their own attendance
+                query = query.Where(a => a.EmployeeId == currentEmployee.Id);
+
+                _logger.LogInformation("Employee {UserId} viewing own attendance",
+                    _currentUserService.UserId);
+            }
+        }
 
         if (fromDate.HasValue)
         {
@@ -179,6 +361,9 @@ public class AttendanceService : IAttendanceService
             .OrderByDescending(a => a.Date)
             .ThenBy(a => a.Employee!.FirstName)
             .ToListAsync();
+
+        _logger.LogInformation("User {UserId} retrieved {Count} attendance records",
+            _currentUserService.UserId, attendances.Count);
 
         return attendances.Select(MapToListDto).ToList();
     }
@@ -380,9 +565,21 @@ public class AttendanceService : IAttendanceService
         return Math.Round(overtimeHours, 2);
     }
 
+    /// <summary>
+    /// Gets monthly attendance summary with role-based authorization
+    /// SECURITY: Filters based on user's access level
+    /// </summary>
     public async Task<MonthlyAttendanceSummaryDto> GetMonthlyAttendanceAsync(Guid employeeId, int year, int month)
     {
+        // AUTHORIZATION CHECK: Verify user can view this employee's attendance
+        if (!await CanViewAttendanceAsync(employeeId))
+        {
+            LogAuthorizationFailure("GetMonthlyAttendance", employeeId);
+            throw new UnauthorizedAccessException($"You do not have permission to view attendance for employee {employeeId}");
+        }
+
         var employee = await _tenantContext.Employees
+            .AsNoTracking()
             .Include(e => e.Department)
             .FirstOrDefaultAsync(e => e.Id == employeeId);
 
@@ -395,6 +592,7 @@ public class AttendanceService : IAttendanceService
         var endDate = startDate.AddMonths(1).AddDays(-1);
 
         var attendances = await _tenantContext.Attendances
+            .AsNoTracking()
             .Where(a => a.EmployeeId == employeeId)
             .Where(a => a.Date >= startDate && a.Date <= endDate)
             .OrderBy(a => a.Date)
@@ -526,6 +724,10 @@ public class AttendanceService : IAttendanceService
         _logger.LogInformation("Absences marked for {Date}", date);
     }
 
+    /// <summary>
+    /// Requests attendance correction with authorization
+    /// SECURITY: Users can request corrections for their own attendance or Admin/HR can request for anyone
+    /// </summary>
     public async Task<Guid> RequestAttendanceCorrectionAsync(AttendanceCorrectionRequestDto dto, Guid requestedBy)
     {
         var attendance = await _tenantContext.Attendances
@@ -535,6 +737,13 @@ public class AttendanceService : IAttendanceService
         if (attendance == null)
         {
             throw new Exception($"Attendance not found: {dto.AttendanceId}");
+        }
+
+        // AUTHORIZATION CHECK: Verify user can request correction for this attendance
+        if (!await CanViewAttendanceAsync(attendance.EmployeeId))
+        {
+            LogAuthorizationFailure("RequestAttendanceCorrection", dto.AttendanceId);
+            throw new UnauthorizedAccessException("You can only request corrections for your own attendance");
         }
 
         // Check if correction already exists
@@ -565,14 +774,27 @@ public class AttendanceService : IAttendanceService
         _tenantContext.AttendanceCorrections.Add(correction);
         await _tenantContext.SaveChangesAsync();
 
+        // Audit log for correction request
+        LogAttendanceModification("RequestCorrection", dto.AttendanceId, attendance.EmployeeId);
         _logger.LogInformation("Attendance correction requested: {CorrectionId} for attendance {AttendanceId}",
             correction.Id, dto.AttendanceId);
 
         return correction.Id;
     }
 
+    /// <summary>
+    /// Approves/rejects attendance correction with admin-only authorization
+    /// SECURITY: Only Admin/HR can approve or reject corrections
+    /// </summary>
     public async Task<bool> ApproveAttendanceCorrectionAsync(Guid correctionId, ApproveAttendanceCorrectionDto dto, Guid approvedBy)
     {
+        // AUTHORIZATION CHECK: Only Admin/HR can approve/reject corrections
+        if (!IsHROrAdmin())
+        {
+            LogAuthorizationFailure("ApproveAttendanceCorrection", correctionId);
+            throw new UnauthorizedAccessException("Only Admin and HR roles can approve or reject attendance corrections");
+        }
+
         var correction = await _tenantContext.AttendanceCorrections
             .Include(c => c.Attendance)
             .FirstOrDefaultAsync(c => c.Id == correctionId);
@@ -618,8 +840,17 @@ public class AttendanceService : IAttendanceService
 
         await _tenantContext.SaveChangesAsync();
 
-        _logger.LogInformation("Attendance correction {Action}: {CorrectionId}",
-            dto.IsApproved ? "approved" : "rejected", correctionId);
+        // Audit log for status change
+        LogAttendanceModification(
+            dto.IsApproved ? "ApproveCorrection" : "RejectCorrection",
+            correction.AttendanceId,
+            correction.EmployeeId);
+
+        _logger.LogWarning("ATTENDANCE STATUS CHANGE: User {UserId} {Action} correction {CorrectionId} for attendance {AttendanceId}",
+            _currentUserService.UserId,
+            dto.IsApproved ? "approved" : "rejected",
+            correctionId,
+            correction.AttendanceId);
 
         return dto.IsApproved;
     }
@@ -627,6 +858,7 @@ public class AttendanceService : IAttendanceService
     public async Task<AttendanceReportDto> GenerateAttendanceReportAsync(DateTime fromDate, DateTime toDate, Guid? departmentId = null)
     {
         var query = _tenantContext.Attendances
+            .AsNoTracking()
             .Include(a => a.Employee)
                 .ThenInclude(e => e!.Department)
             .Where(a => a.Date >= fromDate.Date && a.Date <= toDate.Date)

@@ -1,0 +1,41 @@
+// ============================================
+// DEVELOPMENT ENVIRONMENT CONFIGURATION
+// ============================================
+// SECURITY: This is a template file. Copy to environment.ts and configure.
+// The environment.ts file is gitignored to prevent secret exposure.
+//
+// Setup Instructions:
+// 1. Copy this file: cp environment.ts.template environment.ts
+// 2. Update the values below for your local development environment
+// 3. Never commit environment.ts to Git (it's in .gitignore)
+// ============================================
+
+export const environment = {
+  production: false,
+
+  // API URL for local development
+  // Options:
+  // - Local: 'http://localhost:5090/api'
+  // - GitHub Codespaces: 'https://YOUR-CODESPACE-URL:5090/api'
+  // - Docker: 'http://localhost:8080/api'
+  apiUrl: 'http://localhost:5090/api',
+
+  appName: 'HRMS',
+  version: '1.0.0',
+
+  // SECURITY CRITICAL: SuperAdmin Secret Path
+  // This is a security-by-obscurity measure for the super admin login route
+  // Generate a new UUID: python3 -c "import uuid; print('system-' + str(uuid.uuid4()))"
+  // This must match the route configured in the backend API
+  // Keep this value SECRET and do not share it
+  superAdminSecretPath: 'system-GENERATE-YOUR-OWN-UUID-HERE'
+};
+
+// ============================================
+// DEVELOPMENT NOTES:
+// ============================================
+// - Use MailHog for local email testing (http://localhost:8025)
+// - PostgreSQL should be running on localhost:5432
+// - Redis (optional) should be on localhost:6379
+// - The backend API runs on http://localhost:5090 by default
+// ============================================

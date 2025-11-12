@@ -36,6 +36,7 @@ public class TimesheetGenerationService : ITimesheetGenerationService
 
         // Get all active employees
         var employees = await _context.Employees
+            .AsNoTracking()
             .Where(e => !e.IsDeleted && e.EmploymentStatus == "Active")
             .ToListAsync();
 
@@ -104,6 +105,7 @@ public class TimesheetGenerationService : ITimesheetGenerationService
 
         // Get employee details
         var employee = await _context.Employees
+            .AsNoTracking()
             .Include(e => e.Department)
             .FirstOrDefaultAsync(e => e.Id == employeeId);
 
@@ -127,6 +129,7 @@ public class TimesheetGenerationService : ITimesheetGenerationService
 
         // Get attendance records for the period
         var attendanceRecords = await _context.Attendances
+            .AsNoTracking()
             .Where(a =>
                 a.EmployeeId == employeeId &&
                 a.Date >= periodStart &&
@@ -137,6 +140,7 @@ public class TimesheetGenerationService : ITimesheetGenerationService
 
         // Get public holidays for the period
         var publicHolidays = await _context.PublicHolidays
+            .AsNoTracking()
             .Where(h =>
                 h.Date >= periodStart &&
                 h.Date <= periodEnd &&
@@ -146,6 +150,7 @@ public class TimesheetGenerationService : ITimesheetGenerationService
 
         // Get leave applications for the period
         var leaveApplications = await _context.LeaveApplications
+            .AsNoTracking()
             .Where(la =>
                 la.EmployeeId == employeeId &&
                 la.Status == LeaveStatus.Approved &&
@@ -194,6 +199,7 @@ public class TimesheetGenerationService : ITimesheetGenerationService
         _logger.LogInformation("Regenerating timesheet {TimesheetId}", timesheetId);
 
         var timesheet = await _context.Timesheets
+            .AsNoTracking()
             .Include(t => t.Entries)
             .Include(t => t.Employee)
             .ThenInclude(e => e!.Department)
@@ -216,6 +222,7 @@ public class TimesheetGenerationService : ITimesheetGenerationService
 
         // Regenerate like new
         var attendanceRecords = await _context.Attendances
+            .AsNoTracking()
             .Where(a =>
                 a.EmployeeId == timesheet.EmployeeId &&
                 a.Date >= timesheet.PeriodStart &&
@@ -225,6 +232,7 @@ public class TimesheetGenerationService : ITimesheetGenerationService
             .ToListAsync();
 
         var publicHolidays = await _context.PublicHolidays
+            .AsNoTracking()
             .Where(h =>
                 h.Date >= timesheet.PeriodStart &&
                 h.Date <= timesheet.PeriodEnd &&
@@ -233,6 +241,7 @@ public class TimesheetGenerationService : ITimesheetGenerationService
             .ToListAsync();
 
         var leaveApplications = await _context.LeaveApplications
+            .AsNoTracking()
             .Where(la =>
                 la.EmployeeId == timesheet.EmployeeId &&
                 la.Status == LeaveStatus.Approved &&
@@ -279,6 +288,7 @@ public class TimesheetGenerationService : ITimesheetGenerationService
         PeriodType periodType)
     {
         var existing = await _context.Timesheets
+            .AsNoTracking()
             .Include(t => t.Entries)
             .FirstOrDefaultAsync(t =>
                 t.EmployeeId == employeeId &&
@@ -299,6 +309,7 @@ public class TimesheetGenerationService : ITimesheetGenerationService
     {
         // Get employee's department and sector configuration
         var employee = await _context.Employees
+            .AsNoTracking()
             .Include(e => e.Department)
             .FirstOrDefaultAsync(e => e.Id == employeeId);
 
@@ -309,6 +320,7 @@ public class TimesheetGenerationService : ITimesheetGenerationService
 
         // Get tenant sector configuration
         var sectorConfig = await _context.TenantSectorConfigurations
+            .AsNoTracking()
             .FirstOrDefaultAsync();
 
         if (sectorConfig == null)

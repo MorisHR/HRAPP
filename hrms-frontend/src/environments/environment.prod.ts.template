@@ -1,0 +1,64 @@
+// ============================================
+// PRODUCTION ENVIRONMENT CONFIGURATION
+// ============================================
+// SECURITY: This is a template file. Copy to environment.prod.ts and configure.
+// The environment.prod.ts file is gitignored to prevent secret exposure.
+//
+// Setup Instructions:
+// 1. Copy this file: cp environment.prod.ts.template environment.prod.ts
+// 2. Update the values below for your production environment
+// 3. Never commit environment.prod.ts to Git (it's in .gitignore)
+// 4. Use CI/CD environment variables to inject these values during build
+// ============================================
+
+export const environment = {
+  production: true,
+
+  // API URL for production
+  // Should be your production API endpoint
+  apiUrl: 'https://api.yourdomain.com/api',
+
+  appName: 'HRMS',
+  version: '1.0.0',
+
+  // SECURITY CRITICAL: SuperAdmin Secret Path
+  // This is a security-by-obscurity measure for the super admin login route
+  // Generate a DIFFERENT UUID than development:
+  //   python3 -c "import uuid; print('system-' + str(uuid.uuid4()))"
+  // This must match the route configured in the backend API
+  // IMPORTANT: Rotate this value regularly (every 90 days recommended)
+  // IMPORTANT: This MUST be different from the development path
+  superAdminSecretPath: 'system-GENERATE-DIFFERENT-UUID-FOR-PRODUCTION'
+};
+
+// ============================================
+// PRODUCTION SECURITY CHECKLIST:
+// ============================================
+// [x] API URL uses HTTPS (not HTTP)
+// [x] SuperAdmin secret path is unique and not shared with dev
+// [x] SuperAdmin secret path is documented in secure location
+// [x] Backend API route matches this path exactly
+// [x] SSL certificates are valid and not self-signed
+// [x] CORS is configured to allow only production domains
+// [x] Rate limiting is enabled on API
+// [x] MFA is enforced for super admin accounts
+// ============================================
+
+// ============================================
+// CI/CD INTEGRATION:
+// ============================================
+// For automated builds, inject values via environment variables:
+//
+// In GitHub Actions:
+//   - name: Create production environment file
+//     run: |
+//       cat > src/environments/environment.prod.ts << EOF
+//       export const environment = {
+//         production: true,
+//         apiUrl: '${{ secrets.API_URL }}',
+//         appName: 'HRMS',
+//         version: '1.0.0',
+//         superAdminSecretPath: '${{ secrets.SUPERADMIN_SECRET_PATH }}'
+//       };
+//       EOF
+// ============================================

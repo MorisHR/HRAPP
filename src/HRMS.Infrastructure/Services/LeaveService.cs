@@ -5,6 +5,7 @@ using HRMS.Core.Enums;
 using HRMS.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using System.Security;
 
 namespace HRMS.Infrastructure.Services;
 
@@ -13,16 +14,157 @@ public class LeaveService : ILeaveService
     private readonly TenantDbContext _context;
     private readonly ILogger<LeaveService> _logger;
     private readonly IFileStorageService _fileStorageService;
+    private readonly ICurrentUserService _currentUserService;
+
+    // Role constants for authorization
+    private const string RoleAdmin = "Admin";
+    private const string RoleHR = "HR";
+    private const string RoleManager = "Manager";
+    private const string RoleEmployee = "Employee";
 
     public LeaveService(
         TenantDbContext context,
         ILogger<LeaveService> logger,
-        IFileStorageService fileStorageService)
+        IFileStorageService fileStorageService,
+        ICurrentUserService currentUserService)
     {
         _context = context;
         _logger = logger;
         _fileStorageService = fileStorageService;
+        _currentUserService = currentUserService;
     }
+
+    #region Authorization Helper Methods
+
+    /// <summary>
+    /// Checks if the current user is HR or Admin
+    /// </summary>
+    private bool IsHROrAdmin()
+    {
+        return _currentUserService.HasAnyRole(RoleAdmin, RoleHR);
+    }
+
+    /// <summary>
+    /// Checks if the current user can approve a leave request
+    /// SECURITY:
+    /// - Admin/HR can approve all leave requests
+    /// - Manager can approve leave requests for their direct reports only
+    /// </summary>
+    private async Task<bool> CanApproveLeaveAsync(Guid leaveRequestId)
+    {
+        // Admin and HR can approve all leave requests
+        if (IsHROrAdmin())
+            return true;
+
+        // Check if user is a manager
+        if (!_currentUserService.HasRole(RoleManager))
+            return false;
+
+        // Get the leave request
+        var leaveRequest = await _context.LeaveApplications
+            .AsNoTracking()
+            .Include(l => l.Employee)
+            .FirstOrDefaultAsync(l => l.Id == leaveRequestId);
+
+        if (leaveRequest == null)
+            return false;
+
+        // Get current user's employee record
+        var currentEmployee = await GetEmployeeByUserIdAsync(_currentUserService.UserId ?? "");
+        if (currentEmployee == null)
+            return false;
+
+        // Manager can only approve for direct reports
+        return leaveRequest.Employee?.ManagerId == currentEmployee.Id;
+    }
+
+    /// <summary>
+    /// Checks if the current user can view a leave request for a specific employee
+    /// SECURITY:
+    /// - Admin/HR can view all leave requests
+    /// - Manager can view leave requests for their direct reports
+    /// - Employee can view their own leave requests
+    /// </summary>
+    private async Task<bool> CanViewLeaveRequestAsync(Guid employeeId)
+    {
+        // Admin and HR can view all leave requests
+        if (IsHROrAdmin())
+            return true;
+
+        // Check if viewing self
+        var currentEmployee = await GetEmployeeByUserIdAsync(_currentUserService.UserId ?? "");
+        if (currentEmployee?.Id == employeeId)
+            return true;
+
+        // Manager can view their direct reports
+        if (_currentUserService.HasRole(RoleManager))
+        {
+            var targetEmployee = await _context.Employees
+                .AsNoTracking()
+                .FirstOrDefaultAsync(e => e.Id == employeeId);
+
+            if (targetEmployee?.ManagerId == currentEmployee?.Id)
+                return true;
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Gets employee record by user ID (from authentication)
+    /// </summary>
+    private async Task<Employee?> GetEmployeeByUserIdAsync(string userId)
+    {
+        // Map by email since that's the common link
+        return await _context.Employees
+            .AsNoTracking()
+            .FirstOrDefaultAsync(e => e.Email == _currentUserService.Email && e.IsActive);
+    }
+
+    /// <summary>
+    /// Logs authorization failure for security audit
+    /// </summary>
+    private void LogAuthorizationFailure(string operation, Guid? resourceId = null)
+    {
+        _logger.LogWarning(
+            "AUTHORIZATION FAILURE: User {UserId} ({Username}) attempted {Operation} on resource {ResourceId}. Roles: {Roles}",
+            _currentUserService.UserId,
+            _currentUserService.Username,
+            operation,
+            resourceId,
+            string.Join(", ", _currentUserService.Roles));
+    }
+
+    /// <summary>
+    /// Logs leave approval/rejection actions for audit trail
+    /// </summary>
+    private void LogLeaveAction(string action, Guid leaveRequestId, Guid employeeId, string? comments = null)
+    {
+        _logger.LogInformation(
+            "LEAVE ACTION: User {UserId} performed {Action} on leave request {LeaveRequestId} for employee {EmployeeId}. Comments: {Comments}",
+            _currentUserService.UserId,
+            action,
+            leaveRequestId,
+            employeeId,
+            comments);
+    }
+
+    /// <summary>
+    /// Logs leave balance modifications for audit trail
+    /// </summary>
+    private void LogLeaveBalanceModification(string operation, Guid employeeId, Guid leaveTypeId, decimal days, string reason)
+    {
+        _logger.LogInformation(
+            "LEAVE BALANCE MODIFICATION: User {UserId} performed {Operation} on employee {EmployeeId} leave type {LeaveTypeId}. Days: {Days}. Reason: {Reason}",
+            _currentUserService.UserId,
+            operation,
+            employeeId,
+            leaveTypeId,
+            days,
+            reason);
+    }
+
+    #endregion
 
     #region Leave Application
 
@@ -102,9 +244,17 @@ public class LeaveService : ILeaveService
         return await GetLeaveApplicationByIdAsync(leaveApplication.Id);
     }
 
+    /// <summary>
+    /// Gets leave application by ID with role-based authorization
+    /// SECURITY:
+    /// - Admin/HR can view all leave applications
+    /// - Manager can view leave applications for their direct reports
+    /// - Employee can view their own leave applications
+    /// </summary>
     public async Task<LeaveApplicationDto> GetLeaveApplicationByIdAsync(Guid id)
     {
         var application = await _context.LeaveApplications
+            .AsNoTracking()
             .Include(l => l.Employee)
                 .ThenInclude(e => e!.Department)
             .Include(l => l.LeaveType)
@@ -115,14 +265,41 @@ public class LeaveService : ILeaveService
             .FirstOrDefaultAsync(l => l.Id == id && !l.IsDeleted);
 
         if (application == null)
+        {
+            LogAuthorizationFailure("GetLeaveApplicationById", id);
             throw new InvalidOperationException("Leave application not found");
+        }
+
+        // AUTHORIZATION CHECK: Verify user can view this leave application
+        var canView = await CanViewLeaveRequestAsync(application.EmployeeId);
+        if (!canView)
+        {
+            LogAuthorizationFailure("GetLeaveApplicationById", id);
+            throw new UnauthorizedAccessException("You do not have permission to view this leave application");
+        }
 
         return MapToLeaveApplicationDto(application);
     }
 
+    /// <summary>
+    /// Gets leave applications for an employee with role-based authorization
+    /// SECURITY:
+    /// - Admin/HR can view all employee leave applications
+    /// - Manager can view leave applications for their direct reports
+    /// - Employee can view their own leave applications
+    /// </summary>
     public async Task<List<LeaveApplicationListDto>> GetMyLeavesAsync(Guid employeeId, int? year = null)
     {
+        // AUTHORIZATION CHECK: Verify user can view this employee's leave applications
+        var canView = await CanViewLeaveRequestAsync(employeeId);
+        if (!canView)
+        {
+            LogAuthorizationFailure("GetMyLeaves", employeeId);
+            throw new UnauthorizedAccessException("You do not have permission to view this employee's leave applications");
+        }
+
         var query = _context.LeaveApplications
+            .AsNoTracking()
             .Include(l => l.LeaveType)
             .Include(l => l.Employee)
             .Where(l => l.EmployeeId == employeeId && !l.IsDeleted);
@@ -139,6 +316,13 @@ public class LeaveService : ILeaveService
         return applications.Select(MapToLeaveApplicationListDto).ToList();
     }
 
+    /// <summary>
+    /// Cancels a leave application with role-based authorization
+    /// SECURITY:
+    /// - Admin/HR can cancel any leave application
+    /// - Employee can only cancel their own leave applications
+    /// - Logs all cancellation actions for audit trail
+    /// </summary>
     public async Task<LeaveApplicationDto> CancelLeaveAsync(Guid leaveId, Guid employeeId, CancelLeaveRequest request)
     {
         var application = await _context.LeaveApplications
@@ -146,7 +330,18 @@ public class LeaveService : ILeaveService
             .FirstOrDefaultAsync(l => l.Id == leaveId && l.EmployeeId == employeeId && !l.IsDeleted);
 
         if (application == null)
+        {
+            LogAuthorizationFailure("CancelLeave", leaveId);
             throw new InvalidOperationException("Leave application not found");
+        }
+
+        // AUTHORIZATION CHECK: Verify user can cancel this leave application
+        var canView = await CanViewLeaveRequestAsync(employeeId);
+        if (!canView)
+        {
+            LogAuthorizationFailure("CancelLeave", leaveId);
+            throw new UnauthorizedAccessException("You do not have permission to cancel this leave application");
+        }
 
         if (application.Status != LeaveStatus.PendingApproval && application.Status != LeaveStatus.Approved)
             throw new InvalidOperationException("Only pending or approved leaves can be cancelled");
@@ -188,8 +383,8 @@ public class LeaveService : ILeaveService
 
         await _context.SaveChangesAsync();
 
-        _logger.LogInformation("Leave application {LeaveId} cancelled by employee {EmployeeId}",
-            leaveId, employeeId);
+        // AUDIT LOG: Log leave cancellation action
+        LogLeaveAction("CancelLeave", leaveId, employeeId, request.CancellationReason);
 
         return await GetLeaveApplicationByIdAsync(leaveId);
     }
@@ -198,6 +393,13 @@ public class LeaveService : ILeaveService
 
     #region Approval Workflow
 
+    /// <summary>
+    /// Approves a leave application with role-based authorization
+    /// SECURITY:
+    /// - Admin/HR can approve all leave requests
+    /// - Manager can approve leave requests for their direct reports only
+    /// - Logs all approval actions for audit trail
+    /// </summary>
     public async Task<LeaveApplicationDto> ApproveLeaveAsync(Guid leaveId, Guid approverId, ApproveLeaveRequest request)
     {
         var application = await _context.LeaveApplications
@@ -206,18 +408,20 @@ public class LeaveService : ILeaveService
             .FirstOrDefaultAsync(l => l.Id == leaveId && !l.IsDeleted);
 
         if (application == null)
+        {
+            LogAuthorizationFailure("ApproveLeave", leaveId);
             throw new InvalidOperationException("Leave application not found");
+        }
 
         if (application.Status != LeaveStatus.PendingApproval)
             throw new InvalidOperationException("Leave is not in pending status");
 
-        // Check if approver is the employee's manager
-        var employee = await _context.Employees.FindAsync(application.EmployeeId);
-        if (employee?.ManagerId != approverId)
+        // AUTHORIZATION CHECK: Verify user can approve this leave request
+        var canApprove = await CanApproveLeaveAsync(leaveId);
+        if (!canApprove)
         {
-            // Check if approver has HR role (simplified - in real system check roles)
-            _logger.LogWarning("Approver {ApproverId} may not have permission to approve leave {LeaveId}",
-                approverId, leaveId);
+            LogAuthorizationFailure("ApproveLeave", leaveId);
+            throw new UnauthorizedAccessException("You do not have permission to approve this leave request. Only HR, Admin, or the employee's direct manager can approve leave requests.");
         }
 
         // Update application status
@@ -242,22 +446,40 @@ public class LeaveService : ILeaveService
 
         await _context.SaveChangesAsync();
 
-        _logger.LogInformation("Leave application {LeaveId} approved by {ApproverId}",
-            leaveId, approverId);
+        // AUDIT LOG: Log leave approval action
+        LogLeaveAction("ApproveLeave", leaveId, application.EmployeeId, request.Comments);
 
         return await GetLeaveApplicationByIdAsync(leaveId);
     }
 
+    /// <summary>
+    /// Rejects a leave application with role-based authorization
+    /// SECURITY:
+    /// - Admin/HR can reject all leave requests
+    /// - Manager can reject leave requests for their direct reports only
+    /// - Logs all rejection actions for audit trail
+    /// </summary>
     public async Task<LeaveApplicationDto> RejectLeaveAsync(Guid leaveId, Guid approverId, RejectLeaveRequest request)
     {
         var application = await _context.LeaveApplications
             .FirstOrDefaultAsync(l => l.Id == leaveId && !l.IsDeleted);
 
         if (application == null)
+        {
+            LogAuthorizationFailure("RejectLeave", leaveId);
             throw new InvalidOperationException("Leave application not found");
+        }
 
         if (application.Status != LeaveStatus.PendingApproval)
             throw new InvalidOperationException("Leave is not in pending status");
+
+        // AUTHORIZATION CHECK: Verify user can reject this leave request
+        var canApprove = await CanApproveLeaveAsync(leaveId);
+        if (!canApprove)
+        {
+            LogAuthorizationFailure("RejectLeave", leaveId);
+            throw new UnauthorizedAccessException("You do not have permission to reject this leave request. Only HR, Admin, or the employee's direct manager can reject leave requests.");
+        }
 
         // Update application status
         application.Status = LeaveStatus.Rejected;
@@ -280,21 +502,39 @@ public class LeaveService : ILeaveService
 
         await _context.SaveChangesAsync();
 
-        _logger.LogInformation("Leave application {LeaveId} rejected by {ApproverId}",
-            leaveId, approverId);
+        // AUDIT LOG: Log leave rejection action
+        LogLeaveAction("RejectLeave", leaveId, application.EmployeeId, request.RejectionReason);
 
         return await GetLeaveApplicationByIdAsync(leaveId);
     }
 
+    /// <summary>
+    /// Gets pending leave approvals for a manager with role-based authorization
+    /// SECURITY:
+    /// - Admin/HR can view all pending approvals
+    /// - Manager can only view pending approvals for their direct reports
+    /// </summary>
     public async Task<List<LeaveApplicationListDto>> GetPendingApprovalsAsync(Guid managerId)
     {
+        // Get current user's employee record
+        var currentEmployee = await GetEmployeeByUserIdAsync(_currentUserService.UserId ?? "");
+
+        // AUTHORIZATION CHECK: Verify the managerId matches current user or user is HR/Admin
+        if (!IsHROrAdmin() && currentEmployee?.Id != managerId)
+        {
+            LogAuthorizationFailure("GetPendingApprovals", managerId);
+            throw new UnauthorizedAccessException("You can only view pending approvals for your own team");
+        }
+
         // Get all employees reporting to this manager
         var teamMemberIds = await _context.Employees
+            .AsNoTracking()
             .Where(e => e.ManagerId == managerId && !e.IsDeleted)
             .Select(e => e.Id)
             .ToListAsync();
 
         var applications = await _context.LeaveApplications
+            .AsNoTracking()
             .Include(l => l.Employee)
             .Include(l => l.LeaveType)
             .Where(l => teamMemberIds.Contains(l.EmployeeId) &&
@@ -306,15 +546,33 @@ public class LeaveService : ILeaveService
         return applications.Select(MapToLeaveApplicationListDto).ToList();
     }
 
+    /// <summary>
+    /// Gets team leave applications for a manager with role-based authorization
+    /// SECURITY:
+    /// - Admin/HR can view all team leaves
+    /// - Manager can only view leaves for their direct reports
+    /// </summary>
     public async Task<List<LeaveApplicationListDto>> GetTeamLeavesAsync(Guid managerId, DateTime? startDate = null, DateTime? endDate = null)
     {
+        // Get current user's employee record
+        var currentEmployee = await GetEmployeeByUserIdAsync(_currentUserService.UserId ?? "");
+
+        // AUTHORIZATION CHECK: Verify the managerId matches current user or user is HR/Admin
+        if (!IsHROrAdmin() && currentEmployee?.Id != managerId)
+        {
+            LogAuthorizationFailure("GetTeamLeaves", managerId);
+            throw new UnauthorizedAccessException("You can only view leave applications for your own team");
+        }
+
         // Get all employees reporting to this manager
         var teamMemberIds = await _context.Employees
+            .AsNoTracking()
             .Where(e => e.ManagerId == managerId && !e.IsDeleted)
             .Select(e => e.Id)
             .ToListAsync();
 
         var query = _context.LeaveApplications
+            .AsNoTracking()
             .Include(l => l.Employee)
             .Include(l => l.LeaveType)
             .Where(l => teamMemberIds.Contains(l.EmployeeId) && !l.IsDeleted);
@@ -336,11 +594,27 @@ public class LeaveService : ILeaveService
 
     #region Leave Balance
 
+    /// <summary>
+    /// Gets leave balance for an employee with role-based authorization
+    /// SECURITY:
+    /// - Admin/HR can view all leave balances
+    /// - Manager can view leave balances for their direct reports
+    /// - Employee can view their own leave balance
+    /// </summary>
     public async Task<List<LeaveBalanceDto>> GetLeaveBalanceAsync(Guid employeeId, int? year = null)
     {
+        // AUTHORIZATION CHECK: Verify user can view this employee's leave balance
+        var canView = await CanViewLeaveRequestAsync(employeeId);
+        if (!canView)
+        {
+            LogAuthorizationFailure("GetLeaveBalance", employeeId);
+            throw new UnauthorizedAccessException("You do not have permission to view this employee's leave balance");
+        }
+
         var currentYear = year ?? DateTime.UtcNow.Year;
 
         var balances = await _context.LeaveBalances
+            .AsNoTracking()
             .Include(b => b.LeaveType)
             .Where(b => b.EmployeeId == employeeId && b.Year == currentYear && !b.IsDeleted)
             .OrderBy(b => b.LeaveType!.TypeCode)
@@ -351,6 +625,7 @@ public class LeaveService : ILeaveService
         {
             await InitializeLeaveBalanceAsync(employeeId, currentYear);
             balances = await _context.LeaveBalances
+                .AsNoTracking()
                 .Include(b => b.LeaveType)
                 .Where(b => b.EmployeeId == employeeId && b.Year == currentYear && !b.IsDeleted)
                 .OrderBy(b => b.LeaveType!.TypeCode)
@@ -439,8 +714,21 @@ public class LeaveService : ILeaveService
             employeeId, month, year);
     }
 
+    /// <summary>
+    /// Updates leave balance for an employee with authorization and audit logging
+    /// SECURITY:
+    /// - Only Admin/HR can update leave balances
+    /// - All modifications are logged for audit trail
+    /// </summary>
     public async Task UpdateLeaveBalanceAsync(Guid employeeId, Guid leaveTypeId, int year, decimal days, string reason)
     {
+        // AUTHORIZATION CHECK: Only HR/Admin can update leave balances
+        if (!IsHROrAdmin())
+        {
+            LogAuthorizationFailure("UpdateLeaveBalance", employeeId);
+            throw new UnauthorizedAccessException("Only HR and Admin roles can update leave balances");
+        }
+
         var balance = await _context.LeaveBalances
             .FirstOrDefaultAsync(b => b.EmployeeId == employeeId &&
                                       b.LeaveTypeId == leaveTypeId &&
@@ -461,8 +749,8 @@ public class LeaveService : ILeaveService
             balance.UpdatedAt = DateTime.UtcNow;
             await _context.SaveChangesAsync();
 
-            _logger.LogInformation("Leave balance updated for employee {EmployeeId}: {Days} days. Reason: {Reason}",
-                employeeId, days, reason);
+            // AUDIT LOG: Log leave balance modification
+            LogLeaveBalanceModification("UpdateLeaveBalance", employeeId, leaveTypeId, days, reason);
         }
     }
 
@@ -473,6 +761,7 @@ public class LeaveService : ILeaveService
     public async Task<List<LeaveCalendarDto>> GetLeaveCalendarAsync(DateTime startDate, DateTime endDate, Guid? departmentId = null)
     {
         var query = _context.LeaveApplications
+            .AsNoTracking()
             .Include(l => l.Employee)
                 .ThenInclude(e => e!.Department)
             .Include(l => l.LeaveType)
@@ -517,6 +806,7 @@ public class LeaveService : ILeaveService
     public async Task<List<LeaveTypeDto>> GetLeaveTypesAsync()
     {
         var leaveTypes = await _context.LeaveTypes
+            .AsNoTracking()
             .Where(lt => lt.IsActive && !lt.IsDeleted)
             .OrderBy(lt => lt.TypeCode)
             .ToListAsync();
@@ -539,6 +829,7 @@ public class LeaveService : ILeaveService
     public async Task<LeaveTypeDto> GetLeaveTypeByIdAsync(Guid id)
     {
         var leaveType = await _context.LeaveTypes
+            .AsNoTracking()
             .FirstOrDefaultAsync(lt => lt.Id == id && !lt.IsDeleted);
 
         if (leaveType == null)
@@ -566,6 +857,7 @@ public class LeaveService : ILeaveService
     public async Task<List<PublicHolidayDto>> GetPublicHolidaysAsync(int year)
     {
         var holidays = await _context.PublicHolidays
+            .AsNoTracking()
             .Where(h => h.Year == year && h.IsActive && !h.IsDeleted)
             .OrderBy(h => h.Date)
             .ToListAsync();

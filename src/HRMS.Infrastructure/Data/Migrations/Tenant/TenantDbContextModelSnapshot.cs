@@ -141,12 +141,25 @@ namespace HRMS.Infrastructure.Data.Migrations.Tenant
 
                     b.HasIndex("Status");
 
+                    b.HasIndex("DeviceId", "Date")
+                        .HasFilter("\"IsDeleted\" = false");
+
                     b.HasIndex("EmployeeId", "Date")
                         .IsUnique();
 
+                    b.HasIndex("EmployeeId", "Date", "Status")
+                        .HasFilter("\"IsDeleted\" = false");
+
                     b.HasIndex("EmployeeId", "DeviceId", "Date");
 
-                    b.ToTable("Attendances", "tenant_default");
+                    b.ToTable("Attendances", "tenant_default", t =>
+                        {
+                            t.HasCheckConstraint("chk_Attendances_OvertimeHours_NonNegative", "\"OvertimeHours\" >= 0");
+
+                            t.HasCheckConstraint("chk_Attendances_OvertimeRate_NonNegative", "\"OvertimeRate\" >= 0");
+
+                            t.HasCheckConstraint("chk_Attendances_WorkingHours_NonNegative", "\"WorkingHours\" >= 0");
+                        });
                 });
 
             modelBuilder.Entity("HRMS.Core.Entities.Tenant.AttendanceAnomaly", b =>
@@ -265,7 +278,10 @@ namespace HRMS.Infrastructure.Data.Migrations.Tenant
 
                     b.HasIndex("EmployeeId", "AnomalyDate");
 
-                    b.ToTable("AttendanceAnomalies", "tenant_default");
+                    b.ToTable("AttendanceAnomalies", "tenant_default", t =>
+                        {
+                            t.HasCheckConstraint("chk_AttendanceAnomalies_Description_NotEmpty", "\"AnomalyDescription\" IS NULL OR LENGTH(TRIM(\"AnomalyDescription\")) > 0");
+                        });
                 });
 
             modelBuilder.Entity("HRMS.Core.Entities.Tenant.AttendanceCorrection", b =>
@@ -755,7 +771,12 @@ namespace HRMS.Infrastructure.Data.Migrations.Tenant
 
                     b.HasIndex("IsActive", "ExpiresAt");
 
-                    b.ToTable("DeviceApiKeys", "tenant_default");
+                    b.ToTable("DeviceApiKeys", "tenant_default", t =>
+                        {
+                            t.HasCheckConstraint("chk_DeviceApiKeys_Description_NotEmpty", "LENGTH(TRIM(\"Description\")) > 0");
+
+                            t.HasCheckConstraint("chk_DeviceApiKeys_Hash_Length", "LENGTH(\"ApiKeyHash\") >= 64");
+                        });
                 });
 
             modelBuilder.Entity("HRMS.Core.Entities.Tenant.DeviceSyncLog", b =>
@@ -1302,7 +1323,18 @@ namespace HRMS.Infrastructure.Data.Migrations.Tenant
 
                     b.HasIndex("PrimaryLocationId");
 
-                    b.ToTable("Employees", "tenant_default");
+                    b.ToTable("Employees", "tenant_default", t =>
+                        {
+                            t.HasCheckConstraint("chk_Employees_AnnualLeaveBalance_NonNegative", "\"AnnualLeaveBalance\" >= 0");
+
+                            t.HasCheckConstraint("chk_Employees_BasicSalary_NonNegative", "\"BasicSalary\" >= 0");
+
+                            t.HasCheckConstraint("chk_Employees_CasualLeaveBalance_NonNegative", "\"CasualLeaveBalance\" >= 0");
+
+                            t.HasCheckConstraint("chk_Employees_PasswordHash_Length", "\"PasswordHash\" IS NULL OR LENGTH(\"PasswordHash\") >= 32");
+
+                            t.HasCheckConstraint("chk_Employees_SickLeaveBalance_NonNegative", "\"SickLeaveBalance\" >= 0");
+                        });
                 });
 
             modelBuilder.Entity("HRMS.Core.Entities.Tenant.EmployeeDeviceAccess", b =>
@@ -1691,7 +1723,15 @@ namespace HRMS.Infrastructure.Data.Migrations.Tenant
                     b.HasIndex("EmployeeId", "LeaveTypeId", "Year")
                         .IsUnique();
 
-                    b.ToTable("LeaveBalances", "tenant_default");
+                    b.HasIndex("EmployeeId", "Year", "LeaveTypeId")
+                        .HasFilter("\"IsDeleted\" = false");
+
+                    b.ToTable("LeaveBalances", "tenant_default", t =>
+                        {
+                            t.HasCheckConstraint("chk_LeaveBalances_Accrual_NonNegative", "\"CarriedForward\" >= 0 AND \"Accrued\" >= 0");
+
+                            t.HasCheckConstraint("chk_LeaveBalances_Days_NonNegative", "\"TotalEntitlement\" >= 0 AND \"UsedDays\" >= 0 AND \"PendingDays\" >= 0");
+                        });
                 });
 
             modelBuilder.Entity("HRMS.Core.Entities.Tenant.LeaveEncashment", b =>
@@ -1761,7 +1801,12 @@ namespace HRMS.Infrastructure.Data.Migrations.Tenant
 
                     b.HasIndex("EmployeeId");
 
-                    b.ToTable("LeaveEncashments", "tenant_default");
+                    b.ToTable("LeaveEncashments", "tenant_default", t =>
+                        {
+                            t.HasCheckConstraint("chk_LeaveEncashments_Amount_NonNegative", "\"DailySalary\" >= 0 AND \"TotalEncashmentAmount\" >= 0");
+
+                            t.HasCheckConstraint("chk_LeaveEncashments_Days_NonNegative", "\"UnusedAnnualLeaveDays\" >= 0 AND \"UnusedSickLeaveDays\" >= 0 AND \"TotalEncashableDays\" >= 0");
+                        });
                 });
 
             modelBuilder.Entity("HRMS.Core.Entities.Tenant.LeaveType", b =>
@@ -2059,7 +2104,20 @@ namespace HRMS.Infrastructure.Data.Migrations.Tenant
                     b.HasIndex("Month", "Year")
                         .IsUnique();
 
-                    b.ToTable("PayrollCycles", "tenant_default");
+                    b.HasIndex("Status", "PaymentDate")
+                        .HasFilter("\"IsDeleted\" = false");
+
+                    b.HasIndex("Year", "Month")
+                        .HasFilter("\"IsDeleted\" = false");
+
+                    b.ToTable("PayrollCycles", "tenant_default", t =>
+                        {
+                            t.HasCheckConstraint("chk_PayrollCycles_Month_Valid", "\"Month\" >= 1 AND \"Month\" <= 12");
+
+                            t.HasCheckConstraint("chk_PayrollCycles_Salary_NonNegative", "\"TotalGrossSalary\" >= 0 AND \"TotalDeductions\" >= 0 AND \"TotalNetSalary\" >= 0");
+
+                            t.HasCheckConstraint("chk_PayrollCycles_Year_Valid", "\"Year\" > 1900");
+                        });
                 });
 
             modelBuilder.Entity("HRMS.Core.Entities.Tenant.Payslip", b =>
@@ -2253,7 +2311,16 @@ namespace HRMS.Infrastructure.Data.Migrations.Tenant
 
                     b.HasIndex("EmployeeId", "Month", "Year");
 
-                    b.ToTable("Payslips", "tenant_default");
+                    b.ToTable("Payslips", "tenant_default", t =>
+                        {
+                            t.HasCheckConstraint("chk_Payslips_Allowances_NonNegative", "\"HousingAllowance\" >= 0 AND \"TransportAllowance\" >= 0 AND \"MealAllowance\" >= 0 AND \"MobileAllowance\" >= 0 AND \"OtherAllowances\" >= 0");
+
+                            t.HasCheckConstraint("chk_Payslips_LeaveDays_NonNegative", "\"PaidLeaveDays\" >= 0 AND \"UnpaidLeaveDays\" >= 0");
+
+                            t.HasCheckConstraint("chk_Payslips_Overtime_NonNegative", "\"OvertimeHours\" >= 0 AND \"OvertimePay\" >= 0");
+
+                            t.HasCheckConstraint("chk_Payslips_Salary_NonNegative", "\"BasicSalary\" >= 0 AND \"TotalGrossSalary\" >= 0 AND \"TotalDeductions\" >= 0");
+                        });
                 });
 
             modelBuilder.Entity("HRMS.Core.Entities.Tenant.PublicHoliday", b =>
@@ -2419,7 +2486,10 @@ namespace HRMS.Infrastructure.Data.Migrations.Tenant
 
                     b.HasIndex("IsActive", "EffectiveFrom");
 
-                    b.ToTable("SalaryComponents", "tenant_default");
+                    b.ToTable("SalaryComponents", "tenant_default", t =>
+                        {
+                            t.HasCheckConstraint("chk_SalaryComponents_Amount_NonNegative", "\"Amount\" >= 0");
+                        });
                 });
 
             modelBuilder.Entity("HRMS.Core.Entities.Tenant.TenantCustomComplianceRule", b =>
@@ -2648,9 +2718,18 @@ namespace HRMS.Infrastructure.Data.Migrations.Tenant
 
                     b.HasIndex("PeriodStart", "PeriodEnd");
 
+                    b.HasIndex("Status", "PeriodStart")
+                        .HasFilter("\"IsDeleted\" = false");
+
                     b.HasIndex("EmployeeId", "PeriodStart", "PeriodEnd");
 
-                    b.ToTable("Timesheets", "tenant_default");
+                    b.HasIndex("EmployeeId", "Status", "PeriodStart")
+                        .HasFilter("\"IsDeleted\" = false");
+
+                    b.ToTable("Timesheets", "tenant_default", t =>
+                        {
+                            t.HasCheckConstraint("chk_Timesheets_Hours_NonNegative", "\"TotalRegularHours\" >= 0 AND \"TotalOvertimeHours\" >= 0 AND \"TotalHolidayHours\" >= 0 AND \"TotalSickLeaveHours\" >= 0 AND \"TotalAnnualLeaveHours\" >= 0 AND \"TotalAbsentHours\" >= 0");
+                        });
                 });
 
             modelBuilder.Entity("HRMS.Core.Entities.Tenant.TimesheetAdjustment", b =>
@@ -2885,9 +2964,13 @@ namespace HRMS.Infrastructure.Data.Migrations.Tenant
 
                     b.HasIndex("Date");
 
-                    b.HasIndex("TimesheetId", "Date");
+                    b.HasIndex("TimesheetId", "Date")
+                        .HasFilter("\"IsDeleted\" = false");
 
-                    b.ToTable("TimesheetEntries", "tenant_default");
+                    b.ToTable("TimesheetEntries", "tenant_default", t =>
+                        {
+                            t.HasCheckConstraint("chk_TimesheetEntries_Hours_NonNegative", "\"ActualHours\" >= 0 AND \"RegularHours\" >= 0 AND \"OvertimeHours\" >= 0 AND \"HolidayHours\" >= 0 AND \"SickLeaveHours\" >= 0 AND \"AnnualLeaveHours\" >= 0");
+                        });
                 });
 
             modelBuilder.Entity("HRMS.Core.Entities.Tenant.Attendance", b =>

@@ -3,5 +3,7 @@ export const environment = {
   apiUrl: 'https://api.hrms.com/api',
   appName: 'HRMS',
   version: '1.0.0',
-  superAdminSecretPath: 'system-9f7a2b4c-3d8e-4a1b-8c9d-1e2f3a4b5c6d'
+  // SECURITY: Rotated on 2025-11-12 - Previous path was exposed in Git history
+  // IMPORTANT: Update backend SuperAdmin route to match this new path
+  superAdminSecretPath: 'system-d27b11e7-fae7-4f19-8a56-6d3455b97105'
 };

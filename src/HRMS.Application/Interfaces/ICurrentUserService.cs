@@ -38,4 +38,19 @@ public interface ICurrentUserService
     /// Use this for CreatedBy/UpdatedBy fields
     /// </summary>
     string GetAuditUsername();
+
+    /// <summary>
+    /// Gets all roles assigned to the current user
+    /// </summary>
+    IEnumerable<string> Roles { get; }
+
+    /// <summary>
+    /// Checks if the current user has a specific role
+    /// </summary>
+    bool HasRole(string role);
+
+    /// <summary>
+    /// Checks if the current user has any of the specified roles
+    /// </summary>
+    bool HasAnyRole(params string[] roles);
 }

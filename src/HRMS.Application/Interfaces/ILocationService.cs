@@ -18,7 +18,16 @@ public interface ILocationService
     Task<List<LocationSummaryDto>> GetAllLocationsAsync(bool activeOnly = true);
     Task<List<LocationDropdownDto>> GetLocationsForDropdownAsync(bool activeOnly = true);
 
+    // Advanced Filtering
+    Task<(List<LocationSummaryDto> Locations, int TotalCount)> GetLocationsWithFilterAsync(LocationFilterDto filter);
+    Task<List<string>> GetDistrictsAsync();
+    Task<List<LocationSummaryDto>> GetLocationsByDistrictAsync(string district, bool activeOnly = true);
+    Task<List<LocationSummaryDto>> SearchLocationsAsync(string searchTerm, bool activeOnly = true);
+
     // Statistics
     Task<int> GetDeviceCountByLocationAsync(Guid locationId);
     Task<int> GetEmployeeCountByLocationAsync(Guid locationId);
+
+    // Data Seeding
+    Task SeedMauritiusLocationsAsync(string createdBy);
 }
