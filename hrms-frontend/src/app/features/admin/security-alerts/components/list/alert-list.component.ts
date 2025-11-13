@@ -1,5 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { Router, ActivatedRoute } from '@angular/router';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { Router, ActivatedRoute, RouterModule } from '@angular/router';
 import { Subject } from 'rxjs';
 import { takeUntil, debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { SecurityAlertService } from '../../../../../services/security-alert.service';
@@ -17,9 +19,9 @@ import {
 
 @Component({
   selector: 'app-alert-list',
+  imports: [CommonModule, FormsModule, RouterModule],
   templateUrl: './alert-list.component.html',
-  styleUrls: ['./alert-list.component.css'],
-  standalone: false
+  styleUrls: ['./alert-list.component.css']
 })
 export class AlertListComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();

@@ -1,4 +1,3 @@
-/workspaces/HRAPP/src/HRMS.API/bin/Debug/net9.0/appsettings.Development.json
 /workspaces/HRAPP/src/HRMS.API/bin/Debug/net9.0/appsettings.json
 /workspaces/HRAPP/src/HRMS.API/bin/Debug/net9.0/appsettings.Production.json
 /workspaces/HRAPP/src/HRMS.API/bin/Debug/net9.0/appsettings.Staging.json

@@ -1,6 +1,7 @@
 using HRMS.Application.DTOs.AttendanceDtos;
 using HRMS.Application.Interfaces;
 using HRMS.Core.Enums;
+using HRMS.Core.Exceptions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -25,6 +26,108 @@ public class AttendanceController : ControllerBase
     {
         _attendanceService = attendanceService;
         _logger = logger;
+    }
+
+    /// <summary>
+    /// ✅ FORTUNE 500: Employee self-service check-in
+    /// </summary>
+    /// <remarks>
+    /// POST /api/attendance/check-in
+    /// {
+    ///   "employeeId": "guid"
+    /// }
+    /// Records check-in time for today. Employees can check in for themselves.
+    /// </remarks>
+    [HttpPost("check-in")]
+    [Authorize] // All authenticated users can check in
+    public async Task<IActionResult> CheckIn([FromBody] CheckInRequestDto request)
+    {
+        try
+        {
+            var attendance = await _attendanceService.CheckInAsync(request.EmployeeId);
+
+            return Ok(new
+            {
+                message = "Check-in recorded successfully",
+                data = attendance
+            });
+        }
+        catch (ConflictException ex)
+        {
+            _logger.LogWarning(ex, "Check-in conflict for employee {EmployeeId}", request.EmployeeId);
+            return Conflict(new { error = ex.Message });
+        }
+        catch (NotFoundException ex)
+        {
+            _logger.LogWarning(ex, "Employee not found during check-in: {EmployeeId}", request.EmployeeId);
+            return NotFound(new { error = ex.Message });
+        }
+        catch (ForbiddenException ex)
+        {
+            _logger.LogWarning(ex, "Unauthorized check-in attempt for employee {EmployeeId}", request.EmployeeId);
+            return Forbid();
+        }
+        catch (ValidationException ex)
+        {
+            _logger.LogWarning(ex, "Validation error during check-in for employee {EmployeeId}", request.EmployeeId);
+            return BadRequest(new { error = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error during check-in for employee {EmployeeId}", request.EmployeeId);
+            return StatusCode(500, new { error = "An error occurred during check-in. Please try again." });
+        }
+    }
+
+    /// <summary>
+    /// ✅ FORTUNE 500: Employee self-service check-out
+    /// </summary>
+    /// <remarks>
+    /// POST /api/attendance/check-out
+    /// {
+    ///   "employeeId": "guid"
+    /// }
+    /// Records check-out time for today. Employees can check out for themselves.
+    /// </remarks>
+    [HttpPost("check-out")]
+    [Authorize] // All authenticated users can check out
+    public async Task<IActionResult> CheckOut([FromBody] CheckOutRequestDto request)
+    {
+        try
+        {
+            var attendance = await _attendanceService.CheckOutAsync(request.EmployeeId);
+
+            return Ok(new
+            {
+                message = "Check-out recorded successfully",
+                data = attendance
+            });
+        }
+        catch (NotFoundException ex)
+        {
+            _logger.LogWarning(ex, "No check-in found during check-out for employee {EmployeeId}", request.EmployeeId);
+            return NotFound(new { error = ex.Message });
+        }
+        catch (ConflictException ex)
+        {
+            _logger.LogWarning(ex, "Check-out conflict for employee {EmployeeId}", request.EmployeeId);
+            return Conflict(new { error = ex.Message });
+        }
+        catch (ForbiddenException ex)
+        {
+            _logger.LogWarning(ex, "Unauthorized check-out attempt for employee {EmployeeId}", request.EmployeeId);
+            return Forbid();
+        }
+        catch (ValidationException ex)
+        {
+            _logger.LogWarning(ex, "Validation error during check-out for employee {EmployeeId}", request.EmployeeId);
+            return BadRequest(new { error = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error during check-out for employee {EmployeeId}", request.EmployeeId);
+            return StatusCode(500, new { error = "An error occurred during check-out. Please try again." });
+        }
     }
 
     /// <summary>

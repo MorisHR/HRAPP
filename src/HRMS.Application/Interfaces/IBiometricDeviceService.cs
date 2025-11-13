@@ -22,4 +22,37 @@ public interface IBiometricDeviceService
     // Sync Status
     Task<List<DeviceSyncStatusDto>> GetDeviceSyncStatusAsync();
     Task<DeviceSyncStatusDto?> GetDeviceSyncStatusByIdAsync(Guid deviceId);
+
+    // Device Connection & Sync Operations
+    /// <summary>
+    /// Test connection to a biometric device
+    /// </summary>
+    Task<ConnectionTestResultDto> TestConnectionAsync(TestConnectionDto dto);
+
+    /// <summary>
+    /// Manually trigger a device sync operation
+    /// </summary>
+    Task<ManualSyncResultDto> TriggerManualSyncAsync(Guid deviceId);
+
+    // API Key Management
+    /// <summary>
+    /// Get all API keys for a specific device
+    /// </summary>
+    Task<List<DeviceApiKeyDto>> GetDeviceApiKeysAsync(Guid deviceId);
+
+    /// <summary>
+    /// Generate a new API key for a device
+    /// Returns the plaintext key ONLY ONCE - it cannot be retrieved later
+    /// </summary>
+    Task<GenerateApiKeyResponse> GenerateApiKeyAsync(Guid deviceId, string description, string createdBy);
+
+    /// <summary>
+    /// Revoke an API key (mark as inactive)
+    /// </summary>
+    Task RevokeApiKeyAsync(Guid deviceId, Guid apiKeyId, string revokedBy);
+
+    /// <summary>
+    /// Rotate an API key (revoke old, generate new)
+    /// </summary>
+    Task<GenerateApiKeyResponse> RotateApiKeyAsync(Guid deviceId, Guid apiKeyId, string rotatedBy);
 }

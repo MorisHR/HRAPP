@@ -31,7 +31,7 @@ import {
   providedIn: 'root'
 })
 export class SecurityAlertService {
-  private readonly apiUrl = `${environment.apiUrl}/api/security-alerts`;
+  private readonly apiUrl = `${environment.apiUrl}/security-alerts`;
 
   constructor(private http: HttpClient) {}
 

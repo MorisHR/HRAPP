@@ -32,6 +32,9 @@ namespace HRMS.Infrastructure.Data.Migrations.Master
                     b.Property<int>("AccessFailedCount")
                         .HasColumnType("integer");
 
+                    b.Property<DateTime?>("ActivationTokenExpiry")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("AllowedIPAddresses")
                         .HasColumnType("text");
 
@@ -117,6 +120,12 @@ namespace HRMS.Infrastructure.Data.Migrations.Master
 
                     b.Property<string>("PasswordHistory")
                         .HasColumnType("text");
+
+                    b.Property<string>("PasswordResetToken")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("PasswordResetTokenExpiry")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Permissions")
                         .HasColumnType("text");
@@ -824,7 +833,7 @@ namespace HRMS.Infrastructure.Data.Migrations.Master
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<Guid>("AdminUserId")
+                    b.Property<Guid?>("AdminUserId")
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("CreatedAt")
@@ -835,7 +844,13 @@ namespace HRMS.Infrastructure.Data.Migrations.Master
                         .HasMaxLength(45)
                         .HasColumnType("character varying(45)");
 
+                    b.Property<Guid?>("EmployeeId")
+                        .HasColumnType("uuid");
+
                     b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("LastActivityAt")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("ReasonRevoked")
@@ -852,6 +867,12 @@ namespace HRMS.Infrastructure.Data.Migrations.Master
                     b.Property<string>("RevokedByIp")
                         .HasMaxLength(45)
                         .HasColumnType("character varying(45)");
+
+                    b.Property<int>("SessionTimeoutMinutes")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("Token")
                         .IsRequired()
@@ -1751,8 +1772,7 @@ namespace HRMS.Infrastructure.Data.Migrations.Master
                     b.HasOne("HRMS.Core.Entities.Master.AdminUser", "AdminUser")
                         .WithMany()
                         .HasForeignKey("AdminUserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Cascade);
 
                     b.Navigation("AdminUser");
                 });

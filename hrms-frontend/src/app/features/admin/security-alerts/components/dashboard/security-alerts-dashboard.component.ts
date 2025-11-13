@@ -1,5 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { Router } from '@angular/router';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { Router, RouterModule } from '@angular/router';
 import { Subject, interval } from 'rxjs';
 import { takeUntil, switchMap, startWith } from 'rxjs/operators';
 import { SecurityAlertService } from '../../../../../services/security-alert.service';
@@ -14,9 +16,9 @@ import {
 
 @Component({
   selector: 'app-security-alerts-dashboard',
+  imports: [CommonModule, FormsModule, RouterModule],
   templateUrl: './security-alerts-dashboard.component.html',
-  styleUrls: ['./security-alerts-dashboard.component.css'],
-  standalone: false
+  styleUrls: ['./security-alerts-dashboard.component.css']
 })
 export class SecurityAlertsDashboardComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();

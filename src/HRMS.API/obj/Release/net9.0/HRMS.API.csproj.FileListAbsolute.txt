@@ -1,4 +1,3 @@
-/workspaces/HRAPP/src/HRMS.API/bin/Release/net9.0/appsettings.Development.json
 /workspaces/HRAPP/src/HRMS.API/bin/Release/net9.0/appsettings.json
 /workspaces/HRAPP/src/HRMS.API/bin/Release/net9.0/appsettings.Production.json
 /workspaces/HRAPP/src/HRMS.API/bin/Release/net9.0/appsettings.Staging.json
@@ -284,3 +283,15 @@
 /workspaces/HRAPP/src/HRMS.API/bin/Release/net9.0/Google.Apis.Storage.v1.dll
 /workspaces/HRAPP/src/HRMS.API/bin/Release/net9.0/Google.Cloud.Storage.V1.dll
 /workspaces/HRAPP/src/HRMS.API/bin/Release/net9.0/Microsoft.Extensions.Caching.StackExchangeRedis.dll
+/workspaces/HRAPP/src/HRMS.API/bin/Release/net9.0/BouncyCastle.Cryptography.dll
+/workspaces/HRAPP/src/HRMS.API/bin/Release/net9.0/Hangfire.SqlServer.dll
+/workspaces/HRAPP/src/HRMS.API/bin/Release/net9.0/MailKit.dll
+/workspaces/HRAPP/src/HRMS.API/bin/Release/net9.0/Microsoft.Win32.SystemEvents.dll
+/workspaces/HRAPP/src/HRMS.API/bin/Release/net9.0/MimeKit.dll
+/workspaces/HRAPP/src/HRMS.API/bin/Release/net9.0/Otp.NET.dll
+/workspaces/HRAPP/src/HRMS.API/bin/Release/net9.0/QRCoder.dll
+/workspaces/HRAPP/src/HRMS.API/bin/Release/net9.0/System.Drawing.Common.dll
+/workspaces/HRAPP/src/HRMS.API/bin/Release/net9.0/System.Net.WebSockets.WebSocketProtocol.dll
+/workspaces/HRAPP/src/HRMS.API/bin/Release/net9.0/runtimes/win/lib/net6.0/Microsoft.Win32.SystemEvents.dll
+/workspaces/HRAPP/src/HRMS.API/bin/Release/net9.0/runtimes/unix/lib/net6.0/System.Drawing.Common.dll
+/workspaces/HRAPP/src/HRMS.API/bin/Release/net9.0/runtimes/win/lib/net6.0/System.Drawing.Common.dll

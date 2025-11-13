@@ -1,5 +1,5 @@
 import { Component, signal, inject, OnInit, OnDestroy } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { Router, ActivatedRoute, RouterModule } from '@angular/router';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Subject, debounceTime, takeUntil } from 'rxjs';
@@ -34,7 +34,6 @@ import { SalaryComponentsService, SalaryComponentDto } from '../../../core/servi
   selector: 'app-comprehensive-employee-form',
   standalone: true,
   imports: [
-    CommonModule,
     ReactiveFormsModule,
     RouterModule,
     MatExpansionModule,
@@ -53,7 +52,7 @@ import { SalaryComponentsService, SalaryComponentDto } from '../../../core/servi
     MatTooltipModule,
     MatDividerModule,
     MatSnackBarModule
-  ],
+],
   templateUrl: './comprehensive-employee-form.component.html',
   styleUrls: ['./comprehensive-employee-form.component.scss']
 })

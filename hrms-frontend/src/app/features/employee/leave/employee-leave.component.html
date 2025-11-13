@@ -1,0 +1,277 @@
+<div class="leave-container">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1>My Leave Requests</h1>
+      <p class="subtitle">Apply for leave and track your requests</p>
+    </div>
+    <div class="header-actions">
+      <button mat-raised-button color="primary" (click)="toggleForm()" [disabled]="loading()">
+        <mat-icon>{{ showForm() ? 'close' : 'add' }}</mat-icon>
+        {{ showForm() ? 'Cancel' : 'Apply Leave' }}
+      </button>
+      <button mat-raised-button routerLink="/employee/dashboard" class="back-button">
+        <mat-icon>arrow_back</mat-icon>
+        Back
+      </button>
+    </div>
+  </div>
+
+  <!-- Leave Balance Cards -->
+  <div class="balance-section">
+    <h2 class="section-title">Leave Balance</h2>
+    <div class="balance-grid">
+      @for (balance of leaveBalances(); track balance.type) {
+        <mat-card class="balance-card">
+          <mat-card-content>
+            <div class="balance-header">
+              <h3>{{ getLeaveTypeLabel(balance.type) }}</h3>
+              <mat-chip [color]="getBalanceColor(getBalancePercentage(balance))">
+                {{ balance.remaining }} left
+              </mat-chip>
+            </div>
+            <div class="balance-details">
+              <div class="balance-bar">
+                <div
+                  class="balance-fill"
+                  [style.width.%]="getBalancePercentage(balance)"
+                  [class]="getBalanceColor(getBalancePercentage(balance))">
+                </div>
+              </div>
+              <div class="balance-stats">
+                <span>Used: <strong>{{ balance.used }}</strong></span>
+                <span>Total: <strong>{{ balance.total }}</strong></span>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      }
+    </div>
+  </div>
+
+  <!-- Leave Application Form -->
+  @if (showForm()) {
+    <mat-card class="form-card">
+      <mat-card-header>
+        <mat-card-title>Apply for Leave</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <form [formGroup]="leaveForm" (ngSubmit)="onSubmit()" class="leave-form">
+          <div class="form-row">
+            <!-- Leave Type -->
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Leave Type</mat-label>
+              <mat-select formControlName="leaveType">
+                @for (type of leaveTypes; track type.value) {
+                  <mat-option [value]="type.value">{{ type.label }}</mat-option>
+                }
+              </mat-select>
+              <mat-error>Leave type is required</mat-error>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <!-- Start Date -->
+            <mat-form-field appearance="outline">
+              <mat-label>Start Date</mat-label>
+              <input matInput [matDatepicker]="startPicker" formControlName="startDate">
+              <mat-datepicker-toggle matIconSuffix [for]="startPicker"></mat-datepicker-toggle>
+              <mat-datepicker #startPicker></mat-datepicker>
+              <mat-error>Start date is required</mat-error>
+            </mat-form-field>
+
+            <!-- End Date -->
+            <mat-form-field appearance="outline">
+              <mat-label>End Date</mat-label>
+              <input matInput [matDatepicker]="endPicker" formControlName="endDate">
+              <mat-datepicker-toggle matIconSuffix [for]="endPicker"></mat-datepicker-toggle>
+              <mat-datepicker #endPicker></mat-datepicker>
+              <mat-error>End date is required</mat-error>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <!-- Reason -->
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Reason for Leave</mat-label>
+              <textarea
+                matInput
+                formControlName="reason"
+                rows="4"
+                placeholder="Please provide a reason for your leave request (minimum 10 characters)"
+                maxlength="500">
+              </textarea>
+              <mat-hint align="end">{{ leaveForm.get('reason')?.value?.length || 0 }}/500</mat-hint>
+              <mat-error>
+                @if (leaveForm.get('reason')?.hasError('required')) {
+                  Reason is required
+                }
+                @if (leaveForm.get('reason')?.hasError('minlength')) {
+                  Reason must be at least 10 characters
+                }
+              </mat-error>
+            </mat-form-field>
+          </div>
+
+          <div class="form-actions">
+            <button
+              type="submit"
+              mat-raised-button
+              color="primary"
+              [disabled]="submitting() || leaveForm.invalid">
+              @if (submitting()) {
+                <mat-spinner diameter="20" class="inline-spinner"></mat-spinner>
+                Submitting...
+              } @else {
+                <mat-icon>send</mat-icon>
+                Submit Request
+              }
+            </button>
+            <button type="button" mat-button (click)="toggleForm()">Cancel</button>
+          </div>
+        </form>
+      </mat-card-content>
+    </mat-card>
+  }
+
+  <!-- Stats Cards -->
+  <div class="stats-grid">
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-icon info">
+          <mat-icon>assignment</mat-icon>
+        </div>
+        <div class="stat-details">
+          <div class="stat-value">{{ stats().total }}</div>
+          <div class="stat-label">Total Requests</div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-icon warning">
+          <mat-icon>pending</mat-icon>
+        </div>
+        <div class="stat-details">
+          <div class="stat-value">{{ stats().pending }}</div>
+          <div class="stat-label">Pending</div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-icon success">
+          <mat-icon>check_circle</mat-icon>
+        </div>
+        <div class="stat-details">
+          <div class="stat-value">{{ stats().approved }}</div>
+          <div class="stat-label">Approved</div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-icon error">
+          <mat-icon>cancel</mat-icon>
+        </div>
+        <div class="stat-details">
+          <div class="stat-value">{{ stats().rejected }}</div>
+          <div class="stat-label">Rejected</div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Leave History -->
+  <mat-card class="history-card">
+    <mat-card-header>
+      <mat-card-title>Leave History</mat-card-title>
+      <button mat-icon-button (click)="loadLeaveData()" [disabled]="loading()">
+        <mat-icon>refresh</mat-icon>
+      </button>
+    </mat-card-header>
+
+    <mat-card-content>
+      @if (loading()) {
+        <div class="loading-state">
+          <mat-spinner diameter="50"></mat-spinner>
+          <p>Loading leave requests...</p>
+        </div>
+      } @else if (leaveRequests().length === 0) {
+        <div class="empty-state">
+          <mat-icon>inbox</mat-icon>
+          <p>No leave requests found</p>
+          <button mat-raised-button color="primary" (click)="toggleForm()">
+            Apply for Leave
+          </button>
+        </div>
+      } @else {
+        <div class="table-container">
+          <table mat-table [dataSource]="leaveRequests()" class="leave-table">
+            <!-- Leave Type Column -->
+            <ng-container matColumnDef="leaveType">
+              <th mat-header-cell *matHeaderCellDef>Leave Type</th>
+              <td mat-cell *matCellDef="let request">{{ request.leaveType }}</td>
+            </ng-container>
+
+            <!-- Dates Column -->
+            <ng-container matColumnDef="dates">
+              <th mat-header-cell *matHeaderCellDef>Period</th>
+              <td mat-cell *matCellDef="let request">
+                {{ formatDateRange(request.startDate, request.endDate) }}
+              </td>
+            </ng-container>
+
+            <!-- Days Column -->
+            <ng-container matColumnDef="days">
+              <th mat-header-cell *matHeaderCellDef>Days</th>
+              <td mat-cell *matCellDef="let request">
+                <strong>{{ request.days }}</strong> day{{ request.days > 1 ? 's' : '' }}
+              </td>
+            </ng-container>
+
+            <!-- Status Column -->
+            <ng-container matColumnDef="status">
+              <th mat-header-cell *matHeaderCellDef>Status</th>
+              <td mat-cell *matCellDef="let request">
+                <mat-chip [color]="getStatusColor(request.status)">
+                  {{ getStatusLabel(request.status) }}
+                </mat-chip>
+              </td>
+            </ng-container>
+
+            <!-- Applied Date Column -->
+            <ng-container matColumnDef="appliedDate">
+              <th mat-header-cell *matHeaderCellDef>Applied</th>
+              <td mat-cell *matCellDef="let request">{{ formatDate(request.appliedDate) }}</td>
+            </ng-container>
+
+            <!-- Actions Column -->
+            <ng-container matColumnDef="actions">
+              <th mat-header-cell *matHeaderCellDef>Actions</th>
+              <td mat-cell *matCellDef="let request">
+                @if (request.status === 'pending') {
+                  <button
+                    mat-icon-button
+                    color="warn"
+                    (click)="cancelRequest(request)"
+                    matTooltip="Cancel request">
+                    <mat-icon>cancel</mat-icon>
+                  </button>
+                } @else {
+                  <span class="text-muted">-</span>
+                }
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+          </table>
+        </div>
+      }
+    </mat-card-content>
+  </mat-card>
+</div>

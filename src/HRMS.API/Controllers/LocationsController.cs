@@ -30,7 +30,7 @@ public class LocationsController : ControllerBase
     /// Get all locations
     /// </summary>
     [HttpGet]
-    [Authorize(Roles = "Admin,HR,Manager")]
+    [Authorize(Roles = "Admin,HR,Manager,TenantEmployee")]
     public async Task<IActionResult> GetAll([FromQuery] bool activeOnly = true)
     {
         try
@@ -49,7 +49,7 @@ public class LocationsController : ControllerBase
     /// Get a single location by ID
     /// </summary>
     [HttpGet("{id:guid}")]
-    [Authorize(Roles = "Admin,HR,Manager")]
+    [Authorize(Roles = "Admin,HR,Manager,TenantEmployee")]
     public async Task<IActionResult> GetById(Guid id)
     {
         try
@@ -74,7 +74,7 @@ public class LocationsController : ControllerBase
     /// Get location by code
     /// </summary>
     [HttpGet("by-code/{code}")]
-    [Authorize(Roles = "Admin,HR,Manager")]
+    [Authorize(Roles = "Admin,HR,Manager,TenantEmployee")]
     public async Task<IActionResult> GetByCode(string code)
     {
         try
@@ -99,7 +99,7 @@ public class LocationsController : ControllerBase
     /// Get locations for dropdown (lightweight)
     /// </summary>
     [HttpGet("dropdown")]
-    [Authorize(Roles = "Admin,HR,Manager")]
+    [Authorize(Roles = "Admin,HR,Manager,TenantEmployee")]
     public async Task<IActionResult> GetDropdown([FromQuery] bool activeOnly = true)
     {
         try
@@ -218,7 +218,7 @@ public class LocationsController : ControllerBase
     /// Get device count for a location
     /// </summary>
     [HttpGet("{id:guid}/device-count")]
-    [Authorize(Roles = "Admin,HR,Manager")]
+    [Authorize(Roles = "Admin,HR,Manager,TenantEmployee")]
     public async Task<IActionResult> GetDeviceCount(Guid id)
     {
         try
@@ -237,7 +237,7 @@ public class LocationsController : ControllerBase
     /// Get employee count for a location
     /// </summary>
     [HttpGet("{id:guid}/employee-count")]
-    [Authorize(Roles = "Admin,HR,Manager")]
+    [Authorize(Roles = "Admin,HR,Manager,TenantEmployee")]
     public async Task<IActionResult> GetEmployeeCount(Guid id)
     {
         try

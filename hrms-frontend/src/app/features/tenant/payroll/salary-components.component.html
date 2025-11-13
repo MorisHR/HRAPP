@@ -76,166 +76,166 @@
   </div>
 
   <!-- Bulk Create Form -->
-  <mat-card *ngIf="bulkMode()" class="bulk-form-card">
-    <mat-card-header>
-      <mat-card-title>
-        <mat-icon>group_add</mat-icon>
-        Bulk Create Salary Components
-      </mat-card-title>
-    </mat-card-header>
-    <mat-card-content>
-      <form [formGroup]="bulkForm" (ngSubmit)="onBulkSubmit()">
-        <div class="form-row">
-          <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Select Employees (Multiple)</mat-label>
-            <mat-select formControlName="employeeIds" multiple>
-              <mat-option *ngFor="let emp of employees()" [value]="emp.id">
-                {{ emp.fullName }} ({{ emp.employeeCode }})
-              </mat-option>
-            </mat-select>
-            <mat-error>Please select at least one employee</mat-error>
-          </mat-form-field>
-        </div>
-
-        <div class="form-row">
-          <mat-form-field appearance="outline">
-            <mat-label>Component Name</mat-label>
-            <input matInput formControlName="componentName" placeholder="e.g., Performance Bonus">
-            <mat-error>Component name is required (min 2 characters)</mat-error>
-          </mat-form-field>
-
-          <mat-form-field appearance="outline">
-            <mat-label>Type</mat-label>
-            <mat-select formControlName="componentType">
-              <mat-option value="Allowance">Allowance</mat-option>
-              <mat-option value="Deduction">Deduction</mat-option>
-            </mat-select>
-          </mat-form-field>
-
-          <mat-form-field appearance="outline">
-            <mat-label>Amount (MUR)</mat-label>
-            <input matInput type="number" formControlName="amount" min="0">
-            <mat-error>Amount must be 0 or greater</mat-error>
-          </mat-form-field>
-        </div>
-
-        <div class="form-row">
-          <mat-form-field appearance="outline">
-            <mat-label>Effective Date</mat-label>
-            <input matInput [matDatepicker]="bulkEffective" formControlName="effectiveDate">
-            <mat-datepicker-toggle matSuffix [for]="bulkEffective"></mat-datepicker-toggle>
-            <mat-datepicker #bulkEffective></mat-datepicker>
-          </mat-form-field>
-
-          <mat-form-field appearance="outline">
-            <mat-label>End Date (Optional)</mat-label>
-            <input matInput [matDatepicker]="bulkEnd" formControlName="endDate">
-            <mat-datepicker-toggle matSuffix [for]="bulkEnd"></mat-datepicker-toggle>
-            <mat-datepicker #bulkEnd></mat-datepicker>
-          </mat-form-field>
-
-          <div class="checkbox-group">
-            <mat-checkbox formControlName="isRecurring">Recurring</mat-checkbox>
-            <mat-checkbox formControlName="requiresApproval">Requires Approval</mat-checkbox>
+  @if (bulkMode()) {
+    <mat-card class="bulk-form-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>group_add</mat-icon>
+          Bulk Create Salary Components
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <form [formGroup]="bulkForm" (ngSubmit)="onBulkSubmit()">
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Select Employees (Multiple)</mat-label>
+              <mat-select formControlName="employeeIds" multiple>
+                @for (emp of employees(); track emp) {
+                  <mat-option [value]="emp.id">
+                    {{ emp.fullName }} ({{ emp.employeeCode }})
+                  </mat-option>
+                }
+              </mat-select>
+              <mat-error>Please select at least one employee</mat-error>
+            </mat-form-field>
           </div>
-        </div>
-
-        <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Description</mat-label>
-          <textarea matInput formControlName="description" rows="2" placeholder="Optional notes"></textarea>
-        </mat-form-field>
-
-        <div class="form-actions">
-          <button type="button" mat-button (click)="toggleBulkMode()">Cancel</button>
-          <button type="submit" mat-raised-button color="primary" [disabled]="bulkForm.invalid || saving()">
-            <mat-spinner *ngIf="saving()" diameter="20"></mat-spinner>
-            <span *ngIf="!saving()">Create for Selected Employees</span>
-          </button>
-        </div>
-      </form>
-    </mat-card-content>
-  </mat-card>
+          <div class="form-row">
+            <mat-form-field appearance="outline">
+              <mat-label>Component Name</mat-label>
+              <input matInput formControlName="componentName" placeholder="e.g., Performance Bonus">
+              <mat-error>Component name is required (min 2 characters)</mat-error>
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Type</mat-label>
+              <mat-select formControlName="componentType">
+                <mat-option value="Allowance">Allowance</mat-option>
+                <mat-option value="Deduction">Deduction</mat-option>
+              </mat-select>
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Amount (MUR)</mat-label>
+              <input matInput type="number" formControlName="amount" min="0">
+              <mat-error>Amount must be 0 or greater</mat-error>
+            </mat-form-field>
+          </div>
+          <div class="form-row">
+            <mat-form-field appearance="outline">
+              <mat-label>Effective Date</mat-label>
+              <input matInput [matDatepicker]="bulkEffective" formControlName="effectiveDate">
+              <mat-datepicker-toggle matSuffix [for]="bulkEffective"></mat-datepicker-toggle>
+              <mat-datepicker #bulkEffective></mat-datepicker>
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>End Date (Optional)</mat-label>
+              <input matInput [matDatepicker]="bulkEnd" formControlName="endDate">
+              <mat-datepicker-toggle matSuffix [for]="bulkEnd"></mat-datepicker-toggle>
+              <mat-datepicker #bulkEnd></mat-datepicker>
+            </mat-form-field>
+            <div class="checkbox-group">
+              <mat-checkbox formControlName="isRecurring">Recurring</mat-checkbox>
+              <mat-checkbox formControlName="requiresApproval">Requires Approval</mat-checkbox>
+            </div>
+          </div>
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Description</mat-label>
+            <textarea matInput formControlName="description" rows="2" placeholder="Optional notes"></textarea>
+          </mat-form-field>
+          <div class="form-actions">
+            <button type="button" mat-button (click)="toggleBulkMode()">Cancel</button>
+            <button type="submit" mat-raised-button color="primary" [disabled]="bulkForm.invalid || saving()">
+              @if (saving()) {
+                <mat-spinner diameter="20"></mat-spinner>
+              }
+              @if (!saving()) {
+                <span>Create for Selected Employees</span>
+              }
+            </button>
+          </div>
+        </form>
+      </mat-card-content>
+    </mat-card>
+  }
 
   <!-- Create/Edit Form -->
-  <mat-card *ngIf="showForm()" class="form-card">
-    <mat-card-header>
-      <mat-card-title>
-        <mat-icon>{{ editingComponent() ? 'edit' : 'add' }}</mat-icon>
-        {{ editingComponent() ? 'Edit' : 'Create' }} Salary Component
-      </mat-card-title>
-    </mat-card-header>
-    <mat-card-content>
-      <form [formGroup]="componentForm" (ngSubmit)="onSubmit()">
-        <div class="form-row">
-          <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Employee</mat-label>
-            <mat-select formControlName="employeeId" [disabled]="!!editingComponent()">
-              <mat-option *ngFor="let emp of employees()" [value]="emp.id">
-                {{ emp.fullName }} ({{ emp.employeeCode }}) - {{ emp.department }}
-              </mat-option>
-            </mat-select>
-            <mat-error>Employee is required</mat-error>
-          </mat-form-field>
-        </div>
-
-        <div class="form-row">
-          <mat-form-field appearance="outline">
-            <mat-label>Component Name</mat-label>
-            <input matInput formControlName="componentName" placeholder="e.g., Housing Allowance">
-            <mat-error>Component name is required (min 2 characters)</mat-error>
-          </mat-form-field>
-
-          <mat-form-field appearance="outline">
-            <mat-label>Type</mat-label>
-            <mat-select formControlName="componentType" [disabled]="!!editingComponent()">
-              <mat-option value="Allowance">Allowance</mat-option>
-              <mat-option value="Deduction">Deduction</mat-option>
-            </mat-select>
-          </mat-form-field>
-
-          <mat-form-field appearance="outline">
-            <mat-label>Amount (MUR)</mat-label>
-            <input matInput type="number" formControlName="amount" min="0">
-            <mat-error>Amount must be 0 or greater</mat-error>
-          </mat-form-field>
-        </div>
-
-        <div class="form-row">
-          <mat-form-field appearance="outline">
-            <mat-label>Effective Date</mat-label>
-            <input matInput [matDatepicker]="effective" formControlName="effectiveDate">
-            <mat-datepicker-toggle matSuffix [for]="effective"></mat-datepicker-toggle>
-            <mat-datepicker #effective></mat-datepicker>
-          </mat-form-field>
-
-          <mat-form-field appearance="outline">
-            <mat-label>End Date (Optional)</mat-label>
-            <input matInput [matDatepicker]="end" formControlName="endDate">
-            <mat-datepicker-toggle matSuffix [for]="end"></mat-datepicker-toggle>
-            <mat-datepicker #end></mat-datepicker>
-          </mat-form-field>
-
-          <div class="checkbox-group">
-            <mat-checkbox formControlName="isRecurring">Recurring</mat-checkbox>
-            <mat-checkbox formControlName="requiresApproval">Requires Approval</mat-checkbox>
+  @if (showForm()) {
+    <mat-card class="form-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>{{ editingComponent() ? 'edit' : 'add' }}</mat-icon>
+          {{ editingComponent() ? 'Edit' : 'Create' }} Salary Component
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <form [formGroup]="componentForm" (ngSubmit)="onSubmit()">
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Employee</mat-label>
+              <mat-select formControlName="employeeId" [disabled]="!!editingComponent()">
+                @for (emp of employees(); track emp) {
+                  <mat-option [value]="emp.id">
+                    {{ emp.fullName }} ({{ emp.employeeCode }}) - {{ emp.department }}
+                  </mat-option>
+                }
+              </mat-select>
+              <mat-error>Employee is required</mat-error>
+            </mat-form-field>
           </div>
-        </div>
-
-        <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Description</mat-label>
-          <textarea matInput formControlName="description" rows="3" placeholder="Optional notes about this component"></textarea>
-        </mat-form-field>
-
-        <div class="form-actions">
-          <button type="button" mat-button (click)="cancelForm()">Cancel</button>
-          <button type="submit" mat-raised-button color="primary" [disabled]="componentForm.invalid || saving()">
-            <mat-spinner *ngIf="saving()" diameter="20"></mat-spinner>
-            <span *ngIf="!saving()">{{ editingComponent() ? 'Update' : 'Create' }}</span>
-          </button>
-        </div>
-      </form>
-    </mat-card-content>
-  </mat-card>
+          <div class="form-row">
+            <mat-form-field appearance="outline">
+              <mat-label>Component Name</mat-label>
+              <input matInput formControlName="componentName" placeholder="e.g., Housing Allowance">
+              <mat-error>Component name is required (min 2 characters)</mat-error>
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Type</mat-label>
+              <mat-select formControlName="componentType" [disabled]="!!editingComponent()">
+                <mat-option value="Allowance">Allowance</mat-option>
+                <mat-option value="Deduction">Deduction</mat-option>
+              </mat-select>
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Amount (MUR)</mat-label>
+              <input matInput type="number" formControlName="amount" min="0">
+              <mat-error>Amount must be 0 or greater</mat-error>
+            </mat-form-field>
+          </div>
+          <div class="form-row">
+            <mat-form-field appearance="outline">
+              <mat-label>Effective Date</mat-label>
+              <input matInput [matDatepicker]="effective" formControlName="effectiveDate">
+              <mat-datepicker-toggle matSuffix [for]="effective"></mat-datepicker-toggle>
+              <mat-datepicker #effective></mat-datepicker>
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>End Date (Optional)</mat-label>
+              <input matInput [matDatepicker]="end" formControlName="endDate">
+              <mat-datepicker-toggle matSuffix [for]="end"></mat-datepicker-toggle>
+              <mat-datepicker #end></mat-datepicker>
+            </mat-form-field>
+            <div class="checkbox-group">
+              <mat-checkbox formControlName="isRecurring">Recurring</mat-checkbox>
+              <mat-checkbox formControlName="requiresApproval">Requires Approval</mat-checkbox>
+            </div>
+          </div>
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Description</mat-label>
+            <textarea matInput formControlName="description" rows="3" placeholder="Optional notes about this component"></textarea>
+          </mat-form-field>
+          <div class="form-actions">
+            <button type="button" mat-button (click)="cancelForm()">Cancel</button>
+            <button type="submit" mat-raised-button color="primary" [disabled]="componentForm.invalid || saving()">
+              @if (saving()) {
+                <mat-spinner diameter="20"></mat-spinner>
+              }
+              @if (!saving()) {
+                <span>{{ editingComponent() ? 'Update' : 'Create' }}</span>
+              }
+            </button>
+          </div>
+        </form>
+      </mat-card-content>
+    </mat-card>
+  }
 
   <!-- Filters and Employee Selection -->
   <mat-card class="filters-card">
@@ -245,9 +245,11 @@
           <mat-label>Filter by Employee</mat-label>
           <mat-select [value]="selectedEmployee()" (selectionChange)="loadEmployeeComponents($event.value)">
             <mat-option [value]="null">All Employees</mat-option>
-            <mat-option *ngFor="let emp of employees()" [value]="emp.id">
-              {{ emp.fullName }} ({{ emp.employeeCode }})
-            </mat-option>
+            @for (emp of employees(); track emp) {
+              <mat-option [value]="emp.id">
+                {{ emp.fullName }} ({{ emp.employeeCode }})
+              </mat-option>
+            }
           </mat-select>
         </mat-form-field>
 
@@ -303,140 +305,146 @@
   <!-- Components Table -->
   <mat-card class="table-card">
     <mat-card-content>
-      <div *ngIf="loading()" class="loading-container">
-        <mat-spinner></mat-spinner>
-        <p>Loading salary components...</p>
-      </div>
+      @if (loading()) {
+        <div class="loading-container">
+          <mat-spinner></mat-spinner>
+          <p>Loading salary components...</p>
+        </div>
+      }
 
-      <div *ngIf="!loading() && filteredComponents().length === 0" class="no-data">
-        <mat-icon>inbox</mat-icon>
-        <p>No salary components found</p>
-        <p class="hint">Create your first component using the "New Component" button above</p>
-      </div>
+      @if (!loading() && filteredComponents().length === 0) {
+        <div class="no-data">
+          <mat-icon>inbox</mat-icon>
+          <p>No salary components found</p>
+          <p class="hint">Create your first component using the "New Component" button above</p>
+        </div>
+      }
 
-      <table mat-table [dataSource]="filteredComponents()" *ngIf="!loading() && filteredComponents().length > 0">
-        <!-- Employee Column -->
-        <ng-container matColumnDef="componentName">
-          <th mat-header-cell *matHeaderCellDef>Component</th>
-          <td mat-cell *matCellDef="let component">
-            <div class="component-cell">
-              <strong>{{ component.componentName }}</strong>
-              <small>{{ getEmployeeName(component.employeeId) }}</small>
-            </div>
-          </td>
-        </ng-container>
-
-        <!-- Type Column -->
-        <ng-container matColumnDef="componentType">
-          <th mat-header-cell *matHeaderCellDef>Type</th>
-          <td mat-cell *matCellDef="let component">
-            <mat-chip [class]="getComponentTypeBadgeClass(component.componentType)">
-              {{ component.componentType }}
-            </mat-chip>
-          </td>
-        </ng-container>
-
-        <!-- Amount Column -->
-        <ng-container matColumnDef="amount">
-          <th mat-header-cell *matHeaderCellDef>Amount</th>
-          <td mat-cell *matCellDef="let component">
-            <strong>{{ formatCurrency(component.amount) }}</strong>
-          </td>
-        </ng-container>
-
-        <!-- Recurring Column -->
-        <ng-container matColumnDef="isRecurring">
-          <th mat-header-cell *matHeaderCellDef>Frequency</th>
-          <td mat-cell *matCellDef="let component">
-            {{ component.isRecurring ? 'Recurring' : 'One-time' }}
-          </td>
-        </ng-container>
-
-        <!-- Effective Date Column -->
-        <ng-container matColumnDef="effectiveDate">
-          <th mat-header-cell *matHeaderCellDef>Effective Date</th>
-          <td mat-cell *matCellDef="let component">
-            {{ formatDate(component.effectiveDate) }}
-          </td>
-        </ng-container>
-
-        <!-- End Date Column -->
-        <ng-container matColumnDef="endDate">
-          <th mat-header-cell *matHeaderCellDef>End Date</th>
-          <td mat-cell *matCellDef="let component">
-            {{ component.endDate ? formatDate(component.endDate) : 'N/A' }}
-          </td>
-        </ng-container>
-
-        <!-- Active Column -->
-        <ng-container matColumnDef="isActive">
-          <th mat-header-cell *matHeaderCellDef>Status</th>
-          <td mat-cell *matCellDef="let component">
-            <mat-chip [class]="getStatusBadgeClass(component.isActive)">
-              {{ component.isActive ? 'Active' : 'Inactive' }}
-            </mat-chip>
-          </td>
-        </ng-container>
-
-        <!-- Requires Approval Column -->
-        <ng-container matColumnDef="requiresApproval">
-          <th mat-header-cell *matHeaderCellDef>Approval</th>
-          <td mat-cell *matCellDef="let component">
-            <span *ngIf="!component.requiresApproval">N/A</span>
-            <span *ngIf="component.requiresApproval">Required</span>
-          </td>
-        </ng-container>
-
-        <!-- Is Approved Column -->
-        <ng-container matColumnDef="isApproved">
-          <th mat-header-cell *matHeaderCellDef>Approved</th>
-          <td mat-cell *matCellDef="let component">
-            <mat-chip [class]="getApprovalBadgeClass(component)">
-              <span *ngIf="!component.requiresApproval">N/A</span>
-              <span *ngIf="component.requiresApproval && component.isApproved">Yes</span>
-              <span *ngIf="component.requiresApproval && !component.isApproved">Pending</span>
-            </mat-chip>
-          </td>
-        </ng-container>
-
-        <!-- Actions Column -->
-        <ng-container matColumnDef="actions">
-          <th mat-header-cell *matHeaderCellDef>Actions</th>
-          <td mat-cell *matCellDef="let component">
-            <button mat-icon-button [matMenuTriggerFor]="menu" aria-label="Actions">
-              <mat-icon>more_vert</mat-icon>
-            </button>
-            <mat-menu #menu="matMenu">
-              <button mat-menu-item (click)="editComponent(component)">
-                <mat-icon>edit</mat-icon>
-                <span>Edit</span>
+      @if (!loading() && filteredComponents().length > 0) {
+        <table mat-table [dataSource]="filteredComponents()">
+          <!-- Employee Column -->
+          <ng-container matColumnDef="componentName">
+            <th mat-header-cell *matHeaderCellDef>Component</th>
+            <td mat-cell *matCellDef="let component">
+              <div class="component-cell">
+                <strong>{{ component.componentName }}</strong>
+                <small>{{ getEmployeeName(component.employeeId) }}</small>
+              </div>
+            </td>
+          </ng-container>
+          <!-- Type Column -->
+          <ng-container matColumnDef="componentType">
+            <th mat-header-cell *matHeaderCellDef>Type</th>
+            <td mat-cell *matCellDef="let component">
+              <mat-chip [class]="getComponentTypeBadgeClass(component.componentType)">
+                {{ component.componentType }}
+              </mat-chip>
+            </td>
+          </ng-container>
+          <!-- Amount Column -->
+          <ng-container matColumnDef="amount">
+            <th mat-header-cell *matHeaderCellDef>Amount</th>
+            <td mat-cell *matCellDef="let component">
+              <strong>{{ formatCurrency(component.amount) }}</strong>
+            </td>
+          </ng-container>
+          <!-- Recurring Column -->
+          <ng-container matColumnDef="isRecurring">
+            <th mat-header-cell *matHeaderCellDef>Frequency</th>
+            <td mat-cell *matCellDef="let component">
+              {{ component.isRecurring ? 'Recurring' : 'One-time' }}
+            </td>
+          </ng-container>
+          <!-- Effective Date Column -->
+          <ng-container matColumnDef="effectiveDate">
+            <th mat-header-cell *matHeaderCellDef>Effective Date</th>
+            <td mat-cell *matCellDef="let component">
+              {{ formatDate(component.effectiveDate) }}
+            </td>
+          </ng-container>
+          <!-- End Date Column -->
+          <ng-container matColumnDef="endDate">
+            <th mat-header-cell *matHeaderCellDef>End Date</th>
+            <td mat-cell *matCellDef="let component">
+              {{ component.endDate ? formatDate(component.endDate) : 'N/A' }}
+            </td>
+          </ng-container>
+          <!-- Active Column -->
+          <ng-container matColumnDef="isActive">
+            <th mat-header-cell *matHeaderCellDef>Status</th>
+            <td mat-cell *matCellDef="let component">
+              <mat-chip [class]="getStatusBadgeClass(component.isActive)">
+                {{ component.isActive ? 'Active' : 'Inactive' }}
+              </mat-chip>
+            </td>
+          </ng-container>
+          <!-- Requires Approval Column -->
+          <ng-container matColumnDef="requiresApproval">
+            <th mat-header-cell *matHeaderCellDef>Approval</th>
+            <td mat-cell *matCellDef="let component">
+              @if (!component.requiresApproval) {
+                <span>N/A</span>
+              }
+              @if (component.requiresApproval) {
+                <span>Required</span>
+              }
+            </td>
+          </ng-container>
+          <!-- Is Approved Column -->
+          <ng-container matColumnDef="isApproved">
+            <th mat-header-cell *matHeaderCellDef>Approved</th>
+            <td mat-cell *matCellDef="let component">
+              <mat-chip [class]="getApprovalBadgeClass(component)">
+                @if (!component.requiresApproval) {
+                  <span>N/A</span>
+                }
+                @if (component.requiresApproval && component.isApproved) {
+                  <span>Yes</span>
+                }
+                @if (component.requiresApproval && !component.isApproved) {
+                  <span>Pending</span>
+                }
+              </mat-chip>
+            </td>
+          </ng-container>
+          <!-- Actions Column -->
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef>Actions</th>
+            <td mat-cell *matCellDef="let component">
+              <button mat-icon-button [matMenuTriggerFor]="menu" aria-label="Actions">
+                <mat-icon>more_vert</mat-icon>
               </button>
-              <button
-                mat-menu-item
-                (click)="approveComponent(component)"
-                [disabled]="!component.requiresApproval || component.isApproved">
-                <mat-icon>check_circle</mat-icon>
-                <span>Approve</span>
-              </button>
-              <button
-                mat-menu-item
-                (click)="deactivateComponent(component)"
-                [disabled]="!component.isActive">
-                <mat-icon>block</mat-icon>
-                <span>Deactivate</span>
-              </button>
-              <mat-divider></mat-divider>
-              <button mat-menu-item (click)="deleteComponent(component)" class="danger-action">
-                <mat-icon color="warn">delete</mat-icon>
-                <span>Delete</span>
-              </button>
-            </mat-menu>
-          </td>
-        </ng-container>
-
-        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
-      </table>
+              <mat-menu #menu="matMenu">
+                <button mat-menu-item (click)="editComponent(component)">
+                  <mat-icon>edit</mat-icon>
+                  <span>Edit</span>
+                </button>
+                <button
+                  mat-menu-item
+                  (click)="approveComponent(component)"
+                  [disabled]="!component.requiresApproval || component.isApproved">
+                  <mat-icon>check_circle</mat-icon>
+                  <span>Approve</span>
+                </button>
+                <button
+                  mat-menu-item
+                  (click)="deactivateComponent(component)"
+                  [disabled]="!component.isActive">
+                  <mat-icon>block</mat-icon>
+                  <span>Deactivate</span>
+                </button>
+                <mat-divider></mat-divider>
+                <button mat-menu-item (click)="deleteComponent(component)" class="danger-action">
+                  <mat-icon color="warn">delete</mat-icon>
+                  <span>Delete</span>
+                </button>
+              </mat-menu>
+            </td>
+          </ng-container>
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+        </table>
+      }
     </mat-card-content>
   </mat-card>
 </div>

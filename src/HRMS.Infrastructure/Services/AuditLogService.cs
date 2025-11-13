@@ -962,7 +962,15 @@ public class AuditLogService : IAuditLogService
         // Session and correlation IDs
         if (string.IsNullOrWhiteSpace(log.SessionId))
         {
-            log.SessionId = httpContext.Session?.Id;
+            try
+            {
+                log.SessionId = httpContext.Session?.Id;
+            }
+            catch (InvalidOperationException)
+            {
+                // Session middleware not configured - use TraceIdentifier instead
+                log.SessionId = httpContext.TraceIdentifier;
+            }
         }
 
         if (string.IsNullOrWhiteSpace(log.CorrelationId))

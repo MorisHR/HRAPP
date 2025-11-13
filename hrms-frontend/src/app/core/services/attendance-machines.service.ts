@@ -5,46 +5,43 @@ import { environment } from '../../../environments/environment';
 
 export interface AttendanceMachineDto {
   id: string;
+  machineName: string;
+  machineId: string;              // Unique machine identifier
+  ipAddress?: string;
+  location?: string;              // String location, not locationId
   departmentId?: string;
   departmentName?: string;
-  locationId?: string;
-  locationName?: string;
-  machineName: string;
-  machineType: string;
-  ipAddress?: string;
-  port?: number;
-  zkTecoDeviceId?: string;
-  serialNumber?: string;
   isActive: boolean;
-  lastSyncTime?: string;
+  serialNumber?: string;
+  model?: string;
+  zkTecoDeviceId?: string;
+  port?: number;
+  lastSyncAt?: string;            // Changed from lastSyncTime to match backend
   createdAt: string;
-  updatedAt: string;
-  createdBy: string;
-  updatedBy?: string;
+  updatedAt?: string;
 }
 
 export interface CreateAttendanceMachineDto {
-  departmentId?: string;
-  locationId?: string;
-  machineName: string;
-  machineType: string;
+  machineName: string;          // Required
+  machineId: string;             // Required - unique identifier for the machine
   ipAddress?: string;
-  port?: number;
-  zkTecoDeviceId?: string;
+  location?: string;             // String location name, not locationId (Guid)
+  departmentId?: string;         // Guid as string
   serialNumber?: string;
+  model?: string;
+  zkTecoDeviceId?: string;
+  port?: number;
   isActive?: boolean;
 }
 
 export interface UpdateAttendanceMachineDto {
-  departmentId?: string;
-  locationId?: string;
-  machineName?: string;
-  machineType?: string;
+  machineName: string;           // Required
   ipAddress?: string;
+  location?: string;             // String location name, not locationId (Guid)
+  departmentId?: string;         // Guid as string
+  model?: string;
   port?: number;
-  zkTecoDeviceId?: string;
-  serialNumber?: string;
-  isActive?: boolean;
+  isActive: boolean;             // Required
 }
 
 @Injectable({
@@ -74,7 +71,11 @@ export class AttendanceMachinesService {
    * @param activeOnly Filter to show only active machines (default: true)
    */
   getMachines(activeOnly: boolean = true): Observable<{ total: number; data: AttendanceMachineDto[] }> {
+    console.log('🔍 AttendanceMachinesService.getMachines() called with activeOnly:', activeOnly);
+    console.log('🔍 API URL:', this.apiUrl);
     const params = new HttpParams().set('activeOnly', activeOnly.toString());
+    console.log('🔍 Request params:', params.toString());
+
     return this.http.get<{ total: number; data: AttendanceMachineDto[] }>(this.apiUrl, { params });
   }
 

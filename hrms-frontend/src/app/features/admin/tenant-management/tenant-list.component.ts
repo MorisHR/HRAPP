@@ -1,5 +1,5 @@
 import { Component, signal, inject, OnInit, ViewChild } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { MatTableModule, MatTableDataSource } from '@angular/material/table';
 import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
 import { MatSort, MatSortModule } from '@angular/material/sort';
@@ -18,7 +18,6 @@ import { Tenant, TenantStatus } from '../../../core/models/tenant.model';
   selector: 'app-tenant-list',
   standalone: true,
   imports: [
-    CommonModule,
     MatTableModule,
     MatPaginatorModule,
     MatSortModule,
@@ -30,7 +29,7 @@ import { Tenant, TenantStatus } from '../../../core/models/tenant.model';
     MatInputModule,
     MatMenuModule,
     RouterModule
-  ],
+],
   templateUrl: './tenant-list.component.html',
   styleUrl: './tenant-list.component.scss'
 })

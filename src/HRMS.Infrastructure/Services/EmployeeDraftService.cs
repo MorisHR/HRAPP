@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using HRMS.Application.DTOs;
 using HRMS.Application.Interfaces;
 using HRMS.Core.Entities.Tenant;
+using HRMS.Core.Exceptions;
 using HRMS.Infrastructure.Data;
 
 namespace HRMS.Infrastructure.Services;
@@ -89,7 +90,11 @@ public class EmployeeDraftService : IEmployeeDraftService
                 .FirstOrDefaultAsync(d => d.Id == request.Id.Value && !d.IsDeleted);
 
             if (existingDraft == null)
-                throw new KeyNotFoundException($"Draft {request.Id} not found");
+                throw new NotFoundException(
+                    ErrorCodes.EMP_DRAFT_NOT_FOUND,
+                    "The employee draft could not be found.",
+                    $"Draft {request.Id} not found in database",
+                    "The draft may have been deleted. Please create a new draft.");
 
             draft = existingDraft;
 
@@ -137,13 +142,21 @@ public class EmployeeDraftService : IEmployeeDraftService
             .FirstOrDefaultAsync(d => d.Id == draftId && !d.IsDeleted);
 
         if (draft == null)
-            throw new KeyNotFoundException($"Draft {draftId} not found");
+            throw new NotFoundException(
+                ErrorCodes.EMP_DRAFT_NOT_FOUND,
+                "The employee draft could not be found.",
+                $"Draft {draftId} not found in database",
+                "The draft may have been deleted. Please verify the draft ID.");
 
         // Deserialize form data
         var formData = JsonSerializer.Deserialize<Dictionary<string, object>>(draft.FormDataJson);
 
         if (formData == null)
-            throw new InvalidOperationException("Invalid draft data");
+            throw new ValidationException(
+                ErrorCodes.EMP_DRAFT_INVALID,
+                "The employee draft contains invalid information.",
+                "Draft data validation failed",
+                "Please review the draft data and ensure all required fields are valid.");
 
         // TODO: Map form data to CreateEmployeeRequest
         // For now, this is a placeholder
@@ -158,7 +171,11 @@ public class EmployeeDraftService : IEmployeeDraftService
         // Fetch the actual employee entity from database
         var employee = await _context.Employees
             .FirstOrDefaultAsync(e => e.Id == employeeDto.Id)
-            ?? throw new InvalidOperationException("Failed to retrieve created employee");
+            ?? throw new BusinessRuleException(
+                ErrorCodes.EMP_INVALID_DATA,
+                "Unable to create employee from draft.",
+                "Failed to retrieve created employee after save",
+                "Please try again or contact support if the issue persists.");
 
         // Delete draft after successful employee creation
         draft.IsDeleted = true;
@@ -178,7 +195,11 @@ public class EmployeeDraftService : IEmployeeDraftService
             .FirstOrDefaultAsync(d => d.Id == id && !d.IsDeleted);
 
         if (draft == null)
-            throw new KeyNotFoundException($"Draft {id} not found");
+            throw new NotFoundException(
+                ErrorCodes.EMP_DRAFT_NOT_FOUND,
+                "The employee draft could not be found.",
+                $"Draft {id} not found in database",
+                "The draft may have been deleted. Please verify the draft ID.");
 
         draft.IsDeleted = true;
         draft.DeletedAt = DateTime.UtcNow;

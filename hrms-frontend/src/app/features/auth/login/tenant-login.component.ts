@@ -1,5 +1,5 @@
 import { Component, signal, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
@@ -9,7 +9,7 @@ import { SessionManagementService } from '../../../core/services/session-managem
 @Component({
   selector: 'app-tenant-login',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [FormsModule],
   templateUrl: './tenant-login.component.html',
   styleUrls: ['./tenant-login.component.scss']
 })
@@ -35,7 +35,7 @@ export class TenantLoginComponent implements OnInit {
     // Matches Fortune 500 behavior (Google, Microsoft, Salesforce)
     if (this.authService.isAuthenticated() && !this.sessionManagement.isTokenExpired()) {
       console.log('✅ User already authenticated - redirecting to dashboard');
-      this.router.navigate(['/dashboard'], { replaceUrl: true });
+      this.router.navigate(['/tenant/dashboard'], { replaceUrl: true });
       return;
     }
 

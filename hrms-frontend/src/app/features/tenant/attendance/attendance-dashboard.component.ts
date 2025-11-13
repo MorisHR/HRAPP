@@ -476,11 +476,11 @@ export class AttendanceDashboardComponent implements OnInit, OnDestroy {
    * Get machine status (online/offline)
    */
   getMachineStatus(machine: AttendanceMachineDto): 'online' | 'offline' | 'warning' {
-    if (!machine.lastSyncTime) {
+    if (!machine.lastSyncAt) {
       return 'offline';
     }
 
-    const lastSync = new Date(machine.lastSyncTime);
+    const lastSync = new Date(machine.lastSyncAt);
     const now = new Date();
     const minutesSinceSync = (now.getTime() - lastSync.getTime()) / (1000 * 60);
 

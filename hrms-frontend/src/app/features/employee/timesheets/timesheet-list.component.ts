@@ -1,5 +1,5 @@
 import { Component, OnInit, signal, inject, computed } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { RouterModule } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -24,7 +24,6 @@ import {
   selector: 'app-timesheet-list',
   standalone: true,
   imports: [
-    CommonModule,
     RouterModule,
     FormsModule,
     MatCardModule,
@@ -36,7 +35,7 @@ import {
     MatTooltipModule,
     MatSelectModule,
     MatFormFieldModule
-  ],
+],
   templateUrl: './timesheet-list.component.html',
   styleUrl: './timesheet-list.component.scss'
 })

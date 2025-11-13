@@ -1,5 +1,5 @@
 import { Component, OnInit, signal, inject, computed } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { RouterModule } from '@angular/router';
 import { SelectionModel } from '@angular/cdk/collections';
 import { MatCardModule } from '@angular/material/card';
@@ -25,7 +25,6 @@ import {
   selector: 'app-timesheet-approvals',
   standalone: true,
   imports: [
-    CommonModule,
     RouterModule,
     FormsModule,
     ReactiveFormsModule,
@@ -40,7 +39,7 @@ import {
     MatDialogModule,
     MatFormFieldModule,
     MatInputModule
-  ],
+],
   templateUrl: './timesheet-approvals.component.html',
   styleUrl: './timesheet-approvals.component.scss'
 })

@@ -14,6 +14,16 @@ public interface IAttendanceService
     Task<Guid> RecordAttendanceAsync(CreateAttendanceDto dto, string createdBy);
 
     /// <summary>
+    /// ✅ FORTUNE 500: Employee self-service check-in
+    /// </summary>
+    Task<AttendanceDetailsDto> CheckInAsync(Guid employeeId);
+
+    /// <summary>
+    /// ✅ FORTUNE 500: Employee self-service check-out
+    /// </summary>
+    Task<AttendanceDetailsDto> CheckOutAsync(Guid employeeId);
+
+    /// <summary>
     /// Get attendance by ID
     /// </summary>
     Task<AttendanceDetailsDto?> GetAttendanceByIdAsync(Guid id);

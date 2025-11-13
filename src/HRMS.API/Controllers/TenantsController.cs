@@ -6,6 +6,8 @@ using HRMS.Core.Enums;
 using HRMS.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using HRMS.Application.Interfaces;
+using HRMS.API.Attributes;
+using HRMS.Core.Constants;
 
 namespace HRMS.API.Controllers;
 
@@ -101,6 +103,7 @@ public class TenantsController : ControllerBase
     /// Get all tenants
     /// </summary>
     [HttpGet]
+    [RequirePermission(Permissions.TENANT_VIEW)]
     public async Task<IActionResult> GetAllTenants()
     {
         try
@@ -119,6 +122,7 @@ public class TenantsController : ControllerBase
     /// Get tenant by ID
     /// </summary>
     [HttpGet("{id}")]
+    [RequirePermission(Permissions.TENANT_VIEW)]
     public async Task<IActionResult> GetTenantById(Guid id)
     {
         try
@@ -140,6 +144,7 @@ public class TenantsController : ControllerBase
     /// Create a new tenant with email activation workflow
     /// </summary>
     [HttpPost]
+    [RequirePermission(Permissions.TENANT_CREATE)]
     public async Task<IActionResult> CreateTenant([FromBody] CreateTenantRequest request)
     {
         try
@@ -329,6 +334,7 @@ public class TenantsController : ControllerBase
     /// Suspend a tenant (temporary block)
     /// </summary>
     [HttpPost("{id}/suspend")]
+    [RequirePermission(Permissions.TENANT_SUSPEND)]
     public async Task<IActionResult> SuspendTenant(Guid id, [FromBody] SuspendTenantRequest request)
     {
         try
@@ -387,6 +393,7 @@ public class TenantsController : ControllerBase
     /// Soft delete a tenant (mark for deletion with grace period)
     /// </summary>
     [HttpDelete("{id}/soft")]
+    [RequirePermission(Permissions.TENANT_DELETE)]
     public async Task<IActionResult> SoftDeleteTenant(Guid id, [FromBody] DeleteTenantRequest request)
     {
         try
@@ -445,6 +452,7 @@ public class TenantsController : ControllerBase
     /// Reactivate a suspended or soft-deleted tenant
     /// </summary>
     [HttpPost("{id}/reactivate")]
+    [RequirePermission(Permissions.TENANT_REACTIVATE)]
     public async Task<IActionResult> ReactivateTenant(Guid id)
     {
         try
@@ -502,6 +510,7 @@ public class TenantsController : ControllerBase
     /// Only allowed after grace period expires
     /// </summary>
     [HttpDelete("{id}/hard")]
+    [RequirePermission(Permissions.TENANT_HARD_DELETE)]
     public async Task<IActionResult> HardDeleteTenant(Guid id, [FromBody] HardDeleteTenantRequest request)
     {
         try
@@ -598,6 +607,7 @@ public class TenantsController : ControllerBase
     /// Update tenant employee tier and pricing
     /// </summary>
     [HttpPut("{id}/tier")]
+    [RequirePermission(Permissions.TENANT_UPDATE)]
     public async Task<IActionResult> UpdateEmployeeTier(Guid id, [FromBody] UpdateEmployeeTierRequest request)
     {
         try

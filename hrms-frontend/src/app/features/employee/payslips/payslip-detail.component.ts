@@ -1,5 +1,5 @@
 import { Component, OnInit, signal, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -14,7 +14,6 @@ import { Payslip, formatCurrency } from '../../../core/models/payroll.model';
   selector: 'app-payslip-detail',
   standalone: true,
   imports: [
-    CommonModule,
     RouterModule,
     MatCardModule,
     MatButtonModule,
@@ -22,7 +21,7 @@ import { Payslip, formatCurrency } from '../../../core/models/payroll.model';
     MatDividerModule,
     MatProgressSpinnerModule,
     MatTableModule
-  ],
+],
   templateUrl: './payslip-detail.component.html',
   styleUrl: './payslip-detail.component.scss'
 })

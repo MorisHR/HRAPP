@@ -68,6 +68,13 @@
     .input-group {
       margin-bottom: 1.25rem;
 
+      .password-label-wrapper {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.5rem;
+      }
+
       .input-label {
         display: block;
         font-size: 0.875rem;
@@ -75,6 +82,25 @@
         color: #333;
         margin-bottom: 0.5rem;
         letter-spacing: 0.2px;
+      }
+
+      .forgot-password-link {
+        font-size: 0.8125rem;
+        color: #3B82F6;
+        text-decoration: none;
+        font-weight: 500;
+        transition: color 0.2s ease;
+
+        &:hover {
+          color: #2563eb;
+          text-decoration: underline;
+        }
+
+        &:focus {
+          outline: 2px solid #3B82F6;
+          outline-offset: 2px;
+          border-radius: 2px;
+        }
       }
 
       .form-input {

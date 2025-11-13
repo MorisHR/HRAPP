@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("HRMS.Core")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+90a4770ef8cc048c9adc553d62509acde865c492")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+4d778df52f6be618023e38947610c0834f4e949e")]
 [assembly: System.Reflection.AssemblyProductAttribute("HRMS.Core")]
 [assembly: System.Reflection.AssemblyTitleAttribute("HRMS.Core")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

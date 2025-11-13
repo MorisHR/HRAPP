@@ -161,7 +161,7 @@ export interface LocationSummaryDto {
 })
 export class LocationService {
   private http = inject(HttpClient);
-  private apiUrl = `${environment.apiUrl}/api/locations`;
+  private apiUrl = `${environment.apiUrl}/locations`;
 
   /**
    * Get all locations

@@ -60,20 +60,26 @@
               <mat-form-field appearance="outline">
                 <mat-label>First Name *</mat-label>
                 <input matInput formControlName="firstName" placeholder="John">
-                <mat-error *ngIf="employeeForm.get('firstName')?.hasError('required')">
-                  First name is required
-                </mat-error>
-                <mat-error *ngIf="employeeForm.get('firstName')?.hasError('minlength')">
-                  Must be at least 2 characters
-                </mat-error>
+                @if (employeeForm.get('firstName')?.hasError('required')) {
+                  <mat-error>
+                    First name is required
+                  </mat-error>
+                }
+                @if (employeeForm.get('firstName')?.hasError('minlength')) {
+                  <mat-error>
+                    Must be at least 2 characters
+                  </mat-error>
+                }
               </mat-form-field>
 
               <mat-form-field appearance="outline">
                 <mat-label>Last Name *</mat-label>
                 <input matInput formControlName="lastName" placeholder="Doe">
-                <mat-error *ngIf="employeeForm.get('lastName')?.hasError('required')">
-                  Last name is required
-                </mat-error>
+                @if (employeeForm.get('lastName')?.hasError('required')) {
+                  <mat-error>
+                    Last name is required
+                  </mat-error>
+                }
               </mat-form-field>
 
               <mat-form-field appearance="outline">
@@ -122,12 +128,16 @@
               <mat-form-field appearance="outline">
                 <mat-label>Email Address *</mat-label>
                 <input matInput type="email" formControlName="email" placeholder="john.doe@company.mu">
-                <mat-error *ngIf="employeeForm.get('email')?.hasError('required')">
-                  Email is required
-                </mat-error>
-                <mat-error *ngIf="employeeForm.get('email')?.hasError('email')">
-                  Please enter a valid email
-                </mat-error>
+                @if (employeeForm.get('email')?.hasError('required')) {
+                  <mat-error>
+                    Email is required
+                  </mat-error>
+                }
+                @if (employeeForm.get('email')?.hasError('email')) {
+                  <mat-error>
+                    Please enter a valid email
+                  </mat-error>
+                }
               </mat-form-field>
 
               <mat-form-field appearance="outline">
@@ -201,12 +211,16 @@
                   <mat-form-field appearance="outline" class="full-width">
                     <mat-label>Address Line 1 *</mat-label>
                     <input matInput formControlName="addressLine1" placeholder="House/Building number, Street name">
-                    <mat-error *ngIf="employeeForm.get('addressLine1')?.hasError('required')">
-                      Address line 1 is required
-                    </mat-error>
-                    <mat-error *ngIf="employeeForm.get('addressLine1')?.hasError('minlength')">
-                      Must be at least 10 characters
-                    </mat-error>
+                    @if (employeeForm.get('addressLine1')?.hasError('required')) {
+                      <mat-error>
+                        Address line 1 is required
+                      </mat-error>
+                    }
+                    @if (employeeForm.get('addressLine1')?.hasError('minlength')) {
+                      <mat-error>
+                        Must be at least 10 characters
+                      </mat-error>
+                    }
                   </mat-form-field>
 
                   <mat-form-field appearance="outline" class="full-width">
@@ -631,7 +645,7 @@
               <mat-form-field appearance="outline" class="full-width">
                 <mat-label>Skills</mat-label>
                 <textarea matInput formControlName="skills" rows="2"
-                  placeholder="e.g., Leadership, Communication, Technical skills"></textarea>
+                placeholder="e.g., Leadership, Communication, Technical skills"></textarea>
               </mat-form-field>
 
               <mat-form-field appearance="outline" class="full-width">
@@ -650,112 +664,123 @@
           </mat-expansion-panel>
 
           <!-- ========== SECTION 8: SALARY COMPONENTS ========== -->
-          <mat-expansion-panel *ngIf="isEditMode() && employeeId">
-            <mat-expansion-panel-header>
-              <mat-panel-title>
-                <mat-icon>account_balance_wallet</mat-icon>
-                Salary Components
-              </mat-panel-title>
-              <mat-panel-description>
-                Manage allowances and deductions
-              </mat-panel-description>
-            </mat-expansion-panel-header>
-
-            <div class="salary-components-section">
-              <!-- Loading State -->
-              <div *ngIf="loadingSalaryComponents()" class="loading-state">
-                <mat-spinner diameter="30"></mat-spinner>
-                <p>Loading salary components...</p>
-              </div>
-
-              <!-- Empty State -->
-              <div *ngIf="!loadingSalaryComponents() && employeeSalaryComponents().length === 0" class="empty-state">
-                <mat-icon>inbox</mat-icon>
-                <p>No salary components assigned yet</p>
-                <button mat-raised-button color="primary" (click)="openSalaryComponentsManagement()">
-                  <mat-icon>add</mat-icon>
-                  Add Components
-                </button>
-              </div>
-
-              <!-- Components List -->
-              <div *ngIf="!loadingSalaryComponents() && employeeSalaryComponents().length > 0" class="components-list">
-                <div class="components-header">
-                  <h3>Active Components</h3>
-                  <button mat-raised-button color="primary" (click)="openSalaryComponentsManagement()">
-                    <mat-icon>settings</mat-icon>
-                    Manage All
-                  </button>
-                </div>
-
-                <div class="component-cards">
-                  <mat-card *ngFor="let component of employeeSalaryComponents()" class="component-card">
-                    <mat-card-content>
-                      <div class="component-header">
-                        <div class="component-info">
-                          <h4>{{ component.componentName }}</h4>
-                          <mat-chip [class]="component.componentType === 'Allowance' ? 'chip-allowance' : 'chip-deduction'">
-                            {{ component.componentType }}
-                          </mat-chip>
-                        </div>
-                        <div class="component-amount">
-                          {{ formatCurrency(component.amount) }}
+          @if (isEditMode() && employeeId) {
+            <mat-expansion-panel>
+              <mat-expansion-panel-header>
+                <mat-panel-title>
+                  <mat-icon>account_balance_wallet</mat-icon>
+                  Salary Components
+                </mat-panel-title>
+                <mat-panel-description>
+                  Manage allowances and deductions
+                </mat-panel-description>
+              </mat-expansion-panel-header>
+              <div class="salary-components-section">
+                <!-- Loading State -->
+                @if (loadingSalaryComponents()) {
+                  <div class="loading-state">
+                    <mat-spinner diameter="30"></mat-spinner>
+                    <p>Loading salary components...</p>
+                  </div>
+                }
+                <!-- Empty State -->
+                @if (!loadingSalaryComponents() && employeeSalaryComponents().length === 0) {
+                  <div class="empty-state">
+                    <mat-icon>inbox</mat-icon>
+                    <p>No salary components assigned yet</p>
+                    <button mat-raised-button color="primary" (click)="openSalaryComponentsManagement()">
+                      <mat-icon>add</mat-icon>
+                      Add Components
+                    </button>
+                  </div>
+                }
+                <!-- Components List -->
+                @if (!loadingSalaryComponents() && employeeSalaryComponents().length > 0) {
+                  <div class="components-list">
+                    <div class="components-header">
+                      <h3>Active Components</h3>
+                      <button mat-raised-button color="primary" (click)="openSalaryComponentsManagement()">
+                        <mat-icon>settings</mat-icon>
+                        Manage All
+                      </button>
+                    </div>
+                    <div class="component-cards">
+                      @for (component of employeeSalaryComponents(); track component) {
+                        <mat-card class="component-card">
+                          <mat-card-content>
+                            <div class="component-header">
+                              <div class="component-info">
+                                <h4>{{ component.componentName }}</h4>
+                                <mat-chip [class]="component.componentType === 'Allowance' ? 'chip-allowance' : 'chip-deduction'">
+                                  {{ component.componentType }}
+                                </mat-chip>
+                              </div>
+                              <div class="component-amount">
+                                {{ formatCurrency(component.amount) }}
+                              </div>
+                            </div>
+                            <div class="component-details">
+                              <div class="detail-row">
+                                <mat-icon>event</mat-icon>
+                                <span>Effective: {{ formatDate(component.effectiveDate) }}</span>
+                              </div>
+                              @if (component.endDate) {
+                                <div class="detail-row">
+                                  <mat-icon>event_busy</mat-icon>
+                                  <span>End: {{ formatDate(component.endDate) }}</span>
+                                </div>
+                              }
+                              <div class="detail-row">
+                                <mat-icon>{{ component.isRecurring ? 'loop' : 'event_note' }}</mat-icon>
+                                <span>{{ component.isRecurring ? 'Recurring' : 'One-time' }}</span>
+                              </div>
+                              @if (component.requiresApproval) {
+                                <div class="detail-row">
+                                  <mat-icon [class]="component.isApproved ? 'approved' : 'pending'">
+                                    {{ component.isApproved ? 'check_circle' : 'schedule' }}
+                                  </mat-icon>
+                                  <span>{{ component.isApproved ? 'Approved' : 'Pending Approval' }}</span>
+                                </div>
+                              }
+                            </div>
+                            @if (component.description) {
+                              <div class="component-description">
+                                <p>{{ component.description }}</p>
+                              </div>
+                            }
+                          </mat-card-content>
+                        </mat-card>
+                      }
+                    </div>
+                    <!-- Summary -->
+                    <div class="components-summary">
+                      <div class="summary-item allowances">
+                        <mat-icon>add_circle</mat-icon>
+                        <div>
+                          <span class="label">Total Allowances</span>
+                          <span class="value">{{ formatCurrency(getTotalAllowances()) }}</span>
                         </div>
                       </div>
-                      <div class="component-details">
-                        <div class="detail-row">
-                          <mat-icon>event</mat-icon>
-                          <span>Effective: {{ formatDate(component.effectiveDate) }}</span>
-                        </div>
-                        <div class="detail-row" *ngIf="component.endDate">
-                          <mat-icon>event_busy</mat-icon>
-                          <span>End: {{ formatDate(component.endDate) }}</span>
-                        </div>
-                        <div class="detail-row">
-                          <mat-icon>{{ component.isRecurring ? 'loop' : 'event_note' }}</mat-icon>
-                          <span>{{ component.isRecurring ? 'Recurring' : 'One-time' }}</span>
-                        </div>
-                        <div class="detail-row" *ngIf="component.requiresApproval">
-                          <mat-icon [class]="component.isApproved ? 'approved' : 'pending'">
-                            {{ component.isApproved ? 'check_circle' : 'schedule' }}
-                          </mat-icon>
-                          <span>{{ component.isApproved ? 'Approved' : 'Pending Approval' }}</span>
+                      <div class="summary-item deductions">
+                        <mat-icon>remove_circle</mat-icon>
+                        <div>
+                          <span class="label">Total Deductions</span>
+                          <span class="value">{{ formatCurrency(getTotalDeductions()) }}</span>
                         </div>
                       </div>
-                      <div class="component-description" *ngIf="component.description">
-                        <p>{{ component.description }}</p>
+                      <div class="summary-item net">
+                        <mat-icon>account_balance</mat-icon>
+                        <div>
+                          <span class="label">Net Adjustment</span>
+                          <span class="value">{{ formatCurrency(getNetAdjustment()) }}</span>
+                        </div>
                       </div>
-                    </mat-card-content>
-                  </mat-card>
-                </div>
-
-                <!-- Summary -->
-                <div class="components-summary">
-                  <div class="summary-item allowances">
-                    <mat-icon>add_circle</mat-icon>
-                    <div>
-                      <span class="label">Total Allowances</span>
-                      <span class="value">{{ formatCurrency(getTotalAllowances()) }}</span>
                     </div>
                   </div>
-                  <div class="summary-item deductions">
-                    <mat-icon>remove_circle</mat-icon>
-                    <div>
-                      <span class="label">Total Deductions</span>
-                      <span class="value">{{ formatCurrency(getTotalDeductions()) }}</span>
-                    </div>
-                  </div>
-                  <div class="summary-item net">
-                    <mat-icon>account_balance</mat-icon>
-                    <div>
-                      <span class="label">Net Adjustment</span>
-                      <span class="value">{{ formatCurrency(getNetAdjustment()) }}</span>
-                    </div>
-                  </div>
-                </div>
+                }
               </div>
-            </div>
-          </mat-expansion-panel>
+            </mat-expansion-panel>
+          }
 
           <!-- ========== SECTION 9: ADDITIONAL INFORMATION ========== -->
           <mat-expansion-panel>
@@ -773,7 +798,7 @@
               <mat-form-field appearance="outline" class="full-width">
                 <mat-label>Notes</mat-label>
                 <textarea matInput formControlName="notes" rows="5"
-                  placeholder="Any additional information or remarks about the employee"></textarea>
+                placeholder="Any additional information or remarks about the employee"></textarea>
               </mat-form-field>
             </div>
           </mat-expansion-panel>

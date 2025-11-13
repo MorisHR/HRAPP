@@ -1,7 +1,9 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 using HRMS.Core.Entities.Tenant;
+using HRMS.Core.Entities.Master;
 using HRMS.Core.Interfaces;
 using HRMS.Core.Settings;
 using HRMS.Core.Enums;
@@ -44,10 +46,11 @@ public class TenantAuthService
         _auditLogService = auditLogService;
     }
 
-    public async Task<(string Token, DateTime ExpiresAt, Employee User, Guid TenantId)?> LoginAsync(
+    public async Task<(string Token, string RefreshToken, DateTime ExpiresAt, Employee User, Guid TenantId)?> LoginAsync(
         string email,
         string password,
-        string subdomain)
+        string subdomain,
+        string ipAddress)
     {
         // Step 1: Get tenant by subdomain
         var tenant = await _masterContext.Tenants
@@ -246,6 +249,30 @@ public class TenantAuthService
         _logger.LogInformation("Successful tenant login: Employee {EmployeeId} in Tenant {TenantId}",
             employee.Id, tenant.Id);
 
+        // FORTUNE 500: Validate login hours
+        // NOTE: This requires adding AllowedLoginHours field to Employee entity
+        // Uncomment when field is added via migration
+        /*
+        if (!string.IsNullOrWhiteSpace(employee.AllowedLoginHours))
+        {
+            var currentHour = DateTime.UtcNow.Hour;
+            var allowedHours = System.Text.Json.JsonSerializer.Deserialize<List<int>>(employee.AllowedLoginHours) ?? new();
+
+            if (allowedHours.Any() && !allowedHours.Contains(currentHour))
+            {
+                await _auditLogService.LogAuthenticationAsync(
+                    AuditActionType.LOGIN_FAILED,
+                    userId: employee.Id,
+                    userEmail: employee.Email,
+                    success: false,
+                    tenantId: tenant.Id,
+                    errorMessage: "Login attempted outside allowed hours");
+
+                throw new InvalidOperationException("Login is not allowed at this time. Please contact your administrator.");
+            }
+        }
+        */
+
         // Step 8: Check if employee is a manager (has subordinates)
         var isManager = await tenantContext.Employees
             .AnyAsync(e => e.ManagerId == employee.Id && !e.IsDeleted);
@@ -263,6 +290,18 @@ public class TenantAuthService
         );
         var expiresAt = DateTime.UtcNow.AddMinutes(_jwtSettings.ExpirationMinutes);
 
+        // Step 10: Generate cryptographically secure refresh token (long-lived)
+        var refreshToken = GenerateRefreshToken(ipAddress);
+        refreshToken.TenantId = tenant.Id;
+        refreshToken.EmployeeId = employee.Id;
+
+        // Save refresh token to master database (shared across all tenants)
+        _masterContext.RefreshTokens.Add(refreshToken);
+        await _masterContext.SaveChangesAsync();
+
+        _logger.LogInformation("Refresh token generated and stored for employee {EmployeeId} in tenant {TenantId}",
+            employee.Id, tenant.Id);
+
         // Audit log: Successful login
         _ = _auditLogService.LogAuthenticationAsync(
             AuditActionType.LOGIN_SUCCESS,
@@ -272,7 +311,7 @@ public class TenantAuthService
             tenantId: tenant.Id
         );
 
-        return (token, expiresAt, employee, tenant.Id);
+        return (token, refreshToken.Token, expiresAt, employee, tenant.Id);
     }
 
     private string GenerateTenantJwtToken(
@@ -354,5 +393,162 @@ public class TenantAuthService
         );
 
         return new JwtSecurityTokenHandler().WriteToken(token);
+    }
+
+    /// <summary>
+    /// Generates a cryptographically secure random refresh token
+    /// Uses RNGCryptoServiceProvider for maximum security
+    /// </summary>
+    private RefreshToken GenerateRefreshToken(string ipAddress)
+    {
+        using var rng = RandomNumberGenerator.Create();
+        var randomBytes = new byte[64]; // 512 bits of entropy
+        rng.GetBytes(randomBytes);
+
+        var now = DateTime.UtcNow;
+        return new RefreshToken
+        {
+            Id = Guid.NewGuid(),
+            Token = Convert.ToBase64String(randomBytes),
+            ExpiresAt = now.AddDays(_jwtSettings.RefreshTokenExpirationDays),
+            CreatedAt = now,
+            CreatedByIp = ipAddress,
+            LastActivityAt = now,
+            SessionTimeoutMinutes = 30
+        };
+    }
+
+    /// <summary>
+    /// Refreshes access token using refresh token for tenant employees
+    /// Implements token rotation: old refresh token revoked, new one issued
+    /// </summary>
+    public async Task<(string AccessToken, string RefreshToken)> RefreshTokenAsync(string refreshToken, string ipAddress)
+    {
+        _logger.LogInformation("Tenant token refresh requested from IP {IpAddress}", ipAddress);
+
+        // Find and validate refresh token
+        var token = await _masterContext.RefreshTokens
+            .FirstOrDefaultAsync(rt => rt.Token == refreshToken && rt.TenantId != null && rt.EmployeeId != null);
+
+        if (token == null)
+        {
+            _logger.LogWarning("Tenant refresh token not found");
+            throw new UnauthorizedAccessException("Invalid refresh token");
+        }
+
+        if (!token.IsActive)
+        {
+            _logger.LogWarning("Inactive tenant refresh token used: Expired={IsExpired}, Revoked={IsRevoked}", token.IsExpired, token.IsRevoked);
+            throw new UnauthorizedAccessException("Refresh token is expired or revoked");
+        }
+
+        // Get tenant information
+        var tenant = await _masterContext.Tenants
+            .FirstOrDefaultAsync(t => t.Id == token.TenantId);
+
+        if (tenant == null)
+        {
+            _logger.LogWarning("Tenant not found for refresh token: {TenantId}", token.TenantId);
+            throw new UnauthorizedAccessException("Invalid tenant");
+        }
+
+        // Get employee from tenant schema
+        var optionsBuilder = new DbContextOptionsBuilder<TenantDbContext>();
+        optionsBuilder.UseNpgsql(_connectionString, o =>
+        {
+            o.MigrationsHistoryTable("__EFMigrationsHistory", tenant.SchemaName);
+            o.EnableRetryOnFailure(3, TimeSpan.FromSeconds(5), null);
+        });
+
+        await using var tenantContext = new TenantDbContext(optionsBuilder.Options, tenant.SchemaName);
+
+        var employee = await tenantContext.Employees
+            .FirstOrDefaultAsync(e => e.Id == token.EmployeeId);
+
+        if (employee == null || !employee.IsActive || employee.IsOffboarded)
+        {
+            _logger.LogWarning("Employee not found or inactive for refresh token: {EmployeeId}", token.EmployeeId);
+            throw new UnauthorizedAccessException("Invalid employee or account inactive");
+        }
+
+        // Check if employee is a manager
+        var isManager = await tenantContext.Employees
+            .AnyAsync(e => e.ManagerId == employee.Id && !e.IsDeleted);
+
+        // SECURITY: Token Rotation
+        // Generate new refresh token and revoke the old one
+        var newRefreshToken = GenerateRefreshToken(ipAddress);
+        newRefreshToken.TenantId = token.TenantId;
+        newRefreshToken.EmployeeId = token.EmployeeId;
+
+        // Revoke old token
+        token.RevokedAt = DateTime.UtcNow;
+        token.RevokedByIp = ipAddress;
+        token.ReplacedByToken = newRefreshToken.Token;
+        token.ReasonRevoked = "Replaced by new token (rotation)";
+
+        // Save new refresh token
+        _masterContext.RefreshTokens.Add(newRefreshToken);
+        await _masterContext.SaveChangesAsync();
+
+        // Generate new access token
+        var accessToken = GenerateTenantJwtToken(
+            employee.Id,
+            employee.Email,
+            employee.FullName,
+            employee.JobTitle,
+            isManager,
+            tenant.Id,
+            tenant.Subdomain,
+            tenant.SchemaName
+        );
+
+        _logger.LogInformation("Tenant token refreshed successfully for employee {EmployeeId} in tenant {TenantId}",
+            token.EmployeeId, token.TenantId);
+
+        // Audit log: Token refreshed
+        _ = _auditLogService.LogAuthenticationAsync(
+            AuditActionType.TOKEN_REFRESHED,
+            userId: employee.Id,
+            userEmail: employee.Email,
+            success: true,
+            tenantId: tenant.Id
+        );
+
+        return (accessToken, newRefreshToken.Token);
+    }
+
+    /// <summary>
+    /// Revokes a tenant refresh token (logout)
+    /// </summary>
+    public async Task RevokeTokenAsync(string refreshToken, string ipAddress, string? reason = null)
+    {
+        var token = await _masterContext.RefreshTokens
+            .FirstOrDefaultAsync(rt => rt.Token == refreshToken && rt.TenantId != null && rt.EmployeeId != null);
+
+        if (token == null || !token.IsActive)
+        {
+            _logger.LogWarning("Attempted to revoke invalid or already revoked tenant token from IP {IpAddress}", ipAddress);
+            return; // Token doesn't exist or already revoked
+        }
+
+        // Revoke token
+        token.RevokedAt = DateTime.UtcNow;
+        token.RevokedByIp = ipAddress;
+        token.ReasonRevoked = reason ?? "Revoked by user (logout)";
+
+        await _masterContext.SaveChangesAsync();
+
+        _logger.LogInformation("Tenant refresh token revoked for employee {EmployeeId} in tenant {TenantId}, reason: {Reason}",
+            token.EmployeeId, token.TenantId, token.ReasonRevoked);
+
+        // Audit log: Logout
+        _ = _auditLogService.LogAuthenticationAsync(
+            AuditActionType.LOGOUT,
+            userId: token.EmployeeId,
+            userEmail: null,
+            success: true,
+            tenantId: token.TenantId
+        );
     }
 }

@@ -1,33 +1,41 @@
 <div class="activation-container">
   <!-- Loading State -->
-  <div class="activation-card" *ngIf="loading">
-    <div class="spinner"></div>
-    <h2>Activating your account...</h2>
-    <p>Please wait while we activate your MorisHR account.</p>
-  </div>
+  @if (loading) {
+    <div class="activation-card">
+      <div class="spinner"></div>
+      <h2>Activating your account...</h2>
+      <p>Please wait while we activate your MorisHR account.</p>
+    </div>
+  }
 
   <!-- Success State -->
-  <div class="activation-card success" *ngIf="!loading && success">
-    <div class="success-icon">✓</div>
-    <h2>Account Activated!</h2>
-    <p class="success-message">{{ message }}</p>
-    <div class="info-box">
-      <p class="email-notice">📧 Check your email for login instructions</p>
-      <p class="subdomain-info" *ngIf="subdomain">
-        Your subdomain: <strong>{{ subdomain }}</strong>
-      </p>
+  @if (!loading && success) {
+    <div class="activation-card success">
+      <div class="success-icon">✓</div>
+      <h2>Account Activated!</h2>
+      <p class="success-message">{{ message }}</p>
+      <div class="info-box">
+        <p class="email-notice">📧 Check your email for login instructions</p>
+        @if (subdomain) {
+          <p class="subdomain-info">
+            Your subdomain: <strong>{{ subdomain }}</strong>
+          </p>
+        }
+      </div>
+      <button (click)="goToLogin()" class="btn-primary">Go to Login</button>
     </div>
-    <button (click)="goToLogin()" class="btn-primary">Go to Login</button>
-  </div>
+  }
 
   <!-- Error State -->
-  <div class="activation-card error" *ngIf="!loading && !success && error">
-    <div class="error-icon">✗</div>
-    <h2>Activation Failed</h2>
-    <p class="error-message">{{ error }}</p>
-    <div class="error-actions">
-      <button (click)="contactSupport()" class="btn-secondary">Contact Support</button>
-      <button (click)="goToLogin()" class="btn-outline">Try Login</button>
+  @if (!loading && !success && error) {
+    <div class="activation-card error">
+      <div class="error-icon">✗</div>
+      <h2>Activation Failed</h2>
+      <p class="error-message">{{ error }}</p>
+      <div class="error-actions">
+        <button (click)="contactSupport()" class="btn-secondary">Contact Support</button>
+        <button (click)="goToLogin()" class="btn-outline">Try Login</button>
+      </div>
     </div>
-  </div>
+  }
 </div>

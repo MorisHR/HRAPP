@@ -1,5 +1,5 @@
 import { Component, OnInit, signal, inject, computed } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { RouterModule } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -29,7 +29,6 @@ import { PaymentDetailDialogComponent } from './payment-detail-dialog.component'
   selector: 'app-subscription-dashboard',
   standalone: true,
   imports: [
-    CommonModule,
     RouterModule,
     MatCardModule,
     MatButtonModule,
@@ -41,7 +40,7 @@ import { PaymentDetailDialogComponent } from './payment-detail-dialog.component'
     MatTabsModule,
     MatBadgeModule,
     BaseChartDirective
-  ],
+],
   templateUrl: './subscription-dashboard.component.html',
   styleUrl: './subscription-dashboard.component.scss'
 })

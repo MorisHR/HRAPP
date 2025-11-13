@@ -1,5 +1,5 @@
 import { Component, signal, effect, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
@@ -10,7 +10,7 @@ type LoginStage = 'credentials' | 'mfa-setup' | 'mfa-verify';
 @Component({
   selector: 'app-superadmin-login',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule],
+  imports: [FormsModule, ReactiveFormsModule],
   templateUrl: './superadmin-login.component.html',
   styleUrls: ['./superadmin-login.component.scss']
 })
@@ -250,9 +250,39 @@ export class SuperAdminLoginComponent implements OnInit {
           this.resetMfaVerifyForm();
           this.loginStage.set('mfa-verify');
         }
-        // Direct login (no MFA) - should not happen for SuperAdmin
+        // Direct login (no MFA) - MFA disabled for development
         else {
-          this.router.navigate(['/admin/dashboard']);
+          // Save auth state with token and user data
+          const loginData = response as any;
+
+          if (loginData.token && loginData.adminUser) {
+            // Create user object matching User interface
+            const user = {
+              id: loginData.adminUser.id,
+              email: loginData.adminUser.email,
+              firstName: loginData.adminUser.userName?.split(' ')[0] || 'Admin',
+              lastName: loginData.adminUser.userName?.split(' ').slice(1).join(' ') || 'User',
+              role: 'SuperAdmin' as any,
+              avatarUrl: undefined
+            };
+
+            // Create LoginResponse object
+            const loginResponse = {
+              token: loginData.token,
+              refreshToken: loginData.refreshToken || '',
+              user: user,
+              expiresAt: loginData.expiresAt || new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+              expiresIn: 3600
+            };
+
+            // Set auth state using the proper method
+            this.authService.setAuthStatePublic(loginResponse);
+
+            console.log('✅ Direct login successful - navigating to dashboard');
+            this.router.navigate(['/admin/dashboard']);
+          } else {
+            this.errorMessage.set('Invalid login response. Please try again.');
+          }
         }
       },
       error: (error) => {

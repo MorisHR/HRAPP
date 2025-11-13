@@ -1,5 +1,5 @@
 import { Component, signal, inject, OnInit, computed } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { RouterModule, Router } from '@angular/router';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatToolbarModule } from '@angular/material/toolbar';
@@ -21,7 +21,6 @@ interface NavItem {
   selector: 'app-admin-layout',
   standalone: true,
   imports: [
-    CommonModule,
     RouterModule,
     MatSidenavModule,
     MatToolbarModule,
@@ -29,7 +28,7 @@ interface NavItem {
     MatIconModule,
     MatButtonModule,
     MatTooltipModule
-  ],
+],
   template: `
     <mat-sidenav-container class="admin-layout-container">
       <!-- Sidebar Navigation -->

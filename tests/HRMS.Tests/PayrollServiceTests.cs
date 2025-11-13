@@ -24,6 +24,7 @@ public class PayrollServiceTests : IDisposable
     private readonly Mock<ITenantService> _mockTenantService;
     private readonly Mock<ISalaryComponentService> _mockSalaryComponentService;
     private readonly Mock<ILogger<PayrollService>> _mockLogger;
+    private readonly Mock<ICurrentUserService> _mockCurrentUserService;
     private readonly PayrollService _service;
     private readonly Guid _testEmployeeId = Guid.NewGuid();
     private readonly Guid _testDepartmentId = Guid.NewGuid();
@@ -41,6 +42,7 @@ public class PayrollServiceTests : IDisposable
         _mockTenantService = new Mock<ITenantService>();
         _mockSalaryComponentService = new Mock<ISalaryComponentService>();
         _mockLogger = new Mock<ILogger<PayrollService>>();
+        _mockCurrentUserService = new Mock<ICurrentUserService>();
 
         _mockTenantService.Setup(x => x.GetCurrentTenantId()).Returns(Guid.NewGuid());
         _mockSalaryComponentService.Setup(x => x.GetTotalAllowancesAsync(It.IsAny<Guid>(), It.IsAny<int>(), It.IsAny<int>()))
@@ -53,7 +55,8 @@ public class PayrollServiceTests : IDisposable
             _tenantDbContext,
             _mockTenantService.Object,
             _mockSalaryComponentService.Object,
-            _mockLogger.Object
+            _mockLogger.Object,
+            _mockCurrentUserService.Object
         );
 
         // Seed Test Data

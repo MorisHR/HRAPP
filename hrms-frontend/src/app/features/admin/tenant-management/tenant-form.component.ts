@@ -1,5 +1,5 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router, RouterModule, ActivatedRoute } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
@@ -18,7 +18,6 @@ import { PricingTierService, type TierType, type PricingTier } from '../../../co
   selector: 'app-tenant-form',
   standalone: true,
   imports: [
-    CommonModule,
     ReactiveFormsModule,
     RouterModule,
     MatCardModule,
@@ -30,7 +29,7 @@ import { PricingTierService, type TierType, type PricingTier } from '../../../co
     MatToolbarModule,
     MatProgressSpinnerModule,
     MatSnackBarModule
-  ],
+],
   templateUrl: './tenant-form.component.html',
   styleUrl: './tenant-form.component.scss'
 })

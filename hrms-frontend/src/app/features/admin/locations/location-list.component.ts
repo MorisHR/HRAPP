@@ -1,5 +1,5 @@
 import { Component, OnInit, signal, computed, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { MatTableModule } from '@angular/material/table';
@@ -35,7 +35,6 @@ import { MAURITIUS_DISTRICTS, LOCATION_TYPES } from '../../../core/constants/mau
   selector: 'app-location-list',
   standalone: true,
   imports: [
-    CommonModule,
     FormsModule,
     MatTableModule,
     MatButtonModule,
@@ -49,7 +48,7 @@ import { MAURITIUS_DISTRICTS, LOCATION_TYPES } from '../../../core/constants/mau
     MatChipsModule,
     MatTooltipModule,
     MatCardModule
-  ],
+],
   template: `
     <div class="location-list-container">
       <!-- Header -->
@@ -64,7 +63,7 @@ import { MAURITIUS_DISTRICTS, LOCATION_TYPES } from '../../../core/constants/mau
             color="accent"
             (click)="seedLocations()"
             [disabled]="loading()"
-          >
+            >
             <mat-icon>cloud_upload</mat-icon>
             Seed Mauritius Data
           </button>
@@ -72,13 +71,13 @@ import { MAURITIUS_DISTRICTS, LOCATION_TYPES } from '../../../core/constants/mau
             mat-raised-button
             color="primary"
             (click)="createLocation()"
-          >
+            >
             <mat-icon>add</mat-icon>
             Add Location
           </button>
         </div>
       </div>
-
+    
       <!-- Filters -->
       <mat-card class="filters-card">
         <div class="filters">
@@ -89,185 +88,189 @@ import { MAURITIUS_DISTRICTS, LOCATION_TYPES } from '../../../core/constants/mau
               [(ngModel)]="searchTerm"
               (ngModelChange)="applyFilters()"
               placeholder="Search by location name..."
-            />
-            <mat-icon matPrefix>search</mat-icon>
-          </mat-form-field>
-
-          <mat-form-field appearance="outline" class="filter-field">
-            <mat-label>District</mat-label>
-            <mat-select
-              [(ngModel)]="selectedDistrict"
-              (ngModelChange)="applyFilters()"
-            >
-              <mat-option [value]="null">All Districts</mat-option>
-              <mat-option *ngFor="let district of districts" [value]="district">
-                {{ district }}
-              </mat-option>
-            </mat-select>
-            <mat-icon matPrefix>location_on</mat-icon>
-          </mat-form-field>
-
-          <mat-form-field appearance="outline" class="filter-field">
-            <mat-label>Type</mat-label>
-            <mat-select
-              [(ngModel)]="selectedType"
-              (ngModelChange)="applyFilters()"
-            >
-              <mat-option [value]="null">All Types</mat-option>
-              <mat-option *ngFor="let type of locationTypes" [value]="type.value">
-                {{ type.label }}
-              </mat-option>
-            </mat-select>
-            <mat-icon matPrefix>category</mat-icon>
-          </mat-form-field>
-
-          <button
-            mat-stroked-button
-            (click)="clearFilters()"
-            class="clear-button"
-          >
-            <mat-icon>clear</mat-icon>
-            Clear Filters
-          </button>
-        </div>
-      </mat-card>
-
-      <!-- Loading State -->
-      @if (loading()) {
-        <div class="loading-container">
-          <mat-spinner diameter="50"></mat-spinner>
-          <p>Loading locations...</p>
-        </div>
-      }
-
-      <!-- Error State -->
-      @if (errorMessage() && !loading()) {
-        <mat-card class="error-card">
-          <mat-icon color="warn">error</mat-icon>
-          <p>{{ errorMessage() }}</p>
-          <button mat-raised-button color="primary" (click)="loadLocations()">
-            <mat-icon>refresh</mat-icon>
-            Retry
-          </button>
-        </mat-card>
-      }
-
-      <!-- Data Table -->
-      @if (!loading() && !errorMessage()) {
-        <mat-card class="table-card">
-          <!-- Stats -->
-          <div class="stats">
-            <div class="stat">
-              <span class="stat-value">{{ filteredLocations().length }}</span>
-              <span class="stat-label">Total Locations</span>
-            </div>
-            <div class="stat">
-              <span class="stat-value">{{ activeCount() }}</span>
-              <span class="stat-label">Active</span>
-            </div>
-            <div class="stat">
-              <span class="stat-value">{{ uniqueDistricts() }}</span>
-              <span class="stat-label">Districts</span>
-            </div>
-          </div>
-
-          <!-- Table -->
-          <div class="table-container">
-            <table mat-table [dataSource]="filteredLocations()" class="locations-table">
-              <!-- Name Column -->
-              <ng-container matColumnDef="name">
-                <th mat-header-cell *matHeaderCellDef>Name</th>
-                <td mat-cell *matCellDef="let location">
-                  <strong>{{ location.name }}</strong>
-                </td>
-              </ng-container>
-
-              <!-- District Column -->
-              <ng-container matColumnDef="district">
-                <th mat-header-cell *matHeaderCellDef>District</th>
-                <td mat-cell *matCellDef="let location">
-                  {{ location.district }}
-                </td>
-              </ng-container>
-
-              <!-- Type Column -->
-              <ng-container matColumnDef="type">
-                <th mat-header-cell *matHeaderCellDef>Type</th>
-                <td mat-cell *matCellDef="let location">
-                  <mat-chip [style.background-color]="getTypeColor(location.type)">
-                    {{ location.type }}
-                  </mat-chip>
-                </td>
-              </ng-container>
-
-              <!-- Region Column -->
-              <ng-container matColumnDef="region">
-                <th mat-header-cell *matHeaderCellDef>Region</th>
-                <td mat-cell *matCellDef="let location">
-                  {{ location.region || '-' }}
-                </td>
-              </ng-container>
-
-              <!-- Postal Code Column -->
-              <ng-container matColumnDef="postalCode">
-                <th mat-header-cell *matHeaderCellDef>Postal Code</th>
-                <td mat-cell *matCellDef="let location">
-                  {{ location.postalCode || '-' }}
-                </td>
-              </ng-container>
-
-              <!-- Status Column -->
-              <ng-container matColumnDef="status">
-                <th mat-header-cell *matHeaderCellDef>Status</th>
-                <td mat-cell *matCellDef="let location">
-                  <mat-chip [color]="location.isActive ? 'primary' : 'warn'">
-                    {{ location.isActive ? 'Active' : 'Inactive' }}
-                  </mat-chip>
-                </td>
-              </ng-container>
-
-              <!-- Actions Column -->
-              <ng-container matColumnDef="actions">
-                <th mat-header-cell *matHeaderCellDef>Actions</th>
-                <td mat-cell *matCellDef="let location">
-                  <div class="action-buttons">
-                    <button
-                      mat-icon-button
-                      color="primary"
-                      (click)="editLocation(location)"
-                      matTooltip="Edit location"
-                    >
-                      <mat-icon>edit</mat-icon>
-                    </button>
-                    <button
-                      mat-icon-button
-                      color="warn"
-                      (click)="deleteLocation(location)"
-                      matTooltip="Delete location"
-                    >
-                      <mat-icon>delete</mat-icon>
-                    </button>
-                  </div>
-                </td>
-              </ng-container>
-
-              <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-              <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
-
-              <!-- No Data Row -->
-              <tr class="mat-row" *matNoDataRow>
-                <td class="mat-cell no-data" [attr.colspan]="displayedColumns.length">
-                  <mat-icon>search_off</mat-icon>
-                  <p>No locations found</p>
-                  <p class="hint">Try adjusting your filters or add a new location</p>
-                </td>
-              </tr>
-            </table>
+              />
+              <mat-icon matPrefix>search</mat-icon>
+            </mat-form-field>
+    
+            <mat-form-field appearance="outline" class="filter-field">
+              <mat-label>District</mat-label>
+              <mat-select
+                [(ngModel)]="selectedDistrict"
+                (ngModelChange)="applyFilters()"
+                >
+                <mat-option [value]="null">All Districts</mat-option>
+                @for (district of districts; track district) {
+                  <mat-option [value]="district">
+                    {{ district }}
+                  </mat-option>
+                }
+              </mat-select>
+              <mat-icon matPrefix>location_on</mat-icon>
+            </mat-form-field>
+    
+            <mat-form-field appearance="outline" class="filter-field">
+              <mat-label>Type</mat-label>
+              <mat-select
+                [(ngModel)]="selectedType"
+                (ngModelChange)="applyFilters()"
+                >
+                <mat-option [value]="null">All Types</mat-option>
+                @for (type of locationTypes; track type) {
+                  <mat-option [value]="type.value">
+                    {{ type.label }}
+                  </mat-option>
+                }
+              </mat-select>
+              <mat-icon matPrefix>category</mat-icon>
+            </mat-form-field>
+    
+            <button
+              mat-stroked-button
+              (click)="clearFilters()"
+              class="clear-button"
+              >
+              <mat-icon>clear</mat-icon>
+              Clear Filters
+            </button>
           </div>
         </mat-card>
-      }
-    </div>
-  `,
+    
+        <!-- Loading State -->
+        @if (loading()) {
+          <div class="loading-container">
+            <mat-spinner diameter="50"></mat-spinner>
+            <p>Loading locations...</p>
+          </div>
+        }
+    
+        <!-- Error State -->
+        @if (errorMessage() && !loading()) {
+          <mat-card class="error-card">
+            <mat-icon color="warn">error</mat-icon>
+            <p>{{ errorMessage() }}</p>
+            <button mat-raised-button color="primary" (click)="loadLocations()">
+              <mat-icon>refresh</mat-icon>
+              Retry
+            </button>
+          </mat-card>
+        }
+    
+        <!-- Data Table -->
+        @if (!loading() && !errorMessage()) {
+          <mat-card class="table-card">
+            <!-- Stats -->
+            <div class="stats">
+              <div class="stat">
+                <span class="stat-value">{{ filteredLocations().length }}</span>
+                <span class="stat-label">Total Locations</span>
+              </div>
+              <div class="stat">
+                <span class="stat-value">{{ activeCount() }}</span>
+                <span class="stat-label">Active</span>
+              </div>
+              <div class="stat">
+                <span class="stat-value">{{ uniqueDistricts() }}</span>
+                <span class="stat-label">Districts</span>
+              </div>
+            </div>
+    
+            <!-- Table -->
+            <div class="table-container">
+              <table mat-table [dataSource]="filteredLocations()" class="locations-table">
+                <!-- Name Column -->
+                <ng-container matColumnDef="name">
+                  <th mat-header-cell *matHeaderCellDef>Name</th>
+                  <td mat-cell *matCellDef="let location">
+                    <strong>{{ location.name }}</strong>
+                  </td>
+                </ng-container>
+    
+                <!-- District Column -->
+                <ng-container matColumnDef="district">
+                  <th mat-header-cell *matHeaderCellDef>District</th>
+                  <td mat-cell *matCellDef="let location">
+                    {{ location.district }}
+                  </td>
+                </ng-container>
+    
+                <!-- Type Column -->
+                <ng-container matColumnDef="type">
+                  <th mat-header-cell *matHeaderCellDef>Type</th>
+                  <td mat-cell *matCellDef="let location">
+                    <mat-chip [style.background-color]="getTypeColor(location.type)">
+                      {{ location.type }}
+                    </mat-chip>
+                  </td>
+                </ng-container>
+    
+                <!-- Region Column -->
+                <ng-container matColumnDef="region">
+                  <th mat-header-cell *matHeaderCellDef>Region</th>
+                  <td mat-cell *matCellDef="let location">
+                    {{ location.region || '-' }}
+                  </td>
+                </ng-container>
+    
+                <!-- Postal Code Column -->
+                <ng-container matColumnDef="postalCode">
+                  <th mat-header-cell *matHeaderCellDef>Postal Code</th>
+                  <td mat-cell *matCellDef="let location">
+                    {{ location.postalCode || '-' }}
+                  </td>
+                </ng-container>
+    
+                <!-- Status Column -->
+                <ng-container matColumnDef="status">
+                  <th mat-header-cell *matHeaderCellDef>Status</th>
+                  <td mat-cell *matCellDef="let location">
+                    <mat-chip [color]="location.isActive ? 'primary' : 'warn'">
+                      {{ location.isActive ? 'Active' : 'Inactive' }}
+                    </mat-chip>
+                  </td>
+                </ng-container>
+    
+                <!-- Actions Column -->
+                <ng-container matColumnDef="actions">
+                  <th mat-header-cell *matHeaderCellDef>Actions</th>
+                  <td mat-cell *matCellDef="let location">
+                    <div class="action-buttons">
+                      <button
+                        mat-icon-button
+                        color="primary"
+                        (click)="editLocation(location)"
+                        matTooltip="Edit location"
+                        >
+                        <mat-icon>edit</mat-icon>
+                      </button>
+                      <button
+                        mat-icon-button
+                        color="warn"
+                        (click)="deleteLocation(location)"
+                        matTooltip="Delete location"
+                        >
+                        <mat-icon>delete</mat-icon>
+                      </button>
+                    </div>
+                  </td>
+                </ng-container>
+    
+                <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+                <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+    
+                <!-- No Data Row -->
+                <tr class="mat-row" *matNoDataRow>
+                  <td class="mat-cell no-data" [attr.colspan]="displayedColumns.length">
+                    <mat-icon>search_off</mat-icon>
+                    <p>No locations found</p>
+                    <p class="hint">Try adjusting your filters or add a new location</p>
+                  </td>
+                </tr>
+              </table>
+            </div>
+          </mat-card>
+        }
+      </div>
+    `,
   styles: [`
     .location-list-container {
       padding: 24px;

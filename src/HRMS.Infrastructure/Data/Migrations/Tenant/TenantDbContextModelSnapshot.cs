@@ -992,7 +992,7 @@ namespace HRMS.Infrastructure.Data.Migrations.Tenant
                         .HasColumnType("character varying(50)");
 
                     b.Property<decimal>("BasicSalary")
-                        .HasColumnType("decimal(18,2)");
+                        .HasColumnType("numeric");
 
                     b.Property<DateTime?>("BiometricEnrollmentDate")
                         .HasColumnType("timestamp with time zone");
@@ -1923,7 +1923,8 @@ namespace HRMS.Infrastructure.Data.Migrations.Tenant
                         .HasColumnType("text");
 
                     b.Property<string>("District")
-                        .HasColumnType("text");
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
                     b.Property<string>("Email")
                         .HasMaxLength(100)

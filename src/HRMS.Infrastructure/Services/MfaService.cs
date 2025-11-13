@@ -2,6 +2,10 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using HRMS.Core.Interfaces;
+using HRMS.Core.Enums;
+using HRMS.Infrastructure.Data;
+using HRMS.Application.Interfaces;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using OtpNet;
 using QRCoder;
@@ -15,10 +19,20 @@ namespace HRMS.Infrastructure.Services;
 public class MfaService : IMfaService
 {
     private readonly ILogger<MfaService> _logger;
+    private readonly MasterDbContext _context;
+    private readonly IAuditLogService _auditLogService;
+    private readonly IEmailService _emailService;
 
-    public MfaService(ILogger<MfaService> logger)
+    public MfaService(
+        ILogger<MfaService> logger,
+        MasterDbContext context,
+        IAuditLogService auditLogService,
+        IEmailService emailService)
     {
         _logger = logger;
+        _context = context;
+        _auditLogService = auditLogService;
+        _emailService = emailService;
     }
 
     /// <summary>
@@ -97,12 +111,11 @@ public class MfaService : IMfaService
             _logger.LogInformation("Previous step code (-30s): {PreviousCode}", previousCode);
             _logger.LogInformation("Future step code (+30s): {FutureCode}", futureCode);
 
-            // TEMPORARY FIX: Verify with window of ±480 steps (4 hours) to handle timezone differences
-            // Normal production should use ±1 step (90 seconds), but GitHub Codespaces has UTC time
-            // while user devices may be in different timezones
+            // PRODUCTION SECURITY: Verify with window of ±1 step (90 seconds total)
+            // This provides 30 seconds before and after the current time window for clock drift tolerance
             var verificationWindow = new VerificationWindow(
-                previous: 480,  // Allow codes from 4 hours ago (480 * 30 seconds)
-                future: 480     // Allow codes from 4 hours in the future
+                previous: 1,  // Allow codes from 30 seconds ago
+                future: 1     // Allow codes from 30 seconds in the future
             );
 
             var isValid = totp.VerifyTotp(
@@ -252,5 +265,82 @@ public class MfaService : IMfaService
         }
 
         return new string(result);
+    }
+
+    /// <summary>
+    /// Admin override to disable MFA for a user (recovery/support scenario)
+    /// </summary>
+    public async Task<(bool Success, string Message)> AdminDisableMfaAsync(
+        Guid adminUserId,
+        Guid targetUserId,
+        string reason)
+    {
+        try
+        {
+            // Verify admin has permission
+            var admin = await _context.AdminUsers
+                .FirstOrDefaultAsync(u => u.Id == adminUserId && u.IsActive);
+
+            if (admin == null)
+            {
+                _logger.LogWarning("MFA disable attempted by non-existent or inactive admin user: {AdminUserId}", adminUserId);
+                return (false, "Only active administrators can disable MFA for users");
+            }
+
+            // Find target user
+            var targetUser = await _context.AdminUsers
+                .FirstOrDefaultAsync(u => u.Id == targetUserId);
+
+            if (targetUser == null)
+            {
+                _logger.LogWarning("MFA disable attempted for non-existent user: {TargetUserId}", targetUserId);
+                return (false, "User not found");
+            }
+
+            if (!targetUser.IsTwoFactorEnabled)
+            {
+                _logger.LogInformation("MFA disable attempted but MFA already disabled for user: {TargetUserId}", targetUserId);
+                return (true, "MFA is already disabled for this user");
+            }
+
+            // Disable MFA
+            targetUser.IsTwoFactorEnabled = false;
+            targetUser.TwoFactorSecret = null;
+
+            // Note: Revoke backup codes if your system has a separate MfaBackupCodes table
+            // For now, we'll clear the BackupCodes JSON field if it exists
+            if (!string.IsNullOrWhiteSpace(targetUser.BackupCodes))
+            {
+                targetUser.BackupCodes = null;
+            }
+
+            await _context.SaveChangesAsync();
+
+            // Audit log
+            await _auditLogService.LogSecurityEventAsync(
+                AuditActionType.MFA_DISABLED,
+                AuditSeverity.CRITICAL,
+                userId: targetUserId,
+                description: $"MFA disabled by admin {adminUserId}. Reason: {reason}");
+
+            // Send email notification to user
+            await _emailService.SendEmailAsync(
+                targetUser.Email,
+                "Multi-Factor Authentication Disabled",
+                $"Your multi-factor authentication has been disabled by an administrator.\n\n" +
+                $"Reason: {reason}\n\n" +
+                $"If you did not request this change, please contact your administrator immediately.\n\n" +
+                $"This is a security notification from MorisHR.");
+
+            _logger.LogInformation("MFA disabled for user {TargetUserId} by admin {AdminUserId}. Reason: {Reason}",
+                targetUserId, adminUserId, reason);
+
+            return (true, "MFA disabled successfully");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error disabling MFA for user {TargetUserId}", targetUserId);
+            return (false, "An error occurred");
+        }
     }
 }

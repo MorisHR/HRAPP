@@ -137,4 +137,24 @@ public interface IAuthService
     /// <param name="ipAddress">Client IP address</param>
     /// <returns>Access token, refresh token, and expiration date</returns>
     (string Token, string RefreshToken, DateTime ExpiresAt) GenerateTokens(AdminUser admin, string ipAddress);
+
+    // ============================================
+    // PASSWORD RESET METHODS
+    // ============================================
+
+    /// <summary>
+    /// Initiates password reset flow by generating reset token and sending email
+    /// </summary>
+    /// <param name="email">Email address of the user requesting password reset</param>
+    /// <returns>Success status and message</returns>
+    Task<(bool Success, string Message)> ForgotPasswordAsync(string email);
+
+    /// <summary>
+    /// Resets password using the reset token from email
+    /// Validates token expiry and password complexity
+    /// </summary>
+    /// <param name="token">Password reset token from email</param>
+    /// <param name="newPassword">New password to set</param>
+    /// <returns>Success status and message</returns>
+    Task<(bool Success, string Message)> ResetPasswordAsync(string token, string newPassword);
 }

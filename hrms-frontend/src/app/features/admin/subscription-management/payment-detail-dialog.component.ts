@@ -1,5 +1,5 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { MAT_DIALOG_DATA, MatDialogRef, MatDialogModule } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -20,7 +20,6 @@ export interface PaymentDetailDialogData {
   selector: 'app-payment-detail-dialog',
   standalone: true,
   imports: [
-    CommonModule,
     MatDialogModule,
     MatButtonModule,
     MatIconModule,
@@ -28,7 +27,7 @@ export interface PaymentDetailDialogData {
     MatChipsModule,
     MatDividerModule,
     MatListModule
-  ],
+],
   template: `
     <div class="payment-detail-dialog">
       <div mat-dialog-title>

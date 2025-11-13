@@ -59,4 +59,13 @@ public interface IMfaService
     /// <param name="hashedCodes">JSON array of hashed codes</param>
     /// <returns>Updated JSON array with the used code removed</returns>
     string RevokeBackupCode(string code, string hashedCodes);
+
+    /// <summary>
+    /// Admin override to disable MFA for a user
+    /// </summary>
+    /// <param name="adminUserId">ID of admin performing the action</param>
+    /// <param name="targetUserId">ID of user to disable MFA for</param>
+    /// <param name="reason">Reason for disabling MFA</param>
+    /// <returns>Success status and message</returns>
+    Task<(bool Success, string Message)> AdminDisableMfaAsync(Guid adminUserId, Guid targetUserId, string reason);
 }

@@ -1,0 +1,180 @@
+<mat-card class="api-keys-card">
+  <mat-card-header>
+    <mat-card-title>
+      <mat-icon>vpn_key</mat-icon>
+      API Key Management
+    </mat-card-title>
+    <div class="header-actions">
+      <button
+        mat-icon-button
+        (click)="onRefresh()"
+        [disabled]="loading()"
+        matTooltip="Refresh">
+        <mat-icon>refresh</mat-icon>
+      </button>
+      <button
+        mat-raised-button
+        color="primary"
+        (click)="onGenerateNewKey()"
+        [disabled]="loading()">
+        <mat-icon>add</mat-icon>
+        Generate New API Key
+      </button>
+    </div>
+  </mat-card-header>
+
+  <mat-card-content>
+    <!-- Loading State -->
+    @if (loading()) {
+      <div class="loading-container">
+        <mat-spinner diameter="40"></mat-spinner>
+        <p>Loading API keys...</p>
+      </div>
+    }
+
+    <!-- Error State -->
+    @if (error() && !loading()) {
+      <div class="error-container">
+        <mat-icon>error</mat-icon>
+        <p>{{ error() }}</p>
+        <button mat-raised-button color="primary" (click)="onRefresh()">
+          <mat-icon>refresh</mat-icon>
+          Retry
+        </button>
+      </div>
+    }
+
+    <!-- Empty State -->
+    @if (!loading() && !error() && apiKeys().length === 0) {
+      <div class="empty-container">
+        <mat-icon>vpn_key</mat-icon>
+        <h3>No API Keys Yet</h3>
+        <p>Generate an API key to enable programmatic access to this device.</p>
+        <button
+          mat-raised-button
+          color="primary"
+          (click)="onGenerateNewKey()">
+          <mat-icon>add</mat-icon>
+          Generate First API Key
+        </button>
+      </div>
+    }
+
+    <!-- API Keys Table -->
+    @if (!loading() && !error() && apiKeys().length > 0) {
+      <div class="table-container">
+        <table mat-table [dataSource]="apiKeys()" class="api-keys-table">
+          <!-- Description Column -->
+          <ng-container matColumnDef="description">
+            <th mat-header-cell *matHeaderCellDef>Description</th>
+            <td mat-cell *matCellDef="let key">
+              <div class="description-cell">
+                <mat-icon>description</mat-icon>
+                <span>{{ key.description }}</span>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Status Column -->
+          <ng-container matColumnDef="status">
+            <th mat-header-cell *matHeaderCellDef>Status</th>
+            <td mat-cell *matCellDef="let key">
+              <mat-chip [class]="getStatusClass(key)">
+                {{ getStatusText(key) }}
+              </mat-chip>
+            </td>
+          </ng-container>
+
+          <!-- Created Date Column -->
+          <ng-container matColumnDef="createdAt">
+            <th mat-header-cell *matHeaderCellDef>Created</th>
+            <td mat-cell *matCellDef="let key">
+              <div class="date-cell">
+                <mat-icon>calendar_today</mat-icon>
+                <span>{{ formatDate(key.createdAt) }}</span>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Expires At Column -->
+          <ng-container matColumnDef="expiresAt">
+            <th mat-header-cell *matHeaderCellDef>Expires</th>
+            <td mat-cell *matCellDef="let key">
+              <div class="date-cell">
+                <mat-icon>event</mat-icon>
+                <span>{{ formatDate(key.expiresAt) }}</span>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Last Used Column -->
+          <ng-container matColumnDef="lastUsedAt">
+            <th mat-header-cell *matHeaderCellDef>Last Used</th>
+            <td mat-cell *matCellDef="let key">
+              <div class="date-cell">
+                <mat-icon>access_time</mat-icon>
+                <span>{{ formatDate(key.lastUsedAt) }}</span>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Usage Count Column -->
+          <ng-container matColumnDef="usageCount">
+            <th mat-header-cell *matHeaderCellDef>Usage</th>
+            <td mat-cell *matCellDef="let key">
+              <div class="usage-cell">
+                <mat-icon>trending_up</mat-icon>
+                <span>{{ key.usageCount }}</span>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Actions Column -->
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef>Actions</th>
+            <td mat-cell *matCellDef="let key">
+              <div class="actions-cell">
+                @if (key.isActive) {
+                  <button
+                    mat-icon-button
+                    (click)="onRotate(key)"
+                    matTooltip="Rotate API key">
+                    <mat-icon>sync</mat-icon>
+                  </button>
+                  <button
+                    mat-icon-button
+                    color="warn"
+                    (click)="onRevoke(key)"
+                    matTooltip="Revoke API key">
+                    <mat-icon>block</mat-icon>
+                  </button>
+                }
+                @if (!key.isActive) {
+                  <span class="revoked-badge">Revoked</span>
+                }
+              </div>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+        </table>
+      </div>
+
+      <!-- Info Box -->
+      <div class="info-box">
+        <mat-icon>info</mat-icon>
+        <div>
+          <strong>API Key Security Best Practices:</strong>
+          <ul>
+            <li>Store API keys securely and never commit them to version control</li>
+            <li>Rotate keys periodically and when team members leave</li>
+            <li>Use different keys for different environments (dev, staging, production)</li>
+            <li>Revoke keys immediately if they are compromised</li>
+            <li>Monitor usage counts to detect unauthorized access</li>
+          </ul>
+        </div>
+      </div>
+    }
+  </mat-card-content>
+</mat-card>

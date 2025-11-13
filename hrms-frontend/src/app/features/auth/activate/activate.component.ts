@@ -1,13 +1,13 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { CommonModule } from '@angular/common';
+
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'app-activate',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   templateUrl: './activate.component.html',
   styleUrls: ['./activate.component.scss']
 })
@@ -58,7 +58,7 @@ export class ActivateComponent implements OnInit {
   }
 
   goToLogin() {
-    this.router.navigate(['/login']);
+    this.router.navigate(['/auth/subdomain']);
   }
 
   contactSupport() {

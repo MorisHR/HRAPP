@@ -1,5 +1,5 @@
 import { Component, signal, inject, OnInit, OnDestroy } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
@@ -61,7 +61,6 @@ interface KpiCard {
   selector: 'app-tenant-dashboard',
   standalone: true,
   imports: [
-    CommonModule,
     MatCardModule,
     MatIconModule,
     MatButtonModule,
@@ -74,7 +73,7 @@ interface KpiCard {
     MatFormFieldModule,
     MatChipsModule,
     BaseChartDirective
-  ],
+],
   templateUrl: './tenant-dashboard.component.html',
   styleUrl: './tenant-dashboard.component.scss'
 })

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, AfterViewInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
@@ -14,9 +14,11 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { LocationService, LocationDropdownDto } from '../locations/location.service';
 import { AttendanceMachinesService, CreateAttendanceMachineDto, UpdateAttendanceMachineDto } from '../../../../core/services/attendance-machines.service';
 import { BiometricDeviceService, CreateBiometricDeviceDto, UpdateBiometricDeviceDto, TestConnectionDto } from './biometric-device.service';
+import { DeviceApiKeysComponent } from './device-api-keys.component';
 
 // Device Types
 export const DEVICE_TYPES = [
@@ -52,12 +54,14 @@ export const CONNECTION_METHODS = [
     MatProgressSpinnerModule,
     MatDividerModule,
     MatSnackBarModule,
-    MatTooltipModule
-  ],
+    MatTooltipModule,
+    MatSlideToggleModule,
+    DeviceApiKeysComponent
+],
   templateUrl: './biometric-device-form.component.html',
   styleUrls: ['./biometric-device-form.component.scss']
 })
-export class BiometricDeviceFormComponent implements OnInit {
+export class BiometricDeviceFormComponent implements OnInit, AfterViewInit {
   deviceForm!: FormGroup;
   isEditMode = false;
   deviceId?: string;
@@ -83,7 +87,8 @@ export class BiometricDeviceFormComponent implements OnInit {
     private locationService: LocationService,
     private attendanceMachinesService: AttendanceMachinesService,
     private deviceService: BiometricDeviceService,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -94,24 +99,48 @@ export class BiometricDeviceFormComponent implements OnInit {
   }
 
   /**
+   * Fix change detection error by triggering detection after view init
+   */
+  ngAfterViewInit(): void {
+    // Trigger change detection to fix ExpressionChangedAfterItHasBeenCheckedError
+    this.cdr.detectChanges();
+  }
+
+  /**
    * Initialize reactive form with validators
-   * Simplified for AttendanceMachinesService DTO
+   * Comprehensive form matching the HTML template
    */
   private initForm(): void {
     this.deviceForm = this.fb.group({
       // Basic Device Information
+      deviceCode: ['', [Validators.required, Validators.maxLength(50)]],
       machineName: ['', [Validators.required, Validators.maxLength(100)]],
-      machineType: ['ZKTeco', Validators.required],
+      deviceType: ['ZKTeco', Validators.required], // Used in template
+      model: [''],
       departmentId: [''],
-      locationId: [''],
+      locationId: ['', Validators.required],
 
       // Network Configuration
+      connectionMethod: ['TCP/IP', Validators.required],
       ipAddress: ['', [Validators.pattern(this.ipAddressPattern), this.ipAddressValidator.bind(this)]],
       port: [4370, [Validators.min(1), Validators.max(65535)]],
+      macAddress: ['', Validators.pattern(this.macAddressPattern)],
+
+      // Device Credentials (Optional)
+      username: [''],
+      password: [''],
+
+      // Sync Settings
+      syncEnabled: [true],
+      syncIntervalMinutes: [15, [Validators.required, Validators.min(1), Validators.max(1440)]],
+      connectionTimeoutSeconds: [30, [Validators.required, Validators.min(5), Validators.max(300)]],
+      offlineAlertEnabled: [true],
+      offlineThresholdMinutes: [60, [Validators.required, Validators.min(5), Validators.max(1440)]],
 
       // Device Identification (Optional)
       zkTecoDeviceId: ['', Validators.maxLength(50)],
       serialNumber: ['', Validators.maxLength(100)],
+      firmwareVersion: [''],
 
       // Status
       isActive: [true]
@@ -187,9 +216,7 @@ export class BiometricDeviceFormComponent implements OnInit {
       next: (machine) => {
         this.deviceForm.patchValue({
           machineName: machine.machineName,
-          machineType: machine.machineType,
           departmentId: machine.departmentId,
-          locationId: machine.locationId,
           ipAddress: machine.ipAddress,
           port: machine.port,
           zkTecoDeviceId: machine.zkTecoDeviceId,
@@ -241,7 +268,12 @@ export class BiometricDeviceFormComponent implements OnInit {
 
     this.deviceService.testConnection(connectionData).subscribe({
       next: (result) => {
-        this.testingConnection = false;
+        // Wrap in setTimeout to avoid change detection error
+        setTimeout(() => {
+          this.testingConnection = false;
+          this.cdr.detectChanges();
+        });
+
         if (result.success) {
           this.snackBar.open(
             `Successfully connected to device at ${ipAddress}:${port}`,
@@ -263,7 +295,12 @@ export class BiometricDeviceFormComponent implements OnInit {
         }
       },
       error: (error) => {
-        this.testingConnection = false;
+        // Wrap in setTimeout to avoid change detection error
+        setTimeout(() => {
+          this.testingConnection = false;
+          this.cdr.detectChanges();
+        });
+
         console.error('Connection test error:', error);
         this.snackBar.open(
           `Failed to connect to device at ${ipAddress}:${port}. Please check IP, port, and network settings.`,
@@ -297,17 +334,26 @@ export class BiometricDeviceFormComponent implements OnInit {
     const formData = this.deviceForm.value;
 
     // Prepare machine DTO for AttendanceMachinesService
-    const machineDto: CreateAttendanceMachineDto | UpdateAttendanceMachineDto = {
-      machineName: formData.machineName,
-      machineType: formData.machineType,
-      departmentId: formData.departmentId || undefined,
-      locationId: formData.locationId || undefined,
+    // Backend expects: MachineName (required), MachineId (required for create), Location (string), etc.
+    const machineDto: any = {
+      machineName: formData.machineName!,
       ipAddress: formData.ipAddress || undefined,
+      location: undefined, // TODO: Map locationId to location string if available
+      departmentId: formData.departmentId || undefined,
+      model: formData.model || undefined,
       port: formData.port || undefined,
-      zkTecoDeviceId: formData.zkTecoDeviceId || undefined,
-      serialNumber: formData.serialNumber || undefined,
-      isActive: formData.isActive
+      isActive: formData.isActive ?? true
     };
+
+    // For CREATE: machineId is required
+    if (!this.isEditMode) {
+      machineDto.machineId = formData.deviceCode || formData.zkTecoDeviceId || `DEVICE-${Date.now()}`;
+      machineDto.zkTecoDeviceId = formData.zkTecoDeviceId || undefined;
+      machineDto.serialNumber = formData.serialNumber || undefined;
+    }
+
+    console.log('Submitting machine DTO:', machineDto);
+    console.log('Submitting machine DTO (JSON):', JSON.stringify(machineDto, null, 2));
 
     const saveOperation = this.isEditMode
       ? this.attendanceMachinesService.updateMachine(this.deviceId!, machineDto as UpdateAttendanceMachineDto)
@@ -315,7 +361,12 @@ export class BiometricDeviceFormComponent implements OnInit {
 
     saveOperation.subscribe({
       next: (response) => {
-        this.savingDevice = false;
+        // Wrap in setTimeout to avoid change detection error
+        setTimeout(() => {
+          this.savingDevice = false;
+          this.cdr.detectChanges();
+        });
+
         const action = this.isEditMode ? 'updated' : 'created';
         this.snackBar.open(
           `Attendance machine ${action} successfully`,
@@ -328,9 +379,16 @@ export class BiometricDeviceFormComponent implements OnInit {
         this.router.navigate(['/tenant/organization/devices']);
       },
       error: (error) => {
-        this.savingDevice = false;
+        // Wrap in setTimeout to avoid change detection error
+        setTimeout(() => {
+          this.savingDevice = false;
+          this.cdr.detectChanges();
+        });
+
         console.error('Save error:', error);
-        const errorMessage = error?.error?.message || `Failed to ${this.isEditMode ? 'update' : 'create'} machine`;
+        console.error('Error details:', error?.error);
+        console.error('Validation errors:', JSON.stringify(error?.error?.errors, null, 2));
+        const errorMessage = error?.error?.message || error?.error?.title || `Failed to ${this.isEditMode ? 'update' : 'create'} machine`;
         this.snackBar.open(
           errorMessage,
           'Close',

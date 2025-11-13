@@ -2,6 +2,7 @@ using HRMS.Application.DTOs.BiometricPunchDtos;
 using HRMS.Application.Interfaces;
 using HRMS.Core.Entities.Tenant;
 using HRMS.Core.Enums;
+using HRMS.Core.Exceptions;
 using HRMS.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -742,7 +743,11 @@ public class BiometricPunchProcessingService : IBiometricPunchProcessingService
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed to decode base64 photo string");
-                throw new InvalidOperationException("Invalid base64 photo data", ex);
+                throw new ValidationException(
+                    ErrorCodes.DEV_INVALID_DATA,
+                    "The biometric photo data is invalid.",
+                    $"Invalid base64 photo data: {ex.Message}",
+                    "Please ensure the photo data is properly encoded.");
             }
 
             // Generate structured filename

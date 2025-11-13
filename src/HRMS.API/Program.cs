@@ -5,6 +5,7 @@ using HRMS.Infrastructure.Middleware;
 using HRMS.Core.Interfaces;
 using HRMS.Application.Interfaces;
 using HRMS.API.Middleware;
+using HRMS.API.Filters;
 using HRMS.Core.Settings;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -150,7 +151,15 @@ builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 Log.Information("Current user service registered for audit trail tracking");
 
 // ======================
-// TENANT DBCONTEXT
+// TENANT DBCONTEXT FACTORY (Production Pattern for webhooks & background jobs)
+// ======================
+// REMOVED: AddDbContextFactory conflicts with manual AddScoped registration below
+// Use IDbContextFactory pattern manually in services that need it (like DeviceWebhookService)
+// builder.Services.AddDbContextFactory<TenantDbContext>(...);
+Log.Information("TenantDbContext factory pattern used via manual scoped registration");
+
+// ======================
+// TENANT DBCONTEXT (Request-scoped for normal controllers)
 // ======================
 builder.Services.AddScoped<TenantDbContext>(serviceProvider =>
 {
@@ -305,7 +314,14 @@ builder.Services.AddScoped<IBiometricDeviceService, BiometricDeviceService>();
 // Fortune 500: Biometric Punch Processing Service - Real-time attendance capture from devices
 builder.Services.AddScoped<IBiometricPunchProcessingService, BiometricPunchProcessingService>();
 builder.Services.AddScoped<IDeviceApiKeyService, DeviceApiKeyService>();
-Log.Information("Multi-device biometric attendance system services registered: BiometricPunchProcessing, DeviceApiKey");
+// Fortune 500: Device Webhook Service - Push-based IoT architecture for biometric devices
+builder.Services.AddScoped<IDeviceWebhookService, DeviceWebhookService>();
+Log.Information("Multi-device biometric attendance system services registered: BiometricPunchProcessing, DeviceApiKey, DeviceWebhook (Push Architecture)");
+
+// Permission Service - Granular RBAC for AdminUser permissions
+builder.Services.AddScoped<IPermissionService, PermissionService>();
+builder.Services.AddScoped<PermissionAuthorizationFilter>();
+Log.Information("Permission service registered for granular AdminUser RBAC");
 
 // Department Management Service
 builder.Services.AddScoped<DepartmentService>();
@@ -649,7 +665,11 @@ builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 // ======================
 // CONTROLLERS WITH OPTIMIZED JSON (COST OPTIMIZATION - 30% smaller payloads)
 // ======================
-builder.Services.AddControllers()
+builder.Services.AddControllers(options =>
+{
+    // Add permission authorization filter globally
+    options.Filters.AddService<PermissionAuthorizationFilter>();
+})
     .AddJsonOptions(options =>
     {
         // Ignore null values (reduce payload size by 20-30%)
@@ -868,9 +888,6 @@ app.UseIpRateLimiting();
 // Tenant Resolution (before authentication)
 app.UseTenantResolution();
 
-// SECURITY FIX: Tenant Context Validation (blocks requests without valid tenant)
-app.UseTenantContextValidation();
-
 // Biometric Device API Key Authentication Middleware
 // Applied conditionally to /api/device/* endpoints (except /health)
 app.UseWhen(
@@ -879,9 +896,13 @@ app.UseWhen(
     appBuilder => appBuilder.UseMiddleware<DeviceApiKeyAuthenticationMiddleware>()
 );
 
-// Authentication & Authorization - MUST come after UseCors
+// Authentication & Authorization - MUST come after UseCors and BEFORE TenantContextValidation
 app.UseAuthentication();
 app.UseAuthorization();
+
+// SECURITY FIX: Tenant Context Validation (blocks requests without valid tenant)
+// CRITICAL: Must come AFTER authentication so context.User is populated
+app.UseTenantContextValidation();
 
 // Audit Logging - MUST come after authentication to capture user context
 app.UseMiddleware<AuditLoggingMiddleware>();
@@ -909,7 +930,10 @@ if (hangfireSettings.DashboardEnabled)
 // ======================
 var mauritiusTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Mauritius Standard Time");
 
-RecurringJob.AddOrUpdate<DocumentExpiryAlertJob>(
+// Use service-based API instead of static API
+var recurringJobManager = app.Services.GetRequiredService<IRecurringJobManager>();
+
+recurringJobManager.AddOrUpdate<DocumentExpiryAlertJob>(
     "document-expiry-alerts",
     job => job.ExecuteAsync(),
     "0 9 * * *",
@@ -918,7 +942,7 @@ RecurringJob.AddOrUpdate<DocumentExpiryAlertJob>(
         TimeZone = mauritiusTimeZone
     });
 
-RecurringJob.AddOrUpdate<AbsentMarkingJob>(
+recurringJobManager.AddOrUpdate<AbsentMarkingJob>(
     "absent-marking",
     job => job.ExecuteAsync(),
     "0 23 * * *",
@@ -927,7 +951,7 @@ RecurringJob.AddOrUpdate<AbsentMarkingJob>(
         TimeZone = mauritiusTimeZone
     });
 
-RecurringJob.AddOrUpdate<LeaveAccrualJob>(
+recurringJobManager.AddOrUpdate<LeaveAccrualJob>(
     "leave-accrual",
     job => job.ExecuteAsync(),
     "0 1 1 * *",
@@ -936,7 +960,7 @@ RecurringJob.AddOrUpdate<LeaveAccrualJob>(
         TimeZone = mauritiusTimeZone
     });
 
-RecurringJob.AddOrUpdate<DeleteExpiredDraftsJob>(
+recurringJobManager.AddOrUpdate<DeleteExpiredDraftsJob>(
     "delete-expired-drafts",
     job => job.ExecuteAsync(),
     "0 2 * * *",  // 2:00 AM daily
@@ -946,7 +970,7 @@ RecurringJob.AddOrUpdate<DeleteExpiredDraftsJob>(
     });
 
 // SECURITY FIX: Audit log compliance jobs
-RecurringJob.AddOrUpdate<AuditLogArchivalJob>(
+recurringJobManager.AddOrUpdate<AuditLogArchivalJob>(
     "audit-log-archival",
     job => job.ExecuteAsync(),
     "0 3 1 * *",  // 3:00 AM on 1st of each month
@@ -955,7 +979,7 @@ RecurringJob.AddOrUpdate<AuditLogArchivalJob>(
         TimeZone = mauritiusTimeZone
     });
 
-RecurringJob.AddOrUpdate<AuditLogChecksumVerificationJob>(
+recurringJobManager.AddOrUpdate<AuditLogChecksumVerificationJob>(
     "audit-log-checksum-verification",
     job => job.ExecuteAsync(),
     "0 4 * * 0",  // 4:00 AM every Sunday
@@ -965,7 +989,7 @@ RecurringJob.AddOrUpdate<AuditLogChecksumVerificationJob>(
     });
 
 // FORTUNE 500: Subscription notification and auto-renewal job
-RecurringJob.AddOrUpdate<SubscriptionNotificationJob>(
+recurringJobManager.AddOrUpdate<SubscriptionNotificationJob>(
     "subscription-notifications",
     job => job.Execute(),
     "0 6 * * *",  // 6:00 AM daily

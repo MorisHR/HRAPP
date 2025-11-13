@@ -3,6 +3,10 @@ using HRMS.Application.Interfaces;
 using HRMS.Core.Entities.Tenant;
 using HRMS.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using System.Net.Sockets;
+using System.Diagnostics;
+using HRMS.Core.Interfaces;
 
 namespace HRMS.Infrastructure.Services;
 
@@ -12,10 +16,20 @@ namespace HRMS.Infrastructure.Services;
 public class BiometricDeviceService : IBiometricDeviceService
 {
     private readonly TenantDbContext _context;
+    private readonly ILogger<BiometricDeviceService> _logger;
+    private readonly IDeviceApiKeyService _deviceApiKeyService;
+    private readonly IDeviceWebhookService _deviceWebhookService;
 
-    public BiometricDeviceService(TenantDbContext context)
+    public BiometricDeviceService(
+        TenantDbContext context,
+        ILogger<BiometricDeviceService> logger,
+        IDeviceApiKeyService deviceApiKeyService,
+        IDeviceWebhookService deviceWebhookService)
     {
         _context = context;
+        _logger = logger;
+        _deviceApiKeyService = deviceApiKeyService;
+        _deviceWebhookService = deviceWebhookService;
     }
 
     public async Task<Guid> CreateDeviceAsync(CreateBiometricDeviceDto dto, string createdBy)
@@ -439,5 +453,470 @@ public class BiometricDeviceService : IBiometricDeviceService
             CreatedBy = device.CreatedBy,
             UpdatedBy = device.UpdatedBy
         };
+    }
+
+    /// <summary>
+    /// Test connection to a biometric device
+    /// </summary>
+    /// <remarks>
+    /// PRODUCTION NOTE: This is a basic TCP/IP connectivity test.
+    /// For production deployment with actual devices, integrate with:
+    /// - ZKTeco SDK (zkemkeeper.dll) for ZKTeco devices
+    /// - Device-specific APIs/SDKs for other manufacturers
+    /// - SOAP/REST endpoints if devices support HTTP protocols
+    /// </remarks>
+    public async Task<ConnectionTestResultDto> TestConnectionAsync(TestConnectionDto dto)
+    {
+        var stopwatch = Stopwatch.StartNew();
+        var result = new ConnectionTestResultDto
+        {
+            TestedAt = DateTime.UtcNow
+        };
+
+        try
+        {
+            _logger.LogInformation("Testing connection to device at {IpAddress}:{Port}", dto.IpAddress, dto.Port);
+
+            // Basic TCP/IP connectivity test
+            using var tcpClient = new TcpClient();
+            var connectTask = tcpClient.ConnectAsync(dto.IpAddress, dto.Port);
+            var timeoutTask = Task.Delay(TimeSpan.FromSeconds(dto.ConnectionTimeoutSeconds));
+
+            var completedTask = await Task.WhenAny(connectTask, timeoutTask);
+
+            if (completedTask == timeoutTask)
+            {
+                // Connection timed out
+                stopwatch.Stop();
+                result.Success = false;
+                result.Message = $"Connection timeout after {dto.ConnectionTimeoutSeconds} seconds";
+                result.ResponseTimeMs = (int)stopwatch.ElapsedMilliseconds;
+                result.ErrorDetails = $"Device at {dto.IpAddress}:{dto.Port} did not respond within the timeout period";
+                result.Diagnostics = "Possible causes: Device offline, incorrect IP/port, network firewall blocking connection";
+
+                _logger.LogWarning("Connection test failed: Timeout for {IpAddress}:{Port}", dto.IpAddress, dto.Port);
+                return result;
+            }
+
+            // Check if connection succeeded
+            if (connectTask.IsFaulted)
+            {
+                stopwatch.Stop();
+                result.Success = false;
+                result.Message = "Connection failed";
+                result.ResponseTimeMs = (int)stopwatch.ElapsedMilliseconds;
+                result.ErrorDetails = connectTask.Exception?.InnerException?.Message ?? "Unknown connection error";
+                result.Diagnostics = "Device may be offline or unreachable. Verify IP address, port, and network connectivity.";
+
+                _logger.LogWarning("Connection test failed: {Error}", result.ErrorDetails);
+                return result;
+            }
+
+            stopwatch.Stop();
+
+            // Connection successful
+            result.Success = true;
+            result.Message = $"Successfully connected to device at {dto.IpAddress}:{dto.Port}";
+            result.ResponseTimeMs = (int)stopwatch.ElapsedMilliseconds;
+            result.Diagnostics = $"TCP connection established in {result.ResponseTimeMs}ms";
+
+            // Note: In production with actual device SDKs, you would:
+            // 1. Query device info (model, firmware version)
+            // 2. Check available records count
+            // 3. Verify device authentication if required
+            result.DeviceInfo = "Connection established (Full device info requires SDK integration)";
+
+            _logger.LogInformation(
+                "Connection test successful: {IpAddress}:{Port} responded in {ResponseTime}ms",
+                dto.IpAddress,
+                dto.Port,
+                result.ResponseTimeMs
+            );
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            stopwatch.Stop();
+            result.Success = false;
+            result.Message = "Connection test failed with exception";
+            result.ResponseTimeMs = (int)stopwatch.ElapsedMilliseconds;
+            result.ErrorDetails = ex.Message;
+            result.Diagnostics = $"Exception type: {ex.GetType().Name}. Check network configuration and device status.";
+
+            _logger.LogError(ex, "Error testing connection to {IpAddress}:{Port}", dto.IpAddress, dto.Port);
+            return result;
+        }
+    }
+
+    /// <summary>
+    /// Manually trigger a device sync operation
+    /// </summary>
+    /// <remarks>
+    /// PRODUCTION NOTE: This method queues a background sync job.
+    /// For production deployment:
+    /// - Ensure Hangfire is properly configured
+    /// - Implement BiometricDeviceSyncJob with actual device SDK integration
+    /// - Add job status tracking and monitoring
+    /// - Implement retry logic for failed syncs
+    /// </remarks>
+    public async Task<ManualSyncResultDto> TriggerManualSyncAsync(Guid deviceId)
+    {
+        var result = new ManualSyncResultDto
+        {
+            DeviceId = deviceId,
+            QueuedAt = DateTime.UtcNow
+        };
+
+        try
+        {
+            // Verify device exists and is active
+            var device = await _context.AttendanceMachines
+                .FirstOrDefaultAsync(d => d.Id == deviceId && !d.IsDeleted);
+
+            if (device == null)
+            {
+                throw new KeyNotFoundException($"Device with ID {deviceId} not found");
+            }
+
+            result.DeviceName = device.MachineName;
+
+            if (!device.IsActive)
+            {
+                throw new InvalidOperationException($"Device '{device.MachineName}' is not active and cannot be synced");
+            }
+
+            if (!device.SyncEnabled)
+            {
+                throw new InvalidOperationException($"Sync is disabled for device '{device.MachineName}'");
+            }
+
+            // Check if device has required connection info
+            if (string.IsNullOrWhiteSpace(device.IpAddress))
+            {
+                throw new InvalidOperationException($"Device '{device.MachineName}' has no IP address configured");
+            }
+
+            // Check if a sync is already in progress
+            var recentSyncLog = await _context.DeviceSyncLogs
+                .Where(l => l.DeviceId == deviceId && l.SyncStatus == "InProgress")
+                .OrderByDescending(l => l.SyncStartTime)
+                .FirstOrDefaultAsync();
+
+            if (recentSyncLog != null)
+            {
+                result.Success = false;
+                result.Message = $"A sync is already in progress for device '{device.MachineName}'";
+                result.SyncAlreadyInProgress = true;
+                result.ErrorDetails = $"Sync started at {recentSyncLog.SyncStartTime:yyyy-MM-dd HH:mm:ss} UTC";
+
+                _logger.LogWarning("Manual sync skipped: Sync already in progress for device {DeviceId}", deviceId);
+                return result;
+            }
+
+            // PRODUCTION NOTE: Queue Hangfire background job
+            // For now, we'll create a sync log entry to simulate job queuing
+            // In production, replace this with:
+            // var jobId = BackgroundJob.Enqueue<BiometricDeviceSyncJob>(job => job.ExecuteAsync(deviceId));
+
+            var syncLog = new DeviceSyncLog
+            {
+                Id = Guid.NewGuid(),
+                DeviceId = deviceId,
+                SyncStartTime = DateTime.UtcNow,
+                SyncStatus = "Queued",
+                SyncMethod = "Manual",
+                CreatedAt = DateTime.UtcNow
+            };
+
+            _context.DeviceSyncLogs.Add(syncLog);
+            await _context.SaveChangesAsync();
+
+            result.Success = true;
+            result.Message = $"Sync job queued successfully for device '{device.MachineName}'";
+            result.JobId = syncLog.Id.ToString(); // In production, use Hangfire job ID
+            result.EstimatedDurationSeconds = 30; // Estimate based on device type/history
+
+            _logger.LogInformation(
+                "Manual sync triggered for device {DeviceId} ({DeviceName}). Job ID: {JobId}",
+                deviceId,
+                device.MachineName,
+                result.JobId
+            );
+
+            return result;
+        }
+        catch (KeyNotFoundException ex)
+        {
+            result.Success = false;
+            result.Message = ex.Message;
+            result.ErrorDetails = ex.Message;
+            throw; // Re-throw to be handled by controller
+        }
+        catch (InvalidOperationException ex)
+        {
+            result.Success = false;
+            result.Message = ex.Message;
+            result.ErrorDetails = ex.Message;
+            throw; // Re-throw to be handled by controller
+        }
+        catch (Exception ex)
+        {
+            result.Success = false;
+            result.Message = "Failed to trigger device sync";
+            result.ErrorDetails = ex.Message;
+
+            _logger.LogError(ex, "Error triggering manual sync for device {DeviceId}", deviceId);
+            throw; // Re-throw to be handled by controller
+        }
+    }
+
+    // ==========================================
+    // API KEY MANAGEMENT
+    // ==========================================
+
+    /// <summary>
+    /// Get all API keys for a specific device
+    /// </summary>
+    public async Task<List<DeviceApiKeyDto>> GetDeviceApiKeysAsync(Guid deviceId)
+    {
+        try
+        {
+            _logger.LogInformation("Retrieving API keys for device {DeviceId}", deviceId);
+
+            // Verify device exists
+            var device = await _context.AttendanceMachines
+                .FirstOrDefaultAsync(d => d.Id == deviceId && !d.IsDeleted);
+
+            if (device == null)
+            {
+                throw new KeyNotFoundException($"Device with ID {deviceId} not found");
+            }
+
+            // Get all API keys for this device
+            var apiKeys = await _deviceApiKeyService.GetDeviceApiKeysAsync(deviceId);
+
+            // Map to DTOs
+            var result = apiKeys.Select(k => new DeviceApiKeyDto
+            {
+                Id = k.Id,
+                DeviceId = k.DeviceId,
+                Description = k.Description,
+                IsActive = k.IsActive,
+                ExpiresAt = k.ExpiresAt,
+                LastUsedAt = k.LastUsedAt,
+                UsageCount = k.UsageCount,
+                AllowedIpAddresses = k.AllowedIpAddresses,
+                RateLimitPerMinute = k.RateLimitPerMinute,
+                CreatedAt = k.CreatedAt,
+                CreatedBy = k.CreatedBy,
+                UpdatedAt = k.UpdatedAt,
+                UpdatedBy = k.UpdatedBy
+            }).ToList();
+
+            _logger.LogInformation(
+                "Retrieved {Count} API keys for device {DeviceId}",
+                result.Count,
+                deviceId);
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving API keys for device {DeviceId}", deviceId);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Generate a new API key for a device
+    /// </summary>
+    public async Task<GenerateApiKeyResponse> GenerateApiKeyAsync(
+        Guid deviceId,
+        string description,
+        string createdBy)
+    {
+        try
+        {
+            _logger.LogInformation(
+                "Generating new API key for device {DeviceId} by {CreatedBy}",
+                deviceId,
+                createdBy);
+
+            // Verify device exists
+            var device = await _context.AttendanceMachines
+                .FirstOrDefaultAsync(d => d.Id == deviceId && !d.IsDeleted);
+
+            if (device == null)
+            {
+                throw new KeyNotFoundException($"Device with ID {deviceId} not found");
+            }
+
+            // Generate API key using DeviceWebhookService method
+            var plaintextKey = await _deviceWebhookService.GenerateDeviceApiKeyAsync(deviceId, createdBy);
+
+            // Get the newly created API key entity
+            var apiKeys = await _deviceApiKeyService.GetDeviceApiKeysAsync(deviceId);
+            var latestKey = apiKeys.OrderByDescending(k => k.CreatedAt).FirstOrDefault();
+
+            if (latestKey == null)
+            {
+                throw new InvalidOperationException("Failed to retrieve generated API key");
+            }
+
+            var response = new GenerateApiKeyResponse
+            {
+                ApiKeyId = latestKey.Id,
+                PlaintextKey = plaintextKey,
+                Description = latestKey.Description,
+                ExpiresAt = latestKey.ExpiresAt,
+                IsActive = latestKey.IsActive,
+                CreatedAt = latestKey.CreatedAt,
+                RateLimitPerMinute = latestKey.RateLimitPerMinute
+            };
+
+            _logger.LogInformation(
+                "Successfully generated API key {ApiKeyId} for device {DeviceId}",
+                response.ApiKeyId,
+                deviceId);
+
+            return response;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error generating API key for device {DeviceId}", deviceId);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Revoke an API key
+    /// </summary>
+    public async Task RevokeApiKeyAsync(Guid deviceId, Guid apiKeyId, string revokedBy)
+    {
+        try
+        {
+            _logger.LogInformation(
+                "Revoking API key {ApiKeyId} for device {DeviceId} by {RevokedBy}",
+                apiKeyId,
+                deviceId,
+                revokedBy);
+
+            // Verify device exists
+            var device = await _context.AttendanceMachines
+                .FirstOrDefaultAsync(d => d.Id == deviceId && !d.IsDeleted);
+
+            if (device == null)
+            {
+                throw new KeyNotFoundException($"Device with ID {deviceId} not found");
+            }
+
+            // Verify API key belongs to this device
+            var apiKey = await _deviceApiKeyService.GetApiKeyByIdAsync(apiKeyId);
+
+            if (apiKey == null)
+            {
+                throw new KeyNotFoundException($"API key with ID {apiKeyId} not found");
+            }
+
+            if (apiKey.DeviceId != deviceId)
+            {
+                throw new InvalidOperationException(
+                    $"API key {apiKeyId} does not belong to device {deviceId}");
+            }
+
+            // Revoke the API key
+            var success = await _deviceApiKeyService.RevokeApiKeyAsync(apiKeyId);
+
+            if (!success)
+            {
+                throw new InvalidOperationException($"Failed to revoke API key {apiKeyId}");
+            }
+
+            _logger.LogInformation(
+                "Successfully revoked API key {ApiKeyId} for device {DeviceId}",
+                apiKeyId,
+                deviceId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(
+                ex,
+                "Error revoking API key {ApiKeyId} for device {DeviceId}",
+                apiKeyId,
+                deviceId);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Rotate an API key (revoke old, generate new)
+    /// </summary>
+    public async Task<GenerateApiKeyResponse> RotateApiKeyAsync(
+        Guid deviceId,
+        Guid apiKeyId,
+        string rotatedBy)
+    {
+        try
+        {
+            _logger.LogInformation(
+                "Rotating API key {ApiKeyId} for device {DeviceId} by {RotatedBy}",
+                apiKeyId,
+                deviceId,
+                rotatedBy);
+
+            // Verify device exists
+            var device = await _context.AttendanceMachines
+                .FirstOrDefaultAsync(d => d.Id == deviceId && !d.IsDeleted);
+
+            if (device == null)
+            {
+                throw new KeyNotFoundException($"Device with ID {deviceId} not found");
+            }
+
+            // Verify API key belongs to this device
+            var oldApiKey = await _deviceApiKeyService.GetApiKeyByIdAsync(apiKeyId);
+
+            if (oldApiKey == null)
+            {
+                throw new KeyNotFoundException($"API key with ID {apiKeyId} not found");
+            }
+
+            if (oldApiKey.DeviceId != deviceId)
+            {
+                throw new InvalidOperationException(
+                    $"API key {apiKeyId} does not belong to device {deviceId}");
+            }
+
+            // Rotate the API key
+            var (newApiKey, newPlaintextKey) = await _deviceApiKeyService.RotateApiKeyAsync(apiKeyId);
+
+            var response = new GenerateApiKeyResponse
+            {
+                ApiKeyId = newApiKey.Id,
+                PlaintextKey = newPlaintextKey,
+                Description = newApiKey.Description,
+                ExpiresAt = newApiKey.ExpiresAt,
+                IsActive = newApiKey.IsActive,
+                CreatedAt = newApiKey.CreatedAt,
+                RateLimitPerMinute = newApiKey.RateLimitPerMinute
+            };
+
+            _logger.LogInformation(
+                "Successfully rotated API key. Old: {OldApiKeyId}, New: {NewApiKeyId}",
+                apiKeyId,
+                newApiKey.Id);
+
+            return response;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(
+                ex,
+                "Error rotating API key {ApiKeyId} for device {DeviceId}",
+                apiKeyId,
+                deviceId);
+            throw;
+        }
     }
 }

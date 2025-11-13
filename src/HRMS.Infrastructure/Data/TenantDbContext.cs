@@ -203,7 +203,8 @@ public class TenantDbContext : DbContext
             entity.Property(e => e.JobTitle).IsRequired().HasMaxLength(200);
 
             // Salary & Bank
-            entity.Property(e => e.BasicSalary).HasColumnType("decimal(18,2)");
+            // Note: BasicSalary is configured with encryption in the if block above (line 126-128)
+            // Do NOT add duplicate configuration here
             entity.Property(e => e.SalaryCurrency).HasMaxLength(10);
             entity.Property(e => e.BankName).HasMaxLength(200);
             entity.Property(e => e.BankAccountNumber).HasMaxLength(100);
@@ -941,6 +942,7 @@ public class TenantDbContext : DbContext
             entity.Property(e => e.AddressLine1).HasMaxLength(500);
             entity.Property(e => e.AddressLine2).HasMaxLength(500);
             entity.Property(e => e.City).HasMaxLength(100);
+            entity.Property(e => e.District).HasMaxLength(100);
             entity.Property(e => e.Region).HasMaxLength(100);
             entity.Property(e => e.Country).IsRequired().HasMaxLength(100);
             entity.Property(e => e.PostalCode).HasMaxLength(20);

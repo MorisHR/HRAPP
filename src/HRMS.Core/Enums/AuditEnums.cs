@@ -79,6 +79,9 @@ public enum AuditActionType
     /// <summary>Password reset completed</summary>
     PASSWORD_RESET_COMPLETED = 6,
 
+    /// <summary>Password reset failed (invalid token, expired token, etc.)</summary>
+    PASSWORD_RESET_FAILED = 150,
+
     /// <summary>MFA setup initiated</summary>
     MFA_SETUP_STARTED = 7,
 
@@ -90,6 +93,9 @@ public enum AuditActionType
 
     /// <summary>MFA verification failed</summary>
     MFA_VERIFICATION_FAILED = 10,
+
+    /// <summary>MFA disabled by admin</summary>
+    MFA_DISABLED = 137,
 
     // ============================================
     // AUTHORIZATION ACTIONS (11-20)
@@ -124,6 +130,12 @@ public enum AuditActionType
 
     /// <summary>Token refresh request</summary>
     TOKEN_REFRESHED = 20,
+
+    /// <summary>Session expired (token expired)</summary>
+    SESSION_EXPIRED = 151,
+
+    /// <summary>Permission denied (unauthorized access attempt)</summary>
+    PERMISSION_DENIED = 152,
 
     // ============================================
     // TENANT LIFECYCLE ACTIONS (21-30)

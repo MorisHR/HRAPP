@@ -1,0 +1,44 @@
+@if (error) {
+  <div class="error-container" role="alert" [attr.aria-live]="'polite'">
+    <div class="error-card">
+      <!-- Icon -->
+      <div class="error-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+      </div>
+      <!-- Content -->
+      <div class="error-content">
+        <div class="error-header">
+          <h3 class="error-title">{{ error.title }}</h3>
+          @if (dismissible) {
+            <button type="button" class="dismiss-button" (click)="onDismiss()" aria-label="Dismiss error">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+          }
+        </div>
+        <p class="error-message">{{ error.message }}</p>
+        <p class="error-action">{{ error.action }}</p>
+        <!-- Error ID and Support -->
+        <div class="error-footer">
+          <div class="error-id">
+            <span class="error-id-label">Error ID:</span>
+            <button type="button" class="error-id-value" (click)="copyErrorId()" title="Click to copy">
+              {{ error.correlationId }}
+            </button>
+          </div>
+          @if (error.showSupport) {
+            <div class="support-info">
+              Need help? Contact support with the error ID above.
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+}

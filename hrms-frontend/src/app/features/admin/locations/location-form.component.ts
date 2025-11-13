@@ -1,5 +1,5 @@
 import { Component, OnInit, signal, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { Router, ActivatedRoute } from '@angular/router';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
@@ -39,7 +39,6 @@ import { MAURITIUS_DISTRICTS, LOCATION_TYPES } from '../../../core/constants/mau
   selector: 'app-location-form',
   standalone: true,
   imports: [
-    CommonModule,
     ReactiveFormsModule,
     MatCardModule,
     MatFormFieldModule,
@@ -51,7 +50,7 @@ import { MAURITIUS_DISTRICTS, LOCATION_TYPES } from '../../../core/constants/mau
     MatSnackBarModule,
     MatSlideToggleModule,
     MatTooltipModule
-  ],
+],
   template: `
     <div class="location-form-container">
       <!-- Header -->
@@ -66,7 +65,7 @@ import { MAURITIUS_DISTRICTS, LOCATION_TYPES } from '../../../core/constants/mau
           </p>
         </div>
       </div>
-
+    
       <!-- Loading State -->
       @if (loading()) {
         <div class="loading-container">
@@ -74,7 +73,7 @@ import { MAURITIUS_DISTRICTS, LOCATION_TYPES } from '../../../core/constants/mau
           <p>{{ isEditMode() ? 'Loading location...' : 'Creating location...' }}</p>
         </div>
       }
-
+    
       <!-- Form -->
       @if (!loading()) {
         <mat-card class="form-card">
@@ -82,7 +81,7 @@ import { MAURITIUS_DISTRICTS, LOCATION_TYPES } from '../../../core/constants/mau
             <!-- Basic Information -->
             <div class="form-section">
               <h2>Basic Information</h2>
-
+    
               <div class="form-row">
                 <mat-form-field appearance="outline" class="full-width">
                   <mat-label>Location Name</mat-label>
@@ -91,169 +90,173 @@ import { MAURITIUS_DISTRICTS, LOCATION_TYPES } from '../../../core/constants/mau
                     formControlName="name"
                     placeholder="e.g., Port Louis, Curepipe, Rose Hill"
                     required
-                  />
-                  <mat-icon matPrefix>place</mat-icon>
-                  @if (locationForm.get('name')?.hasError('required') && locationForm.get('name')?.touched) {
-                    <mat-error>Location name is required</mat-error>
-                  }
-                </mat-form-field>
+                    />
+                    <mat-icon matPrefix>place</mat-icon>
+                    @if (locationForm.get('name')?.hasError('required') && locationForm.get('name')?.touched) {
+                      <mat-error>Location name is required</mat-error>
+                    }
+                  </mat-form-field>
+                </div>
+    
+                <div class="form-row">
+                  <mat-form-field appearance="outline" class="half-width">
+                    <mat-label>District</mat-label>
+                    <mat-select formControlName="district" required>
+                      @for (district of districts; track district) {
+                        <mat-option [value]="district">
+                          {{ district }}
+                        </mat-option>
+                      }
+                    </mat-select>
+                    <mat-icon matPrefix>location_on</mat-icon>
+                    @if (locationForm.get('district')?.hasError('required') && locationForm.get('district')?.touched) {
+                      <mat-error>District is required</mat-error>
+                    }
+                  </mat-form-field>
+    
+                  <mat-form-field appearance="outline" class="half-width">
+                    <mat-label>Type</mat-label>
+                    <mat-select formControlName="type" required>
+                      @for (type of locationTypes; track type) {
+                        <mat-option [value]="type.value">
+                          {{ type.label }}
+                        </mat-option>
+                      }
+                    </mat-select>
+                    <mat-icon matPrefix>category</mat-icon>
+                    @if (locationForm.get('type')?.hasError('required') && locationForm.get('type')?.touched) {
+                      <mat-error>Type is required</mat-error>
+                    }
+                  </mat-form-field>
+                </div>
               </div>
-
-              <div class="form-row">
-                <mat-form-field appearance="outline" class="half-width">
-                  <mat-label>District</mat-label>
-                  <mat-select formControlName="district" required>
-                    <mat-option *ngFor="let district of districts" [value]="district">
-                      {{ district }}
-                    </mat-option>
-                  </mat-select>
-                  <mat-icon matPrefix>location_on</mat-icon>
-                  @if (locationForm.get('district')?.hasError('required') && locationForm.get('district')?.touched) {
-                    <mat-error>District is required</mat-error>
-                  }
-                </mat-form-field>
-
-                <mat-form-field appearance="outline" class="half-width">
-                  <mat-label>Type</mat-label>
-                  <mat-select formControlName="type" required>
-                    <mat-option *ngFor="let type of locationTypes" [value]="type.value">
-                      {{ type.label }}
-                    </mat-option>
-                  </mat-select>
-                  <mat-icon matPrefix>category</mat-icon>
-                  @if (locationForm.get('type')?.hasError('required') && locationForm.get('type')?.touched) {
-                    <mat-error>Type is required</mat-error>
-                  }
-                </mat-form-field>
-              </div>
-            </div>
-
-            <!-- Additional Details -->
-            <div class="form-section">
-              <h2>Additional Details</h2>
-
-              <div class="form-row">
-                <mat-form-field appearance="outline" class="half-width">
-                  <mat-label>Region (Optional)</mat-label>
-                  <input
-                    matInput
-                    formControlName="region"
-                    placeholder="e.g., North, South, East, West"
-                  />
-                  <mat-icon matPrefix>map</mat-icon>
-                </mat-form-field>
-
-                <mat-form-field appearance="outline" class="half-width">
-                  <mat-label>Postal Code (Optional)</mat-label>
-                  <input
-                    matInput
-                    formControlName="postalCode"
-                    placeholder="e.g., 11302"
-                    pattern="^[0-9]{5}$"
-                  />
-                  <mat-icon matPrefix>local_post_office</mat-icon>
-                  @if (locationForm.get('postalCode')?.hasError('pattern')) {
-                    <mat-error>Invalid postal code format (5 digits)</mat-error>
-                  }
-                </mat-form-field>
-              </div>
-            </div>
-
-            <!-- Coordinates (Optional) -->
-            <div class="form-section">
-              <h2>
-                Coordinates (Optional)
-                <mat-icon
-                  matTooltip="Use Google Maps to find precise coordinates"
-                  class="info-icon"
-                >
-                  info
-                </mat-icon>
-              </h2>
-
-              <div class="form-row">
-                <mat-form-field appearance="outline" class="half-width">
-                  <mat-label>Latitude</mat-label>
-                  <input
-                    matInput
-                    formControlName="latitude"
-                    type="number"
-                    step="0.000001"
-                    placeholder="e.g., -20.1644"
-                  />
-                  <mat-icon matPrefix>my_location</mat-icon>
-                  @if (locationForm.get('latitude')?.hasError('min') || locationForm.get('latitude')?.hasError('max')) {
-                    <mat-error>Latitude must be between -90 and 90</mat-error>
-                  }
-                </mat-form-field>
-
-                <mat-form-field appearance="outline" class="half-width">
-                  <mat-label>Longitude</mat-label>
-                  <input
-                    matInput
-                    formControlName="longitude"
-                    type="number"
-                    step="0.000001"
-                    placeholder="e.g., 57.5024"
-                  />
-                  <mat-icon matPrefix>explore</mat-icon>
-                  @if (locationForm.get('longitude')?.hasError('min') || locationForm.get('longitude')?.hasError('max')) {
-                    <mat-error>Longitude must be between -180 and 180</mat-error>
-                  }
-                </mat-form-field>
-              </div>
-            </div>
-
-            <!-- Status -->
-            <div class="form-section">
-              <h2>Status</h2>
-
-              <div class="toggle-row">
-                <mat-slide-toggle formControlName="isActive" color="primary">
-                  <span class="toggle-label">
-                    {{ locationForm.get('isActive')?.value ? 'Active' : 'Inactive' }}
-                  </span>
-                </mat-slide-toggle>
-                <p class="toggle-hint">
-                  {{ locationForm.get('isActive')?.value
-                    ? 'This location is active and can be selected in forms'
-                    : 'This location is inactive and will not appear in dropdowns'
-                  }}
-                </p>
-              </div>
-            </div>
-
-            <!-- Actions -->
-            <div class="form-actions">
-              <button
-                type="button"
-                mat-stroked-button
-                (click)="goBack()"
-                [disabled]="submitting()"
-              >
-                <mat-icon>cancel</mat-icon>
-                Cancel
-              </button>
-              <button
-                type="submit"
-                mat-raised-button
-                color="primary"
-                [disabled]="locationForm.invalid || submitting()"
-              >
-                @if (submitting()) {
-                  <mat-spinner diameter="20"></mat-spinner>
+    
+              <!-- Additional Details -->
+              <div class="form-section">
+                <h2>Additional Details</h2>
+    
+                <div class="form-row">
+                  <mat-form-field appearance="outline" class="half-width">
+                    <mat-label>Region (Optional)</mat-label>
+                    <input
+                      matInput
+                      formControlName="region"
+                      placeholder="e.g., North, South, East, West"
+                      />
+                      <mat-icon matPrefix>map</mat-icon>
+                    </mat-form-field>
+    
+                    <mat-form-field appearance="outline" class="half-width">
+                      <mat-label>Postal Code (Optional)</mat-label>
+                      <input
+                        matInput
+                        formControlName="postalCode"
+                        placeholder="e.g., 11302"
+                        pattern="^[0-9]{5}$"
+                        />
+                        <mat-icon matPrefix>local_post_office</mat-icon>
+                        @if (locationForm.get('postalCode')?.hasError('pattern')) {
+                          <mat-error>Invalid postal code format (5 digits)</mat-error>
+                        }
+                      </mat-form-field>
+                    </div>
+                  </div>
+    
+                  <!-- Coordinates (Optional) -->
+                  <div class="form-section">
+                    <h2>
+                      Coordinates (Optional)
+                      <mat-icon
+                        matTooltip="Use Google Maps to find precise coordinates"
+                        class="info-icon"
+                        >
+                        info
+                      </mat-icon>
+                    </h2>
+    
+                    <div class="form-row">
+                      <mat-form-field appearance="outline" class="half-width">
+                        <mat-label>Latitude</mat-label>
+                        <input
+                          matInput
+                          formControlName="latitude"
+                          type="number"
+                          step="0.000001"
+                          placeholder="e.g., -20.1644"
+                          />
+                          <mat-icon matPrefix>my_location</mat-icon>
+                          @if (locationForm.get('latitude')?.hasError('min') || locationForm.get('latitude')?.hasError('max')) {
+                            <mat-error>Latitude must be between -90 and 90</mat-error>
+                          }
+                        </mat-form-field>
+    
+                        <mat-form-field appearance="outline" class="half-width">
+                          <mat-label>Longitude</mat-label>
+                          <input
+                            matInput
+                            formControlName="longitude"
+                            type="number"
+                            step="0.000001"
+                            placeholder="e.g., 57.5024"
+                            />
+                            <mat-icon matPrefix>explore</mat-icon>
+                            @if (locationForm.get('longitude')?.hasError('min') || locationForm.get('longitude')?.hasError('max')) {
+                              <mat-error>Longitude must be between -180 and 180</mat-error>
+                            }
+                          </mat-form-field>
+                        </div>
+                      </div>
+    
+                      <!-- Status -->
+                      <div class="form-section">
+                        <h2>Status</h2>
+    
+                        <div class="toggle-row">
+                          <mat-slide-toggle formControlName="isActive" color="primary">
+                            <span class="toggle-label">
+                              {{ locationForm.get('isActive')?.value ? 'Active' : 'Inactive' }}
+                            </span>
+                          </mat-slide-toggle>
+                          <p class="toggle-hint">
+                            {{ locationForm.get('isActive')?.value
+                            ? 'This location is active and can be selected in forms'
+                            : 'This location is inactive and will not appear in dropdowns'
+                            }}
+                          </p>
+                        </div>
+                      </div>
+    
+                      <!-- Actions -->
+                      <div class="form-actions">
+                        <button
+                          type="button"
+                          mat-stroked-button
+                          (click)="goBack()"
+                          [disabled]="submitting()"
+                          >
+                          <mat-icon>cancel</mat-icon>
+                          Cancel
+                        </button>
+                        <button
+                          type="submit"
+                          mat-raised-button
+                          color="primary"
+                          [disabled]="locationForm.invalid || submitting()"
+                          >
+                          @if (submitting()) {
+                            <mat-spinner diameter="20"></mat-spinner>
+                          }
+                          @if (!submitting()) {
+                            <mat-icon>{{ isEditMode() ? 'save' : 'add' }}</mat-icon>
+                          }
+                          {{ isEditMode() ? 'Update Location' : 'Create Location' }}
+                        </button>
+                      </div>
+                    </form>
+                  </mat-card>
                 }
-                @if (!submitting()) {
-                  <mat-icon>{{ isEditMode() ? 'save' : 'add' }}</mat-icon>
-                }
-                {{ isEditMode() ? 'Update Location' : 'Create Location' }}
-              </button>
-            </div>
-          </form>
-        </mat-card>
-      }
-    </div>
-  `,
+              </div>
+    `,
   styles: [`
     .location-form-container {
       padding: 24px;

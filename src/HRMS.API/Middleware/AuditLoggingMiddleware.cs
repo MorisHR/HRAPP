@@ -31,7 +31,7 @@ public class AuditLoggingMiddleware
         _logger = logger;
     }
 
-    public async Task InvokeAsync(HttpContext context, IAuditLogService auditLogService)
+    public async Task InvokeAsync(HttpContext context)
     {
         var path = context.Request.Path.Value ?? string.Empty;
 
@@ -52,15 +52,15 @@ public class AuditLoggingMiddleware
 
             stopwatch.Stop();
 
-            // Log successful request asynchronously
-            _ = LogAuditAsync(context, auditLogService, stopwatch.ElapsedMilliseconds, null);
+            // Log successful request asynchronously with new scope
+            _ = LogAuditWithNewScopeAsync(context, stopwatch.ElapsedMilliseconds, null);
         }
         catch (Exception ex)
         {
             stopwatch.Stop();
 
-            // Log failed request asynchronously
-            _ = LogAuditAsync(context, auditLogService, stopwatch.ElapsedMilliseconds, ex);
+            // Log failed request asynchronously with new scope
+            _ = LogAuditWithNewScopeAsync(context, stopwatch.ElapsedMilliseconds, ex);
 
             // Re-throw to let global exception handler deal with it
             throw;
@@ -89,127 +89,142 @@ public class AuditLoggingMiddleware
         return false;
     }
 
-    private async Task LogAuditAsync(
+    /// <summary>
+    /// Log audit with a new dependency injection scope to avoid disposed DbContext issues
+    /// Creates a new scope so the background task has its own DbContext instance
+    /// </summary>
+    private Task LogAuditWithNewScopeAsync(
         HttpContext context,
-        IAuditLogService auditLogService,
         long durationMs,
         Exception? exception)
     {
-        try
+        // Capture context data before the request scope is disposed
+        var request = context.Request;
+        var response = context.Response;
+        var user = context.User;
+
+        // Extract user information
+        var userId = GetUserId(user);
+        var userEmail = user.FindFirst(ClaimTypes.Email)?.Value;
+        var userFullName = user.FindFirst(ClaimTypes.Name)?.Value;
+        var userRole = user.FindFirst(ClaimTypes.Role)?.Value;
+
+        // Extract tenant information
+        var tenantId = GetTenantId(context);
+        var tenantName = context.Items["TenantSubdomain"]?.ToString();
+
+        // Determine action type based on HTTP method and path
+        var actionType = DetermineActionType(request.Method, request.Path);
+
+        // Determine category based on path
+        var category = DetermineCategory(request.Path);
+
+        // Determine severity
+        var severity = DetermineSeverity(response.StatusCode, exception, actionType);
+
+        // Sanitize query string (remove passwords)
+        var queryString = SanitizeQueryString(request.QueryString.ToString());
+
+        // Get correlation ID
+        var correlationId = context.Items["X-Correlation-ID"]?.ToString() ?? Guid.NewGuid().ToString();
+
+        // Capture IP address
+        var ipAddress = GetClientIpAddress(context);
+        var userAgent = request.Headers.UserAgent.ToString();
+        var httpMethod = request.Method;
+        var requestPath = request.Path.ToString();
+
+        // Build additional metadata
+        var additionalMetadata = BuildAdditionalMetadata(context, exception);
+
+        // Build audit log entry with captured data
+        var auditLog = new AuditLog
         {
-            var request = context.Request;
-            var response = context.Response;
-            var user = context.User;
+            Id = Guid.NewGuid(),
+            PerformedAt = DateTime.UtcNow,
+            ActionType = actionType,
+            Category = category,
+            Severity = severity,
+            Success = exception == null && response.StatusCode < 400,
 
-            // Extract user information
-            var userId = GetUserId(user);
-            var userEmail = user.FindFirst(ClaimTypes.Email)?.Value;
-            var userFullName = user.FindFirst(ClaimTypes.Name)?.Value;
-            var userRole = user.FindFirst(ClaimTypes.Role)?.Value;
+            // User information
+            UserId = userId,
+            UserEmail = userEmail,
+            UserFullName = userFullName,
+            UserRole = userRole,
 
-            // Extract tenant information
-            var tenantId = GetTenantId(context);
-            var tenantName = context.Items["TenantSubdomain"]?.ToString();
+            // Tenant information
+            TenantId = tenantId,
+            TenantName = tenantName,
 
-            // Determine action type based on HTTP method and path
-            var actionType = DetermineActionType(request.Method, request.Path);
+            // HTTP information
+            HttpMethod = httpMethod,
+            RequestPath = requestPath,
+            QueryString = queryString,
+            ResponseCode = response.StatusCode,
+            DurationMs = (int)durationMs,
 
-            // Determine category based on path
-            var category = DetermineCategory(request.Path);
+            // Network information
+            IpAddress = ipAddress,
+            UserAgent = userAgent,
 
-            // Determine severity
-            var severity = DetermineSeverity(response.StatusCode, exception, actionType);
+            // Metadata
+            CorrelationId = correlationId,
+            ErrorMessage = exception?.Message,
 
-            // Sanitize query string (remove passwords)
-            var queryString = SanitizeQueryString(request.QueryString.ToString());
+            // Additional metadata
+            AdditionalMetadata = additionalMetadata
+        };
 
-            // Get correlation ID
-            var correlationId = context.Items["X-Correlation-ID"]?.ToString() ?? Guid.NewGuid().ToString();
+        // Create a reference to the service provider before the request context is disposed
+        var serviceProvider = context.RequestServices;
 
-            // Build audit log entry
-            var auditLog = new AuditLog
+        // Fire and forget with new scope (prevents DbContext disposal issues)
+        _ = Task.Run(async () =>
+        {
+            try
             {
-                Id = Guid.NewGuid(),
-                PerformedAt = DateTime.UtcNow,
-                ActionType = actionType,
-                Category = category,
-                Severity = severity,
-                Success = exception == null && response.StatusCode < 400,
+                // Create a new scope with its own DbContext
+                using var scope = serviceProvider.CreateScope();
+                var scopedAuditLogService = scope.ServiceProvider.GetRequiredService<IAuditLogService>();
 
-                // User information
-                UserId = userId,
-                UserEmail = userEmail,
-                UserFullName = userFullName,
-                UserRole = userRole,
+                // Log the audit entry with the scoped service
+                await scopedAuditLogService.LogAsync(auditLog);
 
-                // Tenant information
-                TenantId = tenantId,
-                TenantName = tenantName,
-
-                // HTTP information
-                HttpMethod = request.Method,
-                RequestPath = request.Path,
-                QueryString = queryString,
-                ResponseCode = response.StatusCode,
-                DurationMs = (int)durationMs,
-
-                // Network information
-                IpAddress = GetClientIpAddress(context),
-                UserAgent = request.Headers.UserAgent.ToString(),
-
-                // Metadata
-                CorrelationId = correlationId,
-                ErrorMessage = exception?.Message,
-
-                // Additional metadata
-                AdditionalMetadata = BuildAdditionalMetadata(context, exception)
-            };
-
-            // Log asynchronously (fire and forget pattern with error handling)
-            await Task.Run(async () =>
-            {
-                try
+                // FORTUNE 500 ENHANCEMENT: Run anomaly detection after audit log is saved
+                // This is done asynchronously to avoid blocking the audit logging pipeline
+                var anomalyService = scope.ServiceProvider.GetService<IAnomalyDetectionService>();
+                if (anomalyService != null)
                 {
-                    await auditLogService.LogAsync(auditLog);
-
-                    // FORTUNE 500 ENHANCEMENT: Run anomaly detection after audit log is saved
-                    // This is done asynchronously to avoid blocking the audit logging pipeline
-                    var anomalyService = context.RequestServices.GetService<IAnomalyDetectionService>();
-                    if (anomalyService != null)
+                    _ = Task.Run(async () =>
                     {
-                        _ = Task.Run(async () =>
+                        try
                         {
-                            try
+                            var anomalies = await anomalyService.DetectAnomaliesAsync(auditLog);
+                            if (anomalies.Any())
                             {
-                                var anomalies = await anomalyService.DetectAnomaliesAsync(auditLog);
-                                if (anomalies.Any())
-                                {
-                                    _logger.LogWarning("Detected {Count} anomalies for audit log {AuditLogId}",
-                                        anomalies.Count, auditLog.Id);
-                                }
+                                _logger.LogWarning("Detected {Count} anomalies for audit log {AuditLogId}",
+                                    anomalies.Count, auditLog.Id);
                             }
-                            catch (Exception anomEx)
-                            {
-                                _logger.LogError(anomEx, "Failed to run anomaly detection for audit log {AuditLogId}",
-                                    auditLog.Id);
-                                // Don't fail the request if anomaly detection fails
-                            }
-                        });
-                    }
+                        }
+                        catch (Exception anomEx)
+                        {
+                            _logger.LogError(anomEx, "Failed to run anomaly detection for audit log {AuditLogId}",
+                                auditLog.Id);
+                            // Don't fail the request if anomaly detection fails
+                        }
+                    });
                 }
-                catch (Exception ex)
-                {
-                    // Log audit logging failure but don't throw
-                    _logger.LogError(ex, "Failed to write audit log for {Method} {Path}",
-                        request.Method, request.Path);
-                }
-            });
-        }
-        catch (Exception ex)
-        {
-            // Audit logging should NEVER break user requests
-            _logger.LogError(ex, "Audit logging middleware failed");
-        }
+            }
+            catch (Exception ex)
+            {
+                // Log audit logging failure but don't throw
+                _logger.LogError(ex, "Failed to write audit log for {Method} {Path}",
+                    httpMethod, requestPath);
+            }
+        });
+
+        return Task.CompletedTask;
     }
 
     private Guid? GetUserId(ClaimsPrincipal user)

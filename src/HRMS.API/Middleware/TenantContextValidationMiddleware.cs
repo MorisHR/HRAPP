@@ -50,6 +50,25 @@ public class TenantContextValidationMiddleware
 
             if (!tenantId.HasValue || string.IsNullOrEmpty(tenantSchema))
             {
+                // ============================================
+                // DEVELOPMENT FIX: Allow SuperAdmin to bypass tenant context
+                // This enables SuperAdmin to access tenant endpoints during development
+                // when subdomain routing is not available (localhost/Codespaces)
+                // ============================================
+                var user = context.User;
+                var isSuperAdmin = user?.Identity?.IsAuthenticated == true &&
+                                   user.HasClaim(c => c.Type == "Role" && c.Value == "SuperAdmin");
+
+                if (isSuperAdmin)
+                {
+                    _logger.LogDebug(
+                        "SuperAdmin accessing without tenant context: {Path} (Development Mode)",
+                        path);
+                    await _next(context);
+                    return;
+                }
+
+                // Block non-SuperAdmin users without tenant context
                 _logger.LogWarning(
                     "SECURITY: Request blocked - No tenant context for path: {Path}, IP: {IP}",
                     path,

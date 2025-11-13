@@ -195,11 +195,19 @@ export class AuthService {
           throw new Error('Invalid login response format');
         }
 
+        // FIXED: Use actual refresh token from backend response
+        // Backend now returns both token (access token) and refreshToken (refresh token)
+        const refreshToken = backendData.refreshToken || backendData.token;
+
+        console.log('✅ Login response received:');
+        console.log('   Access Token:', backendData.token ? 'Present' : 'Missing');
+        console.log('   Refresh Token:', backendData.refreshToken ? 'Present (separate)' : 'Fallback to access token');
+
         const response: LoginResponse = {
           token: backendData.token,
-          refreshToken: backendData.token, // Backend doesn't return separate refresh token yet
+          refreshToken: refreshToken,
           user: user,
-          expiresIn: 480 * 60 // 480 minutes in seconds (from backend config)
+          expiresIn: 15 * 60 // 15 minutes in seconds (actual token expiration)
         };
 
         return response;
@@ -313,10 +321,20 @@ export class AuthService {
    * Refreshes access token using refresh token from HttpOnly cookie
    * The refresh token is NOT sent manually - browser sends it automatically via cookie
    * Backend implements token rotation: old token revoked, new one issued
+   * Automatically uses the correct endpoint based on user type (tenant vs SuperAdmin)
    */
   refreshToken(): Observable<LoginResponse> {
+    // Determine refresh endpoint based on current user type
+    const user = this.userSignal();
+    const isTenantUser = user && user.role !== UserRole.SuperAdmin;
+    const endpoint = isTenantUser
+      ? `${this.apiUrl}/auth/tenant/refresh`
+      : `${this.apiUrl}/auth/refresh`;
+
+    console.log(`🔄 Refreshing token for ${isTenantUser ? 'tenant user' : 'SuperAdmin'} using endpoint: ${endpoint}`);
+
     return this.http.post<any>(
-      `${this.apiUrl}/auth/refresh`,
+      endpoint,
       {}, // Empty body - refresh token comes from HttpOnly cookie
       { withCredentials: true } // CRITICAL: Sends HttpOnly cookies
     ).pipe(
@@ -479,6 +497,15 @@ export class AuthService {
     this.saveLastUserRole(response.user.role);
   }
 
+  /**
+   * Public method to set auth state from login components
+   * Used when handling direct login without MFA
+   */
+  public setAuthStatePublic(response: LoginResponse): void {
+    this.setAuthState(response);
+    this.sessionManagement.startSession();
+  }
+
   private clearAuthState(): void {
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
@@ -537,5 +564,25 @@ export class AuthService {
   hasAnyRole(roles: UserRole[]): boolean {
     const userRole = this.userSignal()?.role;
     return userRole ? roles.includes(userRole) : false;
+  }
+
+  // ============================================
+  // PASSWORD RESET METHODS
+  // ============================================
+
+  /**
+   * Request password reset email
+   * Public endpoint - no authentication required
+   */
+  forgotPassword(email: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/auth/forgot-password`, { email });
+  }
+
+  /**
+   * Reset password using token from email
+   * Public endpoint - no authentication required
+   */
+  resetPassword(data: { token: string; newPassword: string; confirmPassword: string }): Observable<any> {
+    return this.http.post(`${this.apiUrl}/auth/reset-password`, data);
   }
 }

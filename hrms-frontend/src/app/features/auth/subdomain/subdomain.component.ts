@@ -1,5 +1,5 @@
 import { Component, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { TenantContextService } from '../../../core/services/tenant-context.service';
@@ -20,7 +20,7 @@ interface TenantCheckResponse {
 @Component({
   selector: 'app-subdomain',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [FormsModule],
   templateUrl: './subdomain.component.html',
   styleUrls: ['./subdomain.component.scss']
 })
@@ -74,27 +74,38 @@ export class SubdomainComponent {
     this.errorMessage.set('');
 
     try {
+      console.log('🔍 Checking subdomain:', this.subdomain());
       const response = await this.http.get<TenantCheckResponse>(
         `${environment.apiUrl}/tenants/check/${this.subdomain()}`
       ).toPromise();
 
+      console.log('📥 Subdomain check response:', response);
+
       if (!response) {
+        console.error('❌ No response received');
         this.errorMessage.set('Unable to verify domain. Please try again.');
+        this.isLoading.set(false);
         return;
       }
 
       if (response.success === false) {
+        console.error('❌ Subdomain check failed:', response.message);
         this.errorMessage.set(response.message || 'This company account is not active. Please contact support.');
+        this.isLoading.set(false);
         return;
       }
 
       if (!response.data?.exists) {
+        console.error('❌ Company not found');
         this.errorMessage.set('Company not found. Please check your domain and try again.');
+        this.isLoading.set(false);
         return;
       }
 
       if (response.data.isActive === false) {
+        console.error('❌ Company not active');
         this.errorMessage.set('This company account is not active. Please contact support.');
+        this.isLoading.set(false);
         return;
       }
 
@@ -104,11 +115,15 @@ export class SubdomainComponent {
       // - Localhost: Browser redirect to subdomain.localhost:4200/auth/login
       // - Production: Browser redirect to subdomain.morishr.com/auth/login
       console.log(`✅ Tenant verified: ${this.subdomain()}`);
+      console.log('🚀 Navigating to login...');
 
       // Use tenant context service for environment-aware navigation
       this.tenantContext.navigateToLogin(this.subdomain(), '/auth/login');
+
+      // Keep loading state true during navigation
+      console.log('✅ Navigation initiated');
     } catch (error: any) {
-      console.error('Subdomain check error:', error);
+      console.error('❌ Subdomain check error:', error);
       if (error.status === 404) {
         this.errorMessage.set('Company not found. Please check your domain and try again.');
       } else if (error.status >= 500) {
@@ -116,7 +131,6 @@ export class SubdomainComponent {
       } else {
         this.errorMessage.set('Unable to verify domain. Please try again.');
       }
-    } finally {
       this.isLoading.set(false);
     }
   }

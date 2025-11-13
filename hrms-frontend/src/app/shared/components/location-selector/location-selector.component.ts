@@ -1,5 +1,5 @@
 import { Component, Input, Output, EventEmitter, OnInit, forwardRef, signal, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule, ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
@@ -40,7 +40,6 @@ import { MAURITIUS_DISTRICTS } from '../../../core/constants/mauritius.constants
   selector: 'app-location-selector',
   standalone: true,
   imports: [
-    CommonModule,
     FormsModule,
     MatFormFieldModule,
     MatSelectModule,
@@ -48,7 +47,7 @@ import { MAURITIUS_DISTRICTS } from '../../../core/constants/mauritius.constants
     MatInputModule,
     MatProgressSpinnerModule,
     MatIconModule
-  ],
+],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
@@ -65,15 +64,17 @@ import { MAURITIUS_DISTRICTS } from '../../../core/constants/mauritius.constants
           [(ngModel)]="selectedDistrict"
           (ngModelChange)="onDistrictChange($event)"
           [disabled]="isDisabled()"
-        >
+          >
           <mat-option [value]="null">All Districts</mat-option>
-          <mat-option *ngFor="let district of districts" [value]="district">
-            {{ district }}
-          </mat-option>
+          @for (district of districts; track district) {
+            <mat-option [value]="district">
+              {{ district }}
+            </mat-option>
+          }
         </mat-select>
         <mat-icon matPrefix>location_on</mat-icon>
       </mat-form-field>
-
+    
       <!-- Location Autocomplete -->
       <mat-form-field appearance="outline" class="full-width">
         <mat-label>Location</mat-label>
@@ -85,43 +86,43 @@ import { MAURITIUS_DISTRICTS } from '../../../core/constants/mauritius.constants
           [matAutocomplete]="auto"
           [disabled]="isDisabled()"
           placeholder="Search for a location..."
-        />
-        <mat-icon matPrefix>search</mat-icon>
-        @if (loading()) {
-          <mat-spinner matSuffix diameter="20"></mat-spinner>
+          />
+          <mat-icon matPrefix>search</mat-icon>
+          @if (loading()) {
+            <mat-spinner matSuffix diameter="20"></mat-spinner>
+          }
+          <mat-autocomplete
+            #auto="matAutocomplete"
+            [displayWith]="displayLocation"
+            (optionSelected)="onLocationSelected($event.option.value)"
+            >
+            @if (filteredLocations().length === 0 && !loading()) {
+              <mat-option disabled>
+                {{ searchTerm ? 'No locations found' : 'Start typing to search...' }}
+              </mat-option>
+            }
+            @for (location of filteredLocations(); track location.id) {
+              <mat-option [value]="location">
+                <div class="location-option">
+                  <span class="location-name">{{ location.name }}</span>
+                  <span class="location-meta">
+                    {{ location.district }} • {{ location.type }}
+                  </span>
+                </div>
+              </mat-option>
+            }
+          </mat-autocomplete>
+        </mat-form-field>
+    
+        <!-- Error Message -->
+        @if (errorMessage()) {
+          <div class="error-message">
+            <mat-icon>error</mat-icon>
+            <span>{{ errorMessage() }}</span>
+          </div>
         }
-        <mat-autocomplete
-          #auto="matAutocomplete"
-          [displayWith]="displayLocation"
-          (optionSelected)="onLocationSelected($event.option.value)"
-        >
-          @if (filteredLocations().length === 0 && !loading()) {
-            <mat-option disabled>
-              {{ searchTerm ? 'No locations found' : 'Start typing to search...' }}
-            </mat-option>
-          }
-          @for (location of filteredLocations(); track location.id) {
-            <mat-option [value]="location">
-              <div class="location-option">
-                <span class="location-name">{{ location.name }}</span>
-                <span class="location-meta">
-                  {{ location.district }} • {{ location.type }}
-                </span>
-              </div>
-            </mat-option>
-          }
-        </mat-autocomplete>
-      </mat-form-field>
-
-      <!-- Error Message -->
-      @if (errorMessage()) {
-        <div class="error-message">
-          <mat-icon>error</mat-icon>
-          <span>{{ errorMessage() }}</span>
-        </div>
-      }
-    </div>
-  `,
+      </div>
+    `,
   styles: [`
     .location-selector {
       display: flex;

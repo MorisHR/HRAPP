@@ -1,5 +1,5 @@
 import { Component, OnInit, signal, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { RouterModule, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
@@ -18,7 +18,6 @@ import { DepartmentService, DepartmentDto } from './services/department.service'
   selector: 'app-department-list',
   standalone: true,
   imports: [
-    CommonModule,
     RouterModule,
     FormsModule,
     MatCardModule,
@@ -31,7 +30,7 @@ import { DepartmentService, DepartmentDto } from './services/department.service'
     MatChipsModule,
     MatTooltipModule,
     MatDialogModule
-  ],
+],
   template: `
     <div class="department-list-container">
       <div class="page-header">

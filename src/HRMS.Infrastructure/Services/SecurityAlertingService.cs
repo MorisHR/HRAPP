@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 using HRMS.Application.Interfaces;
 using HRMS.Core.Entities.Master;
 using HRMS.Core.Enums;
+using HRMS.Core.Exceptions;
 using HRMS.Infrastructure.Data;
 
 namespace HRMS.Infrastructure.Services;
@@ -425,7 +426,11 @@ public class SecurityAlertingService : ISecurityAlertingService
     {
         var alert = await _context.SecurityAlerts.FindAsync(alertId);
         if (alert == null)
-            throw new InvalidOperationException($"Security alert {alertId} not found");
+            throw new NotFoundException(
+                ErrorCodes.SEC_ALERT_NOT_FOUND,
+                "The security alert could not be found.",
+                $"Security alert {alertId} not found in database",
+                "The alert may have been deleted. Please verify the alert ID.");
 
         alert.Status = SecurityAlertStatus.ACKNOWLEDGED;
         alert.AcknowledgedAt = DateTime.UtcNow;
@@ -445,7 +450,11 @@ public class SecurityAlertingService : ISecurityAlertingService
     {
         var alert = await _context.SecurityAlerts.FindAsync(alertId);
         if (alert == null)
-            throw new InvalidOperationException($"Security alert {alertId} not found");
+            throw new NotFoundException(
+                ErrorCodes.SEC_ALERT_NOT_FOUND,
+                "The security alert could not be found.",
+                $"Security alert {alertId} not found in database",
+                "The alert may have been deleted. Please verify the alert ID.");
 
         alert.AssignedTo = assignedTo;
         alert.AssignedToEmail = assignedToEmail;
@@ -466,7 +475,11 @@ public class SecurityAlertingService : ISecurityAlertingService
     {
         var alert = await _context.SecurityAlerts.FindAsync(alertId);
         if (alert == null)
-            throw new InvalidOperationException($"Security alert {alertId} not found");
+            throw new NotFoundException(
+                ErrorCodes.SEC_ALERT_NOT_FOUND,
+                "The security alert could not be found.",
+                $"Security alert {alertId} not found in database",
+                "The alert may have been deleted. Please verify the alert ID.");
 
         alert.Status = SecurityAlertStatus.IN_PROGRESS;
         await _context.SaveChangesAsync();
@@ -480,7 +493,11 @@ public class SecurityAlertingService : ISecurityAlertingService
     {
         var alert = await _context.SecurityAlerts.FindAsync(alertId);
         if (alert == null)
-            throw new InvalidOperationException($"Security alert {alertId} not found");
+            throw new NotFoundException(
+                ErrorCodes.SEC_ALERT_NOT_FOUND,
+                "The security alert could not be found.",
+                $"Security alert {alertId} not found in database",
+                "The alert may have been deleted. Please verify the alert ID.");
 
         alert.Status = SecurityAlertStatus.RESOLVED;
         alert.ResolvedAt = DateTime.UtcNow;
@@ -501,7 +518,11 @@ public class SecurityAlertingService : ISecurityAlertingService
     {
         var alert = await _context.SecurityAlerts.FindAsync(alertId);
         if (alert == null)
-            throw new InvalidOperationException($"Security alert {alertId} not found");
+            throw new NotFoundException(
+                ErrorCodes.SEC_ALERT_NOT_FOUND,
+                "The security alert could not be found.",
+                $"Security alert {alertId} not found in database",
+                "The alert may have been deleted. Please verify the alert ID.");
 
         alert.Status = SecurityAlertStatus.FALSE_POSITIVE;
         alert.ResolvedAt = DateTime.UtcNow;
@@ -522,7 +543,11 @@ public class SecurityAlertingService : ISecurityAlertingService
     {
         var alert = await _context.SecurityAlerts.FindAsync(alertId);
         if (alert == null)
-            throw new InvalidOperationException($"Security alert {alertId} not found");
+            throw new NotFoundException(
+                ErrorCodes.SEC_ALERT_NOT_FOUND,
+                "The security alert could not be found.",
+                $"Security alert {alertId} not found in database",
+                "The alert may have been deleted. Please verify the alert ID.");
 
         alert.Status = SecurityAlertStatus.ESCALATED;
         alert.EscalatedTo = escalatedTo;

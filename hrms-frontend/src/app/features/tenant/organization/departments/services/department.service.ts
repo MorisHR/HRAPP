@@ -65,7 +65,7 @@ export interface DepartmentHierarchyDto {
 })
 export class DepartmentService {
   private http = inject(HttpClient);
-  private apiUrl = `${environment.apiUrl}/api/department`;
+  private apiUrl = `${environment.apiUrl}/department`;
 
   /**
    * Get all departments

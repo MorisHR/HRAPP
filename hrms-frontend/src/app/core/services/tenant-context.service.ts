@@ -111,10 +111,14 @@ export class TenantContextService {
       return;
     }
 
+    console.log(`🔑 navigateToLogin called with subdomain: ${subdomain}, path: ${path}`);
+
     // Store tenant in localStorage first
     this.setTenant(subdomain);
+    console.log(`✅ Tenant stored in localStorage: ${subdomain}`);
 
     const supportsSubdomains = this.environmentDetection.supportsSubdomainRouting();
+    console.log(`🌐 Supports subdomains: ${supportsSubdomains}`);
 
     if (supportsSubdomains) {
       // SUBDOMAIN-BASED ROUTING
@@ -125,7 +129,18 @@ export class TenantContextService {
       // STORAGE-BASED ROUTING (Codespaces)
       // Use Angular router (no real subdomain available)
       console.log(`🔄 Navigating within app (Codespaces): ${path}`);
-      this.router.navigate([path]);
+      this.router.navigate([path]).then(
+        success => {
+          if (success) {
+            console.log(`✅ Navigation to ${path} succeeded`);
+          } else {
+            console.error(`❌ Navigation to ${path} failed (returned false)`);
+          }
+        },
+        error => {
+          console.error(`❌ Navigation to ${path} rejected with error:`, error);
+        }
+      );
     }
   }
 

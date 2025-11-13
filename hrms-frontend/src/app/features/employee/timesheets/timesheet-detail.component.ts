@@ -1,5 +1,5 @@
 import { Component, OnInit, signal, inject, computed } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
@@ -29,7 +29,6 @@ import {
   selector: 'app-timesheet-detail',
   standalone: true,
   imports: [
-    CommonModule,
     RouterModule,
     FormsModule,
     ReactiveFormsModule,
@@ -44,7 +43,7 @@ import {
     MatFormFieldModule,
     MatInputModule,
     MatDividerModule
-  ],
+],
   templateUrl: './timesheet-detail.component.html',
   styleUrl: './timesheet-detail.component.scss'
 })

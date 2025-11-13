@@ -1,5 +1,5 @@
 import { Component, OnInit, signal, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { RouterModule, Router, ActivatedRoute } from '@angular/router';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
@@ -22,7 +22,6 @@ interface Employee {
   selector: 'app-department-form',
   standalone: true,
   imports: [
-    CommonModule,
     RouterModule,
     ReactiveFormsModule,
     MatCardModule,
@@ -33,7 +32,7 @@ interface Employee {
     MatIconModule,
     MatCheckboxModule,
     MatProgressSpinnerModule
-  ],
+],
   template: `
     <div class="department-form-container">
       <div class="page-header">

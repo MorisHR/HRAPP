@@ -1,5 +1,5 @@
 import { Component, signal, inject, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { RouterModule } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -13,14 +13,13 @@ import { Employee } from '../../../core/models/employee.model';
   selector: 'app-employee-list',
   standalone: true,
   imports: [
-    CommonModule,
     RouterModule,
     MatCardModule,
     MatButtonModule,
     MatIconModule,
     MatTableModule,
     MatProgressSpinnerModule
-  ],
+],
   template: `
     <div class="employee-list-container">
       <mat-card>

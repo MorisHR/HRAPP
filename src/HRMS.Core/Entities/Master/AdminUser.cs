@@ -121,4 +121,21 @@ public class AdminUser : BaseEntity
     /// Used for admin-to-admin communication about account issues
     /// </summary>
     public string? StatusNotes { get; set; }
+
+    /// <summary>
+    /// Password Reset: Token for password reset flow
+    /// Single-use, time-limited (1 hour expiry)
+    /// </summary>
+    public string? PasswordResetToken { get; set; }
+
+    /// <summary>
+    /// Password Reset: Token expiration timestamp
+    /// </summary>
+    public DateTime? PasswordResetTokenExpiry { get; set; }
+
+    /// <summary>
+    /// Activation token expiration (24 hours from generation)
+    /// Used for email-based account activation workflow
+    /// </summary>
+    public DateTime? ActivationTokenExpiry { get; set; }
 }

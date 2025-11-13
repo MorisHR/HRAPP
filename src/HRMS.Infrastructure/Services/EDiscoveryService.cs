@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 using HRMS.Application.Interfaces;
 using HRMS.Core.Entities.Master;
 using HRMS.Core.Enums;
+using HRMS.Core.Exceptions;
 using HRMS.Infrastructure.Data;
 
 namespace HRMS.Infrastructure.Services;
@@ -30,7 +31,11 @@ public class EDiscoveryService : IEDiscoveryService
     {
         var legalHold = await _context.LegalHolds.FindAsync(new object[] { legalHoldId }, cancellationToken);
         if (legalHold == null)
-            throw new InvalidOperationException($"Legal hold {legalHoldId} not found");
+            throw new NotFoundException(
+                ErrorCodes.SEC_ALERT_NOT_FOUND,
+                "The legal hold could not be found.",
+                $"Legal hold {legalHoldId} not found in database",
+                "Verify the legal hold ID or contact your security administrator.");
 
         var auditLogs = await _context.AuditLogs
             .Where(a => a.LegalHoldId == legalHoldId)
@@ -43,7 +48,11 @@ public class EDiscoveryService : IEDiscoveryService
             EDiscoveryFormat.PDF => await ExportToPdfAsync(auditLogs, legalHold.CaseNumber, cancellationToken),
             EDiscoveryFormat.JSON => await ExportToJsonAsync(auditLogs, cancellationToken),
             EDiscoveryFormat.CSV => await ExportToCsvAsync(auditLogs, cancellationToken),
-            _ => throw new NotSupportedException($"Format {format} not supported")
+            _ => throw new ValidationException(
+                ErrorCodes.VAL_INVALID_FORMAT,
+                "The requested export format is not supported.",
+                $"Format {format} not supported",
+                "Please use a supported format (JSON, CSV, or XML).")
         };
     }
 
@@ -103,7 +112,11 @@ public class EDiscoveryService : IEDiscoveryService
     {
         var legalHold = await _context.LegalHolds.FindAsync(new object[] { legalHoldId }, cancellationToken);
         if (legalHold == null)
-            throw new InvalidOperationException($"Legal hold {legalHoldId} not found");
+            throw new NotFoundException(
+                ErrorCodes.SEC_ALERT_NOT_FOUND,
+                "The legal hold could not be found.",
+                $"Legal hold {legalHoldId} not found in database",
+                "Verify the legal hold ID or contact your security administrator.");
 
         var sb = new StringBuilder();
         sb.AppendLine("=== CHAIN OF CUSTODY REPORT ===");

@@ -1,4 +1,5 @@
 using HRMS.Application.Interfaces;
+using HRMS.Core.Exceptions;
 using HRMS.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -34,7 +35,11 @@ public class PdfService : IPdfService
 
         if (payslip == null)
         {
-            throw new Exception($"Payslip not found with ID: {payslipId}");
+            throw new NotFoundException(
+                ErrorCodes.PAY_SLIP_NOT_FOUND,
+                "The payslip you requested could not be found.",
+                $"Payslip ID {payslipId} not found in database",
+                "Please verify the payslip selection or contact HR for assistance.");
         }
 
         var document = Document.Create(container =>
@@ -170,7 +175,11 @@ public class PdfService : IPdfService
 
         if (employee == null)
         {
-            throw new Exception($"Employee not found with ID: {employeeId}");
+            throw new NotFoundException(
+                ErrorCodes.EMP_NOT_FOUND,
+                "Employee information could not be found.",
+                $"Employee ID {employeeId} not found in database",
+                "Please verify the employee selection or contact HR.");
         }
 
         var document = Document.Create(container =>
@@ -236,7 +245,11 @@ public class PdfService : IPdfService
 
         if (employee == null)
         {
-            throw new Exception($"Employee not found with ID: {employeeId}");
+            throw new NotFoundException(
+                ErrorCodes.EMP_NOT_FOUND,
+                "Employee information could not be found.",
+                $"Employee ID {employeeId} not found in database",
+                "Please verify the employee selection or contact HR.");
         }
 
         var startDate = new DateTime(year, month, 1);
@@ -338,7 +351,11 @@ public class PdfService : IPdfService
 
         if (employee == null)
         {
-            throw new Exception($"Employee not found with ID: {employeeId}");
+            throw new NotFoundException(
+                ErrorCodes.EMP_NOT_FOUND,
+                "Employee information could not be found.",
+                $"Employee ID {employeeId} not found in database",
+                "Please verify the employee selection or contact HR.");
         }
 
         var leaveBalances = await _context.LeaveBalances
@@ -413,7 +430,11 @@ public class PdfService : IPdfService
 
         if (employee == null)
         {
-            throw new Exception($"Employee not found with ID: {employeeId}");
+            throw new NotFoundException(
+                ErrorCodes.EMP_NOT_FOUND,
+                "Employee information could not be found.",
+                $"Employee ID {employeeId} not found in database",
+                "Please verify the employee selection or contact HR.");
         }
 
         // Get all payslips for the year

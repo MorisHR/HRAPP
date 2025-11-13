@@ -7,12 +7,14 @@ using HRMS.Core.Entities.Master;
 using HRMS.Core.Interfaces;
 using HRMS.Core.Settings;
 using HRMS.Core.Enums;
+using HRMS.Core.Exceptions;
 using HRMS.Infrastructure.Data;
 using HRMS.Application.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.Extensions.Configuration;
 
 namespace HRMS.Infrastructure.Services;
 
@@ -24,6 +26,9 @@ public class AuthService : IAuthService
     private readonly ILogger<AuthService> _logger;
     private readonly IMfaService _mfaService;
     private readonly IAuditLogService _auditLogService;
+    private readonly IEmailService _emailService;
+    private readonly IConfiguration _configuration;
+    private readonly string _frontendUrl;
 
     public AuthService(
         MasterDbContext context,
@@ -31,7 +36,9 @@ public class AuthService : IAuthService
         IOptions<JwtSettings> jwtSettings,
         ILogger<AuthService> logger,
         IMfaService mfaService,
-        IAuditLogService auditLogService)
+        IAuditLogService auditLogService,
+        IEmailService emailService,
+        IConfiguration configuration)
     {
         _context = context;
         _passwordHasher = passwordHasher;
@@ -39,6 +46,9 @@ public class AuthService : IAuthService
         _logger = logger;
         _mfaService = mfaService;
         _auditLogService = auditLogService;
+        _emailService = emailService;
+        _configuration = configuration;
+        _frontendUrl = _configuration["AppSettings:FrontendUrl"] ?? "http://localhost:4200";
     }
 
     public async Task<(string Token, string RefreshToken, DateTime ExpiresAt, AdminUser User)?> LoginAsync(string email, string password, string ipAddress)
@@ -115,9 +125,11 @@ public class AuthService : IAuthService
                     errorMessage: $"IP address {ipAddress} is not whitelisted for this account"
                 );
 
-                throw new UnauthorizedAccessException(
-                    "Login denied: Your IP address is not authorized for this account. " +
-                    "Contact your administrator to add your IP to the whitelist.");
+                throw new ForbiddenException(
+                    ErrorCodes.AUTH_INSUFFICIENT_PERMISSIONS,
+                    "Access denied from your current location.",
+                    $"IP address {ipAddress} is not whitelisted for user {email}",
+                    "Contact your administrator to authorize access from your location.");
             }
 
             _logger.LogInformation("IP whitelist validation passed for user {Email} from IP {IpAddress}", email, ipAddress);
@@ -147,10 +159,11 @@ public class AuthService : IAuthService
             adminUser.MustChangePassword = true;
             await _context.SaveChangesAsync();
 
-            throw new InvalidOperationException(
-                $"Your password expired on {adminUser.PasswordExpiresAt.Value:yyyy-MM-dd}. " +
-                "You must change your password before logging in. " +
-                "Contact your administrator for assistance.");
+            throw new UnauthorizedException(
+                ErrorCodes.AUTH_PASSWORD_EXPIRED,
+                "Your password has expired and must be changed before you can sign in.",
+                $"Password expired on {adminUser.PasswordExpiresAt.Value:yyyy-MM-dd} for user {email}",
+                "Contact your administrator to reset your password.");
         }
 
         // SECURITY FIX: Check if account is locked out
@@ -171,9 +184,11 @@ public class AuthService : IAuthService
                     errorMessage: $"Account is locked until {adminUser.LockoutEnd.Value:yyyy-MM-dd HH:mm:ss} UTC"
                 );
 
-                throw new InvalidOperationException(
-                    $"Account is locked until {adminUser.LockoutEnd.Value:yyyy-MM-dd HH:mm:ss} UTC. " +
-                    $"Please try again later or contact an administrator.");
+                throw new UnauthorizedException(
+                    ErrorCodes.AUTH_ACCOUNT_LOCKED,
+                    "Your account has been temporarily locked for security reasons.",
+                    $"Account {email} is locked until {adminUser.LockoutEnd.Value:yyyy-MM-dd HH:mm:ss} UTC",
+                    $"Please try again after {adminUser.LockoutEnd.Value.ToLocalTime():h:mm tt} or contact your administrator.");
             }
             else
             {
@@ -209,9 +224,11 @@ public class AuthService : IAuthService
                     errorMessage: $"Account locked due to {adminUser.AccessFailedCount} failed login attempts"
                 );
 
-                throw new InvalidOperationException(
-                    "Account has been locked due to multiple failed login attempts. " +
-                    $"Please try again after {adminUser.LockoutEnd.Value:yyyy-MM-dd HH:mm:ss} UTC or contact an administrator.");
+                throw new UnauthorizedException(
+                    ErrorCodes.AUTH_ACCOUNT_LOCKED,
+                    "Your account has been locked due to multiple failed sign-in attempts.",
+                    $"Account {email} locked after {adminUser.AccessFailedCount} failed attempts",
+                    $"Please wait 15 minutes and try again, or contact your administrator for immediate assistance.");
             }
 
             await _context.SaveChangesAsync();
@@ -237,6 +254,29 @@ public class AuthService : IAuthService
         // Update last login date and IP address
         adminUser.LastLoginDate = DateTime.UtcNow;
         adminUser.LastLoginIPAddress = ipAddress; // FORTUNE 500: Track login IP for security monitoring
+
+        // FORTUNE 500: Validate login hours
+        if (!string.IsNullOrWhiteSpace(adminUser.AllowedLoginHours))
+        {
+            var currentHour = DateTime.UtcNow.Hour;
+            var allowedHours = JsonSerializer.Deserialize<List<int>>(adminUser.AllowedLoginHours) ?? new();
+
+            if (allowedHours.Any() && !allowedHours.Contains(currentHour))
+            {
+                await _auditLogService.LogAuthenticationAsync(
+                    AuditActionType.LOGIN_FAILED,
+                    userId: adminUser.Id,
+                    userEmail: adminUser.Email,
+                    success: false,
+                    errorMessage: "Login attempted outside allowed hours");
+
+                throw new ForbiddenException(
+                    ErrorCodes.AUTH_INSUFFICIENT_PERMISSIONS,
+                    "Sign-in is not available at this time due to your account's access hours.",
+                    $"Login attempted outside allowed hours for user {email}. Allowed hours: {string.Join(", ", allowedHours)}. Current hour: {currentHour} UTC",
+                    "Check your access hours with your administrator or try again during your designated time.");
+            }
+        }
 
         // ============================================
         // PRODUCTION-GRADE: Generate access token AND refresh token
@@ -596,14 +636,51 @@ public class AuthService : IAuthService
         if (token == null)
         {
             _logger.LogWarning("Refresh token not found");
-            throw new UnauthorizedAccessException("Invalid refresh token");
+            throw new UnauthorizedException(
+                ErrorCodes.AUTH_TOKEN_INVALID,
+                "Your session is invalid. Please sign in again.",
+                "Refresh token not found in database",
+                "Sign in again to create a new session.");
         }
 
         if (!token.IsActive)
         {
             _logger.LogWarning("Inactive refresh token used: Expired={IsExpired}, Revoked={IsRevoked}", token.IsExpired, token.IsRevoked);
-            throw new UnauthorizedAccessException("Refresh token is expired or revoked");
+            throw new UnauthorizedException(
+                ErrorCodes.AUTH_SESSION_EXPIRED,
+                "Your session has expired. Please sign in again.",
+                $"Refresh token inactive: Expired={token.IsExpired}, Revoked={token.IsRevoked}",
+                "Sign in again to start a new session.");
         }
+
+        // FORTUNE 500: Check session timeout
+        var sessionTimeoutMinutes = token.SessionTimeoutMinutes;
+        var sessionExpiry = token.LastActivityAt.AddMinutes(sessionTimeoutMinutes);
+
+        if (DateTime.UtcNow > sessionExpiry)
+        {
+            // Session expired due to inactivity
+            token.RevokedAt = DateTime.UtcNow;
+            token.RevokedByIp = ipAddress;
+            token.ReasonRevoked = "Session timeout";
+            await _context.SaveChangesAsync();
+
+            await _auditLogService.LogAuthenticationAsync(
+                AuditActionType.SESSION_TIMEOUT,
+                userId: token.AdminUserId,
+                userEmail: null,
+                success: false,
+                errorMessage: $"Session timeout - no activity for {sessionTimeoutMinutes} minutes");
+
+            throw new UnauthorizedException(
+                ErrorCodes.AUTH_SESSION_EXPIRED,
+                "Your session expired due to inactivity. Please sign in again.",
+                $"Session timed out after {sessionTimeoutMinutes} minutes of inactivity",
+                "Sign in again to continue working.");
+        }
+
+        // Update last activity
+        token.LastActivityAt = DateTime.UtcNow;
 
         // SECURITY: Token Rotation
         // Generate new refresh token and revoke the old one
@@ -973,13 +1050,16 @@ public class AuthService : IAuthService
         var randomBytes = new byte[64]; // 512 bits of entropy
         rng.GetBytes(randomBytes);
 
+        var now = DateTime.UtcNow;
         return new RefreshToken
         {
             Id = Guid.NewGuid(),
             Token = Convert.ToBase64String(randomBytes),
-            ExpiresAt = DateTime.UtcNow.AddDays(_jwtSettings.RefreshTokenExpirationDays),
-            CreatedAt = DateTime.UtcNow,
-            CreatedByIp = ipAddress
+            ExpiresAt = now.AddDays(_jwtSettings.RefreshTokenExpirationDays),
+            CreatedAt = now,
+            CreatedByIp = ipAddress,
+            LastActivityAt = now,
+            SessionTimeoutMinutes = 30
         };
     }
 
@@ -1121,6 +1201,227 @@ public class AuthService : IAuthService
         {
             _logger.LogError(ex, "Error checking CIDR range for IP {IpAddress} in range {CidrNotation}", ipAddress, cidrNotation);
             return false;
+        }
+    }
+
+    // ============================================
+    // PASSWORD RESET METHODS
+    // ============================================
+
+    /// <summary>
+    /// Initiates password reset flow by generating reset token and sending email
+    /// SECURITY: Does not reveal if email exists (prevents user enumeration)
+    /// </summary>
+    public async Task<(bool Success, string Message)> ForgotPasswordAsync(string email)
+    {
+        try
+        {
+            // Don't reveal if email exists (security best practice - prevents user enumeration)
+            var adminUser = await _context.AdminUsers
+                .FirstOrDefaultAsync(u => u.Email == email && u.IsActive);
+
+            if (adminUser == null)
+            {
+                _logger.LogWarning("Password reset requested for non-existent or inactive email: {Email}", email);
+                return (true, "If email exists, password reset link will be sent");
+            }
+
+            // Generate cryptographically secure reset token
+            var resetToken = Guid.NewGuid().ToString("N");  // 32 characters, no hyphens
+            var tokenExpiry = DateTime.UtcNow.AddHours(1);   // 1 hour expiry (security best practice)
+
+            adminUser.PasswordResetToken = resetToken;
+            adminUser.PasswordResetTokenExpiry = tokenExpiry;
+            await _context.SaveChangesAsync();
+
+            // Send password reset email
+            var emailSent = await _emailService.SendPasswordResetEmailAsync(
+                adminUser.Email,
+                resetToken,
+                adminUser.FirstName);
+
+            if (!emailSent)
+            {
+                _logger.LogWarning("Failed to send password reset email to {Email}", adminUser.Email);
+            }
+
+            // Audit log: Password reset requested
+            _ = _auditLogService.LogAuthenticationAsync(
+                AuditActionType.PASSWORD_RESET_REQUESTED,
+                userId: adminUser.Id,
+                userEmail: adminUser.Email,
+                success: true,
+                tenantId: null
+            );
+
+            _logger.LogInformation("Password reset token generated for user {Email}", adminUser.Email);
+
+            return (true, "If email exists, password reset link will be sent");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in ForgotPasswordAsync for email {Email}", email);
+            return (false, "An error occurred. Please try again.");
+        }
+    }
+
+    /// <summary>
+    /// Resets password using the reset token from email
+    /// SECURITY FEATURES:
+    /// - Token expiry validation (1 hour)
+    /// - Password complexity enforcement
+    /// - Password history check (no reuse of last 5 passwords)
+    /// - Single-use token (revoked after use)
+    /// - Account lockout reset
+    /// </summary>
+    public async Task<(bool Success, string Message)> ResetPasswordAsync(string token, string newPassword)
+    {
+        try
+        {
+            // Find admin with valid reset token
+            var adminUser = await _context.AdminUsers
+                .FirstOrDefaultAsync(u => u.PasswordResetToken == token);
+
+            if (adminUser == null)
+            {
+                _logger.LogWarning("Password reset attempted with invalid token");
+
+                // Audit log: Failed password reset attempt
+                _ = _auditLogService.LogSecurityEventAsync(
+                    AuditActionType.PASSWORD_RESET_FAILED,
+                    AuditSeverity.WARNING,
+                    userId: null,
+                    description: "Invalid password reset token",
+                    additionalInfo: JsonSerializer.Serialize(new
+                    {
+                        token = token?.Substring(0, Math.Min(8, token?.Length ?? 0)) + "...", // Log only first 8 chars
+                        timestamp = DateTime.UtcNow
+                    })
+                );
+
+                return (false, "Invalid or expired password reset link");
+            }
+
+            // Check token expiry
+            if (adminUser.PasswordResetTokenExpiry == null ||
+                adminUser.PasswordResetTokenExpiry.Value < DateTime.UtcNow)
+            {
+                _logger.LogWarning("Password reset attempted with expired token for user {Email}", adminUser.Email);
+
+                // Audit log: Expired token attempt
+                _ = _auditLogService.LogSecurityEventAsync(
+                    AuditActionType.PASSWORD_RESET_FAILED,
+                    AuditSeverity.WARNING,
+                    adminUser.Id,
+                    description: "Password reset token expired",
+                    additionalInfo: JsonSerializer.Serialize(new
+                    {
+                        userEmail = adminUser.Email,
+                        tokenExpiredOn = adminUser.PasswordResetTokenExpiry.Value,
+                        hoursOverdue = (DateTime.UtcNow - adminUser.PasswordResetTokenExpiry.Value).TotalHours
+                    })
+                );
+
+                return (false, "Password reset link has expired. Please request a new one.");
+            }
+
+            // Validate new password complexity
+            var (isValid, validationMessage) = ValidatePasswordComplexity(newPassword);
+            if (!isValid)
+            {
+                _logger.LogWarning("Password reset failed: Password complexity validation failed for user {Email}", adminUser.Email);
+                return (false, validationMessage);
+            }
+
+            // Check password history (prevent reuse of last 5 passwords)
+            var newPasswordHash = _passwordHasher.HashPassword(newPassword);
+
+            if (!string.IsNullOrWhiteSpace(adminUser.PasswordHistory))
+            {
+                var passwordHistory = JsonSerializer.Deserialize<List<string>>(adminUser.PasswordHistory) ?? new List<string>();
+
+                // Check if new password matches any of the last 5 passwords
+                foreach (var oldHash in passwordHistory)
+                {
+                    if (_passwordHasher.VerifyPassword(newPassword, oldHash))
+                    {
+                        _logger.LogWarning("Password reset failed: Password reuse attempt for user {Email}", adminUser.Email);
+
+                        // Audit log: Password reuse attempt
+                        _ = _auditLogService.LogSecurityEventAsync(
+                            AuditActionType.PASSWORD_RESET_FAILED,
+                            AuditSeverity.WARNING,
+                            adminUser.Id,
+                            description: "Attempted to reuse a previously used password during password reset",
+                            additionalInfo: JsonSerializer.Serialize(new
+                            {
+                                userEmail = adminUser.Email,
+                                reason = "Password reuse prevention"
+                            })
+                        );
+
+                        return (false, "Cannot reuse previous passwords. Choose a different password.");
+                    }
+                }
+
+                // Update password history: add current password, keep last 5
+                passwordHistory.Insert(0, adminUser.PasswordHash);
+                if (passwordHistory.Count > 5)
+                {
+                    passwordHistory = passwordHistory.Take(5).ToList();
+                }
+                adminUser.PasswordHistory = JsonSerializer.Serialize(passwordHistory);
+            }
+            else
+            {
+                // First password change: initialize history with current password
+                adminUser.PasswordHistory = JsonSerializer.Serialize(new List<string> { adminUser.PasswordHash });
+            }
+
+            // Update password and related security fields
+            var now = DateTime.UtcNow;
+            var passwordExpiryDays = 90; // FORTUNE 500: 90-day password rotation policy
+
+            adminUser.PasswordHash = newPasswordHash;
+            adminUser.LastPasswordChangeDate = now;
+            adminUser.PasswordExpiresAt = now.AddDays(passwordExpiryDays);
+            adminUser.MustChangePassword = false;
+
+            // Revoke reset token (single-use security)
+            adminUser.PasswordResetToken = null;
+            adminUser.PasswordResetTokenExpiry = null;
+
+            // Reset lockout (allow user to login immediately)
+            adminUser.AccessFailedCount = 0;
+            adminUser.LockoutEnd = null;
+
+            adminUser.UpdatedAt = now;
+
+            await _context.SaveChangesAsync();
+
+            // Audit log: Successful password reset
+            _ = _auditLogService.LogAuthenticationAsync(
+                AuditActionType.PASSWORD_RESET_COMPLETED,
+                userId: adminUser.Id,
+                userEmail: adminUser.Email,
+                success: true,
+                tenantId: null,
+                eventData: new Dictionary<string, object>
+                {
+                    { "passwordExpiryDate", adminUser.PasswordExpiresAt!.Value },
+                    { "passwordExpiryDays", passwordExpiryDays },
+                    { "method", "reset_token" }
+                }
+            );
+
+            _logger.LogInformation("Password reset successfully for user {Email}", adminUser.Email);
+
+            return (true, "Password reset successfully. You can now login with your new password.");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in ResetPasswordAsync");
+            return (false, "An error occurred. Please try again.");
         }
     }
 }

@@ -38,6 +38,14 @@ export const routes: Routes = [
       {
         path: 'activate',
         loadComponent: () => import('./features/auth/activate/activate.component').then(m => m.ActivateComponent)
+      },
+      {
+        path: 'forgot-password',
+        loadComponent: () => import('./features/auth/forgot-password/forgot-password.component').then(m => m.ForgotPasswordComponent)
+      },
+      {
+        path: 'reset-password',
+        loadComponent: () => import('./features/auth/reset-password/reset-password.component').then(m => m.ResetPasswordComponent)
       }
     ]
   },
@@ -87,8 +95,28 @@ export const routes: Routes = [
       },
       {
         path: 'security-alerts',
-        loadChildren: () => import('./features/admin/security-alerts/security-alerts.module').then(m => m.SecurityAlertsModule),
-        data: { title: 'Security Alerts' }
+        children: [
+          {
+            path: '',
+            redirectTo: 'dashboard',
+            pathMatch: 'full'
+          },
+          {
+            path: 'dashboard',
+            loadComponent: () => import('./features/admin/security-alerts/components/dashboard/security-alerts-dashboard.component').then(m => m.SecurityAlertsDashboardComponent),
+            data: { title: 'Security Alerts Dashboard' }
+          },
+          {
+            path: 'list',
+            loadComponent: () => import('./features/admin/security-alerts/components/list/alert-list.component').then(m => m.AlertListComponent),
+            data: { title: 'Security Alerts List' }
+          },
+          {
+            path: 'detail/:id',
+            loadComponent: () => import('./features/admin/security-alerts/components/detail/alert-detail.component').then(m => m.AlertDetailComponent),
+            data: { title: 'Alert Details' }
+          }
+        ]
       },
       {
         path: 'anomaly-detection',
@@ -269,6 +297,16 @@ export const routes: Routes = [
       {
         path: 'dashboard',
         loadComponent: () => import('./features/employee/dashboard/employee-dashboard.component').then(m => m.EmployeeDashboardComponent)
+      },
+      {
+        path: 'attendance',
+        loadComponent: () => import('./features/employee/attendance/employee-attendance.component').then(m => m.EmployeeAttendanceComponent),
+        data: { title: 'My Attendance' }
+      },
+      {
+        path: 'leave',
+        loadComponent: () => import('./features/employee/leave/employee-leave.component').then(m => m.EmployeeLeaveComponent),
+        data: { title: 'My Leave Requests' }
       },
       {
         path: 'timesheets',

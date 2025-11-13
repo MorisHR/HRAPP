@@ -1,6 +1,7 @@
 using System.Net;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
+using HRMS.Core.Exceptions;
 
 namespace HRMS.API.Middleware;
 
@@ -49,35 +50,122 @@ public class GlobalExceptionHandlingMiddleware
     {
         context.Response.ContentType = "application/json";
 
-        var (statusCode, message, errorCode) = exception switch
-        {
-            ArgumentNullException => (HttpStatusCode.BadRequest, "Invalid request: required parameter is missing", "VALIDATION_ERROR"),
-            ArgumentException => (HttpStatusCode.BadRequest, "Invalid request: parameter value is invalid", "VALIDATION_ERROR"),
-            InvalidOperationException => (HttpStatusCode.BadRequest, exception.Message, "INVALID_OPERATION"),
-            UnauthorizedAccessException => (HttpStatusCode.Forbidden, "Access denied", "ACCESS_DENIED"),
-            KeyNotFoundException => (HttpStatusCode.NotFound, "Resource not found", "NOT_FOUND"),
-            DbUpdateConcurrencyException => (HttpStatusCode.Conflict, "The record was modified by another user", "CONCURRENCY_ERROR"),
-            DbUpdateException => (HttpStatusCode.BadRequest, "Database update failed", "DATABASE_ERROR"),
-            TimeoutException => (HttpStatusCode.RequestTimeout, "The request timed out", "TIMEOUT"),
-            _ => (HttpStatusCode.InternalServerError, "An unexpected error occurred", "INTERNAL_ERROR")
-        };
+        ErrorResponse response;
 
-        context.Response.StatusCode = (int)statusCode;
-
-        var response = new ErrorResponse
+        // Handle our custom HRMS exceptions first
+        if (exception is HRMSException hrmsException)
         {
-            StatusCode = (int)statusCode,
-            ErrorCode = errorCode,
-            Message = message,
-            CorrelationId = context.TraceIdentifier,
-            Timestamp = DateTime.UtcNow
-        };
+            var statusCode = hrmsException switch
+            {
+                ValidationException => HttpStatusCode.BadRequest,
+                NotFoundException => HttpStatusCode.NotFound,
+                ConflictException => HttpStatusCode.Conflict,
+                UnauthorizedException => HttpStatusCode.Unauthorized,
+                ForbiddenException => HttpStatusCode.Forbidden,
+                BusinessRuleException => (HttpStatusCode)422, // Unprocessable Entity
+                _ => HttpStatusCode.InternalServerError
+            };
 
-        // Include stack trace and detailed error only in development
-        if (_environment.IsDevelopment())
+            context.Response.StatusCode = (int)statusCode;
+
+            response = new ErrorResponse
+            {
+                StatusCode = (int)statusCode,
+                ErrorCode = hrmsException.ErrorCode,
+                Message = hrmsException.UserMessage,
+                SuggestedAction = hrmsException.SuggestedAction,
+                CorrelationId = context.TraceIdentifier,
+                Timestamp = DateTime.UtcNow,
+                SupportContact = "support@morishr.com" // TODO: Make configurable
+            };
+
+            // Include technical details only in development
+            if (_environment.IsDevelopment())
+            {
+                response.Details = hrmsException.TechnicalDetails ?? exception.ToString();
+                response.InnerException = exception.InnerException?.Message;
+            }
+        }
+        else
         {
-            response.Details = exception.ToString();
-            response.InnerException = exception.InnerException?.Message;
+            // Handle standard .NET exceptions with user-friendly messages
+            var (statusCode, message, errorCode, suggestedAction) = exception switch
+            {
+                ArgumentNullException => (
+                    HttpStatusCode.BadRequest,
+                    "Required information is missing. Please review your input and try again.",
+                    ErrorCodes.VAL_REQUIRED_FIELD,
+                    "Check that all required fields are filled in."
+                ),
+                ArgumentException => (
+                    HttpStatusCode.BadRequest,
+                    "Invalid information provided. Please check your input and try again.",
+                    ErrorCodes.VAL_INVALID_FORMAT,
+                    "Review the highlighted fields and correct any errors."
+                ),
+                InvalidOperationException => (
+                    HttpStatusCode.BadRequest,
+                    "This operation cannot be completed at this time.",
+                    ErrorCodes.SYS_UNEXPECTED_ERROR,
+                    "Please try again or contact support if the issue persists."
+                ),
+                System.UnauthorizedAccessException => (
+                    HttpStatusCode.Forbidden,
+                    "You don't have permission to access this resource.",
+                    ErrorCodes.AUTH_INSUFFICIENT_PERMISSIONS,
+                    "Contact your administrator if you need access."
+                ),
+                KeyNotFoundException => (
+                    HttpStatusCode.NotFound,
+                    "The requested information could not be found.",
+                    ErrorCodes.SYS_UNEXPECTED_ERROR,
+                    "Verify your selection or contact support if you believe this is an error."
+                ),
+                DbUpdateConcurrencyException => (
+                    HttpStatusCode.Conflict,
+                    "This record was recently modified by another user. Please refresh and try again.",
+                    ErrorCodes.SYS_DATABASE_ERROR,
+                    "Reload the page to see the latest information, then retry your changes."
+                ),
+                DbUpdateException => (
+                    HttpStatusCode.BadRequest,
+                    "Unable to save your changes due to a data conflict.",
+                    ErrorCodes.SYS_DATABASE_ERROR,
+                    "Check your input and try again. Contact support if the issue continues."
+                ),
+                TimeoutException => (
+                    HttpStatusCode.RequestTimeout,
+                    "Your request is taking longer than expected. Please try again.",
+                    ErrorCodes.SYS_EXTERNAL_SERVICE_ERROR,
+                    "Wait a moment and retry. If this persists, try again later."
+                ),
+                _ => (
+                    HttpStatusCode.InternalServerError,
+                    "An unexpected error occurred. Our team has been notified and is working on it.",
+                    ErrorCodes.SYS_UNEXPECTED_ERROR,
+                    "Please try again in a few moments. Contact support with error ID if this continues."
+                )
+            };
+
+            context.Response.StatusCode = (int)statusCode;
+
+            response = new ErrorResponse
+            {
+                StatusCode = (int)statusCode,
+                ErrorCode = errorCode,
+                Message = message,
+                SuggestedAction = suggestedAction,
+                CorrelationId = context.TraceIdentifier,
+                Timestamp = DateTime.UtcNow,
+                SupportContact = "support@morishr.com"
+            };
+
+            // Include stack trace and detailed error only in development
+            if (_environment.IsDevelopment())
+            {
+                response.Details = exception.ToString();
+                response.InnerException = exception.InnerException?.Message;
+            }
         }
 
         var options = new JsonSerializerOptions
@@ -89,20 +177,6 @@ public class GlobalExceptionHandlingMiddleware
         var json = JsonSerializer.Serialize(response, options);
         await context.Response.WriteAsync(json);
     }
-}
-
-/// <summary>
-/// Standard error response model
-/// </summary>
-public class ErrorResponse
-{
-    public int StatusCode { get; set; }
-    public string ErrorCode { get; set; } = string.Empty;
-    public string Message { get; set; } = string.Empty;
-    public string CorrelationId { get; set; } = string.Empty;
-    public DateTime Timestamp { get; set; }
-    public string? Details { get; set; }
-    public string? InnerException { get; set; }
 }
 
 /// <summary>

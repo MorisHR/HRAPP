@@ -2,6 +2,7 @@ using HRMS.Application.DTOs.AttendanceDtos;
 using HRMS.Application.Interfaces;
 using HRMS.Core.Entities.Tenant;
 using HRMS.Core.Enums;
+using HRMS.Core.Exceptions;
 using HRMS.Core.Interfaces;
 using HRMS.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -149,6 +150,237 @@ public class AttendanceService : IAttendanceService
     #endregion
 
     /// <summary>
+    /// ✅ FORTUNE 500: Employee self-service check-in
+    /// Creates attendance record for today with check-in time
+    /// SECURITY: Employees can check in for themselves
+    /// </summary>
+    public async Task<AttendanceDetailsDto> CheckInAsync(Guid employeeId)
+    {
+        _logger.LogInformation("Employee {EmployeeId} checking in", employeeId);
+
+        // AUTHORIZATION CHECK: Verify user can check in for this employee
+        var currentEmployee = await GetCurrentEmployeeAsync();
+        if (currentEmployee == null || (currentEmployee.Id != employeeId && !IsHROrAdmin()))
+        {
+            LogAuthorizationFailure("CheckIn", employeeId);
+            throw new ForbiddenException(
+                ErrorCodes.ATT_UNAUTHORIZED_ACCESS,
+                "You can only check in for yourself.",
+                $"User attempted to check in for employee {employeeId} without permission",
+                "Use your own employee account to check in.");
+        }
+
+        // Validate employee exists and is active
+        var employee = await _tenantContext.Employees.FindAsync(employeeId);
+        if (employee == null)
+        {
+            throw new NotFoundException(
+                ErrorCodes.EMP_NOT_FOUND,
+                "Employee information could not be found.",
+                $"Employee ID {employeeId} not found in database",
+                "Verify your employee account and try again.");
+        }
+
+        if (!employee.IsActive)
+        {
+            throw new ValidationException(
+                ErrorCodes.EMP_INACTIVE,
+                "Cannot check in. Employee account is inactive.",
+                $"Employee {employeeId} is inactive",
+                "Contact HR to activate your account.");
+        }
+
+        var today = DateTime.UtcNow.Date;
+        var now = DateTime.UtcNow;
+
+        // Check for existing attendance on this date
+        var existing = await _tenantContext.Attendances
+            .FirstOrDefaultAsync(a => a.EmployeeId == employeeId && a.Date.Date == today);
+
+        if (existing != null)
+        {
+            // If already checked in today
+            if (existing.CheckInTime.HasValue && !existing.CheckOutTime.HasValue)
+            {
+                throw new ConflictException(
+                    ErrorCodes.ATT_ALREADY_CHECKED_IN,
+                    "You have already checked in today.",
+                    $"Employee {employeeId} already checked in at {existing.CheckInTime}",
+                    "Use check-out to complete your attendance for today.");
+            }
+
+            // If already checked out today
+            if (existing.CheckInTime.HasValue && existing.CheckOutTime.HasValue)
+            {
+                throw new ConflictException(
+                    ErrorCodes.ATT_ALREADY_COMPLETED,
+                    "You have already completed attendance for today.",
+                    $"Employee {employeeId} already checked in and out for {today:yyyy-MM-dd}",
+                    "Attendance for today is complete. Contact HR for corrections.");
+            }
+        }
+
+        // Determine day type
+        var isSunday = today.DayOfWeek == DayOfWeek.Sunday;
+        var isPublicHoliday = await IsPublicHolidayAsync(today);
+
+        // Determine status based on check-in time
+        var status = DetermineCheckInStatus(now, isSunday, isPublicHoliday);
+
+        // Create attendance record
+        var attendance = new Attendance
+        {
+            Id = Guid.NewGuid(),
+            EmployeeId = employeeId,
+            Date = today,
+            CheckInTime = now,
+            CheckOutTime = null,
+            WorkingHours = 0,
+            OvertimeHours = 0,
+            Status = status,
+            IsSunday = isSunday,
+            IsPublicHoliday = isPublicHoliday,
+            IsRegularized = false,
+            CreatedAt = DateTime.UtcNow,
+            CreatedBy = _currentUserService.GetAuditUsername(),
+            IsDeleted = false
+        };
+
+        _tenantContext.Attendances.Add(attendance);
+        await _tenantContext.SaveChangesAsync();
+
+        // Audit log
+        LogAttendanceModification("CheckIn", attendance.Id, employeeId);
+        _logger.LogInformation("Employee {EmployeeId} checked in successfully at {CheckInTime}",
+            employeeId, now);
+
+        // Load full details with includes
+        var result = await _tenantContext.Attendances
+            .AsNoTracking()
+            .Include(a => a.Employee)
+                .ThenInclude(e => e!.Department)
+            .FirstOrDefaultAsync(a => a.Id == attendance.Id);
+
+        return MapToDetailsDto(result!);
+    }
+
+    /// <summary>
+    /// ✅ FORTUNE 500: Employee self-service check-out
+    /// Updates today's attendance with check-out time and calculates working hours
+    /// SECURITY: Employees can check out for themselves
+    /// </summary>
+    public async Task<AttendanceDetailsDto> CheckOutAsync(Guid employeeId)
+    {
+        _logger.LogInformation("Employee {EmployeeId} checking out", employeeId);
+
+        // AUTHORIZATION CHECK: Verify user can check out for this employee
+        var currentEmployee = await GetCurrentEmployeeAsync();
+        if (currentEmployee == null || (currentEmployee.Id != employeeId && !IsHROrAdmin()))
+        {
+            LogAuthorizationFailure("CheckOut", employeeId);
+            throw new ForbiddenException(
+                ErrorCodes.ATT_UNAUTHORIZED_ACCESS,
+                "You can only check out for yourself.",
+                $"User attempted to check out for employee {employeeId} without permission",
+                "Use your own employee account to check out.");
+        }
+
+        var today = DateTime.UtcNow.Date;
+        var now = DateTime.UtcNow;
+
+        // Find today's attendance record
+        var attendance = await _tenantContext.Attendances
+            .Include(a => a.Employee)
+                .ThenInclude(e => e!.Department)
+            .FirstOrDefaultAsync(a => a.EmployeeId == employeeId && a.Date.Date == today);
+
+        if (attendance == null)
+        {
+            throw new NotFoundException(
+                ErrorCodes.ATT_NO_CHECKIN,
+                "Cannot check out. You have not checked in today.",
+                $"No attendance record found for employee {employeeId} on {today:yyyy-MM-dd}",
+                "Please check in first before checking out.");
+        }
+
+        // Verify check-in exists
+        if (!attendance.CheckInTime.HasValue)
+        {
+            throw new ValidationException(
+                ErrorCodes.ATT_NO_CHECKIN,
+                "Cannot check out. No check-in time found.",
+                $"Attendance {attendance.Id} has no check-in time",
+                "Please check in first before checking out.");
+        }
+
+        // Verify not already checked out
+        if (attendance.CheckOutTime.HasValue)
+        {
+            throw new ConflictException(
+                ErrorCodes.ATT_ALREADY_CHECKED_OUT,
+                "You have already checked out today.",
+                $"Employee {employeeId} already checked out at {attendance.CheckOutTime}",
+                "Attendance for today is already complete. Contact HR for corrections.");
+        }
+
+        // Update check-out time
+        attendance.CheckOutTime = now;
+        attendance.UpdatedAt = DateTime.UtcNow;
+        attendance.UpdatedBy = _currentUserService.GetAuditUsername();
+
+        // Calculate working hours
+        var totalHours = (decimal)(now - attendance.CheckInTime.Value).TotalHours;
+
+        // Subtract break time (1 hour if working > 5 hours)
+        if (totalHours > 5)
+        {
+            totalHours -= 1; // 1 hour lunch break
+        }
+
+        attendance.WorkingHours = Math.Round(totalHours, 2);
+
+        // Update status to Present if it was just a check-in
+        if (attendance.Status != AttendanceStatus.Late)
+        {
+            attendance.Status = AttendanceStatus.Present;
+        }
+
+        await _tenantContext.SaveChangesAsync();
+
+        // Audit log
+        LogAttendanceModification("CheckOut", attendance.Id, employeeId);
+        _logger.LogInformation("Employee {EmployeeId} checked out successfully at {CheckOutTime}. Working hours: {WorkingHours}",
+            employeeId, now, attendance.WorkingHours);
+
+        return MapToDetailsDto(attendance);
+    }
+
+    /// <summary>
+    /// Helper method to determine status during check-in
+    /// </summary>
+    private AttendanceStatus DetermineCheckInStatus(DateTime checkInTime, bool isSunday, bool isPublicHoliday)
+    {
+        if (isPublicHoliday)
+        {
+            return AttendanceStatus.PublicHoliday;
+        }
+
+        if (isSunday || checkInTime.DayOfWeek == DayOfWeek.Saturday)
+        {
+            return AttendanceStatus.Weekend;
+        }
+
+        // Check if late (assuming 9:00 AM start time - should be from shift)
+        var startTime = new TimeSpan(9, 0, 0);
+        if (checkInTime.TimeOfDay > startTime.Add(TimeSpan.FromMinutes(15)))
+        {
+            return AttendanceStatus.Late;
+        }
+
+        return AttendanceStatus.Present;
+    }
+
+    /// <summary>
     /// Records attendance/punch with role-based authorization
     /// SECURITY: Users can only record their own punches unless Admin/HR
     /// </summary>
@@ -163,7 +395,11 @@ public class AttendanceService : IAttendanceService
             if (currentEmployee == null || currentEmployee.Id != dto.EmployeeId)
             {
                 LogAuthorizationFailure("RecordAttendance", dto.EmployeeId);
-                throw new UnauthorizedAccessException("You can only record attendance for yourself. Contact HR to record attendance for others.");
+                throw new ForbiddenException(
+                    ErrorCodes.ATT_UNAUTHORIZED_ACCESS,
+                    "You can only record attendance for yourself.",
+                    $"User attempted to record attendance for employee {dto.EmployeeId} without permission",
+                    "Contact your HR department to record attendance for others.");
             }
         }
 
@@ -171,7 +407,11 @@ public class AttendanceService : IAttendanceService
         var employee = await _tenantContext.Employees.FindAsync(dto.EmployeeId);
         if (employee == null)
         {
-            throw new Exception($"Employee not found: {dto.EmployeeId}");
+            throw new NotFoundException(
+                ErrorCodes.EMP_NOT_FOUND,
+                "Employee information could not be found.",
+                $"Employee ID {dto.EmployeeId} not found in database",
+                "Verify the employee selection and try again.");
         }
 
         // Check for existing attendance on this date
@@ -180,7 +420,11 @@ public class AttendanceService : IAttendanceService
 
         if (existing != null)
         {
-            throw new Exception($"Attendance already recorded for {employee.FirstName} {employee.LastName} on {dto.Date:yyyy-MM-dd}");
+            throw new ConflictException(
+                ErrorCodes.ATT_DUPLICATE_RECORD,
+                "Attendance has already been recorded for this date.",
+                $"Duplicate attendance record for employee {dto.EmployeeId} on {dto.Date:yyyy-MM-dd}",
+                "To make changes, please edit the existing attendance record or contact HR.");
         }
 
         // Validate check-in/out times
@@ -188,7 +432,11 @@ public class AttendanceService : IAttendanceService
         {
             if (dto.CheckOutTime <= dto.CheckInTime)
             {
-                throw new Exception("Check-out time must be after check-in time");
+                throw new ValidationException(
+                    ErrorCodes.ATT_INVALID_TIME,
+                    "Check-out time must be later than check-in time.",
+                    $"Invalid times: Check-in={dto.CheckInTime}, Check-out={dto.CheckOutTime}",
+                    "Please adjust the times and try again.");
             }
         }
 

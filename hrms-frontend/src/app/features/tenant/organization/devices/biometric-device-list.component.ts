@@ -1,5 +1,5 @@
-import { Component, OnInit, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, signal, ChangeDetectorRef } from '@angular/core';
+
 import { Router } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatTableModule } from '@angular/material/table';
@@ -10,13 +10,12 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { AttendanceMachinesService, AttendanceMachineDto } from '../../../../core/services/attendance-machines.service';
-import { BiometricDeviceService, BiometricDeviceDto, DeviceSyncStatusDto } from './biometric-device.service';
+import { BiometricDeviceService, BiometricDeviceDto, DeviceSyncStatusDto, ManualSyncResult } from './biometric-device.service';
 
 @Component({
   selector: 'app-biometric-device-list',
   standalone: true,
   imports: [
-    CommonModule,
     MatCardModule,
     MatTableModule,
     MatButtonModule,
@@ -25,7 +24,7 @@ import { BiometricDeviceService, BiometricDeviceDto, DeviceSyncStatusDto } from 
     MatTooltipModule,
     MatChipsModule,
     MatSnackBarModule
-  ],
+],
   templateUrl: './biometric-device-list.component.html',
   styleUrls: ['./biometric-device-list.component.scss']
 })
@@ -34,7 +33,7 @@ export class BiometricDeviceListComponent implements OnInit {
   machines = signal<AttendanceMachineDto[]>([]);
   loading = signal<boolean>(false);
   error = signal<string | null>(null);
-  displayedColumns: string[] = ['machineName', 'machineType', 'location', 'ipAddress', 'status', 'lastSync', 'actions'];
+  displayedColumns: string[] = ['code', 'name', 'location', 'ipAddress', 'status', 'lastSync', 'actions'];
 
   // Connection testing state
   testingConnection: Set<string> = new Set();
@@ -44,7 +43,8 @@ export class BiometricDeviceListComponent implements OnInit {
     private router: Router,
     private snackBar: MatSnackBar,
     private attendanceMachinesService: AttendanceMachinesService,
-    private deviceService: BiometricDeviceService
+    private deviceService: BiometricDeviceService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -55,20 +55,38 @@ export class BiometricDeviceListComponent implements OnInit {
    * Load attendance machines using the new AttendanceMachinesService
    */
   private loadDevices(): void {
+    console.log('🔄 Starting to load attendance machines...');
     this.loading.set(true);
     this.error.set(null);
 
     this.attendanceMachinesService.getMachines(true).subscribe({
       next: (response) => {
+        console.log('✅ API Response received:', response);
+        console.log('📊 Response structure:', {
+          hasTotal: 'total' in response,
+          hasData: 'data' in response,
+          dataIsArray: Array.isArray(response.data),
+          dataLength: response.data?.length
+        });
         this.machines.set(response.data);
         this.loading.set(false);
-        console.log(`Loaded ${response.total} attendance machines`);
+        console.log(`✅ Loaded ${response.total} attendance machines, loading set to false`);
       },
       error: (error) => {
-        console.error('Error loading machines:', error);
+        console.error('❌ Error loading machines:', error);
+        console.error('❌ Error details:', {
+          status: error.status,
+          statusText: error.statusText,
+          message: error.message,
+          url: error.url,
+          error: error.error
+        });
         this.error.set('Failed to load attendance machines');
         this.loading.set(false);
         this.snackBar.open('Failed to load attendance machines', 'Close', { duration: 3000 });
+      },
+      complete: () => {
+        console.log('🏁 Observable completed');
       }
     });
   }
@@ -114,56 +132,60 @@ export class BiometricDeviceListComponent implements OnInit {
 
   /**
    * Test device connection
-   * Note: This still uses BiometricDeviceService as AttendanceMachinesService doesn't have test connection
    */
   onTestConnection(device: AttendanceMachineDto): void {
     if (!device.ipAddress) {
-      this.snackBar.open('Device does not have an IP address configured', 'Close', { duration: 3000 });
+      this.snackBar.open(
+        'Device has no IP address configured',
+        'Close',
+        { duration: 3000 }
+      );
       return;
     }
 
     this.testingConnection.add(device.id);
 
-    const connectionData = {
+    const testDto = {
       ipAddress: device.ipAddress,
       port: device.port || 4370,
       connectionMethod: 'TCP/IP',
       connectionTimeoutSeconds: 30
     };
 
-    this.deviceService.testConnection(connectionData).subscribe({
+    this.deviceService.testConnection(testDto).subscribe({
       next: (result) => {
-        this.testingConnection.delete(device.id);
+        // Wrap in setTimeout to avoid ExpressionChangedAfterItHasBeenCheckedError
+        setTimeout(() => {
+          this.testingConnection.delete(device.id);
+          this.cdr.detectChanges();
+        });
+
         if (result.success) {
           this.snackBar.open(
-            `Connection to ${device.machineName} successful`,
+            `✓ Connected to ${device.machineName} in ${result.responseTimeMs}ms`,
             'Close',
-            {
-              duration: 3000,
-              panelClass: ['success-snackbar']
-            }
+            { duration: 5000, panelClass: ['success-snackbar'] }
           );
         } else {
           this.snackBar.open(
-            `Failed to connect to ${device.machineName}. ${result.message}`,
+            `✗ Failed to connect to ${device.machineName}: ${result.message}`,
             'Close',
-            {
-              duration: 4000,
-              panelClass: ['error-snackbar']
-            }
+            { duration: 6000, panelClass: ['error-snackbar'] }
           );
         }
       },
       error: (error) => {
-        this.testingConnection.delete(device.id);
+        // Wrap in setTimeout to avoid ExpressionChangedAfterItHasBeenCheckedError
+        setTimeout(() => {
+          this.testingConnection.delete(device.id);
+          this.cdr.detectChanges();
+        });
+
         console.error('Connection test error:', error);
         this.snackBar.open(
           `Failed to test connection to ${device.machineName}`,
           'Close',
-          {
-            duration: 4000,
-            panelClass: ['error-snackbar']
-          }
+          { duration: 3000 }
         );
       }
     });
@@ -171,45 +193,47 @@ export class BiometricDeviceListComponent implements OnInit {
 
   /**
    * Manually trigger device sync
-   * Note: This still uses BiometricDeviceService for sync operations
    */
   onSyncNow(device: AttendanceMachineDto): void {
     this.syncingDevice.add(device.id);
 
-    this.deviceService.syncDevice(device.id).subscribe({
-      next: (result) => {
-        this.syncingDevice.delete(device.id);
+    this.deviceService.triggerSync(device.id).subscribe({
+      next: (result: ManualSyncResult) => {
+        // Wrap in setTimeout to avoid ExpressionChangedAfterItHasBeenCheckedError
+        setTimeout(() => {
+          this.syncingDevice.delete(device.id);
+          this.cdr.detectChanges();
+        });
+
         if (result.success) {
           this.snackBar.open(
-            `Synced ${result.recordCount} records from ${device.machineName}`,
+            `✓ Sync queued for ${device.machineName}`,
             'Close',
-            {
-              duration: 4000,
-              panelClass: ['success-snackbar']
-            }
+            { duration: 4000, panelClass: ['success-snackbar'] }
           );
+          // Refresh device list to show updated sync status
           this.loadDevices();
         } else {
           this.snackBar.open(
-            `Sync failed for ${device.machineName}. ${result.message}`,
+            `✗ Failed to sync ${device.machineName}: ${result.message}`,
             'Close',
-            {
-              duration: 4000,
-              panelClass: ['error-snackbar']
-            }
+            { duration: 6000, panelClass: ['error-snackbar'] }
           );
         }
       },
-      error: (error) => {
-        this.syncingDevice.delete(device.id);
-        console.error('Sync error:', error);
+      error: (error: any) => {
+        // Wrap in setTimeout to avoid ExpressionChangedAfterItHasBeenCheckedError
+        setTimeout(() => {
+          this.syncingDevice.delete(device.id);
+          this.cdr.detectChanges();
+        });
+
+        console.error('Sync trigger error:', error);
+        const errorMsg = error.error?.error || error.error?.message || 'Failed to trigger sync';
         this.snackBar.open(
-          `Failed to sync ${device.machineName}`,
+          `Failed to sync ${device.machineName}: ${errorMsg}`,
           'Close',
-          {
-            duration: 4000,
-            panelClass: ['error-snackbar']
-          }
+          { duration: 4000 }
         );
       }
     });
@@ -239,11 +263,11 @@ export class BiometricDeviceListComponent implements OnInit {
     }
 
     // Check if device has synced recently
-    if (!device.lastSyncTime) {
+    if (!device.lastSyncAt) {
       return 'offline';
     }
 
-    const lastSync = new Date(device.lastSyncTime);
+    const lastSync = new Date(device.lastSyncAt);
     const now = new Date();
     const minutesSinceSync = (now.getTime() - lastSync.getTime()) / (1000 * 60);
 

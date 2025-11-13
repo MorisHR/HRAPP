@@ -1,5 +1,5 @@
 import { Component, signal, inject, OnInit, OnDestroy } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Subject, takeUntil, finalize } from 'rxjs';
 
@@ -45,7 +45,6 @@ interface EmployeeOption {
   selector: 'app-salary-components',
   standalone: true,
   imports: [
-    CommonModule,
     ReactiveFormsModule,
     MatCardModule,
     MatButtonModule,
@@ -66,7 +65,7 @@ interface EmployeeOption {
     MatMenuModule,
     MatBadgeModule,
     MatDividerModule
-  ],
+],
   templateUrl: './salary-components.component.html',
   styleUrls: ['./salary-components.component.scss']
 })

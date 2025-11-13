@@ -2,47 +2,46 @@
   <h1>Anomaly Detection Dashboard</h1>
 
   <!-- Statistics Cards -->
-  <div class="statistics-grid" *ngIf="statistics">
-    <mat-card>
-      <mat-card-header>
-        <mat-card-title>Total Anomalies</mat-card-title>
-      </mat-card-header>
-      <mat-card-content>
-        <div class="stat-value">{{ statistics.totalAnomalies }}</div>
-        <div class="stat-label">Last 30 Days</div>
-      </mat-card-content>
-    </mat-card>
-
-    <mat-card>
-      <mat-card-header>
-        <mat-card-title>New Anomalies</mat-card-title>
-      </mat-card-header>
-      <mat-card-content>
-        <div class="stat-value warn-text">{{ statistics.newAnomalies }}</div>
-        <div class="stat-label">Requiring Investigation</div>
-      </mat-card-content>
-    </mat-card>
-
-    <mat-card>
-      <mat-card-header>
-        <mat-card-title>Critical Threats</mat-card-title>
-      </mat-card-header>
-      <mat-card-content>
-        <div class="stat-value error-text">{{ statistics.criticalAnomalies }}</div>
-        <div class="stat-label">High Priority</div>
-      </mat-card-content>
-    </mat-card>
-
-    <mat-card>
-      <mat-card-header>
-        <mat-card-title>Average Risk Score</mat-card-title>
-      </mat-card-header>
-      <mat-card-content>
-        <div class="stat-value">{{ statistics.averageRiskScore.toFixed(1) }}</div>
-        <div class="stat-label">Out of 100</div>
-      </mat-card-content>
-    </mat-card>
-  </div>
+  @if (statistics) {
+    <div class="statistics-grid">
+      <mat-card>
+        <mat-card-header>
+          <mat-card-title>Total Anomalies</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="stat-value">{{ statistics.totalAnomalies }}</div>
+          <div class="stat-label">Last 30 Days</div>
+        </mat-card-content>
+      </mat-card>
+      <mat-card>
+        <mat-card-header>
+          <mat-card-title>New Anomalies</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="stat-value warn-text">{{ statistics.newAnomalies }}</div>
+          <div class="stat-label">Requiring Investigation</div>
+        </mat-card-content>
+      </mat-card>
+      <mat-card>
+        <mat-card-header>
+          <mat-card-title>Critical Threats</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="stat-value error-text">{{ statistics.criticalAnomalies }}</div>
+          <div class="stat-label">High Priority</div>
+        </mat-card-content>
+      </mat-card>
+      <mat-card>
+        <mat-card-header>
+          <mat-card-title>Average Risk Score</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="stat-value">{{ statistics.averageRiskScore.toFixed(1) }}</div>
+          <div class="stat-label">Out of 100</div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  }
 
   <!-- Anomalies Table -->
   <mat-card class="anomalies-card">
@@ -53,102 +52,104 @@
           <mat-label>Filter by Status</mat-label>
           <mat-select [(ngModel)]="selectedStatus" (selectionChange)="onStatusFilterChange()">
             <mat-option [value]="undefined">All Statuses</mat-option>
-            <mat-option *ngFor="let status of statusOptions" [value]="status">
-              {{ status }}
-            </mat-option>
+            @for (status of statusOptions; track status) {
+              <mat-option [value]="status">
+                {{ status }}
+              </mat-option>
+            }
           </mat-select>
         </mat-form-field>
       </div>
     </mat-card-header>
 
     <mat-card-content>
-      <div *ngIf="loading" class="loading-container">
-        <mat-spinner></mat-spinner>
-      </div>
+      @if (loading) {
+        <div class="loading-container">
+          <mat-spinner></mat-spinner>
+        </div>
+      }
 
-      <table mat-table [dataSource]="anomalies" *ngIf="!loading">
-        <!-- Detected At Column -->
-        <ng-container matColumnDef="detectedAt">
-          <th mat-header-cell *matHeaderCellDef>Detected At</th>
-          <td mat-cell *matCellDef="let anomaly">
-            {{ anomaly.detectedAt | date:'short' }}
-          </td>
-        </ng-container>
-
-        <!-- Anomaly Type Column -->
-        <ng-container matColumnDef="anomalyType">
-          <th mat-header-cell *matHeaderCellDef>Type</th>
-          <td mat-cell *matCellDef="let anomaly">
-            <mat-chip>{{ anomaly.anomalyType }}</mat-chip>
-          </td>
-        </ng-container>
-
-        <!-- Risk Level Column -->
-        <ng-container matColumnDef="riskLevel">
-          <th mat-header-cell *matHeaderCellDef>Risk Level</th>
-          <td mat-cell *matCellDef="let anomaly">
-            <mat-chip [color]="getRiskLevelColor(anomaly.riskLevel)" selected>
-              {{ anomaly.riskLevel }} ({{ anomaly.riskScore }})
-            </mat-chip>
-          </td>
-        </ng-container>
-
-        <!-- User Email Column -->
-        <ng-container matColumnDef="userEmail">
-          <th mat-header-cell *matHeaderCellDef>User</th>
-          <td mat-cell *matCellDef="let anomaly">
-            {{ anomaly.userEmail || 'Unknown' }}
-          </td>
-        </ng-container>
-
-        <!-- Description Column -->
-        <ng-container matColumnDef="description">
-          <th mat-header-cell *matHeaderCellDef>Description</th>
-          <td mat-cell *matCellDef="let anomaly">
-            <span [matTooltip]="anomaly.description">
-              {{ anomaly.description.substring(0, 50) }}{{ anomaly.description.length > 50 ? '...' : '' }}
-            </span>
-          </td>
-        </ng-container>
-
-        <!-- Status Column -->
-        <ng-container matColumnDef="status">
-          <th mat-header-cell *matHeaderCellDef>Status</th>
-          <td mat-cell *matCellDef="let anomaly">
-            <mat-chip [color]="getStatusColor(anomaly.status)" selected>
-              {{ anomaly.status }}
-            </mat-chip>
-          </td>
-        </ng-container>
-
-        <!-- Actions Column -->
-        <ng-container matColumnDef="actions">
-          <th mat-header-cell *matHeaderCellDef>Actions</th>
-          <td mat-cell *matCellDef="let anomaly">
-            <button mat-icon-button (click)="viewDetails(anomaly)" matTooltip="View Details">
-              <mat-icon>visibility</mat-icon>
-            </button>
-            <button mat-icon-button (click)="startInvestigation(anomaly)"
-                    *ngIf="anomaly.status === 'NEW'"
-                    matTooltip="Start Investigation">
-              <mat-icon>search</mat-icon>
-            </button>
-            <button mat-icon-button (click)="markAsFalsePositive(anomaly)"
-                    *ngIf="anomaly.status !== 'FALSE_POSITIVE' && anomaly.status !== 'RESOLVED'"
-                    matTooltip="Mark as False Positive">
-              <mat-icon>cancel</mat-icon>
-            </button>
-            <button mat-icon-button (click)="resolveAnomaly(anomaly)"
-                    *ngIf="anomaly.status === 'INVESTIGATING'"
-                    matTooltip="Resolve">
-              <mat-icon>check_circle</mat-icon>
-            </button>
-          </td>
-        </ng-container>
-
-        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
-      </table>
+      @if (!loading) {
+        <table mat-table [dataSource]="anomalies">
+          <!-- Detected At Column -->
+          <ng-container matColumnDef="detectedAt">
+            <th mat-header-cell *matHeaderCellDef>Detected At</th>
+            <td mat-cell *matCellDef="let anomaly">
+              {{ anomaly.detectedAt | date:'short' }}
+            </td>
+          </ng-container>
+          <!-- Anomaly Type Column -->
+          <ng-container matColumnDef="anomalyType">
+            <th mat-header-cell *matHeaderCellDef>Type</th>
+            <td mat-cell *matCellDef="let anomaly">
+              <mat-chip>{{ anomaly.anomalyType }}</mat-chip>
+            </td>
+          </ng-container>
+          <!-- Risk Level Column -->
+          <ng-container matColumnDef="riskLevel">
+            <th mat-header-cell *matHeaderCellDef>Risk Level</th>
+            <td mat-cell *matCellDef="let anomaly">
+              <mat-chip [color]="getRiskLevelColor(anomaly.riskLevel)" selected>
+                {{ anomaly.riskLevel }} ({{ anomaly.riskScore }})
+              </mat-chip>
+            </td>
+          </ng-container>
+          <!-- User Email Column -->
+          <ng-container matColumnDef="userEmail">
+            <th mat-header-cell *matHeaderCellDef>User</th>
+            <td mat-cell *matCellDef="let anomaly">
+              {{ anomaly.userEmail || 'Unknown' }}
+            </td>
+          </ng-container>
+          <!-- Description Column -->
+          <ng-container matColumnDef="description">
+            <th mat-header-cell *matHeaderCellDef>Description</th>
+            <td mat-cell *matCellDef="let anomaly">
+              <span [matTooltip]="anomaly.description">
+                {{ anomaly.description.substring(0, 50) }}{{ anomaly.description.length > 50 ? '...' : '' }}
+              </span>
+            </td>
+          </ng-container>
+          <!-- Status Column -->
+          <ng-container matColumnDef="status">
+            <th mat-header-cell *matHeaderCellDef>Status</th>
+            <td mat-cell *matCellDef="let anomaly">
+              <mat-chip [color]="getStatusColor(anomaly.status)" selected>
+                {{ anomaly.status }}
+              </mat-chip>
+            </td>
+          </ng-container>
+          <!-- Actions Column -->
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef>Actions</th>
+            <td mat-cell *matCellDef="let anomaly">
+              <button mat-icon-button (click)="viewDetails(anomaly)" matTooltip="View Details">
+                <mat-icon>visibility</mat-icon>
+              </button>
+              @if (anomaly.status === 'NEW') {
+                <button mat-icon-button (click)="startInvestigation(anomaly)"
+                  matTooltip="Start Investigation">
+                  <mat-icon>search</mat-icon>
+                </button>
+              }
+              @if (anomaly.status !== 'FALSE_POSITIVE' && anomaly.status !== 'RESOLVED') {
+                <button mat-icon-button (click)="markAsFalsePositive(anomaly)"
+                  matTooltip="Mark as False Positive">
+                  <mat-icon>cancel</mat-icon>
+                </button>
+              }
+              @if (anomaly.status === 'INVESTIGATING') {
+                <button mat-icon-button (click)="resolveAnomaly(anomaly)"
+                  matTooltip="Resolve">
+                  <mat-icon>check_circle</mat-icon>
+                </button>
+              }
+            </td>
+          </ng-container>
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+        </table>
+      }
 
       <mat-paginator
         [length]="totalCount"

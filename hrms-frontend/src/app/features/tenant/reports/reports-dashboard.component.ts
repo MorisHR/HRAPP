@@ -38,84 +38,88 @@ import { ReportsService, DashboardSummaryDto } from '../../../core/services/repo
         <h1><mat-icon>assessment</mat-icon> Reports & Analytics</h1>
         <p class="subtitle">Generate insights and reports from your HR data</p>
       </div>
-
+    
       <!-- Dashboard KPIs Section -->
-      <mat-card class="kpi-card" *ngIf="dashboardData()">
-        <mat-card-header>
-          <mat-icon class="header-icon">dashboard</mat-icon>
-          <div>
-            <mat-card-title>Dashboard Overview</mat-card-title>
-            <mat-card-subtitle>Real-time HR metrics</mat-card-subtitle>
-          </div>
-        </mat-card-header>
-        <mat-card-content>
-          <div class="kpi-grid">
-            <div class="kpi-item">
-              <mat-icon class="kpi-icon employee">people</mat-icon>
-              <div class="kpi-content">
-                <div class="kpi-value">{{ dashboardData()?.totalEmployees }}</div>
-                <div class="kpi-label">Total Employees</div>
+      @if (dashboardData()) {
+        <mat-card class="kpi-card">
+          <mat-card-header>
+            <mat-icon class="header-icon">dashboard</mat-icon>
+            <div>
+              <mat-card-title>Dashboard Overview</mat-card-title>
+              <mat-card-subtitle>Real-time HR metrics</mat-card-subtitle>
+            </div>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="kpi-grid">
+              <div class="kpi-item">
+                <mat-icon class="kpi-icon employee">people</mat-icon>
+                <div class="kpi-content">
+                  <div class="kpi-value">{{ dashboardData()?.totalEmployees }}</div>
+                  <div class="kpi-label">Total Employees</div>
+                </div>
+              </div>
+              <div class="kpi-item">
+                <mat-icon class="kpi-icon success">verified_user</mat-icon>
+                <div class="kpi-content">
+                  <div class="kpi-value">{{ dashboardData()?.activeEmployees }}</div>
+                  <div class="kpi-label">Active Employees</div>
+                </div>
+              </div>
+              <div class="kpi-item">
+                <mat-icon class="kpi-icon department">business</mat-icon>
+                <div class="kpi-content">
+                  <div class="kpi-value">{{ dashboardData()?.totalDepartments }}</div>
+                  <div class="kpi-label">Departments</div>
+                </div>
+              </div>
+              <div class="kpi-item">
+                <mat-icon class="kpi-icon warning">pending_actions</mat-icon>
+                <div class="kpi-content">
+                  <div class="kpi-value">{{ dashboardData()?.pendingLeaveRequests }}</div>
+                  <div class="kpi-label">Pending Leaves</div>
+                </div>
+              </div>
+              <div class="kpi-item">
+                <mat-icon class="kpi-icon attendance">event_available</mat-icon>
+                <div class="kpi-content">
+                  <div class="kpi-value">{{ dashboardData()?.todayAttendance }}%</div>
+                  <div class="kpi-label">Today's Attendance</div>
+                </div>
+              </div>
+              <div class="kpi-item">
+                <mat-icon class="kpi-icon payroll">payments</mat-icon>
+                <div class="kpi-content">
+                  <div class="kpi-value">Rs {{ (dashboardData()?.monthlyPayroll || 0) | number:'1.0-0' }}</div>
+                  <div class="kpi-label">Monthly Payroll</div>
+                </div>
               </div>
             </div>
-            <div class="kpi-item">
-              <mat-icon class="kpi-icon success">verified_user</mat-icon>
-              <div class="kpi-content">
-                <div class="kpi-value">{{ dashboardData()?.activeEmployees }}</div>
-                <div class="kpi-label">Active Employees</div>
-              </div>
-            </div>
-            <div class="kpi-item">
-              <mat-icon class="kpi-icon department">business</mat-icon>
-              <div class="kpi-content">
-                <div class="kpi-value">{{ dashboardData()?.totalDepartments }}</div>
-                <div class="kpi-label">Departments</div>
-              </div>
-            </div>
-            <div class="kpi-item">
-              <mat-icon class="kpi-icon warning">pending_actions</mat-icon>
-              <div class="kpi-content">
-                <div class="kpi-value">{{ dashboardData()?.pendingLeaveRequests }}</div>
-                <div class="kpi-label">Pending Leaves</div>
-              </div>
-            </div>
-            <div class="kpi-item">
-              <mat-icon class="kpi-icon attendance">event_available</mat-icon>
-              <div class="kpi-content">
-                <div class="kpi-value">{{ dashboardData()?.todayAttendance }}%</div>
-                <div class="kpi-label">Today's Attendance</div>
-              </div>
-            </div>
-            <div class="kpi-item">
-              <mat-icon class="kpi-icon payroll">payments</mat-icon>
-              <div class="kpi-content">
-                <div class="kpi-value">Rs {{ (dashboardData()?.monthlyPayroll || 0) | number:'1.0-0' }}</div>
-                <div class="kpi-label">Monthly Payroll</div>
-              </div>
-            </div>
-          </div>
-        </mat-card-content>
-        <mat-card-actions>
-          <button mat-button (click)="loadDashboardData()" [disabled]="isLoadingDashboard()">
-            <mat-icon>refresh</mat-icon> Refresh
-          </button>
-        </mat-card-actions>
-      </mat-card>
-
+          </mat-card-content>
+          <mat-card-actions>
+            <button mat-button (click)="loadDashboardData()" [disabled]="isLoadingDashboard()">
+              <mat-icon>refresh</mat-icon> Refresh
+            </button>
+          </mat-card-actions>
+        </mat-card>
+      }
+    
       <!-- Loading State for Dashboard -->
-      <mat-card *ngIf="isLoadingDashboard() && !dashboardData()" class="loading-card">
-        <mat-card-content>
-          <mat-spinner diameter="40"></mat-spinner>
-          <p>Loading dashboard data...</p>
-        </mat-card-content>
-      </mat-card>
-
+      @if (isLoadingDashboard() && !dashboardData()) {
+        <mat-card class="loading-card">
+          <mat-card-content>
+            <mat-spinner diameter="40"></mat-spinner>
+            <p>Loading dashboard data...</p>
+          </mat-card-content>
+        </mat-card>
+      }
+    
       <mat-divider class="section-divider"></mat-divider>
-
+    
       <!-- Report Generation Section -->
       <h2 class="section-title">Generate Reports</h2>
-
+    
       <mat-accordion class="reports-accordion">
-
+    
         <!-- Payroll Reports -->
         <mat-expansion-panel>
           <mat-expansion-panel-header>
@@ -127,55 +131,63 @@ import { ReportsService, DashboardSummaryDto } from '../../../core/services/repo
               Salary summaries, deductions, and bank transfers
             </mat-panel-description>
           </mat-expansion-panel-header>
-
+    
           <div class="report-controls">
             <mat-form-field appearance="outline">
               <mat-label>Month</mat-label>
               <mat-select [(ngModel)]="payrollMonth">
-                <mat-option *ngFor="let month of months" [value]="month.value">
-                  {{ month.label }}
-                </mat-option>
+                @for (month of months; track month) {
+                  <mat-option [value]="month.value">
+                    {{ month.label }}
+                  </mat-option>
+                }
               </mat-select>
             </mat-form-field>
-
+    
             <mat-form-field appearance="outline">
               <mat-label>Year</mat-label>
               <mat-select [(ngModel)]="payrollYear">
-                <mat-option *ngFor="let year of years" [value]="year">
-                  {{ year }}
-                </mat-option>
+                @for (year of years; track year) {
+                  <mat-option [value]="year">
+                    {{ year }}
+                  </mat-option>
+                }
               </mat-select>
             </mat-form-field>
           </div>
-
+    
           <div class="report-actions">
             <button mat-raised-button color="primary"
-                    (click)="generatePayrollReport('excel')"
-                    [disabled]="isLoadingPayroll()"
-                    matTooltip="Export monthly payroll summary to Excel">
+              (click)="generatePayrollReport('excel')"
+              [disabled]="isLoadingPayroll()"
+              matTooltip="Export monthly payroll summary to Excel">
               <mat-icon>table_chart</mat-icon>
-              <span *ngIf="!isLoadingPayroll()">Monthly Payroll Summary (Excel)</span>
-              <mat-spinner *ngIf="isLoadingPayroll()" diameter="20"></mat-spinner>
+              @if (!isLoadingPayroll()) {
+                <span>Monthly Payroll Summary (Excel)</span>
+              }
+              @if (isLoadingPayroll()) {
+                <mat-spinner diameter="20"></mat-spinner>
+              }
             </button>
-
+    
             <button mat-raised-button color="accent"
-                    (click)="generateStatutoryDeductions()"
-                    [disabled]="isLoadingPayroll()"
-                    matTooltip="Export statutory deductions report">
+              (click)="generateStatutoryDeductions()"
+              [disabled]="isLoadingPayroll()"
+              matTooltip="Export statutory deductions report">
               <mat-icon>account_balance</mat-icon>
               Statutory Deductions (Excel)
             </button>
-
+    
             <button mat-raised-button
-                    (click)="generateBankTransferList()"
-                    [disabled]="isLoadingPayroll()"
-                    matTooltip="Export bank transfer list for payroll">
+              (click)="generateBankTransferList()"
+              [disabled]="isLoadingPayroll()"
+              matTooltip="Export bank transfer list for payroll">
               <mat-icon>account_balance_wallet</mat-icon>
               Bank Transfer List (Excel)
             </button>
           </div>
         </mat-expansion-panel>
-
+    
         <!-- Attendance Reports -->
         <mat-expansion-panel>
           <mat-expansion-panel-header>
@@ -187,47 +199,55 @@ import { ReportsService, DashboardSummaryDto } from '../../../core/services/repo
               Monthly registers, overtime, and attendance analysis
             </mat-panel-description>
           </mat-expansion-panel-header>
-
+    
           <div class="report-controls">
             <mat-form-field appearance="outline">
               <mat-label>Month</mat-label>
               <mat-select [(ngModel)]="attendanceMonth">
-                <mat-option *ngFor="let month of months" [value]="month.value">
-                  {{ month.label }}
-                </mat-option>
+                @for (month of months; track month) {
+                  <mat-option [value]="month.value">
+                    {{ month.label }}
+                  </mat-option>
+                }
               </mat-select>
             </mat-form-field>
-
+    
             <mat-form-field appearance="outline">
               <mat-label>Year</mat-label>
               <mat-select [(ngModel)]="attendanceYear">
-                <mat-option *ngFor="let year of years" [value]="year">
-                  {{ year }}
-                </mat-option>
+                @for (year of years; track year) {
+                  <mat-option [value]="year">
+                    {{ year }}
+                  </mat-option>
+                }
               </mat-select>
             </mat-form-field>
           </div>
-
+    
           <div class="report-actions">
             <button mat-raised-button color="primary"
-                    (click)="generateAttendanceReport('excel')"
-                    [disabled]="isLoadingAttendance()"
-                    matTooltip="Export monthly attendance register">
+              (click)="generateAttendanceReport('excel')"
+              [disabled]="isLoadingAttendance()"
+              matTooltip="Export monthly attendance register">
               <mat-icon>table_chart</mat-icon>
-              <span *ngIf="!isLoadingAttendance()">Monthly Attendance Register (Excel)</span>
-              <mat-spinner *ngIf="isLoadingAttendance()" diameter="20"></mat-spinner>
+              @if (!isLoadingAttendance()) {
+                <span>Monthly Attendance Register (Excel)</span>
+              }
+              @if (isLoadingAttendance()) {
+                <mat-spinner diameter="20"></mat-spinner>
+              }
             </button>
-
+    
             <button mat-raised-button color="accent"
-                    (click)="generateOvertimeReport()"
-                    [disabled]="isLoadingAttendance()"
-                    matTooltip="Export overtime report">
+              (click)="generateOvertimeReport()"
+              [disabled]="isLoadingAttendance()"
+              matTooltip="Export overtime report">
               <mat-icon>schedule</mat-icon>
               Overtime Report (Excel)
             </button>
           </div>
         </mat-expansion-panel>
-
+    
         <!-- Leave Reports -->
         <mat-expansion-panel>
           <mat-expansion-panel-header>
@@ -239,30 +259,36 @@ import { ReportsService, DashboardSummaryDto } from '../../../core/services/repo
               Leave balances and utilization reports
             </mat-panel-description>
           </mat-expansion-panel-header>
-
+    
           <div class="report-controls">
             <mat-form-field appearance="outline">
               <mat-label>Year</mat-label>
               <mat-select [(ngModel)]="leaveYear">
-                <mat-option *ngFor="let year of years" [value]="year">
-                  {{ year }}
-                </mat-option>
+                @for (year of years; track year) {
+                  <mat-option [value]="year">
+                    {{ year }}
+                  </mat-option>
+                }
               </mat-select>
             </mat-form-field>
           </div>
-
+    
           <div class="report-actions">
             <button mat-raised-button color="primary"
-                    (click)="generateLeaveReport('excel')"
-                    [disabled]="isLoadingLeave()"
-                    matTooltip="Export leave balance report">
+              (click)="generateLeaveReport('excel')"
+              [disabled]="isLoadingLeave()"
+              matTooltip="Export leave balance report">
               <mat-icon>table_chart</mat-icon>
-              <span *ngIf="!isLoadingLeave()">Leave Balance Report (Excel)</span>
-              <mat-spinner *ngIf="isLoadingLeave()" diameter="20"></mat-spinner>
+              @if (!isLoadingLeave()) {
+                <span>Leave Balance Report (Excel)</span>
+              }
+              @if (isLoadingLeave()) {
+                <mat-spinner diameter="20"></mat-spinner>
+              }
             </button>
           </div>
         </mat-expansion-panel>
-
+    
         <!-- Employee Reports -->
         <mat-expansion-panel>
           <mat-expansion-panel-header>
@@ -274,30 +300,34 @@ import { ReportsService, DashboardSummaryDto } from '../../../core/services/repo
               Headcount, demographics, and expatriate tracking
             </mat-panel-description>
           </mat-expansion-panel-header>
-
+    
           <div class="report-actions">
             <button mat-raised-button color="primary"
-                    (click)="generateEmployeeReport('headcount')"
-                    [disabled]="isLoadingEmployee()"
-                    matTooltip="Export headcount and demographics report">
+              (click)="generateEmployeeReport('headcount')"
+              [disabled]="isLoadingEmployee()"
+              matTooltip="Export headcount and demographics report">
               <mat-icon>table_chart</mat-icon>
-              <span *ngIf="!isLoadingEmployee()">Headcount Report (Excel)</span>
-              <mat-spinner *ngIf="isLoadingEmployee()" diameter="20"></mat-spinner>
+              @if (!isLoadingEmployee()) {
+                <span>Headcount Report (Excel)</span>
+              }
+              @if (isLoadingEmployee()) {
+                <mat-spinner diameter="20"></mat-spinner>
+              }
             </button>
-
+    
             <button mat-raised-button color="accent"
-                    (click)="generateEmployeeReport('expatriates')"
-                    [disabled]="isLoadingEmployee()"
-                    matTooltip="Export expatriate tracking report">
+              (click)="generateEmployeeReport('expatriates')"
+              [disabled]="isLoadingEmployee()"
+              matTooltip="Export expatriate tracking report">
               <mat-icon>flight_takeoff</mat-icon>
               Expatriate Report (Excel)
             </button>
           </div>
         </mat-expansion-panel>
-
+    
       </mat-accordion>
     </div>
-  `,
+    `,
   styles: [`
     .reports-dashboard {
       padding: 24px;

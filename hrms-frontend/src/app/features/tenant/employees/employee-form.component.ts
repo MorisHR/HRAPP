@@ -1,5 +1,5 @@
 import { Component, signal, inject, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { Router, ActivatedRoute, RouterModule } from '@angular/router';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
@@ -18,7 +18,6 @@ import { CreateEmployeeRequest } from '../../../core/models/employee.model';
   selector: 'app-employee-form',
   standalone: true,
   imports: [
-    CommonModule,
     ReactiveFormsModule,
     RouterModule,
     MatCardModule,
@@ -30,7 +29,7 @@ import { CreateEmployeeRequest } from '../../../core/models/employee.model';
     MatDatepickerModule,
     MatNativeDateModule,
     MatProgressSpinnerModule
-  ],
+],
   template: `
     <div class="employee-form-container">
       <mat-card>
@@ -42,40 +41,48 @@ import { CreateEmployeeRequest } from '../../../core/models/employee.model';
             <h1>{{ isEditMode() ? 'Edit Employee' : 'Add New Employee' }}</h1>
           </mat-card-title>
         </mat-card-header>
-
+    
         <mat-card-content>
           <form [formGroup]="employeeForm" (ngSubmit)="onSubmit()">
             <div class="form-grid">
               <!-- Basic Information -->
               <h3 class="section-title">Basic Information</h3>
-
+    
               <mat-form-field appearance="outline" class="full-width">
                 <mat-label>Full Name</mat-label>
                 <input matInput formControlName="fullName" placeholder="Enter full name">
-                <mat-error *ngIf="employeeForm.get('fullName')?.hasError('required')">
-                  Full name is required
-                </mat-error>
+                @if (employeeForm.get('fullName')?.hasError('required')) {
+                  <mat-error>
+                    Full name is required
+                  </mat-error>
+                }
               </mat-form-field>
-
+    
               <mat-form-field appearance="outline" class="full-width">
                 <mat-label>Email</mat-label>
                 <input matInput type="email" formControlName="email" placeholder="employee@company.com">
-                <mat-error *ngIf="employeeForm.get('email')?.hasError('required')">
-                  Email is required
-                </mat-error>
-                <mat-error *ngIf="employeeForm.get('email')?.hasError('email')">
-                  Please enter a valid email
-                </mat-error>
+                @if (employeeForm.get('email')?.hasError('required')) {
+                  <mat-error>
+                    Email is required
+                  </mat-error>
+                }
+                @if (employeeForm.get('email')?.hasError('email')) {
+                  <mat-error>
+                    Please enter a valid email
+                  </mat-error>
+                }
               </mat-form-field>
-
+    
               <mat-form-field appearance="outline">
                 <mat-label>Employee Code</mat-label>
                 <input matInput formControlName="employeeCode" placeholder="EMP001">
-                <mat-error *ngIf="employeeForm.get('employeeCode')?.hasError('required')">
-                  Employee code is required
-                </mat-error>
+                @if (employeeForm.get('employeeCode')?.hasError('required')) {
+                  <mat-error>
+                    Employee code is required
+                  </mat-error>
+                }
               </mat-form-field>
-
+    
               <mat-form-field appearance="outline">
                 <mat-label>Employee Type</mat-label>
                 <mat-select formControlName="employeeType">
@@ -83,39 +90,39 @@ import { CreateEmployeeRequest } from '../../../core/models/employee.model';
                   <mat-option value="Expatriate">Expatriate</mat-option>
                 </mat-select>
               </mat-form-field>
-
+    
               <mat-form-field appearance="outline">
                 <mat-label>Phone Number</mat-label>
                 <input matInput formControlName="phoneNumber" placeholder="+1234567890">
               </mat-form-field>
-
+    
               <mat-form-field appearance="outline">
                 <mat-label>Join Date</mat-label>
                 <input matInput [matDatepicker]="joinPicker" formControlName="joinDate">
                 <mat-datepicker-toggle matIconSuffix [for]="joinPicker"></mat-datepicker-toggle>
                 <mat-datepicker #joinPicker></mat-datepicker>
               </mat-form-field>
-
+    
               <!-- Department & Position -->
               <h3 class="section-title full-width">Department & Position</h3>
-
+    
               <mat-form-field appearance="outline">
                 <mat-label>Department</mat-label>
                 <input matInput formControlName="department" placeholder="e.g., Engineering">
               </mat-form-field>
-
+    
               <mat-form-field appearance="outline">
                 <mat-label>Designation</mat-label>
                 <input matInput formControlName="designation" placeholder="e.g., Software Engineer">
               </mat-form-field>
-
+    
               @if (error()) {
                 <div class="error-message full-width">
                   <mat-icon>error</mat-icon>
                   <span>{{ error() }}</span>
                 </div>
               }
-
+    
               <div class="form-actions full-width">
                 <button mat-button type="button" routerLink="/tenant/employees">
                   Cancel
@@ -132,7 +139,7 @@ import { CreateEmployeeRequest } from '../../../core/models/employee.model';
         </mat-card-content>
       </mat-card>
     </div>
-  `,
+    `,
   styles: [`
     .employee-form-container {
       padding: 24px;

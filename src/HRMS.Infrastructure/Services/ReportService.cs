@@ -1,5 +1,6 @@
 using HRMS.Application.DTOs.Reports;
 using HRMS.Application.Interfaces;
+using HRMS.Core.Exceptions;
 using HRMS.Core.Interfaces;
 using HRMS.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -116,7 +117,11 @@ public class ReportService : IReportService
 
         if (payrollCycle == null)
         {
-            throw new Exception($"Payroll cycle not found for {month}/{year}");
+            throw new NotFoundException(
+                ErrorCodes.PAY_CYCLE_NOT_FOUND,
+                "The payroll cycle you requested could not be found.",
+                $"Payroll cycle not found for {month}/{year}",
+                "Verify the month and year, or contact HR if payroll has not been processed yet.");
         }
 
         var payslips = await _context.Payslips
@@ -588,7 +593,11 @@ public class ReportService : IReportService
 
         if (payrollCycle == null)
         {
-            throw new Exception($"Payroll cycle not found for {month}/{year}");
+            throw new NotFoundException(
+                ErrorCodes.PAY_CYCLE_NOT_FOUND,
+                "The payroll cycle you requested could not be found.",
+                $"Payroll cycle not found for {month}/{year}",
+                "Verify the month and year, or contact HR if payroll has not been processed yet.");
         }
 
         var payslips = await _context.Payslips

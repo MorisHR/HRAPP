@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using HRMS.Application.Interfaces;
 using HRMS.Core.Entities.Master;
 using HRMS.Core.Enums;
+using HRMS.Core.Exceptions;
 using HRMS.Infrastructure.Data;
 
 namespace HRMS.Infrastructure.Services;
@@ -72,7 +73,11 @@ public class LegalHoldService : ILegalHoldService
     {
         var legalHold = await _context.LegalHolds.FindAsync(new object[] { legalHoldId }, cancellationToken);
         if (legalHold == null)
-            throw new InvalidOperationException($"Legal hold {legalHoldId} not found");
+            throw new NotFoundException(
+                ErrorCodes.SEC_ALERT_NOT_FOUND,
+                "The legal hold you requested could not be found.",
+                $"Legal hold {legalHoldId} not found in database",
+                "Verify the legal hold ID or contact your security administrator.");
 
         legalHold.Status = LegalHoldStatus.RELEASED;
         legalHold.ReleasedBy = releasedBy;
@@ -113,7 +118,11 @@ public class LegalHoldService : ILegalHoldService
     {
         var legalHold = await _context.LegalHolds.FindAsync(new object[] { legalHoldId }, cancellationToken);
         if (legalHold == null)
-            throw new InvalidOperationException($"Legal hold {legalHoldId} not found");
+            throw new NotFoundException(
+                ErrorCodes.SEC_ALERT_NOT_FOUND,
+                "The legal hold you requested could not be found.",
+                $"Legal hold {legalHoldId} not found in database",
+                "Verify the legal hold ID or contact your security administrator.");
 
         var query = _context.AuditLogs
             .Where(a => a.PerformedAt >= legalHold.StartDate);

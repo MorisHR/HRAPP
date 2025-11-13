@@ -1,0 +1,278 @@
+.api-keys-card {
+  margin-top: 24px;
+
+  mat-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+
+    mat-card-title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 0;
+      font-size: 20px;
+      font-weight: 600;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+  }
+}
+
+// Loading State
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  gap: 16px;
+
+  p {
+    margin: 0;
+    color: #666;
+  }
+}
+
+// Error State
+.error-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  gap: 16px;
+  color: #f44336;
+
+  mat-icon {
+    font-size: 48px;
+    width: 48px;
+    height: 48px;
+  }
+
+  p {
+    margin: 0;
+    font-size: 16px;
+  }
+}
+
+// Empty State
+.empty-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 64px 24px;
+  gap: 16px;
+  text-align: center;
+
+  mat-icon {
+    font-size: 64px;
+    width: 64px;
+    height: 64px;
+    color: #999;
+  }
+
+  h3 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 500;
+    color: #333;
+  }
+
+  p {
+    margin: 0;
+    color: #666;
+    max-width: 400px;
+  }
+
+  button {
+    margin-top: 8px;
+  }
+}
+
+// Table Container
+.table-container {
+  overflow-x: auto;
+  margin-bottom: 24px;
+}
+
+.api-keys-table {
+  width: 100%;
+  background: white;
+
+  th {
+    font-weight: 600;
+    color: #333;
+    background-color: #f5f5f5;
+  }
+
+  td, th {
+    padding: 16px 12px;
+  }
+
+  .description-cell,
+  .date-cell,
+  .usage-cell {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    mat-icon {
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+      color: #666;
+    }
+  }
+
+  .actions-cell {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+
+    .revoked-badge {
+      padding: 4px 12px;
+      background-color: #e0e0e0;
+      color: #666;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+  }
+}
+
+// Status Chips
+mat-chip {
+  font-weight: 500;
+  font-size: 12px;
+  padding: 4px 12px;
+  height: 28px;
+
+  &.status-active {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+  }
+
+  &.status-expired {
+    background-color: #ffe0b2;
+    color: #e65100;
+  }
+
+  &.status-revoked {
+    background-color: #e0e0e0;
+    color: #616161;
+  }
+
+  &.status-expiring {
+    background-color: #fff3e0;
+    color: #f57c00;
+  }
+}
+
+// Info Box
+.info-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 20px;
+  background-color: #e3f2fd;
+  border-left: 4px solid #2196f3;
+  border-radius: 4px;
+
+  mat-icon {
+    color: #2196f3;
+    margin-top: 2px;
+  }
+
+  strong {
+    display: block;
+    margin-bottom: 8px;
+    color: #1976d2;
+  }
+
+  ul {
+    margin: 0;
+    padding-left: 20px;
+    color: #555;
+
+    li {
+      margin-bottom: 4px;
+      line-height: 1.6;
+    }
+  }
+}
+
+// Responsive Design
+@media (max-width: 1200px) {
+  .api-keys-table {
+    font-size: 14px;
+
+    td, th {
+      padding: 12px 8px;
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .api-keys-card {
+    mat-card-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 16px;
+
+      .header-actions {
+        width: 100%;
+        justify-content: space-between;
+      }
+    }
+  }
+
+  .api-keys-table {
+    display: block;
+
+    thead {
+      display: none;
+    }
+
+    tbody, tr, td {
+      display: block;
+    }
+
+    tr {
+      margin-bottom: 16px;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 12px;
+      background: white;
+    }
+
+    td {
+      padding: 8px;
+      position: relative;
+      padding-left: 50%;
+
+      &::before {
+        content: attr(data-label);
+        position: absolute;
+        left: 12px;
+        font-weight: 600;
+        color: #666;
+      }
+    }
+  }
+}
+
+// Dialog Styles (applied to dialogs via ViewEncapsulation)
+::ng-deep {
+  .mat-mdc-dialog-container {
+    .full-width {
+      width: 100%;
+    }
+  }
+}

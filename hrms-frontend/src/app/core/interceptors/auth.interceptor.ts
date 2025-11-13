@@ -37,6 +37,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   } else {
     console.log(`⚠️  No token present`);
   }
+  console.log('🔍 Request headers before modification:', req.headers.keys());
 
   // ✅ SECURITY FIX: Don't add tenant subdomain header for admin routes
   // SuperAdmin endpoints at /api/Tenants, /api/AdminUsers, etc. don't need tenant context
@@ -89,6 +90,13 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
       withCredentials: true
     });
   }
+
+  console.log('🚀 Final request headers:', {
+    Authorization: req.headers.get('Authorization') ? 'Bearer ***' : 'none',
+    'X-Tenant-Subdomain': req.headers.get('X-Tenant-Subdomain') || 'none',
+    allKeys: req.headers.keys()
+  });
+  console.log('🚀 Sending request to:', req.url);
 
   return next(req).pipe(
     tap(response => {
@@ -143,6 +151,14 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
           console.warn('⚠️  Got 401 Unauthorized - Token may be expired');
           console.log('🔄 Attempting token refresh...');
 
+          // Determine refresh endpoint based on current user type
+          // Use tenant refresh for tenant users, regular refresh for SuperAdmin
+          const user = authService.user();
+          const isTenantUser = user && user.role !== 'SuperAdmin';
+          const refreshEndpoint = isTenantUser ? '/auth/tenant/refresh' : '/auth/refresh';
+
+          console.log(`🔄 Using ${isTenantUser ? 'tenant' : 'SuperAdmin'} refresh endpoint: ${refreshEndpoint}`);
+
           // Try to refresh token using HttpOnly cookie
           return authService.refreshToken().pipe(
             switchMap((response) => {
@@ -172,8 +188,24 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
         case 403:
           console.error('🚫 403 Forbidden - User does not have permission for this action');
+          console.error('📋 Missing required role or permission');
+          console.error('💡 User should contact administrator for access');
+
+          // Enhance error with user-friendly message
+          const enhancedError = new HttpErrorResponse({
+            error: {
+              ...error.error,
+              message: error.error?.message || 'You do not have permission to access this resource. Please contact your administrator if you need access.',
+              userMessage: 'Access Denied - Insufficient Permissions'
+            },
+            headers: error.headers,
+            status: error.status,
+            statusText: error.statusText,
+            url: error.url || undefined
+          });
+
           // Don't logout - user is authenticated but not authorized
-          return throwError(() => error);
+          return throwError(() => enhancedError);
 
         case 404:
           console.error('🔍 404 Not Found - Endpoint does not exist:', req.url);

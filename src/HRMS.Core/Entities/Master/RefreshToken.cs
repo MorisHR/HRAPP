@@ -14,9 +14,22 @@ public class RefreshToken
     public Guid Id { get; set; }
 
     /// <summary>
-    /// Reference to the admin user who owns this token
+    /// Reference to the admin user who owns this token (for SuperAdmin)
+    /// Nullable to support tenant employees
     /// </summary>
-    public Guid AdminUserId { get; set; }
+    public Guid? AdminUserId { get; set; }
+
+    /// <summary>
+    /// Reference to the tenant ID (for tenant employees)
+    /// Nullable to support SuperAdmin users
+    /// </summary>
+    public Guid? TenantId { get; set; }
+
+    /// <summary>
+    /// Reference to the employee ID (for tenant employees)
+    /// Nullable to support SuperAdmin users
+    /// </summary>
+    public Guid? EmployeeId { get; set; }
 
     /// <summary>
     /// The actual refresh token string (cryptographically secure random)
@@ -58,8 +71,18 @@ public class RefreshToken
     /// </summary>
     public string? ReasonRevoked { get; set; }
 
+    /// <summary>
+    /// Session timeout in minutes (from last activity)
+    /// </summary>
+    public int SessionTimeoutMinutes { get; set; } = 30;
+
+    /// <summary>
+    /// Last activity timestamp
+    /// </summary>
+    public DateTime LastActivityAt { get; set; }
+
     // Navigation properties
-    public virtual AdminUser AdminUser { get; set; } = null!;
+    public virtual AdminUser? AdminUser { get; set; }
 
     // Computed properties for convenience
     /// <summary>

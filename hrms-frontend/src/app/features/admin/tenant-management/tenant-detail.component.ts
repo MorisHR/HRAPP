@@ -1,5 +1,5 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -15,7 +15,6 @@ import { Tenant, TenantStatus } from '../../../core/models/tenant.model';
   selector: 'app-tenant-detail',
   standalone: true,
   imports: [
-    CommonModule,
     RouterModule,
     MatCardModule,
     MatButtonModule,
@@ -24,7 +23,7 @@ import { Tenant, TenantStatus } from '../../../core/models/tenant.model';
     MatChipsModule,
     MatProgressSpinnerModule,
     MatDividerModule
-  ],
+],
   template: `
     <div class="tenant-detail-container">
       <mat-toolbar color="primary">

@@ -1,5 +1,5 @@
 import { Component, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { MatDialogRef, MatDialogModule } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -27,7 +27,6 @@ interface TierOption {
   selector: 'app-tier-upgrade-dialog',
   standalone: true,
   imports: [
-    CommonModule,
     MatDialogModule,
     MatButtonModule,
     MatIconModule,
@@ -35,7 +34,7 @@ interface TierOption {
     MatChipsModule,
     MatDividerModule,
     MatSnackBarModule
-  ],
+],
   template: `
     <div class="tier-upgrade-dialog">
       <div mat-dialog-title>

@@ -112,28 +112,34 @@ export interface TestConnectionDto {
 
 /**
  * Result of connection test
+ * Matches backend ConnectionTestResultDto
  */
 export interface ConnectionTestResult {
   success: boolean;
   message: string;
-  responseTime?: number;
-  deviceInfo?: {
-    serialNumber?: string;
-    firmwareVersion?: string;
-    model?: string;
-  };
-  error?: string;
+  responseTimeMs: number;
+  deviceInfo?: string;
+  firmwareVersion?: string;
+  recordsAvailable?: number;
+  errorDetails?: string;
+  diagnostics?: string;
+  testedAt: string;
 }
 
 /**
- * Result of device sync operation
+ * Result of manual sync trigger
+ * Matches backend ManualSyncResultDto
  */
-export interface SyncResult {
+export interface ManualSyncResult {
   success: boolean;
-  recordCount: number;
-  duration: number;
   message: string;
-  error?: string;
+  jobId?: string;
+  deviceId: string;
+  deviceName: string;
+  queuedAt: string;
+  estimatedDurationSeconds?: number;
+  errorDetails?: string;
+  syncAlreadyInProgress: boolean;
 }
 
 /**
@@ -169,7 +175,7 @@ export interface DeviceSyncStatusDto {
 })
 export class BiometricDeviceService {
   private http = inject(HttpClient);
-  private apiUrl = `${environment.apiUrl}/api/biometric-devices`;
+  private apiUrl = `${environment.apiUrl}/biometric-devices`;
 
   /**
    * Get all biometric devices
@@ -223,11 +229,18 @@ export class BiometricDeviceService {
   /**
    * Manually trigger device sync
    */
-  syncDevice(id: string): Observable<SyncResult> {
-    return this.http.post<{ success: boolean; data: SyncResult }>(
+  syncDevice(id: string): Observable<ManualSyncResult> {
+    return this.http.post<{ success: boolean; data: ManualSyncResult }>(
       `${this.apiUrl}/${id}/sync`,
       {}
     ).pipe(map(response => response.data));
+  }
+
+  /**
+   * Alias for syncDevice - Manually trigger device sync
+   */
+  triggerSync(id: string): Observable<ManualSyncResult> {
+    return this.syncDevice(id);
   }
 
   /**

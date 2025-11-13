@@ -18,15 +18,19 @@ public class AuthController : ControllerBase
     private readonly IAuthService _authService;
     private readonly TenantAuthService _tenantAuthService;
     private readonly ILogger<AuthController> _logger;
+    private readonly string _secretPath;
 
     public AuthController(
         IAuthService authService,
         TenantAuthService tenantAuthService,
-        ILogger<AuthController> logger)
+        ILogger<AuthController> logger,
+        IConfiguration configuration)
     {
         _authService = authService;
         _tenantAuthService = tenantAuthService;
         _logger = logger;
+        _secretPath = configuration["Auth:SuperAdminSecretPath"]
+            ?? throw new InvalidOperationException("Auth:SuperAdminSecretPath configuration not set");
     }
 
     /// <summary>
@@ -129,17 +133,30 @@ public class AuthController : ControllerBase
     /// <summary>
     /// SECRET URL SuperAdmin Login - Step 1: Email/Password verification
     /// Returns MFA setup or verification requirement
-    /// SECURITY NOTE: The secret path should be configured via environment variable 'SUPERADMIN_SECRET_PATH'
-    /// This hardcoded route is deprecated and will be removed in a future version
+    /// SECURITY: The secret path is configured via Auth:SuperAdminSecretPath setting
     /// </summary>
-    [HttpPost("system-9f7a2b4c-3d8e-4a1b-8c9d-1e2f3a4b5c6d")]
-    [Obsolete("Use environment variable SUPERADMIN_SECRET_PATH instead")]
+    [HttpPost("system-{secretPath}")]
+    [AllowAnonymous]
     [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public async Task<IActionResult> SecretLogin([FromBody] LoginRequest request)
+    public async Task<IActionResult> SecretLogin(
+        string secretPath,
+        [FromBody] LoginRequest request)
     {
         try
         {
+            // SECURITY: Validate secret path before processing request
+            if (secretPath != _secretPath)
+            {
+                _logger.LogWarning("Invalid secret path attempt: {AttemptedPath} from IP: {IpAddress}",
+                    secretPath, GetIpAddress());
+                return Unauthorized(new
+                {
+                    success = false,
+                    message = "Invalid endpoint"
+                });
+            }
+
             if (!ModelState.IsValid)
             {
                 return BadRequest(new
@@ -491,7 +508,10 @@ public class AuthController : ControllerBase
                 });
             }
 
-            var result = await _tenantAuthService.LoginAsync(request.Email, request.Password, request.Subdomain);
+            // Get client IP address for security tracking
+            var ipAddress = GetIpAddress();
+
+            var result = await _tenantAuthService.LoginAsync(request.Email, request.Password, request.Subdomain, ipAddress);
 
             if (result == null)
             {
@@ -507,9 +527,13 @@ public class AuthController : ControllerBase
             _logger.LogInformation("Successful tenant login for employee: {Email}, tenant: {Subdomain}",
                 request.Email, request.Subdomain);
 
+            // Set refresh token as HttpOnly cookie
+            SetRefreshTokenCookie(result.Value.RefreshToken);
+
             var response = new
             {
                 Token = result.Value.Token,
+                RefreshToken = result.Value.RefreshToken, // Also return in response for clients that can't access cookies
                 ExpiresAt = result.Value.ExpiresAt,
                 Employee = new
                 {
@@ -560,7 +584,7 @@ public class AuthController : ControllerBase
     // ============================================
 
     /// <summary>
-    /// Refresh access token using refresh token from HttpOnly cookie
+    /// Refresh access token for SuperAdmin using refresh token from HttpOnly cookie
     /// Implements token rotation: old refresh token revoked, new one issued
     /// </summary>
     /// <returns>New access token and refresh token</returns>
@@ -726,6 +750,74 @@ public class AuthController : ControllerBase
     }
 
     /// <summary>
+    /// Refresh access token for Tenant Employees using refresh token from HttpOnly cookie
+    /// Implements token rotation: old refresh token revoked, new one issued
+    /// </summary>
+    /// <returns>New access token and refresh token</returns>
+    [HttpPost("tenant/refresh")]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> TenantRefreshToken()
+    {
+        try
+        {
+            // Get refresh token from HttpOnly cookie
+            var refreshToken = Request.Cookies["refreshToken"];
+
+            if (string.IsNullOrEmpty(refreshToken))
+            {
+                _logger.LogWarning("Tenant refresh token not found in cookie");
+                return Unauthorized(new
+                {
+                    success = false,
+                    message = "Refresh token not found. Please login again."
+                });
+            }
+
+            var ipAddress = GetIpAddress();
+
+            // Refresh the token (implements rotation)
+            var (accessToken, newRefreshToken) = await _tenantAuthService.RefreshTokenAsync(refreshToken, ipAddress);
+
+            // Set new refresh token as HttpOnly cookie
+            SetRefreshTokenCookie(newRefreshToken);
+
+            _logger.LogInformation("Tenant token refreshed successfully from IP: {IpAddress}", ipAddress);
+
+            return Ok(new
+            {
+                success = true,
+                data = new
+                {
+                    token = accessToken,
+                    refreshToken = newRefreshToken,
+                    expiresAt = DateTime.UtcNow.AddMinutes(15) // Access token expiration
+                },
+                message = "Token refreshed successfully"
+            });
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            _logger.LogWarning("Tenant token refresh failed: {Message}", ex.Message);
+            return Unauthorized(new
+            {
+                success = false,
+                message = ex.Message
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error refreshing tenant token");
+            return StatusCode(500, new
+            {
+                success = false,
+                message = "Token refresh failed"
+            });
+        }
+    }
+
+    /// <summary>
     /// DIAGNOSTIC ENDPOINT: Validate current JWT token and show all claims
     /// Used for debugging authentication issues
     /// </summary>
@@ -837,6 +929,100 @@ public class AuthController : ControllerBase
             message = "Auth endpoint is working",
             timestamp = DateTime.UtcNow
         });
+    }
+
+    // ============================================
+    // PASSWORD RESET ENDPOINTS
+    // ============================================
+
+    /// <summary>
+    /// Request password reset email
+    /// Public endpoint - no authentication required
+    /// SECURITY: Does not reveal if email exists (prevents user enumeration)
+    /// </summary>
+    [HttpPost("forgot-password")]
+    [AllowAnonymous]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request)
+    {
+        try
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    message = "Invalid email"
+                });
+            }
+
+            var (success, message) = await _authService.ForgotPasswordAsync(request.Email);
+
+            return Ok(new { success, message });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in ForgotPassword");
+            return StatusCode(500, new
+            {
+                success = false,
+                message = "An error occurred. Please try again later."
+            });
+        }
+    }
+
+    /// <summary>
+    /// Reset password using token from email
+    /// Public endpoint - no authentication required
+    /// SECURITY FEATURES:
+    /// - Token expiry validation (1 hour)
+    /// - Password complexity enforcement
+    /// - Password history check (no reuse of last 5 passwords)
+    /// - Single-use token (revoked after use)
+    /// </summary>
+    [HttpPost("reset-password")]
+    [AllowAnonymous]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest request)
+    {
+        try
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    message = "Invalid request"
+                });
+            }
+
+            if (request.NewPassword != request.ConfirmPassword)
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    message = "Passwords do not match"
+                });
+            }
+
+            var (success, message) = await _authService.ResetPasswordAsync(
+                request.Token,
+                request.NewPassword);
+
+            return success
+                ? Ok(new { success, message })
+                : BadRequest(new { success, message });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in ResetPassword");
+            return StatusCode(500, new
+            {
+                success = false,
+                message = "An error occurred. Please try again later."
+            });
+        }
     }
 
     // ============================================

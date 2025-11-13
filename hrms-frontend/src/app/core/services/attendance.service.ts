@@ -1,6 +1,6 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, tap } from 'rxjs';
+import { Observable, tap, map } from 'rxjs';
 import { Attendance, AttendanceStats } from '../models/attendance.model';
 import { environment } from '../../../environments/environment';
 
@@ -20,9 +20,19 @@ export class AttendanceService {
   readonly stats = this.statsSignal.asReadonly();
   readonly loading = this.loadingSignal.asReadonly();
 
+  /**
+   * ✅ FORTUNE 500: Get attendance records with proper parameter names
+   * Backend expects: fromDate and toDate (not startDate/endDate)
+   * Backend returns: { total, data } (not plain array)
+   */
   getAttendanceRecords(startDate: string, endDate: string): Observable<Attendance[]> {
     this.loadingSignal.set(true);
-    return this.http.get<Attendance[]>(`${this.apiUrl}?startDate=${startDate}&endDate=${endDate}`).pipe(
+    // Fix #2: Use fromDate/toDate to match backend API
+    return this.http.get<{ total: number; data: Attendance[] }>(
+      `${this.apiUrl}?fromDate=${startDate}&toDate=${endDate}`
+    ).pipe(
+      // Fix #6: Unwrap response to get data array
+      map(response => response.data),
       tap(records => {
         this.attendanceRecordsSignal.set(records);
         this.loadingSignal.set(false);
@@ -30,16 +40,45 @@ export class AttendanceService {
     );
   }
 
-  getEmployeeAttendance(employeeId: string, month: string): Observable<Attendance[]> {
-    return this.http.get<Attendance[]>(`${this.apiUrl}/employee/${employeeId}?month=${month}`);
+  /**
+   * ✅ FORTUNE 500: Get monthly attendance for employee
+   * Backend expects: /monthly/employee/{id}?year=2025&month=11
+   */
+  getEmployeeAttendance(employeeId: string, year: number, month: number): Observable<Attendance[]> {
+    return this.http.get<any>(
+      `${this.apiUrl}/monthly/employee/${employeeId}?year=${year}&month=${month}`
+    ).pipe(
+      // Backend returns MonthlyAttendanceSummaryDto with dailyRecords array
+      map(response => response.dailyRecords || [])
+    );
   }
 
+  /**
+   * ✅ FORTUNE 500: Employee self-service check-in
+   * Backend returns: { message, data: AttendanceDetailsDto }
+   */
   checkIn(employeeId: string): Observable<Attendance> {
-    return this.http.post<Attendance>(`${this.apiUrl}/check-in`, { employeeId });
+    return this.http.post<{ message: string; data: Attendance }>(
+      `${this.apiUrl}/check-in`,
+      { employeeId }
+    ).pipe(
+      // Unwrap response to get attendance data
+      map(response => response.data)
+    );
   }
 
+  /**
+   * ✅ FORTUNE 500: Employee self-service check-out
+   * Backend returns: { message, data: AttendanceDetailsDto }
+   */
   checkOut(employeeId: string): Observable<Attendance> {
-    return this.http.post<Attendance>(`${this.apiUrl}/check-out`, { employeeId });
+    return this.http.post<{ message: string; data: Attendance }>(
+      `${this.apiUrl}/check-out`,
+      { employeeId }
+    ).pipe(
+      // Unwrap response to get attendance data
+      map(response => response.data)
+    );
   }
 
   getAttendanceStats(month: string): Observable<AttendanceStats> {
