@@ -1,0 +1,155 @@
+<div class="paginator">
+  <!-- Items per page selector -->
+  <div class="paginator__page-size">
+    <label for="page-size-select" class="paginator__label">
+      Items per page:
+    </label>
+    <select
+      id="page-size-select"
+      class="paginator__select"
+      [value]="pageSize"
+      (change)="changePageSize(+$any($event.target).value)"
+      aria-label="Items per page"
+    >
+      <option *ngFor="let option of pageSizeOptions" [value]="option">
+        {{ option }}
+      </option>
+    </select>
+  </div>
+
+  <!-- Page range info -->
+  <div class="paginator__range" aria-live="polite">
+    {{ rangeLabel }}
+  </div>
+
+  <!-- Navigation controls -->
+  <nav class="paginator__nav" aria-label="Pagination navigation">
+    <!-- First page button -->
+    <button
+      *ngIf="showFirstLastButtons"
+      type="button"
+      class="paginator__button"
+      [disabled]="isFirstPage"
+      (click)="firstPage()"
+      (keydown)="handleKeyDown($event, 'first')"
+      aria-label="First page"
+      [attr.aria-disabled]="isFirstPage"
+    >
+      <svg
+        class="paginator__icon"
+        width="20"
+        height="20"
+        viewBox="0 0 20 20"
+        fill="none"
+        aria-hidden="true"
+      >
+        <path
+          d="M15.5 15L10.5 10L15.5 5"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+        <path
+          d="M9.5 15L4.5 10L9.5 5"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+      </svg>
+    </button>
+
+    <!-- Previous page button -->
+    <button
+      type="button"
+      class="paginator__button"
+      [disabled]="isFirstPage"
+      (click)="previousPage()"
+      (keydown)="handleKeyDown($event, 'previous')"
+      aria-label="Previous page"
+      [attr.aria-disabled]="isFirstPage"
+    >
+      <svg
+        class="paginator__icon"
+        width="20"
+        height="20"
+        viewBox="0 0 20 20"
+        fill="none"
+        aria-hidden="true"
+      >
+        <path
+          d="M12.5 15L7.5 10L12.5 5"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+      </svg>
+    </button>
+
+    <!-- Next page button -->
+    <button
+      type="button"
+      class="paginator__button"
+      [disabled]="isLastPage"
+      (click)="nextPage()"
+      (keydown)="handleKeyDown($event, 'next')"
+      aria-label="Next page"
+      [attr.aria-disabled]="isLastPage"
+    >
+      <svg
+        class="paginator__icon"
+        width="20"
+        height="20"
+        viewBox="0 0 20 20"
+        fill="none"
+        aria-hidden="true"
+      >
+        <path
+          d="M7.5 5L12.5 10L7.5 15"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+      </svg>
+    </button>
+
+    <!-- Last page button -->
+    <button
+      *ngIf="showFirstLastButtons"
+      type="button"
+      class="paginator__button"
+      [disabled]="isLastPage"
+      (click)="lastPage()"
+      (keydown)="handleKeyDown($event, 'last')"
+      aria-label="Last page"
+      [attr.aria-disabled]="isLastPage"
+    >
+      <svg
+        class="paginator__icon"
+        width="20"
+        height="20"
+        viewBox="0 0 20 20"
+        fill="none"
+        aria-hidden="true"
+      >
+        <path
+          d="M4.5 5L9.5 10L4.5 15"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+        <path
+          d="M10.5 5L15.5 10L10.5 15"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+      </svg>
+    </button>
+  </nav>
+</div>

@@ -1,0 +1,58 @@
+<!-- Toast Container -->
+<div class="toast-list">
+  <div
+    *ngFor="let toast of toasts; trackBy: trackByToastId"
+    [class]="getToastClasses(toast)"
+    [@toastAnimation]
+    (mouseenter)="onToastMouseEnter(toast)"
+    (mouseleave)="onToastMouseLeave(toast)"
+    (click)="dismissToast(toast)"
+    role="alert"
+    [attr.aria-live]="toast.config.type === 'error' ? 'assertive' : 'polite'"
+  >
+    <!-- Toast Content -->
+    <div class="toast__content">
+      <!-- Icon -->
+      <div class="toast__icon">
+        {{ getIcon(toast.config.type) }}
+      </div>
+
+      <!-- Message -->
+      <div class="toast__message">
+        {{ toast.config.message }}
+      </div>
+
+      <!-- Action Button -->
+      <button
+        *ngIf="toast.config.action"
+        class="toast__action"
+        (click)="triggerAction(toast); $event.stopPropagation()"
+        type="button"
+      >
+        {{ toast.config.action.label }}
+      </button>
+
+      <!-- Close Button -->
+      <button
+        *ngIf="toast.config.dismissible !== false"
+        class="toast__close"
+        (click)="dismissToast(toast); $event.stopPropagation()"
+        type="button"
+        aria-label="Close notification"
+      >
+        ×
+      </button>
+    </div>
+
+    <!-- Progress Bar -->
+    <div
+      *ngIf="toast.config.showProgress !== false && toast.config.duration"
+      class="toast__progress"
+    >
+      <div
+        class="toast__progress-bar"
+        [@progressAnimation]="getProgressParams(toast)"
+      ></div>
+    </div>
+  </div>
+</div>

@@ -231,10 +231,11 @@ namespace HRMS.Infrastructure.BackgroundJobs
         /// Register all database maintenance jobs with Hangfire
         /// Call this during application startup
         /// </summary>
-        public static void RegisterScheduledJobs()
+        /// <param name="recurringJobManager">IRecurringJobManager instance for job scheduling</param>
+        public static void RegisterScheduledJobs(IRecurringJobManager recurringJobManager)
         {
             // Daily materialized view refresh - 3:00 AM
-            RecurringJob.AddOrUpdate<DatabaseMaintenanceJobs>(
+            recurringJobManager.AddOrUpdate<DatabaseMaintenanceJobs>(
                 "daily-mv-refresh",
                 jobs => jobs.RefreshMaterializedViewsAsync(),
                 Cron.Daily(3), // 3 AM
@@ -244,7 +245,7 @@ namespace HRMS.Infrastructure.BackgroundJobs
                 });
 
             // Daily token cleanup - 4:00 AM
-            RecurringJob.AddOrUpdate<DatabaseMaintenanceJobs>(
+            recurringJobManager.AddOrUpdate<DatabaseMaintenanceJobs>(
                 "daily-token-cleanup",
                 jobs => jobs.CleanupExpiredTokensAsync(),
                 Cron.Daily(4), // 4 AM
@@ -254,7 +255,7 @@ namespace HRMS.Infrastructure.BackgroundJobs
                 });
 
             // Weekly vacuum - Sunday 4:00 AM
-            RecurringJob.AddOrUpdate<DatabaseMaintenanceJobs>(
+            recurringJobManager.AddOrUpdate<DatabaseMaintenanceJobs>(
                 "weekly-vacuum-maintenance",
                 jobs => jobs.WeeklyVacuumMaintenanceAsync(),
                 Cron.Weekly(DayOfWeek.Sunday, 4), // Sunday 4 AM
@@ -264,7 +265,7 @@ namespace HRMS.Infrastructure.BackgroundJobs
                 });
 
             // Monthly partition maintenance - 1st of month, 2:00 AM
-            RecurringJob.AddOrUpdate<DatabaseMaintenanceJobs>(
+            recurringJobManager.AddOrUpdate<DatabaseMaintenanceJobs>(
                 "monthly-partition-maintenance",
                 jobs => jobs.MonthlyPartitionMaintenanceAsync(),
                 Cron.Monthly(1, 2), // 1st day, 2 AM
@@ -274,7 +275,7 @@ namespace HRMS.Infrastructure.BackgroundJobs
                 });
 
             // Daily health check - 6:00 AM
-            RecurringJob.AddOrUpdate<DatabaseMaintenanceJobs>(
+            recurringJobManager.AddOrUpdate<DatabaseMaintenanceJobs>(
                 "daily-health-check",
                 jobs => jobs.DailyHealthCheckAsync(),
                 Cron.Daily(6), // 6 AM

@@ -1,0 +1,19 @@
+<div
+  class="progress-spinner"
+  [class.progress-spinner--small]="size === 'small'"
+  [class.progress-spinner--medium]="size === 'medium'"
+  [class.progress-spinner--large]="size === 'large'"
+  role="status"
+  aria-label="Loading">
+
+  <div
+    class="progress-spinner__circle"
+    [class.progress-spinner__circle--primary]="color === 'primary'"
+    [class.progress-spinner__circle--success]="color === 'success'"
+    [class.progress-spinner__circle--warning]="color === 'warning'"
+    [class.progress-spinner__circle--error]="color === 'error'"
+    [style.border-width]="spinnerThickness()">
+  </div>
+
+  <span class="sr-only">Loading...</span>
+</div>

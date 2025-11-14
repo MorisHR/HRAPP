@@ -1,0 +1,356 @@
+// ============================================================================
+// PRODUCTION-READY TABS COMPONENT - HRMS Design System
+// ============================================================================
+// Replace mat-tab with custom implementation
+// Supports: default, pills, underline variants + keyboard navigation
+// ============================================================================
+
+@import '../../../../../styles/colors';
+@import '../../../../../styles/spacing';
+@import '../../../../../styles/motion';
+@import '../../../../../styles/focus';
+
+// ----------------------------------------------------------------------------
+// BASE STYLES
+// ----------------------------------------------------------------------------
+
+.tabs {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.tabs__header {
+  display: flex;
+  gap: $spacing-1;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: $color-neutral-400 $color-neutral-100;
+
+  // Hide scrollbar on webkit browsers but keep functionality
+  &::-webkit-scrollbar {
+    height: 4px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: $color-neutral-100;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: $color-neutral-400;
+    border-radius: 2px;
+
+    &:hover {
+      background: $color-neutral-500;
+    }
+  }
+
+  // Smooth scroll on mobile
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+
+  // Prevent text selection during keyboard navigation
+  user-select: none;
+}
+
+.tabs__button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-2;
+  padding: $spacing-3 $spacing-4;
+  border: none;
+  background: transparent;
+  color: $color-text-secondary;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.5;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all $duration-normal $easing-standard;
+  flex-shrink: 0;
+
+  // Focus styles for accessibility
+  &:focus-visible {
+    @include focus-ring;
+    z-index: 1;
+  }
+
+  // Hover state
+  &:hover:not(&--disabled):not(&--active) {
+    color: $color-text-primary;
+    background-color: $color-alpha-black-4;
+  }
+
+  // Active state
+  &--active {
+    color: $color-primary-600;
+    font-weight: 600;
+  }
+
+  // Disabled state
+  &--disabled {
+    color: $color-text-disabled;
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+}
+
+.tabs__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  font-size: 20px;
+
+  // Support for icon fonts and SVG
+  svg {
+    width: 100%;
+    height: 100%;
+  }
+}
+
+.tabs__label {
+  display: inline-block;
+}
+
+.tabs__content {
+  padding-top: $spacing-4;
+}
+
+// ----------------------------------------------------------------------------
+// VARIANT: DEFAULT
+// ----------------------------------------------------------------------------
+
+.tabs--default {
+  .tabs__header {
+    border-bottom: 1px solid $color-border-default;
+    padding-bottom: $spacing-1;
+  }
+
+  .tabs__button {
+    border-radius: 4px 4px 0 0;
+
+    &--active {
+      background-color: $color-alpha-black-4;
+    }
+
+    // Active indicator - bottom border
+    &::after {
+      content: '';
+      position: absolute;
+      bottom: -$spacing-1;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background-color: $color-primary-600;
+      transform: scaleX(0);
+      transition: transform $duration-normal $easing-standard;
+    }
+
+    &--active::after {
+      transform: scaleX(1);
+    }
+  }
+}
+
+// ----------------------------------------------------------------------------
+// VARIANT: PILLS
+// ----------------------------------------------------------------------------
+
+.tabs--pills {
+  .tabs__header {
+    gap: $spacing-2;
+    padding: $spacing-1;
+    background-color: $color-neutral-100;
+    border-radius: 8px;
+  }
+
+  .tabs__button {
+    border-radius: 6px;
+    padding: $spacing-2 $spacing-4;
+
+    &:hover:not(&--disabled):not(&--active) {
+      background-color: $color-alpha-black-8;
+    }
+
+    &--active {
+      background-color: $color-background-paper;
+      color: $color-primary-600;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1),
+                  0 1px 2px rgba(0, 0, 0, 0.06);
+    }
+  }
+}
+
+// ----------------------------------------------------------------------------
+// VARIANT: UNDERLINE
+// ----------------------------------------------------------------------------
+
+.tabs--underline {
+  .tabs__header {
+    gap: $spacing-6;
+    border-bottom: 1px solid $color-border-default;
+  }
+
+  .tabs__button {
+    padding: $spacing-3 $spacing-2;
+    position: relative;
+
+    // Underline indicator
+    &::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background-color: $color-primary-600;
+      transform: scaleX(0);
+      transform-origin: center;
+      transition: transform $duration-normal $easing-standard;
+    }
+
+    &--active::after {
+      transform: scaleX(1);
+    }
+
+    &:hover:not(&--disabled):not(&--active) {
+      color: $color-text-primary;
+
+      &::after {
+        transform: scaleX(0.5);
+        background-color: $color-neutral-400;
+      }
+    }
+  }
+}
+
+// ----------------------------------------------------------------------------
+// RESPONSIVE DESIGN
+// ----------------------------------------------------------------------------
+
+@media (max-width: 768px) {
+  .tabs__button {
+    padding: $spacing-2 $spacing-3;
+    font-size: 13px;
+  }
+
+  .tabs__icon {
+    width: 18px;
+    height: 18px;
+    font-size: 18px;
+  }
+
+  .tabs--pills .tabs__button {
+    padding: $spacing-2 $spacing-3;
+  }
+
+  .tabs__content {
+    padding-top: $spacing-3;
+  }
+}
+
+@media (max-width: 480px) {
+  .tabs__header {
+    gap: $spacing-1;
+  }
+
+  .tabs__button {
+    padding: $spacing-2;
+    font-size: 12px;
+  }
+
+  .tabs--underline .tabs__header {
+    gap: $spacing-4;
+  }
+}
+
+// ----------------------------------------------------------------------------
+// ANIMATION UTILITIES
+// ----------------------------------------------------------------------------
+
+// Fade in animation for content
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.tabs__content {
+  animation: fadeIn $duration-normal $easing-decelerate;
+}
+
+// ----------------------------------------------------------------------------
+// ACCESSIBILITY ENHANCEMENTS
+// ----------------------------------------------------------------------------
+
+// High contrast mode support
+@media (prefers-contrast: high) {
+  .tabs__button {
+    &--active {
+      outline: 2px solid currentColor;
+      outline-offset: -2px;
+    }
+  }
+}
+
+// Reduced motion support
+@media (prefers-reduced-motion: reduce) {
+  .tabs__button,
+  .tabs__button::after,
+  .tabs__content {
+    animation: none;
+    transition: none;
+  }
+}
+
+// Dark mode support (optional - can be enabled later)
+@media (prefers-color-scheme: dark) {
+  .tabs__button {
+    color: $color-text-secondary-dark;
+
+    &:hover:not(&--disabled):not(&--active) {
+      color: $color-text-primary-dark;
+      background-color: $color-alpha-white-4;
+    }
+
+    &--active {
+      color: $color-primary-400;
+    }
+
+    &--disabled {
+      color: $color-text-disabled-dark;
+    }
+  }
+
+  .tabs--default .tabs__header {
+    border-bottom-color: $color-border-default-dark;
+  }
+
+  .tabs--pills .tabs__header {
+    background-color: $color-background-paper-dark;
+  }
+
+  .tabs--pills .tabs__button {
+    &:hover:not(&--disabled):not(&--active) {
+      background-color: $color-alpha-white-8;
+    }
+
+    &--active {
+      background-color: $color-background-elevated-dark;
+    }
+  }
+
+  .tabs--underline .tabs__header {
+    border-bottom-color: $color-border-default-dark;
+  }
+}

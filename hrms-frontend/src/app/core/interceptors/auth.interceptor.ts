@@ -178,10 +178,20 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
             }),
             catchError(refreshError => {
               console.error('❌ Token refresh failed:', refreshError);
-              console.log('🚪 Logging out user due to refresh failure');
 
-              // Only NOW logout - after refresh explicitly failed
-              authService.logout();
+              // ✅ CRITICAL FIX: Check if already on a login page
+              // If user is on /auth/* pages, don't navigate - just clear state silently
+              const currentUrl = router.url;
+              const isOnLoginPage = currentUrl.startsWith('/auth/');
+
+              if (isOnLoginPage) {
+                console.log('🧹 Already on login page - clearing state silently without redirect');
+                authService.clearAuthStateSilently();
+              } else {
+                console.log('🚪 Logging out user due to refresh failure');
+                authService.logout();
+              }
+
               return throwError(() => refreshError);
             })
           );

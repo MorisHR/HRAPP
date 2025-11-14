@@ -1,0 +1,95 @@
+// PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP
+// PROGRESS BAR COMPONENT
+// Production-ready progress indicator with animations
+// PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP
+
+.progress-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+
+  // Height variants
+  &--small {
+    .progress-bar__track {
+      height: 4px;
+    }
+  }
+
+  &--medium {
+    .progress-bar__track {
+      height: 8px;
+    }
+  }
+
+  &--large {
+    .progress-bar__track {
+      height: 12px;
+    }
+  }
+
+  // Track (background)
+  &__track {
+    position: relative;
+    flex: 1;
+    background-color: var(--color-gray-200);
+    border-radius: 9999px;
+    overflow: hidden;
+  }
+
+  // Fill (progress)
+  &__fill {
+    height: 100%;
+    border-radius: 9999px;
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: width;
+
+    // Color variants
+    &--primary {
+      background-color: var(--color-primary-600);
+    }
+
+    &--success {
+      background-color: var(--color-success-600);
+    }
+
+    &--warning {
+      background-color: var(--color-warning-600);
+    }
+
+    &--error {
+      background-color: var(--color-error-600);
+    }
+  }
+
+  // Indeterminate animation
+  &--indeterminate {
+    .progress-bar__fill {
+      width: 40%;
+      animation: progress-indeterminate 1.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    }
+  }
+
+  // Label
+  &__label {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--color-gray-700);
+    white-space: nowrap;
+    min-width: 48px;
+    text-align: right;
+  }
+}
+
+// Indeterminate animation
+@keyframes progress-indeterminate {
+  0% {
+    transform: translateX(-100%);
+  }
+  50% {
+    transform: translateX(250%);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
+}

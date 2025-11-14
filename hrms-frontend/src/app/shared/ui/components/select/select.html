@@ -1,0 +1,187 @@
+<div class="select-container">
+  <!-- Label -->
+  <label *ngIf="label" class="select-label">
+    {{ label }}
+    <span *ngIf="required" class="select-label__required">*</span>
+  </label>
+
+  <!-- Select Control -->
+  <div
+    class="select"
+    [class.select--open]="isOpen"
+    [class.select--disabled]="disabled"
+    [class.select--error]="error"
+    [class.select--has-value]="hasValue"
+  >
+    <!-- Trigger -->
+    <button
+      type="button"
+      class="select__trigger"
+      [disabled]="disabled"
+      (click)="toggleDropdown()"
+      (blur)="handleBlur($event)"
+      (keydown)="handleKeyDown($event)"
+      [attr.aria-expanded]="isOpen"
+      [attr.aria-haspopup]="true"
+      [attr.aria-label]="label || placeholder"
+    >
+      <span class="select__value" [class.select__value--placeholder]="!hasValue">
+        {{ displayValue }}
+      </span>
+
+      <div class="select__actions">
+        <!-- Clear Button -->
+        <button
+          *ngIf="clearable && hasValue && !disabled"
+          type="button"
+          class="select__clear"
+          (click)="clearSelection($event)"
+          aria-label="Clear selection"
+        >
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path d="M12 4L4 12M4 4l8 8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </button>
+
+        <!-- Chevron Icon -->
+        <svg
+          class="select__chevron"
+          width="20"
+          height="20"
+          viewBox="0 0 20 20"
+          fill="none"
+        >
+          <path
+            d="M5 7.5L10 12.5L15 7.5"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
+      </div>
+    </button>
+
+    <!-- Dropdown Panel -->
+    <div *ngIf="isOpen" class="select__dropdown">
+      <!-- Search Input -->
+      <div *ngIf="searchable" class="select__search">
+        <svg class="select__search-icon" width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <path
+            d="M7 12C9.76142 12 12 9.76142 12 7C12 4.23858 9.76142 2 7 2C4.23858 2 2 4.23858 2 7C2 9.76142 4.23858 12 7 12Z"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+          />
+          <path
+            d="M10.5 10.5L14 14"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+          />
+        </svg>
+        <input
+          #searchInput
+          type="text"
+          class="select__search-input"
+          placeholder="Search..."
+          [(ngModel)]="searchQuery"
+          (keydown)="handleKeyDown($event)"
+        />
+      </div>
+
+      <!-- Options List -->
+      <ul class="select__options" role="listbox">
+        <li
+          *ngFor="let option of filteredOptions; let i = index"
+          class="select__option"
+          [class.select__option--selected]="isSelected(option)"
+          [class.select__option--disabled]="option.disabled"
+          [class.select__option--focused]="i === focusedIndex"
+          role="option"
+          [attr.aria-selected]="isSelected(option)"
+          [attr.aria-disabled]="option.disabled"
+          (click)="selectOption(option)"
+        >
+          <!-- Checkbox for multiple select -->
+          <span *ngIf="multiple" class="select__checkbox">
+            <svg
+              *ngIf="isSelected(option)"
+              width="16"
+              height="16"
+              viewBox="0 0 16 16"
+              fill="none"
+            >
+              <rect width="16" height="16" rx="3" fill="currentColor"/>
+              <path
+                d="M4 8L7 11L12 5"
+                stroke="white"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+            <svg
+              *ngIf="!isSelected(option)"
+              width="16"
+              height="16"
+              viewBox="0 0 16 16"
+              fill="none"
+            >
+              <rect
+                x="1"
+                y="1"
+                width="14"
+                height="14"
+                rx="3"
+                stroke="currentColor"
+                stroke-width="2"
+                fill="none"
+              />
+            </svg>
+          </span>
+
+          <span class="select__option-label">{{ option.label }}</span>
+
+          <!-- Checkmark for single select -->
+          <svg
+            *ngIf="!multiple && isSelected(option)"
+            class="select__checkmark"
+            width="16"
+            height="16"
+            viewBox="0 0 16 16"
+            fill="none"
+          >
+            <path
+              d="M3 8L6.5 11.5L13 4"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+        </li>
+
+        <!-- Empty State -->
+        <li *ngIf="filteredOptions.length === 0" class="select__empty">
+          <span>No options found</span>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Hint Text -->
+  <div *ngIf="hint && !error" class="select-hint">
+    {{ hint }}
+  </div>
+
+  <!-- Error Message -->
+  <div *ngIf="error" class="select-error">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+      <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="2"/>
+      <path d="M8 4V8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      <circle cx="8" cy="11" r="0.5" fill="currentColor" stroke="currentColor"/>
+    </svg>
+    <span>{{ error }}</span>
+  </div>
+</div>

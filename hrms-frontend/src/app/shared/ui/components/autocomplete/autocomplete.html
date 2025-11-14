@@ -1,0 +1,79 @@
+<div class="autocomplete-container">
+  <div class="form-group">
+    @if (label) {
+      <label class="form-label">
+        {{ label }}
+        @if (required) {
+          <span class="required">*</span>
+        }
+      </label>
+    }
+
+    <div class="autocomplete-input-wrapper">
+      <input
+        type="text"
+        class="form-control"
+        [class.disabled]="disabled"
+        [placeholder]="placeholder"
+        [disabled]="disabled"
+        [value]="inputValue"
+        (input)="onInputChange($any($event.target).value)"
+        (focus)="onInputFocus()"
+        (keydown)="onKeyDown($event)"
+        autocomplete="off"
+      />
+
+      @if (loading) {
+        <div class="input-icon loading">
+          <div class="spinner"></div>
+        </div>
+      }
+
+      @if (!loading && isOpen) {
+        <div class="input-icon">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+            <path d="M8 11L3 6h10l-5 5z"/>
+          </svg>
+        </div>
+      }
+    </div>
+
+    @if (isOpen) {
+      <div class="dropdown-panel">
+        @if (showLoadingState) {
+          <div class="loading-state">
+            <div class="spinner-large"></div>
+            <span>Loading options...</span>
+          </div>
+        }
+
+        @if (showEmptyState) {
+          <div class="empty-state">
+            <svg width="48" height="48" viewBox="0 0 48 48" fill="currentColor" opacity="0.3">
+              <path d="M24 4C12.95 4 4 12.95 4 24s8.95 20 20 20 20-8.95 20-20S35.05 4 24 4zm-2 30h4v-4h-4v4zm0-8h4V14h-4v12z"/>
+            </svg>
+            <p>No results found</p>
+            @if (inputValue) {
+              <span class="empty-state-hint">Try a different search term</span>
+            }
+          </div>
+        }
+
+        @if (!loading && hasFilteredOptions) {
+          <div class="options-list">
+            @for (option of filteredOptions; track option; let i = $index) {
+              <div
+                class="option"
+                [class.highlighted]="i === highlightedIndex"
+                (click)="selectOption(option)"
+                (mouseenter)="highlightedIndex = i"
+              >
+                <span [innerHTML]="highlightMatch(getDisplayText(option))"></span>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    }
+  </div>
+</div>

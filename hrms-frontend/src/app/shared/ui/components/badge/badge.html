@@ -1,0 +1,10 @@
+<div class="badge-container">
+  <ng-content></ng-content>
+  <span
+    class="badge"
+    [class]="colorClass + ' ' + positionClasses"
+    [class.badge-dot]="dot"
+    *ngIf="dot || shouldShowContent">
+    <span *ngIf="shouldShowContent">{{ content }}</span>
+  </span>
+</div>

@@ -1,0 +1,27 @@
+<div
+  class="progress-bar"
+  [class.progress-bar--small]="height === 'small'"
+  [class.progress-bar--medium]="height === 'medium'"
+  [class.progress-bar--large]="height === 'large'"
+  [class.progress-bar--indeterminate]="indeterminate"
+  role="progressbar"
+  [attr.aria-valuenow]="indeterminate ? null : progressValue()"
+  [attr.aria-valuemin]="indeterminate ? null : 0"
+  [attr.aria-valuemax]="indeterminate ? null : 100"
+  [attr.aria-label]="indeterminate ? 'Loading' : progressValue() + '%'">
+
+  <div class="progress-bar__track">
+    <div
+      class="progress-bar__fill"
+      [class.progress-bar__fill--primary]="color === 'primary'"
+      [class.progress-bar__fill--success]="color === 'success'"
+      [class.progress-bar__fill--warning]="color === 'warning'"
+      [class.progress-bar__fill--error]="color === 'error'"
+      [style.width]="indeterminate ? null : progressWidth()">
+    </div>
+  </div>
+
+  @if (showLabel && !indeterminate) {
+    <span class="progress-bar__label">{{ progressValue() }}%</span>
+  }
+</div>

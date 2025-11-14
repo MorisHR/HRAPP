@@ -1,0 +1,257 @@
+// ============================================================================
+// PREMIUM COLOR SYSTEM - HRMS Design Tokens
+// ============================================================================
+// Enterprise-grade color palette with accessibility (WCAG 2.1 AA/AAA)
+// ============================================================================
+
+// ----------------------------------------------------------------------------
+// BRAND COLORS - Primary & Secondary
+// ----------------------------------------------------------------------------
+
+// Primary Brand Color (Blue) - Professional, trustworthy
+$color-primary-50: #e3f2fd;
+$color-primary-100: #bbdefb;
+$color-primary-200: #90caf9;
+$color-primary-300: #64b5f6;
+$color-primary-400: #42a5f5;
+$color-primary-500: #2196f3;  // Main primary
+$color-primary-600: #1e88e5;
+$color-primary-700: #1976d2;
+$color-primary-800: #1565c0;
+$color-primary-900: #0d47a1;
+
+// Secondary Brand Color (Indigo) - Complement
+$color-secondary-50: #e8eaf6;
+$color-secondary-100: #c5cae9;
+$color-secondary-200: #9fa8da;
+$color-secondary-300: #7986cb;
+$color-secondary-400: #5c6bc0;
+$color-secondary-500: #3f51b5;  // Main secondary
+$color-secondary-600: #3949ab;
+$color-secondary-700: #303f9f;
+$color-secondary-800: #283593;
+$color-secondary-900: #1a237e;
+
+// Accent Color (Teal) - Call-to-action
+$color-accent-50: #e0f2f1;
+$color-accent-100: #b2dfdb;
+$color-accent-200: #80cbc4;
+$color-accent-300: #4db6ac;
+$color-accent-400: #26a69a;
+$color-accent-500: #009688;  // Main accent
+$color-accent-600: #00897b;
+$color-accent-700: #00796b;
+$color-accent-800: #00695c;
+$color-accent-900: #004d40;
+
+// ----------------------------------------------------------------------------
+// SEMANTIC COLORS - Status & Feedback
+// ----------------------------------------------------------------------------
+
+// Success (Green)
+$color-success-50: #e8f5e9;
+$color-success-100: #c8e6c9;
+$color-success-200: #a5d6a7;
+$color-success-300: #81c784;
+$color-success-400: #66bb6a;
+$color-success-500: #4caf50;  // Main success
+$color-success-600: #43a047;
+$color-success-700: #388e3c;
+$color-success-800: #2e7d32;
+$color-success-900: #1b5e20;
+
+// Warning (Amber)
+$color-warning-50: #fff8e1;
+$color-warning-100: #ffecb3;
+$color-warning-200: #ffe082;
+$color-warning-300: #ffd54f;
+$color-warning-400: #ffca28;
+$color-warning-500: #ffc107;  // Main warning
+$color-warning-600: #ffb300;
+$color-warning-700: #ffa000;
+$color-warning-800: #ff8f00;
+$color-warning-900: #ff6f00;
+
+// Error (Red)
+$color-error-50: #ffebee;
+$color-error-100: #ffcdd2;
+$color-error-200: #ef9a9a;
+$color-error-300: #e57373;
+$color-error-400: #ef5350;
+$color-error-500: #f44336;  // Main error
+$color-error-600: #e53935;
+$color-error-700: #d32f2f;
+$color-error-800: #c62828;
+$color-error-900: #b71c1c;
+
+// Info (Light Blue)
+$color-info-50: #e1f5fe;
+$color-info-100: #b3e5fc;
+$color-info-200: #81d4fa;
+$color-info-300: #4fc3f7;
+$color-info-400: #29b6f6;
+$color-info-500: #03a9f4;  // Main info
+$color-info-600: #039be5;
+$color-info-700: #0288d1;
+$color-info-800: #0277bd;
+$color-info-900: #01579b;
+
+// ----------------------------------------------------------------------------
+// NEUTRAL COLORS - Gray Scale
+// ----------------------------------------------------------------------------
+
+$color-neutral-0: #ffffff;
+$color-neutral-50: #fafafa;
+$color-neutral-100: #f5f5f5;
+$color-neutral-200: #eeeeee;
+$color-neutral-300: #e0e0e0;
+$color-neutral-400: #bdbdbd;
+$color-neutral-500: #9e9e9e;
+$color-neutral-600: #757575;
+$color-neutral-700: #616161;
+$color-neutral-800: #424242;
+$color-neutral-900: #212121;
+$color-neutral-1000: #000000;
+
+// ----------------------------------------------------------------------------
+// TEXT COLORS - Semantic text colors with opacity
+// ----------------------------------------------------------------------------
+
+$color-text-primary: rgba(0, 0, 0, 0.87);
+$color-text-secondary: rgba(0, 0, 0, 0.60);
+$color-text-disabled: rgba(0, 0, 0, 0.38);
+$color-text-hint: rgba(0, 0, 0, 0.38);
+
+$color-text-primary-dark: rgba(255, 255, 255, 1.0);
+$color-text-secondary-dark: rgba(255, 255, 255, 0.70);
+$color-text-disabled-dark: rgba(255, 255, 255, 0.50);
+$color-text-hint-dark: rgba(255, 255, 255, 0.50);
+
+// ----------------------------------------------------------------------------
+// BACKGROUND COLORS
+// ----------------------------------------------------------------------------
+
+$color-background-default: #fafafa;
+$color-background-paper: #ffffff;
+$color-background-elevated: #ffffff;
+$color-background-overlay: rgba(0, 0, 0, 0.5);
+
+$color-background-default-dark: #121212;
+$color-background-paper-dark: #1e1e1e;
+$color-background-elevated-dark: #2c2c2c;
+$color-background-overlay-dark: rgba(0, 0, 0, 0.7);
+
+// ----------------------------------------------------------------------------
+// BORDER COLORS
+// ----------------------------------------------------------------------------
+
+$color-border-default: rgba(0, 0, 0, 0.12);
+$color-border-light: rgba(0, 0, 0, 0.08);
+$color-border-medium: rgba(0, 0, 0, 0.20);
+$color-border-heavy: rgba(0, 0, 0, 0.38);
+
+$color-border-default-dark: rgba(255, 255, 255, 0.12);
+$color-border-light-dark: rgba(255, 255, 255, 0.08);
+$color-border-medium-dark: rgba(255, 255, 255, 0.20);
+$color-border-heavy-dark: rgba(255, 255, 255, 0.38);
+
+// ----------------------------------------------------------------------------
+// GRADIENT OVERLAYS & EFFECTS
+// ----------------------------------------------------------------------------
+
+$gradient-primary: linear-gradient(135deg, $color-primary-500 0%, $color-primary-700 100%);
+$gradient-secondary: linear-gradient(135deg, $color-secondary-500 0%, $color-secondary-700 100%);
+$gradient-accent: linear-gradient(135deg, $color-accent-500 0%, $color-accent-700 100%);
+$gradient-success: linear-gradient(135deg, $color-success-500 0%, $color-success-700 100%);
+$gradient-warning: linear-gradient(135deg, $color-warning-500 0%, $color-warning-700 100%);
+$gradient-error: linear-gradient(135deg, $color-error-500 0%, $color-error-700 100%);
+
+// Scrim gradient for overlays
+$gradient-scrim-top: linear-gradient(to bottom, rgba(0, 0, 0, 0.7) 0%, transparent 100%);
+$gradient-scrim-bottom: linear-gradient(to top, rgba(0, 0, 0, 0.7) 0%, transparent 100%);
+
+// ----------------------------------------------------------------------------
+// STATE COLORS - Hover, Active, Focus, Selected
+// ----------------------------------------------------------------------------
+
+$color-state-hover-opacity: 0.04;
+$color-state-focus-opacity: 0.12;
+$color-state-selected-opacity: 0.08;
+$color-state-activated-opacity: 0.12;
+$color-state-pressed-opacity: 0.16;
+$color-state-dragged-opacity: 0.08;
+
+// ----------------------------------------------------------------------------
+// ALPHA COLORS - Transparent overlays
+// ----------------------------------------------------------------------------
+
+$color-alpha-white-4: rgba(255, 255, 255, 0.04);
+$color-alpha-white-8: rgba(255, 255, 255, 0.08);
+$color-alpha-white-12: rgba(255, 255, 255, 0.12);
+$color-alpha-white-16: rgba(255, 255, 255, 0.16);
+$color-alpha-white-24: rgba(255, 255, 255, 0.24);
+$color-alpha-white-32: rgba(255, 255, 255, 0.32);
+
+$color-alpha-black-4: rgba(0, 0, 0, 0.04);
+$color-alpha-black-8: rgba(0, 0, 0, 0.08);
+$color-alpha-black-12: rgba(0, 0, 0, 0.12);
+$color-alpha-black-16: rgba(0, 0, 0, 0.16);
+$color-alpha-black-24: rgba(0, 0, 0, 0.24);
+$color-alpha-black-32: rgba(0, 0, 0, 0.32);
+
+// ----------------------------------------------------------------------------
+// CONTEXTUAL MAPS - Easy semantic access
+// ----------------------------------------------------------------------------
+
+$color-states: (
+  'primary': (
+    'base': $color-primary-500,
+    'hover': $color-primary-600,
+    'active': $color-primary-700,
+    'disabled': $color-neutral-300,
+  ),
+  'secondary': (
+    'base': $color-secondary-500,
+    'hover': $color-secondary-600,
+    'active': $color-secondary-700,
+    'disabled': $color-neutral-300,
+  ),
+  'success': (
+    'base': $color-success-500,
+    'hover': $color-success-600,
+    'active': $color-success-700,
+    'disabled': $color-neutral-300,
+  ),
+  'warning': (
+    'base': $color-warning-500,
+    'hover': $color-warning-600,
+    'active': $color-warning-700,
+    'disabled': $color-neutral-300,
+  ),
+  'error': (
+    'base': $color-error-500,
+    'hover': $color-error-600,
+    'active': $color-error-700,
+    'disabled': $color-neutral-300,
+  ),
+  'info': (
+    'base': $color-info-500,
+    'hover': $color-info-600,
+    'active': $color-info-700,
+    'disabled': $color-neutral-300,
+  ),
+);
+
+// ----------------------------------------------------------------------------
+// UTILITY FUNCTIONS
+// ----------------------------------------------------------------------------
+
+// Get color from state map
+@function color-state($state, $variant: 'base') {
+  @return map-get(map-get($color-states, $state), $variant);
+}
+
+// Create alpha variant of any color
+@function color-alpha($color, $opacity) {
+  @return rgba($color, $opacity);
+}

@@ -1,0 +1,19 @@
+<label
+  class="radio-wrapper"
+  [class.radio-checked]="checked"
+  [class.radio-disabled]="disabled">
+  <span
+    class="radio-input"
+    role="radio"
+    [attr.aria-checked]="checked"
+    [attr.aria-disabled]="disabled"
+    [attr.aria-label]="label"
+    [tabindex]="disabled ? -1 : 0"
+    (click)="onRadioClick()"
+    (keydown)="onKeyDown($event)">
+    <span class="radio-circle">
+      <span class="radio-inner-circle" *ngIf="checked"></span>
+    </span>
+  </span>
+  <span class="radio-label" *ngIf="label">{{ label }}</span>
+</label>

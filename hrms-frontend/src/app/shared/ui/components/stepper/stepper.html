@@ -1,0 +1,60 @@
+<div class="stepper" [class.stepper-horizontal]="orientation === 'horizontal'" [class.stepper-vertical]="orientation === 'vertical'">
+  <!-- Step Headers -->
+  <div class="stepper-header">
+    <ng-container *ngFor="let step of steps; let i = index; let isLast = last">
+      <div
+        class="step-header"
+        [class.step-completed]="getStepState(i) === 'completed'"
+        [class.step-current]="getStepState(i) === 'current'"
+        [class.step-error]="getStepState(i) === 'error'"
+        [class.step-upcoming]="getStepState(i) === 'upcoming'"
+        [class.step-clickable]="isStepClickable(i)"
+        (click)="goToStep(i)">
+
+        <div class="step-icon-container">
+          <div class="step-icon">
+            <span class="step-number">{{ getStepNumber(i) }}</span>
+          </div>
+        </div>
+
+        <div class="step-label-container">
+          <div class="step-label">{{ step.label }}</div>
+          <div class="step-sublabel" *ngIf="step.optional">(Optional)</div>
+        </div>
+      </div>
+
+      <!-- Connector Line -->
+      <div
+        *ngIf="!isLast"
+        class="step-connector"
+        [class.connector-completed]="step.completed">
+      </div>
+    </ng-container>
+  </div>
+
+  <!-- Step Content Area -->
+  <div class="stepper-content">
+    <div class="step-content">
+      <ng-content></ng-content>
+    </div>
+
+    <!-- Navigation Buttons -->
+    <div class="stepper-navigation">
+      <button
+        type="button"
+        class="stepper-btn stepper-btn-previous"
+        [disabled]="!canGoPrevious"
+        (click)="previous()">
+        Previous
+      </button>
+
+      <button
+        type="button"
+        class="stepper-btn stepper-btn-next"
+        [disabled]="!canGoNext || (linear && !canProceedToNextStep())"
+        (click)="next()">
+        Next
+      </button>
+    </div>
+  </div>
+</div>

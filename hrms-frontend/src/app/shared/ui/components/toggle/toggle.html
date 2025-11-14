@@ -1,0 +1,42 @@
+<label class="toggle-container" [class.disabled]="disabled">
+  <!-- Label before toggle -->
+  <span *ngIf="label && labelPosition === 'before'" class="toggle-label toggle-label-before">
+    {{ label }}
+  </span>
+
+  <!-- Toggle switch -->
+  <div
+    class="toggle-switch"
+    [class.checked]="checked"
+    [class.disabled]="disabled"
+    [attr.data-color]="color"
+    (click)="onToggle()"
+    (keydown)="onKeyDown($event)"
+    [attr.tabindex]="disabled ? -1 : 0"
+    role="switch"
+    [attr.aria-checked]="checked"
+    [attr.aria-disabled]="disabled"
+    [attr.aria-label]="label || 'Toggle switch'"
+  >
+    <!-- Hidden checkbox for form integration -->
+    <input
+      type="checkbox"
+      class="toggle-input"
+      [checked]="checked"
+      [disabled]="disabled"
+      tabindex="-1"
+      aria-hidden="true"
+    />
+
+    <!-- Switch track -->
+    <span class="toggle-track">
+      <!-- Sliding thumb -->
+      <span class="toggle-thumb"></span>
+    </span>
+  </div>
+
+  <!-- Label after toggle -->
+  <span *ngIf="label && labelPosition === 'after'" class="toggle-label toggle-label-after">
+    {{ label }}
+  </span>
+</label>

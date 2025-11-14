@@ -1,0 +1,110 @@
+// PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP
+// PREMIUM RADIO GROUP COMPONENT STYLES
+// Group of radio buttons with flexible layouts
+// PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP
+
+.radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+
+  &.radio-group-disabled {
+    opacity: 0.6;
+    pointer-events: none;
+  }
+}
+
+.radio-group-label {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--gray-700);
+  margin-bottom: var(--spacing-1);
+  display: block;
+  line-height: 1.5;
+}
+
+.radio-group-required {
+  color: var(--error-500);
+  margin-left: var(--spacing-1);
+  font-weight: var(--font-weight-bold);
+}
+
+.radio-group-options {
+  display: flex;
+  gap: var(--spacing-3);
+
+  .radio-group-vertical & {
+    flex-direction: column;
+    gap: var(--spacing-2);
+  }
+
+  .radio-group-horizontal & {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: var(--spacing-4);
+  }
+}
+
+// Responsive behavior for horizontal layout
+@media (max-width: 640px) {
+  .radio-group-options {
+    .radio-group-horizontal & {
+      flex-direction: column;
+      gap: var(--spacing-2);
+    }
+  }
+}
+
+// Dark mode support
+@media (prefers-color-scheme: dark) {
+  .radio-group-label {
+    color: var(--gray-300);
+  }
+
+  .radio-group-required {
+    color: var(--error-400);
+  }
+}
+
+// Focus-within effect for the group
+.radio-group:focus-within {
+  .radio-group-label {
+    color: var(--primary-600);
+  }
+}
+
+// Animation for options appearing
+.radio-group-options app-radio {
+  animation: fade-slide-in 0.2s ease-out backwards;
+}
+
+.radio-group-options app-radio:nth-child(1) {
+  animation-delay: 0ms;
+}
+
+.radio-group-options app-radio:nth-child(2) {
+  animation-delay: 30ms;
+}
+
+.radio-group-options app-radio:nth-child(3) {
+  animation-delay: 60ms;
+}
+
+.radio-group-options app-radio:nth-child(4) {
+  animation-delay: 90ms;
+}
+
+.radio-group-options app-radio:nth-child(5) {
+  animation-delay: 120ms;
+}
+
+@keyframes fade-slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

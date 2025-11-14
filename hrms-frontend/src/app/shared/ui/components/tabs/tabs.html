@@ -1,0 +1,24 @@
+<div class="tabs" [class.tabs--default]="variant === 'default'" [class.tabs--pills]="variant === 'pills'" [class.tabs--underline]="variant === 'underline'" role="tablist">
+  <div class="tabs__header">
+    <button
+      *ngFor="let tab of tabs; let i = index; trackBy: trackByValue"
+      class="tabs__button"
+      [class.tabs__button--active]="isActive(tab)"
+      [class.tabs__button--disabled]="tab.disabled"
+      [attr.data-tab-index]="i"
+      [attr.role]="'tab'"
+      [attr.aria-selected]="isActive(tab)"
+      [attr.aria-disabled]="tab.disabled"
+      [attr.tabindex]="isActive(tab) ? 0 : -1"
+      (click)="selectTab(tab, i)"
+      type="button"
+    >
+      <span *ngIf="tab.icon" class="tabs__icon" [innerHTML]="tab.icon"></span>
+      <span class="tabs__label">{{ tab.label }}</span>
+    </button>
+  </div>
+
+  <div class="tabs__content" role="tabpanel">
+    <ng-content></ng-content>
+  </div>
+</div>

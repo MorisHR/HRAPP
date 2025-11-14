@@ -1,0 +1,85 @@
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- PREMIUM INPUT TEMPLATE                                      -->
+<!-- Material Design-inspired floating label input              -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+
+<div [ngClass]="containerClasses">
+  <!-- Input Wrapper -->
+  <div class="input-wrapper">
+    <!-- Floating Label -->
+    <label
+      *ngIf="showLabel"
+      [for]="id"
+      class="input-label"
+      [class.input-label--required]="required">
+      {{ label }}
+      <span *ngIf="required" class="input-label__required-indicator">*</span>
+    </label>
+
+    <!-- Input Field -->
+    <input
+      [id]="id"
+      [type]="type"
+      [ngClass]="inputClasses"
+      [value]="internalValue"
+      [placeholder]="placeholder"
+      [disabled]="disabled"
+      [readonly]="readonly"
+      [required]="required"
+      [attr.maxlength]="maxLength"
+      [attr.aria-invalid]="showError"
+      [attr.aria-describedby]="showError ? id + '-error' : showHint ? id + '-hint' : null"
+      (input)="onInput($event)"
+      (focus)="onFocus($event)"
+      (blur)="onBlur($event)"
+    />
+
+    <!-- Clear Button -->
+    <button
+      *ngIf="showClearButton"
+      type="button"
+      class="input-clear-button"
+      [attr.aria-label]="'Clear ' + label"
+      (click)="clearValue()"
+      tabindex="-1">
+      <svg
+        width="20"
+        height="20"
+        viewBox="0 0 20 20"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg">
+        <path
+          d="M10 0C4.47 0 0 4.47 0 10C0 15.53 4.47 20 10 20C15.53 20 20 15.53 20 10C20 4.47 15.53 0 10 0ZM15 13.59L13.59 15L10 11.41L6.41 15L5 13.59L8.59 10L5 6.41L6.41 5L10 8.59L13.59 5L15 6.41L11.41 10L15 13.59Z"
+          fill="currentColor"/>
+      </svg>
+    </button>
+  </div>
+
+  <!-- Helper Text Row -->
+  <div class="input-helper-row" *ngIf="showError || showHint || showCharCount">
+    <!-- Error Message -->
+    <span
+      *ngIf="showError"
+      [id]="id + '-error'"
+      class="input-error"
+      role="alert">
+      {{ error }}
+    </span>
+
+    <!-- Hint Text -->
+    <span
+      *ngIf="showHint"
+      [id]="id + '-hint'"
+      class="input-hint">
+      {{ hint }}
+    </span>
+
+    <!-- Character Counter -->
+    <span
+      *ngIf="showCharCount"
+      class="input-char-count"
+      [class.input-char-count--limit]="maxLength && characterCount >= maxLength">
+      {{ characterCount }}<span *ngIf="maxLength"> / {{ maxLength }}</span>
+    </span>
+  </div>
+</div>

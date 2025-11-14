@@ -1,0 +1,16 @@
+// ============================================================================
+// PREMIUM FOCUS SYSTEM - HRMS Design Tokens
+// ============================================================================
+// Accessibility-focused visible focus indicators
+// ============================================================================
+
+@import 'colors';
+
+$focus-ring-width: 3px;
+$focus-ring-offset: 2px;
+$focus-ring-color: $color-primary-500;
+
+@mixin focus-ring {
+  outline: $focus-ring-width solid $focus-ring-color;
+  outline-offset: $focus-ring-offset;
+}

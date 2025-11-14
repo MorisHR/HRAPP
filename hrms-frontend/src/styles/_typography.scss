@@ -1,0 +1,339 @@
+// ============================================================================
+// PREMIUM TYPOGRAPHY SYSTEM - HRMS Design Tokens
+// ============================================================================
+// Enterprise-grade type scale with accessibility and responsive design
+// ============================================================================
+
+// ----------------------------------------------------------------------------
+// FONT FAMILIES
+// ----------------------------------------------------------------------------
+
+$font-family-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto',
+  'Helvetica Neue', Arial, sans-serif;
+$font-family-mono: 'JetBrains Mono', 'Fira Code', 'Courier New', Courier, monospace;
+$font-family-serif: Georgia, 'Times New Roman', Times, serif;
+
+$font-family-base: $font-family-sans;
+$font-family-code: $font-family-mono;
+
+// ----------------------------------------------------------------------------
+// FONT WEIGHTS
+// ----------------------------------------------------------------------------
+
+$font-weight-thin: 100;
+$font-weight-extra-light: 200;
+$font-weight-light: 300;
+$font-weight-regular: 400;
+$font-weight-medium: 500;
+$font-weight-semi-bold: 600;
+$font-weight-bold: 700;
+$font-weight-extra-bold: 800;
+$font-weight-black: 900;
+
+// Semantic font weights
+$font-weight-body: $font-weight-regular;
+$font-weight-heading: $font-weight-semi-bold;
+$font-weight-emphasis: $font-weight-medium;
+
+// ----------------------------------------------------------------------------
+// FONT SIZES - Type Scale (Major Third - 1.250)
+// ----------------------------------------------------------------------------
+
+$font-size-xs: 0.75rem;      // 12px
+$font-size-sm: 0.875rem;     // 14px
+$font-size-base: 1rem;       // 16px
+$font-size-md: 1.125rem;     // 18px
+$font-size-lg: 1.25rem;      // 20px
+$font-size-xl: 1.5rem;       // 24px
+$font-size-2xl: 1.875rem;    // 30px
+$font-size-3xl: 2.25rem;     // 36px
+$font-size-4xl: 3rem;        // 48px
+$font-size-5xl: 3.75rem;     // 60px
+$font-size-6xl: 4.5rem;      // 72px
+
+// ----------------------------------------------------------------------------
+// LINE HEIGHTS - Optimal readability
+// ----------------------------------------------------------------------------
+
+$line-height-none: 1;
+$line-height-tight: 1.25;
+$line-height-snug: 1.375;
+$line-height-normal: 1.5;
+$line-height-relaxed: 1.625;
+$line-height-loose: 2;
+
+// Semantic line heights
+$line-height-heading: $line-height-tight;
+$line-height-body: $line-height-normal;
+$line-height-caption: $line-height-relaxed;
+
+// ----------------------------------------------------------------------------
+// LETTER SPACING - Tracking
+// ----------------------------------------------------------------------------
+
+$letter-spacing-tighter: -0.05em;
+$letter-spacing-tight: -0.025em;
+$letter-spacing-normal: 0;
+$letter-spacing-wide: 0.025em;
+$letter-spacing-wider: 0.05em;
+$letter-spacing-widest: 0.1em;
+
+// ----------------------------------------------------------------------------
+// TYPOGRAPHY STYLES - Complete type scale with all properties
+// ----------------------------------------------------------------------------
+
+// Display styles (Hero sections, landing pages)
+$typography-display-1: (
+  'font-size': $font-size-6xl,
+  'line-height': $line-height-none,
+  'font-weight': $font-weight-bold,
+  'letter-spacing': $letter-spacing-tight,
+  'font-family': $font-family-base,
+);
+
+$typography-display-2: (
+  'font-size': $font-size-5xl,
+  'line-height': $line-height-tight,
+  'font-weight': $font-weight-bold,
+  'letter-spacing': $letter-spacing-tight,
+  'font-family': $font-family-base,
+);
+
+$typography-display-3: (
+  'font-size': $font-size-4xl,
+  'line-height': $line-height-tight,
+  'font-weight': $font-weight-semi-bold,
+  'letter-spacing': $letter-spacing-tight,
+  'font-family': $font-family-base,
+);
+
+// Heading styles (Page titles, section headers)
+$typography-h1: (
+  'font-size': $font-size-3xl,
+  'line-height': $line-height-heading,
+  'font-weight': $font-weight-heading,
+  'letter-spacing': $letter-spacing-tight,
+  'font-family': $font-family-base,
+);
+
+$typography-h2: (
+  'font-size': $font-size-2xl,
+  'line-height': $line-height-heading,
+  'font-weight': $font-weight-heading,
+  'letter-spacing': $letter-spacing-tight,
+  'font-family': $font-family-base,
+);
+
+$typography-h3: (
+  'font-size': $font-size-xl,
+  'line-height': $line-height-heading,
+  'font-weight': $font-weight-heading,
+  'letter-spacing': $letter-spacing-normal,
+  'font-family': $font-family-base,
+);
+
+$typography-h4: (
+  'font-size': $font-size-lg,
+  'line-height': $line-height-heading,
+  'font-weight': $font-weight-heading,
+  'letter-spacing': $letter-spacing-normal,
+  'font-family': $font-family-base,
+);
+
+$typography-h5: (
+  'font-size': $font-size-md,
+  'line-height': $line-height-heading,
+  'font-weight': $font-weight-heading,
+  'letter-spacing': $letter-spacing-normal,
+  'font-family': $font-family-base,
+);
+
+$typography-h6: (
+  'font-size': $font-size-base,
+  'line-height': $line-height-heading,
+  'font-weight': $font-weight-heading,
+  'letter-spacing': $letter-spacing-wide,
+  'font-family': $font-family-base,
+);
+
+// Body text styles
+$typography-body-1: (
+  'font-size': $font-size-base,
+  'line-height': $line-height-body,
+  'font-weight': $font-weight-body,
+  'letter-spacing': $letter-spacing-normal,
+  'font-family': $font-family-base,
+);
+
+$typography-body-2: (
+  'font-size': $font-size-sm,
+  'line-height': $line-height-body,
+  'font-weight': $font-weight-body,
+  'letter-spacing': $letter-spacing-normal,
+  'font-family': $font-family-base,
+);
+
+$typography-body-large: (
+  'font-size': $font-size-md,
+  'line-height': $line-height-body,
+  'font-weight': $font-weight-body,
+  'letter-spacing': $letter-spacing-normal,
+  'font-family': $font-family-base,
+);
+
+// Caption & helper text
+$typography-caption: (
+  'font-size': $font-size-xs,
+  'line-height': $line-height-caption,
+  'font-weight': $font-weight-regular,
+  'letter-spacing': $letter-spacing-wide,
+  'font-family': $font-family-base,
+);
+
+$typography-overline: (
+  'font-size': $font-size-xs,
+  'line-height': $line-height-caption,
+  'font-weight': $font-weight-medium,
+  'letter-spacing': $letter-spacing-widest,
+  'font-family': $font-family-base,
+  'text-transform': uppercase,
+);
+
+// Button & interactive text
+$typography-button: (
+  'font-size': $font-size-sm,
+  'line-height': $line-height-tight,
+  'font-weight': $font-weight-medium,
+  'letter-spacing': $letter-spacing-wide,
+  'font-family': $font-family-base,
+  'text-transform': uppercase,
+);
+
+$typography-button-large: (
+  'font-size': $font-size-base,
+  'line-height': $line-height-tight,
+  'font-weight': $font-weight-medium,
+  'letter-spacing': $letter-spacing-wide,
+  'font-family': $font-family-base,
+  'text-transform': uppercase,
+);
+
+$typography-button-small: (
+  'font-size': $font-size-xs,
+  'line-height': $line-height-tight,
+  'font-weight': $font-weight-medium,
+  'letter-spacing': $letter-spacing-wider,
+  'font-family': $font-family-base,
+  'text-transform': uppercase,
+);
+
+// Link styles
+$typography-link: (
+  'font-size': inherit,
+  'line-height': inherit,
+  'font-weight': $font-weight-medium,
+  'letter-spacing': inherit,
+  'font-family': inherit,
+  'text-decoration': underline,
+  'text-underline-offset': 0.125em,
+);
+
+// Code & monospace
+$typography-code: (
+  'font-size': 0.875em,
+  'line-height': $line-height-normal,
+  'font-weight': $font-weight-regular,
+  'letter-spacing': $letter-spacing-normal,
+  'font-family': $font-family-code,
+);
+
+$typography-code-block: (
+  'font-size': $font-size-sm,
+  'line-height': $line-height-relaxed,
+  'font-weight': $font-weight-regular,
+  'letter-spacing': $letter-spacing-normal,
+  'font-family': $font-family-code,
+);
+
+// ----------------------------------------------------------------------------
+// TYPOGRAPHY MAP - All styles for programmatic access
+// ----------------------------------------------------------------------------
+
+$typography-styles: (
+  'display-1': $typography-display-1,
+  'display-2': $typography-display-2,
+  'display-3': $typography-display-3,
+  'h1': $typography-h1,
+  'h2': $typography-h2,
+  'h3': $typography-h3,
+  'h4': $typography-h4,
+  'h5': $typography-h5,
+  'h6': $typography-h6,
+  'body-1': $typography-body-1,
+  'body-2': $typography-body-2,
+  'body-large': $typography-body-large,
+  'caption': $typography-caption,
+  'overline': $typography-overline,
+  'button': $typography-button,
+  'button-large': $typography-button-large,
+  'button-small': $typography-button-small,
+  'link': $typography-link,
+  'code': $typography-code,
+  'code-block': $typography-code-block,
+);
+
+// ----------------------------------------------------------------------------
+// UTILITY MIXINS
+// ----------------------------------------------------------------------------
+
+// Apply typography style from map
+@mixin typography($style) {
+  $style-map: map-get($typography-styles, $style);
+
+  @if $style-map {
+    @each $property, $value in $style-map {
+      #{$property}: $value;
+    }
+  } @else {
+    @warn "Typography style '#{$style}' not found.";
+  }
+}
+
+// Responsive font size
+@mixin responsive-font-size($min-size, $max-size, $min-width: 320px, $max-width: 1200px) {
+  font-size: $min-size;
+
+  @media (min-width: $min-width) {
+    font-size: calc(
+      #{$min-size} + (#{strip-unit($max-size)} - #{strip-unit($min-size)}) *
+        ((100vw - #{$min-width}) / (#{strip-unit($max-width)} - #{strip-unit($min-width)}))
+    );
+  }
+
+  @media (min-width: $max-width) {
+    font-size: $max-size;
+  }
+}
+
+// Text truncation
+@mixin text-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@mixin text-truncate-multiline($lines: 2) {
+  display: -webkit-box;
+  -webkit-line-clamp: $lines;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+// Remove unit from number
+@function strip-unit($number) {
+  @if type-of($number) == 'number' and not unitless($number) {
+    @return calc($number / ($number * 0 + 1));
+  }
+  @return $number;
+}

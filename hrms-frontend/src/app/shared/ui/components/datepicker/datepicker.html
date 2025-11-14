@@ -1,0 +1,174 @@
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- PREMIUM DATEPICKER TEMPLATE                                 -->
+<!-- Production-ready date picker with calendar popup            -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+
+<div [ngClass]="containerClasses">
+  <!-- Label -->
+  <label *ngIf="label" class="datepicker-label">
+    {{ label }}
+    <span *ngIf="required" class="datepicker-label__required">*</span>
+  </label>
+
+  <!-- Input Field -->
+  <div class="datepicker-input-wrapper">
+    <button
+      type="button"
+      [ngClass]="inputClasses"
+      [disabled]="disabled"
+      (click)="toggleCalendar()"
+      (keydown)="handleKeyDown($event)"
+      [attr.aria-expanded]="isOpen"
+      [attr.aria-haspopup]="true"
+      [attr.aria-label]="label || placeholder"
+    >
+      <span class="datepicker-input__value" [class.datepicker-input__value--placeholder]="!value">
+        {{ displayValue || placeholder }}
+      </span>
+
+      <!-- Calendar Icon -->
+      <svg
+        class="datepicker-input__icon"
+        width="20"
+        height="20"
+        viewBox="0 0 20 20"
+        fill="none"
+      >
+        <path
+          d="M6 2V4M14 2V4M3 8H17M5 4H15C16.1046 4 17 4.89543 17 6V16C17 17.1046 16.1046 18 15 18H5C3.89543 18 3 17.1046 3 16V6C3 4.89543 3.89543 4 5 4Z"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+      </svg>
+    </button>
+
+    <!-- Calendar Popup -->
+    <div *ngIf="isOpen" class="datepicker-popup">
+      <!-- Header with Month/Year Navigation -->
+      <div class="datepicker-header">
+        <!-- Previous Month Button -->
+        <button
+          type="button"
+          class="datepicker-nav-button"
+          (click)="previousMonth()"
+          aria-label="Previous month"
+        >
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <path
+              d="M12 15L7 10L12 5"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+        </button>
+
+        <!-- Month/Year Dropdowns -->
+        <div class="datepicker-header-selectors">
+          <select
+            class="datepicker-select"
+            [value]="currentMonth"
+            (change)="onMonthChange($event)"
+            aria-label="Select month"
+          >
+            <option *ngFor="let month of months; let i = index" [value]="i">
+              {{ month }}
+            </option>
+          </select>
+
+          <select
+            class="datepicker-select"
+            [value]="currentYear"
+            (change)="onYearChange($event)"
+            aria-label="Select year"
+          >
+            <option *ngFor="let year of years" [value]="year">
+              {{ year }}
+            </option>
+          </select>
+        </div>
+
+        <!-- Next Month Button -->
+        <button
+          type="button"
+          class="datepicker-nav-button"
+          (click)="nextMonth()"
+          aria-label="Next month"
+        >
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <path
+              d="M8 5L13 10L8 15"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Days of Week Header -->
+      <div class="datepicker-weekdays">
+        <div
+          *ngFor="let day of weekDays"
+          class="datepicker-weekday"
+        >
+          {{ day }}
+        </div>
+      </div>
+
+      <!-- Calendar Grid -->
+      <div class="datepicker-calendar">
+        <button
+          *ngFor="let calendarDate of calendarDates"
+          type="button"
+          class="datepicker-day"
+          [class.datepicker-day--current-month]="calendarDate.isCurrentMonth"
+          [class.datepicker-day--today]="calendarDate.isToday"
+          [class.datepicker-day--selected]="calendarDate.isSelected"
+          [class.datepicker-day--disabled]="calendarDate.isDisabled"
+          [class.datepicker-day--weekend]="calendarDate.isWeekend"
+          [class.datepicker-day--focused]="isDateFocused(calendarDate.date)"
+          [disabled]="calendarDate.isDisabled"
+          (click)="selectDate(calendarDate)"
+          [attr.aria-label]="formatDate(calendarDate.date)"
+          [attr.aria-selected]="calendarDate.isSelected"
+        >
+          {{ calendarDate.day }}
+        </button>
+      </div>
+
+      <!-- Footer Actions -->
+      <div class="datepicker-footer">
+        <button
+          type="button"
+          class="datepicker-footer-button"
+          (click)="selectToday()"
+        >
+          Today
+        </button>
+
+        <button
+          type="button"
+          class="datepicker-footer-button datepicker-footer-button--secondary"
+          (click)="clearDate()"
+        >
+          Clear
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Error Message -->
+  <div *ngIf="error" class="datepicker-error">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+      <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="2"/>
+      <path d="M8 4V8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      <circle cx="8" cy="11" r="0.5" fill="currentColor" stroke="currentColor"/>
+    </svg>
+    <span>{{ error }}</span>
+  </div>
+</div>

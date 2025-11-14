@@ -1,0 +1,37 @@
+<div class="sidenav-container" [class.sidenav-opened]="opened" [class.mode-push]="mode === 'push'">
+  <!-- Backdrop Overlay -->
+  <div
+    class="sidenav-backdrop"
+    *ngIf="showBackdrop()"
+    (click)="onBackdropClick()"
+    [@backdropAnimation]
+  ></div>
+
+  <!-- Sidenav Drawer -->
+  <aside
+    class="sidenav"
+    [class.position-left]="position === 'left'"
+    [class.position-right]="position === 'right'"
+    [class.mode-over]="mode === 'over'"
+    [class.mode-push]="mode === 'push'"
+    [class.mode-side]="mode === 'side'"
+    [class.sidenav-opened]="opened"
+    [style.width]="width"
+    [style.transform]="getSidenavTransform()"
+    role="navigation"
+    [attr.aria-hidden]="!opened"
+  >
+    <div #sidenavContent class="sidenav-content">
+      <ng-content></ng-content>
+    </div>
+  </aside>
+
+  <!-- Main Content Area -->
+  <div
+    class="sidenav-main-content"
+    [style.margin-left]="position === 'left' ? getContentMargin() : '0'"
+    [style.margin-right]="position === 'right' ? getContentMargin() : '0'"
+  >
+    <ng-content select="[sidenavContent]"></ng-content>
+  </div>
+</div>

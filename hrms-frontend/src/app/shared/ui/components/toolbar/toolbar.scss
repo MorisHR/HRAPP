@@ -1,0 +1,126 @@
+@use '@angular/material' as mat;
+
+:host {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.toolbar-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-height: 64px;
+  padding: 0 16px;
+  box-sizing: border-box;
+  transition: box-shadow 280ms cubic-bezier(0.4, 0, 0.2, 1);
+
+  @media (max-width: 599px) {
+    min-height: 56px;
+    padding: 0 12px;
+  }
+}
+
+.toolbar-section {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  &.toolbar-left {
+    flex: 0 1 auto;
+    justify-content: flex-start;
+  }
+
+  &.toolbar-center {
+    flex: 1 1 auto;
+    justify-content: center;
+  }
+
+  &.toolbar-right {
+    flex: 0 1 auto;
+    justify-content: flex-end;
+  }
+
+  &.toolbar-default {
+    flex: 1 1 auto;
+    justify-content: flex-start;
+  }
+
+  // Hide empty sections
+  &:empty {
+    display: none;
+  }
+}
+
+// Color variants
+:host.toolbar-primary {
+  background-color: var(--md-sys-color-primary, #6750a4);
+  color: var(--md-sys-color-on-primary, #ffffff);
+}
+
+:host.toolbar-secondary {
+  background-color: var(--md-sys-color-secondary, #625b71);
+  color: var(--md-sys-color-on-secondary, #ffffff);
+}
+
+:host.toolbar-neutral {
+  background-color: var(--md-sys-color-surface, #ffffff);
+  color: var(--md-sys-color-on-surface, #1c1b1f);
+  border-bottom: 1px solid var(--md-sys-color-outline-variant, #e0e0e0);
+}
+
+// Elevation
+:host.toolbar-elevated {
+  box-shadow:
+    0px 2px 4px -1px rgba(0, 0, 0, 0.2),
+    0px 4px 5px 0px rgba(0, 0, 0, 0.14),
+    0px 1px 10px 0px rgba(0, 0, 0, 0.12);
+}
+
+// Position variants
+:host.toolbar-static {
+  position: static;
+}
+
+:host.toolbar-fixed {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+}
+
+:host.toolbar-sticky {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+// Responsive adjustments
+@media (max-width: 959px) {
+  .toolbar-container {
+    .toolbar-section {
+      gap: 6px;
+    }
+  }
+}
+
+@media (max-width: 599px) {
+  .toolbar-container {
+    .toolbar-section {
+      gap: 4px;
+
+      &.toolbar-center {
+        // On mobile, center section takes less space
+        flex: 0 1 auto;
+      }
+    }
+  }
+}
+
+// Ensure content items are vertically aligned
+.toolbar-section ::ng-deep > * {
+  display: flex;
+  align-items: center;
+}

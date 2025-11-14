@@ -1,0 +1,135 @@
+// PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP
+// BADGE COMPONENT
+// Notification badge overlay with positioning and color variants
+// Part of the Fortune 500-grade HRMS design system
+// PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP
+
+.badge-container {
+  position: relative;
+  display: inline-flex;
+  vertical-align: middle;
+}
+
+.badge {
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
+  color: white;
+  border-radius: 10px;
+  border: 2px solid white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  z-index: 1;
+  transition: all 0.2s ease;
+
+  // Dot mode - just a circular indicator
+  &.badge-dot {
+    min-width: 8px;
+    width: 8px;
+    height: 8px;
+    padding: 0;
+    border-radius: 50%;
+  }
+
+  // Position variants
+  &.badge-top-right {
+    top: 0;
+    right: 0;
+    transform: translate(50%, -50%);
+  }
+
+  &.badge-top-left {
+    top: 0;
+    left: 0;
+    transform: translate(-50%, -50%);
+  }
+
+  &.badge-bottom-right {
+    bottom: 0;
+    right: 0;
+    transform: translate(50%, 50%);
+  }
+
+  &.badge-bottom-left {
+    bottom: 0;
+    left: 0;
+    transform: translate(-50%, 50%);
+  }
+
+  // Color variants
+  &.badge-primary {
+    background-color: #3b82f6;
+  }
+
+  &.badge-success {
+    background-color: #10b981;
+  }
+
+  &.badge-warning {
+    background-color: #f59e0b;
+  }
+
+  &.badge-error {
+    background-color: #ef4444;
+  }
+
+  // Animation for new badges
+  animation: badge-appear 0.3s ease;
+}
+
+@keyframes badge-appear {
+  from {
+    opacity: 0;
+    transform: translate(50%, -50%) scale(0.5);
+  }
+  to {
+    opacity: 1;
+    transform: translate(50%, -50%) scale(1);
+  }
+}
+
+// Adjust animation for different positions
+.badge-top-left {
+  @keyframes badge-appear {
+    from {
+      opacity: 0;
+      transform: translate(-50%, -50%) scale(0.5);
+    }
+    to {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
+    }
+  }
+}
+
+.badge-bottom-right {
+  @keyframes badge-appear {
+    from {
+      opacity: 0;
+      transform: translate(50%, 50%) scale(0.5);
+    }
+    to {
+      opacity: 1;
+      transform: translate(50%, 50%) scale(1);
+    }
+  }
+}
+
+.badge-bottom-left {
+  @keyframes badge-appear {
+    from {
+      opacity: 0;
+      transform: translate(-50%, 50%) scale(0.5);
+    }
+    to {
+      opacity: 1;
+      transform: translate(-50%, 50%) scale(1);
+    }
+  }
+}

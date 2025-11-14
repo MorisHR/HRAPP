@@ -18,8 +18,7 @@ import { TenantContextService } from '../services/tenant-context.service';
  * - Localhost: Checks URL subdomain (subdomain.localhost:4200)
  * - Production: Checks URL subdomain (subdomain.morishr.com)
  */
-export const subdomainGuard: CanActivateFn = (route: ActivatedRouteSnapshot, state: RouterStateSnapshot) => {
-  const router = inject(Router);
+export const subdomainGuard: CanActivateFn = (_route: ActivatedRouteSnapshot, state: RouterStateSnapshot) => {
   const tenantContext = inject(TenantContextService);
 
   console.log('🔍 SUBDOMAIN GUARD: Checking route:', state.url);
@@ -30,9 +29,17 @@ export const subdomainGuard: CanActivateFn = (route: ActivatedRouteSnapshot, sta
     return true;
   }
 
-  // ✅ Skip ALL auth routes (public routes, no tenant context needed)
-  if (state.url.startsWith('/auth')) {
+  // ✅ CRITICAL FIX: Skip ALL auth routes - EXPLICITLY
+  // This includes /auth/superadmin, /auth/subdomain, /auth/login, etc.
+  // These routes MUST be accessible without tenant context
+  if (state.url.startsWith('/auth/')) {
     console.log('✅ SUBDOMAIN GUARD: Auth route - bypassing (public route)');
+    return true;
+  }
+
+  // ✅ Also skip root /auth path
+  if (state.url === '/auth') {
+    console.log('✅ SUBDOMAIN GUARD: Auth root - bypassing (public route)');
     return true;
   }
 

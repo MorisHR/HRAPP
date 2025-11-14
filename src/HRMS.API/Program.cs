@@ -944,20 +944,21 @@ if (hangfireSettings.DashboardEnabled)
 }
 
 // ======================
-// DATABASE MAINTENANCE JOBS SCHEDULING
-// ======================
-// Register automated database maintenance jobs: MV refresh, token cleanup, vacuum, partitions, health checks
-// These jobs run on optimized schedules to maintain database performance and health
-DatabaseMaintenanceJobs.RegisterScheduledJobs();
-Log.Information("Database maintenance jobs scheduled: daily-mv-refresh (3 AM), daily-token-cleanup (4 AM), weekly-vacuum (Sun 4 AM), monthly-partition (1st 2 AM), daily-health-check (6 AM)");
-
-// ======================
 // RECURRING BACKGROUND JOBS (Production-Grade)
 // ======================
 var mauritiusTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Mauritius Standard Time");
 
 // Use service-based API instead of static API
 var recurringJobManager = app.Services.GetRequiredService<IRecurringJobManager>();
+
+// ======================
+// DATABASE MAINTENANCE JOBS SCHEDULING
+// ======================
+// Register automated database maintenance jobs: MV refresh, token cleanup, vacuum, partitions, health checks
+// These jobs run on optimized schedules to maintain database performance and health
+// IMPORTANT: Must be called AFTER Hangfire dashboard initialization
+DatabaseMaintenanceJobs.RegisterScheduledJobs(recurringJobManager);
+Log.Information("Database maintenance jobs scheduled: daily-mv-refresh (3 AM), daily-token-cleanup (4 AM), weekly-vacuum (Sun 4 AM), monthly-partition (1st 2 AM), daily-health-check (6 AM)");
 
 recurringJobManager.AddOrUpdate<DocumentExpiryAlertJob>(
     "document-expiry-alerts",

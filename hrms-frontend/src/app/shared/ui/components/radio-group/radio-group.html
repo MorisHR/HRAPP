@@ -1,0 +1,27 @@
+<div
+  class="radio-group"
+  [class.radio-group-horizontal]="layout === 'horizontal'"
+  [class.radio-group-vertical]="layout === 'vertical'"
+  [class.radio-group-disabled]="disabled"
+  role="radiogroup"
+  [attr.aria-label]="label"
+  [attr.aria-required]="required">
+
+  <label *ngIf="label" class="radio-group-label">
+    {{ label }}
+    <span *ngIf="required" class="radio-group-required">*</span>
+  </label>
+
+  <div class="radio-group-options">
+    <app-radio
+      *ngFor="let option of options; let i = index"
+      [label]="option.label"
+      [value]="option.value"
+      [checked]="isChecked(option.value)"
+      [disabled]="isDisabled(option)"
+      [name]="name"
+      (change)="onRadioChange($event)"
+      (keydown)="onKeyDown($event, i)">
+    </app-radio>
+  </div>
+</div>

@@ -1,0 +1,240 @@
+// ============================================================================
+// PREMIUM CHECKBOX STYLES
+// Part of the Fortune 500-grade HRMS design system
+// ============================================================================
+// Production-ready checkbox with design tokens and accessibility
+// ============================================================================
+
+@import '../../../../../styles/index';
+
+// ----------------------------------------------------------------------------
+// CHECKBOX WRAPPER - Container element
+// ----------------------------------------------------------------------------
+
+.checkbox-wrapper {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  user-select: none;
+  position: relative;
+
+  // Disabled state for wrapper
+  &.checkbox--disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+}
+
+// ----------------------------------------------------------------------------
+// NATIVE CHECKBOX INPUT - Hidden but accessible
+// ----------------------------------------------------------------------------
+
+.checkbox__input {
+  // Visually hidden but accessible to screen readers
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+
+  // Focus state - show outline on custom checkbox
+  &:focus-visible ~ .checkbox__box {
+    @include focus-ring;
+  }
+}
+
+// ----------------------------------------------------------------------------
+// CUSTOM CHECKBOX BOX - Visual representation
+// ----------------------------------------------------------------------------
+
+.checkbox__box {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  border: 2px solid $color-neutral-400;
+  border-radius: 4px;
+  background-color: $color-background-paper;
+  transition: all $duration-fast $easing-standard;
+
+  // Hover state - only when not disabled
+  .checkbox-wrapper:not(.checkbox--disabled):hover & {
+    border-color: $color-primary-500;
+    background-color: color-alpha($color-primary-500, 0.04);
+  }
+
+  // Checked state
+  .checkbox--checked & {
+    border-color: $color-primary-500;
+    background-color: $color-primary-500;
+  }
+
+  // Indeterminate state
+  .checkbox--indeterminate & {
+    border-color: $color-primary-500;
+    background-color: $color-primary-500;
+  }
+
+  // Disabled state
+  .checkbox--disabled & {
+    border-color: $color-neutral-300;
+    background-color: $color-neutral-100;
+  }
+
+  // Disabled + Checked state
+  .checkbox--disabled.checkbox--checked &,
+  .checkbox--disabled.checkbox--indeterminate & {
+    background-color: $color-neutral-400;
+    border-color: $color-neutral-400;
+  }
+}
+
+// ----------------------------------------------------------------------------
+// CHECKMARK ICON - SVG for checked state
+// ----------------------------------------------------------------------------
+
+.checkbox__checkmark {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  color: $color-neutral-0;
+  opacity: 0;
+  transform: scale(0.5);
+  transition: all $duration-fast $easing-decelerate;
+
+  // Checked state
+  .checkbox--checked & {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  // Disabled state
+  .checkbox--disabled.checkbox--checked & {
+    color: $color-neutral-200;
+  }
+}
+
+// ----------------------------------------------------------------------------
+// INDETERMINATE ICON - Horizontal line
+// ----------------------------------------------------------------------------
+
+.checkbox__indeterminate {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  color: $color-neutral-0;
+  opacity: 0;
+  transform: scale(0.5);
+  transition: all $duration-fast $easing-decelerate;
+
+  // Indeterminate state
+  .checkbox--indeterminate & {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  // Disabled state
+  .checkbox--disabled.checkbox--indeterminate & {
+    color: $color-neutral-200;
+  }
+}
+
+// ----------------------------------------------------------------------------
+// LABEL TEXT - Text next to checkbox
+// ----------------------------------------------------------------------------
+
+.checkbox__label {
+  color: $color-text-primary;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 20px;
+  transition: color $duration-fast $easing-standard;
+
+  // Disabled state
+  .checkbox--disabled & {
+    color: $color-text-disabled;
+  }
+}
+
+// ----------------------------------------------------------------------------
+// REQUIRED INDICATOR - Asterisk for required fields
+// ----------------------------------------------------------------------------
+
+.checkbox__required-indicator {
+  color: $color-error-500;
+  margin-left: 2px;
+  font-weight: 500;
+}
+
+// ----------------------------------------------------------------------------
+// ACTIVE/PRESSED STATE
+// ----------------------------------------------------------------------------
+
+.checkbox-wrapper:not(.checkbox--disabled):active .checkbox__box {
+  transform: scale(0.95);
+}
+
+// ----------------------------------------------------------------------------
+// RESPONSIVE DESIGN
+// ----------------------------------------------------------------------------
+
+@media (max-width: 768px) {
+  .checkbox__box {
+    // Larger tap target for mobile
+    width: 24px;
+    height: 24px;
+  }
+
+  .checkbox__checkmark,
+  .checkbox__indeterminate {
+    width: 16px;
+    height: 16px;
+  }
+}
+
+// ----------------------------------------------------------------------------
+// ACCESSIBILITY ENHANCEMENTS
+// ----------------------------------------------------------------------------
+
+// High contrast mode support
+@media (prefers-contrast: high) {
+  .checkbox__box {
+    border-width: 3px;
+  }
+
+  .checkbox--checked .checkbox__box,
+  .checkbox--indeterminate .checkbox__box {
+    outline: 2px solid transparent;
+    outline-offset: 2px;
+  }
+}
+
+// Reduced motion support
+@media (prefers-reduced-motion: reduce) {
+  .checkbox__box,
+  .checkbox__checkmark,
+  .checkbox__indeterminate,
+  .checkbox__label {
+    transition: none;
+  }
+}
+
+// Dark mode support (future-proofing)
+@media (prefers-color-scheme: dark) {
+  .checkbox__box {
+    background-color: $color-background-paper-dark;
+    border-color: $color-border-default-dark;
+  }
+
+  .checkbox__label {
+    color: $color-text-primary-dark;
+  }
+
+  .checkbox--disabled .checkbox__label {
+    color: $color-text-disabled-dark;
+  }
+}

@@ -1,0 +1,222 @@
+<!-- ============================================================================
+     TABS COMPONENT - VISUAL DEMO
+     Copy this into a test component to see all variants in action
+     ============================================================================ -->
+
+<div style="padding: 2rem; max-width: 1200px; margin: 0 auto;">
+  <h1 style="margin-bottom: 2rem;">Tabs Component Demo</h1>
+
+  <!-- Default Variant -->
+  <section style="margin-bottom: 4rem;">
+    <h2 style="margin-bottom: 1rem;">Default Variant</h2>
+    <app-tabs
+      [tabs]="tabs"
+      [activeTab]="activeTabDefault"
+      [variant]="'default'"
+      (tabChange)="activeTabDefault = $event">
+
+      <div *ngIf="activeTabDefault === 'overview'">
+        <h3>Overview</h3>
+        <p>This is the default tab style with a bottom border and sliding indicator.</p>
+        <p>Try navigating with your keyboard: Arrow keys, Home, End, Enter/Space</p>
+      </div>
+
+      <div *ngIf="activeTabDefault === 'details'">
+        <h3>Details</h3>
+        <p>The active tab is indicated by a blue underline that animates smoothly.</p>
+      </div>
+
+      <div *ngIf="activeTabDefault === 'settings'">
+        <h3>Settings</h3>
+        <p>This tab is disabled in the demo below to show the disabled state.</p>
+      </div>
+
+      <div *ngIf="activeTabDefault === 'analytics'">
+        <h3>Analytics</h3>
+        <p>Hover effects and focus indicators follow accessibility best practices.</p>
+      </div>
+    </app-tabs>
+  </section>
+
+  <!-- Pills Variant -->
+  <section style="margin-bottom: 4rem;">
+    <h2 style="margin-bottom: 1rem;">Pills Variant</h2>
+    <app-tabs
+      [tabs]="tabsWithIcons"
+      [activeTab]="activeTabPills"
+      [variant]="'pills'"
+      (tabChange)="activeTabPills = $event">
+
+      <div *ngIf="activeTabPills === 'dashboard'">
+        <h3>Dashboard</h3>
+        <p>Pills variant features rounded backgrounds with shadow effects.</p>
+        <p>Notice the smooth background transition on the active tab.</p>
+      </div>
+
+      <div *ngIf="activeTabPills === 'users'">
+        <h3>Users</h3>
+        <p>Icons can be added to tabs for better visual communication.</p>
+      </div>
+
+      <div *ngIf="activeTabPills === 'reports'">
+        <h3>Reports</h3>
+        <p>The pills variant works great for dashboard-style layouts.</p>
+      </div>
+
+      <div *ngIf="activeTabPills === 'settings'">
+        <h3>Settings</h3>
+        <p>Each tab can have an optional icon alongside the label.</p>
+      </div>
+    </app-tabs>
+  </section>
+
+  <!-- Underline Variant -->
+  <section style="margin-bottom: 4rem;">
+    <h2 style="margin-bottom: 1rem;">Underline Variant (Minimal)</h2>
+    <app-tabs
+      [tabs]="tabs"
+      [activeTab]="activeTabUnderline"
+      [variant]="'underline'"
+      (tabChange)="activeTabUnderline = $event">
+
+      <div *ngIf="activeTabUnderline === 'overview'">
+        <h3>Overview</h3>
+        <p>The underline variant provides a clean, minimal look.</p>
+        <p>Perfect for content-heavy interfaces.</p>
+      </div>
+
+      <div *ngIf="activeTabUnderline === 'details'">
+        <h3>Details</h3>
+        <p>Active indicator appears as a bottom border that scales smoothly.</p>
+      </div>
+
+      <div *ngIf="activeTabUnderline === 'settings'">
+        <h3>Settings</h3>
+        <p>Hover states show a subtle preview of the active indicator.</p>
+      </div>
+
+      <div *ngIf="activeTabUnderline === 'analytics'">
+        <h3>Analytics</h3>
+        <p>This variant uses more spacing between tabs for better touch targets.</p>
+      </div>
+    </app-tabs>
+  </section>
+
+  <!-- Disabled State Demo -->
+  <section style="margin-bottom: 4rem;">
+    <h2 style="margin-bottom: 1rem;">Disabled State</h2>
+    <app-tabs
+      [tabs]="tabsWithDisabled"
+      [activeTab]="activeTabDisabled"
+      [variant]="'default'"
+      (tabChange)="activeTabDisabled = $event">
+
+      <div *ngIf="activeTabDisabled === 'step1'">
+        <h3>Step 1: Personal Info</h3>
+        <p>Complete this step to unlock the next one.</p>
+        <button
+          style="padding: 0.5rem 1rem; background: #2196f3; color: white; border: none; border-radius: 4px; cursor: pointer;"
+          (click)="enableStep2()">
+          Complete Step 1
+        </button>
+      </div>
+
+      <div *ngIf="activeTabDisabled === 'step2'">
+        <h3>Step 2: Address</h3>
+        <p>Complete this step to unlock the review.</p>
+        <button
+          style="padding: 0.5rem 1rem; background: #2196f3; color: white; border: none; border-radius: 4px; cursor: pointer;"
+          (click)="enableReview()">
+          Complete Step 2
+        </button>
+      </div>
+
+      <div *ngIf="activeTabDisabled === 'review'">
+        <h3>Review & Submit</h3>
+        <p>All steps completed! Ready to submit.</p>
+      </div>
+    </app-tabs>
+  </section>
+
+  <!-- Responsive Demo -->
+  <section style="margin-bottom: 4rem;">
+    <h2 style="margin-bottom: 1rem;">Responsive (Many Tabs)</h2>
+    <p style="margin-bottom: 1rem; color: #666;">
+      Resize your browser to see horizontal scrolling on smaller screens
+    </p>
+    <app-tabs
+      [tabs]="manyTabs"
+      [activeTab]="activeTabMany"
+      [variant]="'pills'"
+      (tabChange)="activeTabMany = $event">
+
+      <div>
+        <h3>Tab: {{ activeTabMany }}</h3>
+        <p>The tab header scrolls horizontally on mobile devices while maintaining smooth navigation.</p>
+      </div>
+    </app-tabs>
+  </section>
+
+  <!-- Accessibility Info -->
+  <section style="background: #f5f5f5; padding: 2rem; border-radius: 8px;">
+    <h2 style="margin-bottom: 1rem;">Accessibility Features</h2>
+    <ul style="line-height: 1.8;">
+      <li><strong>Keyboard Navigation:</strong> Use Arrow keys to move between tabs</li>
+      <li><strong>Focus Management:</strong> Tab key moves focus, Enter/Space activates</li>
+      <li><strong>Screen Readers:</strong> Full ARIA labels and roles</li>
+      <li><strong>High Contrast:</strong> Visible outlines in high contrast mode</li>
+      <li><strong>Reduced Motion:</strong> Respects prefers-reduced-motion setting</li>
+      <li><strong>Focus Indicators:</strong> Clear 3px blue outline on focus</li>
+    </ul>
+  </section>
+</div>
+
+<!-- Component TypeScript -->
+<!--
+export class TabsDemoComponent {
+  // Basic tabs
+  tabs = [
+    { label: 'Overview', value: 'overview' },
+    { label: 'Details', value: 'details' },
+    { label: 'Settings', value: 'settings' },
+    { label: 'Analytics', value: 'analytics' },
+  ];
+
+  // Tabs with icons
+  tabsWithIcons = [
+    { label: 'Dashboard', value: 'dashboard', icon: '📊' },
+    { label: 'Users', value: 'users', icon: '👥' },
+    { label: 'Reports', value: 'reports', icon: '📄' },
+    { label: 'Settings', value: 'settings', icon: '⚙️' },
+  ];
+
+  // Tabs with disabled state
+  tabsWithDisabled = [
+    { label: 'Step 1', value: 'step1' },
+    { label: 'Step 2', value: 'step2', disabled: true },
+    { label: 'Review', value: 'review', disabled: true },
+  ];
+
+  // Many tabs for responsive demo
+  manyTabs = Array.from({ length: 12 }, (_, i) => ({
+    label: `Tab ${i + 1}`,
+    value: `tab${i + 1}`
+  }));
+
+  activeTabDefault = 'overview';
+  activeTabPills = 'dashboard';
+  activeTabUnderline = 'overview';
+  activeTabDisabled = 'step1';
+  activeTabMany = 'tab1';
+
+  enableStep2(): void {
+    this.tabsWithDisabled[1].disabled = false;
+    this.activeTabDisabled = 'step2';
+  }
+
+  enableReview(): void {
+    this.tabsWithDisabled[2].disabled = false;
+    this.activeTabDisabled = 'review';
+  }
+}
+-->

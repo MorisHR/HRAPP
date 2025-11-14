@@ -1,0 +1,354 @@
+// PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP
+// PREMIUM INPUT COMPONENT STYLES
+// Part of the Fortune 500-grade HRMS design system
+// Material Design-inspired floating label input with validation
+// PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP
+
+@import '../../../../../styles/index';
+
+// ============================================================================
+// CONTAINER
+// ============================================================================
+
+.input-container {
+  position: relative;
+  width: 100%;
+  margin-bottom: $spacing-4;
+
+  &--error {
+    .input-field {
+      border-color: $color-error-500;
+
+      &:focus {
+        border-color: $color-error-600;
+        box-shadow: 0 0 0 3px color-alpha($color-error-500, 0.12);
+      }
+    }
+
+    .input-label {
+      color: $color-error-600;
+    }
+  }
+
+  &--disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+// ============================================================================
+// INPUT WRAPPER
+// ============================================================================
+
+.input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+// ============================================================================
+// LABEL - Floating label animation
+// ============================================================================
+
+.input-label {
+  position: absolute;
+  left: $spacing-4;
+  top: 50%;
+  transform: translateY(-50%);
+  color: $color-text-secondary;
+  font-size: $font-size-base;
+  font-weight: $font-weight-regular;
+  line-height: $line-height-normal;
+  background: $color-background-paper;
+  padding: 0 $spacing-1;
+  pointer-events: none;
+  transition: all $duration-normal $easing-standard;
+  z-index: 1;
+
+  // Floating state
+  .input-field--filled ~ &,
+  .input-field--focused ~ &,
+  .input-field:focus ~ & {
+    top: 0;
+    font-size: $font-size-xs;
+    color: $color-primary-600;
+    font-weight: $font-weight-medium;
+  }
+
+  &--required {
+    .input-label__required-indicator {
+      color: $color-error-500;
+      margin-left: $spacing-1;
+    }
+  }
+}
+
+// ============================================================================
+// INPUT FIELD
+// ============================================================================
+
+.input-field {
+  width: 100%;
+  height: 56px;
+  padding: $spacing-4;
+  font-family: $font-family-base;
+  font-size: $font-size-base;
+  font-weight: $font-weight-regular;
+  line-height: $line-height-normal;
+  color: $color-text-primary;
+  background-color: $color-background-paper;
+  border: 2px solid $color-border-default;
+  border-radius: 8px;
+  outline: none;
+  transition: $transition-all;
+  appearance: none;
+
+  // Placeholder
+  &::placeholder {
+    color: $color-text-hint;
+    opacity: 0;
+    transition: opacity $duration-fast $easing-standard;
+  }
+
+  &:focus::placeholder {
+    opacity: 1;
+  }
+
+  // Focus state
+  &:focus,
+  &--focused {
+    border-color: $color-primary-500;
+    box-shadow: 0 0 0 3px color-alpha($color-primary-500, 0.12);
+  }
+
+  // Hover state
+  &:hover:not(:disabled):not(:focus):not(.input-field--error) {
+    border-color: $color-border-medium;
+  }
+
+  // Filled state (has value)
+  &--filled {
+    &::placeholder {
+      opacity: 1;
+    }
+  }
+
+  // Error state
+  &--error {
+    border-color: $color-error-500;
+
+    &:focus {
+      border-color: $color-error-600;
+      box-shadow: 0 0 0 3px color-alpha($color-error-500, 0.12);
+    }
+  }
+
+  // Disabled state
+  &--disabled {
+    background-color: $color-neutral-100;
+    color: $color-text-disabled;
+    cursor: not-allowed;
+    border-color: $color-border-light;
+
+    &:hover {
+      border-color: $color-border-light;
+    }
+  }
+
+  // Readonly state
+  &--readonly {
+    background-color: $color-neutral-50;
+    cursor: default;
+
+    &:focus {
+      border-color: $color-border-default;
+      box-shadow: none;
+    }
+  }
+
+  // When clearable, add padding for clear button
+  .input-container:has(.input-clear-button) & {
+    padding-right: calc($spacing-4 + 32px);
+  }
+}
+
+// ============================================================================
+// CLEAR BUTTON
+// ============================================================================
+
+.input-clear-button {
+  position: absolute;
+  right: $spacing-3;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 50%;
+  color: $color-text-secondary;
+  cursor: pointer;
+  transition: $transition-all;
+  z-index: 2;
+
+  &:hover {
+    background-color: $color-alpha-black-8;
+    color: $color-text-primary;
+  }
+
+  &:active {
+    background-color: $color-alpha-black-12;
+  }
+
+  &:focus-visible {
+    @include focus-ring;
+  }
+
+  svg {
+    width: 20px;
+    height: 20px;
+    display: block;
+  }
+}
+
+// ============================================================================
+// HELPER TEXT ROW
+// ============================================================================
+
+.input-helper-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-top: $spacing-2;
+  min-height: 20px;
+  gap: $spacing-2;
+}
+
+// ============================================================================
+// ERROR MESSAGE
+// ============================================================================
+
+.input-error {
+  display: flex;
+  align-items: center;
+  gap: $spacing-1;
+  color: $color-error-600;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-regular;
+  line-height: $line-height-normal;
+  flex: 1;
+
+  // Error icon (optional - using text only for now)
+  &::before {
+    content: ' ';
+    font-size: $font-size-base;
+  }
+}
+
+// ============================================================================
+// HINT TEXT
+// ============================================================================
+
+.input-hint {
+  color: $color-text-secondary;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-regular;
+  line-height: $line-height-normal;
+  flex: 1;
+}
+
+// ============================================================================
+// CHARACTER COUNTER
+// ============================================================================
+
+.input-char-count {
+  color: $color-text-secondary;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-regular;
+  line-height: $line-height-normal;
+  white-space: nowrap;
+  margin-left: auto;
+
+  &--limit {
+    color: $color-error-600;
+    font-weight: $font-weight-medium;
+  }
+}
+
+// ============================================================================
+// RESPONSIVE ADJUSTMENTS
+// ============================================================================
+
+@media (max-width: 768px) {
+  .input-field {
+    height: 52px;
+    font-size: $font-size-base;
+  }
+
+  .input-label {
+    font-size: $font-size-sm;
+
+    .input-field--filled ~ &,
+    .input-field--focused ~ &,
+    .input-field:focus ~ & {
+      font-size: 0.625rem; // 10px
+    }
+  }
+}
+
+// ============================================================================
+// ACCESSIBILITY ENHANCEMENTS
+// ============================================================================
+
+// High contrast mode support
+@media (prefers-contrast: high) {
+  .input-field {
+    border-width: 3px;
+
+    &:focus {
+      outline: 3px solid;
+      outline-offset: 2px;
+    }
+  }
+}
+
+// Reduced motion support
+@media (prefers-reduced-motion: reduce) {
+  .input-field,
+  .input-label,
+  .input-clear-button {
+    transition: none;
+  }
+}
+
+// Dark mode support (future enhancement)
+@media (prefers-color-scheme: dark) {
+  .input-container {
+    .input-field {
+      background-color: $color-neutral-800;
+      color: $color-text-primary-dark;
+      border-color: $color-border-default-dark;
+
+      &::placeholder {
+        color: $color-text-hint-dark;
+      }
+
+      &:hover {
+        border-color: $color-border-medium-dark;
+      }
+    }
+
+    .input-label {
+      color: $color-text-secondary-dark;
+      background: $color-neutral-800;
+    }
+
+    .input-hint {
+      color: $color-text-secondary-dark;
+    }
+  }
+}

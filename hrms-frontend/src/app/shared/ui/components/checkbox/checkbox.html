@@ -1,0 +1,64 @@
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- PREMIUM CHECKBOX TEMPLATE -->
+<!-- Production-ready with full WCAG 2.1 AA accessibility -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+
+<label class="checkbox-wrapper" [ngClass]="checkboxClasses">
+  <!-- Hidden native checkbox for accessibility -->
+  <input
+    #checkboxInput
+    type="checkbox"
+    class="checkbox__input"
+    [id]="checkboxId"
+    [checked]="checked"
+    [disabled]="disabled"
+    [required]="required"
+    [attr.aria-checked]="indeterminate ? 'mixed' : checked"
+    [attr.aria-label]="label || 'Checkbox'"
+    (change)="onCheckboxChange($event)"
+  />
+
+  <!-- Custom checkbox visual -->
+  <span class="checkbox__box">
+    <!-- Checkmark SVG for checked state -->
+    <svg
+      class="checkbox__checkmark"
+      *ngIf="checked && !indeterminate"
+      viewBox="0 0 16 16"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+    >
+      <path
+        d="M13.5 4.5L6 12L2.5 8.5"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      />
+    </svg>
+
+    <!-- Indeterminate line SVG -->
+    <svg
+      class="checkbox__indeterminate"
+      *ngIf="indeterminate"
+      viewBox="0 0 16 16"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+    >
+      <path
+        d="M3 8H13"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+      />
+    </svg>
+  </span>
+
+  <!-- Label text -->
+  <span class="checkbox__label" *ngIf="label">
+    {{ label }}
+    <span class="checkbox__required-indicator" *ngIf="required" aria-hidden="true">*</span>
+  </span>
+</label>

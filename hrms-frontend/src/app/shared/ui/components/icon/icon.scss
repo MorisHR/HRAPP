@@ -1,0 +1,219 @@
+// PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP
+// ICON COMPONENT STYLES
+// Part of the Fortune 500-grade HRMS design system
+// Production-ready icon styling with size variants
+// PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP
+
+.app-icon {
+  // Base styles
+  display: inline-block;
+  vertical-align: middle;
+  line-height: 1;
+  position: relative;
+  user-select: none;
+  flex-shrink: 0;
+
+  // Default color
+  color: currentColor;
+
+  // Size variants
+  &--small {
+    width: 16px;
+    height: 16px;
+  }
+
+  &--medium {
+    width: 24px;
+    height: 24px;
+  }
+
+  &--large {
+    width: 32px;
+    height: 32px;
+  }
+
+  // Fallback icon styling
+  &--fallback {
+    opacity: 0.6;
+  }
+
+  // SVG wrapper
+  &__svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+
+    // Ensure SVG fills the container
+    svg {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+  }
+}
+
+// Additional utility classes for common use cases
+.app-icon {
+  // Clickable/interactive icons
+  &--interactive {
+    cursor: pointer;
+    transition: color 0.2s ease, opacity 0.2s ease;
+
+    &:hover {
+      opacity: 0.8;
+    }
+
+    &:active {
+      opacity: 0.6;
+    }
+  }
+
+  // Disabled state
+  &--disabled {
+    opacity: 0.38;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+
+  // Spinning animation for loading states
+  &--spin {
+    animation: app-icon-spin 1s linear infinite;
+  }
+}
+
+// Spin animation
+@keyframes app-icon-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+// Context-specific colors (using design tokens)
+.app-icon {
+  // Primary color
+  &--primary {
+    color: var(--color-primary, #007bff);
+  }
+
+  // Success color
+  &--success {
+    color: var(--color-success, #28a745);
+  }
+
+  // Warning color
+  &--warning {
+    color: var(--color-warning, #ffc107);
+  }
+
+  // Error/Danger color
+  &--error,
+  &--danger {
+    color: var(--color-error, #dc3545);
+  }
+
+  // Info color
+  &--info {
+    color: var(--color-info, #17a2b8);
+  }
+
+  // Muted/Secondary color
+  &--muted,
+  &--secondary {
+    color: var(--color-text-secondary, #6c757d);
+  }
+}
+
+// Alignment utilities
+.app-icon {
+  // Align with text baseline
+  &--text-align {
+    vertical-align: text-bottom;
+  }
+
+  // Align to top
+  &--top-align {
+    vertical-align: top;
+  }
+
+  // Align to bottom
+  &--bottom-align {
+    vertical-align: bottom;
+  }
+
+  // Center align (for flex containers)
+  &--center-align {
+    vertical-align: middle;
+  }
+}
+
+// Spacing utilities when used with text
+.app-icon {
+  // Margin right for leading icons
+  &--mr-xs {
+    margin-right: 4px;
+  }
+
+  &--mr-sm {
+    margin-right: 8px;
+  }
+
+  &--mr-md {
+    margin-right: 12px;
+  }
+
+  // Margin left for trailing icons
+  &--ml-xs {
+    margin-left: 4px;
+  }
+
+  &--ml-sm {
+    margin-left: 8px;
+  }
+
+  &--ml-md {
+    margin-left: 12px;
+  }
+}
+
+// Ensure proper rendering in buttons
+button,
+a {
+  .app-icon {
+    // Prevent layout shift
+    pointer-events: none;
+
+    // Better alignment in buttons
+    &:only-child {
+      margin: 0;
+    }
+  }
+}
+
+// High contrast mode support
+@media (prefers-contrast: high) {
+  .app-icon {
+    &--fallback {
+      opacity: 1;
+      outline: 1px solid currentColor;
+    }
+  }
+}
+
+// Reduced motion support
+@media (prefers-reduced-motion: reduce) {
+  .app-icon--spin {
+    animation: none;
+  }
+}
+
+// Print styles
+@media print {
+  .app-icon {
+    // Ensure icons are visible in print
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}

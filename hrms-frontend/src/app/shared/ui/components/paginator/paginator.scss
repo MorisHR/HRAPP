@@ -1,0 +1,346 @@
+// ============================================================================
+// PREMIUM PAGINATOR COMPONENT
+// Part of the Fortune 500-grade HRMS design system
+// Production-ready pagination with full accessibility
+// ============================================================================
+
+@import '../../../../../styles/index';
+
+// ----------------------------------------------------------------------------
+// CONTAINER
+// ----------------------------------------------------------------------------
+
+.paginator {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: $spacing-6;
+  padding: $spacing-4 $spacing-6;
+  background: $color-background-paper;
+  border-top: 1px solid $color-border-light;
+  font-size: 14px;
+  color: $color-text-secondary;
+  min-height: 56px;
+
+  // Responsive: stack on mobile
+  @media (max-width: 768px) {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: $spacing-4;
+    padding: $spacing-4;
+  }
+}
+
+// ----------------------------------------------------------------------------
+// PAGE SIZE SELECTOR
+// ----------------------------------------------------------------------------
+
+.paginator__page-size {
+  display: flex;
+  align-items: center;
+  gap: $spacing-3;
+
+  @media (max-width: 768px) {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+.paginator__label {
+  font-size: 14px;
+  font-weight: 500;
+  color: $color-text-secondary;
+  white-space: nowrap;
+}
+
+.paginator__select {
+  padding: $spacing-2 $spacing-6 $spacing-2 $spacing-3;
+  background: $color-background-paper;
+  border: 2px solid $color-border-default;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  color: $color-text-primary;
+  cursor: pointer;
+  transition: $transition-all;
+  min-width: 70px;
+
+  // Custom arrow
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%23666' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right $spacing-2 center;
+
+  &:hover {
+    border-color: $color-primary-500;
+    background-color: $color-neutral-50;
+  }
+
+  &:focus {
+    outline: none;
+    border-color: $color-primary-500;
+    box-shadow: 0 0 0 3px rgba($color-primary-500, 0.1);
+  }
+
+  &:active {
+    background-color: $color-neutral-100;
+  }
+
+  // Options styling
+  option {
+    padding: $spacing-2;
+    background: $color-background-paper;
+    color: $color-text-primary;
+  }
+}
+
+// ----------------------------------------------------------------------------
+// PAGE RANGE INFO
+// ----------------------------------------------------------------------------
+
+.paginator__range {
+  font-size: 14px;
+  font-weight: 500;
+  color: $color-text-primary;
+  white-space: nowrap;
+  min-width: 100px;
+  text-align: center;
+
+  @media (max-width: 768px) {
+    order: -1;
+    width: 100%;
+  }
+}
+
+// ----------------------------------------------------------------------------
+// NAVIGATION CONTROLS
+// ----------------------------------------------------------------------------
+
+.paginator__nav {
+  display: flex;
+  align-items: center;
+  gap: $spacing-1;
+}
+
+.paginator__button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  background: $color-background-paper;
+  border: 2px solid $color-border-default;
+  border-radius: 6px;
+  color: $color-text-primary;
+  cursor: pointer;
+  transition: $transition-all;
+  flex-shrink: 0;
+
+  &:hover:not(:disabled) {
+    background: $color-primary-50;
+    border-color: $color-primary-500;
+    color: $color-primary-700;
+  }
+
+  &:focus {
+    outline: none;
+    border-color: $color-primary-500;
+    box-shadow: 0 0 0 3px rgba($color-primary-500, 0.1);
+  }
+
+  &:active:not(:disabled) {
+    background: $color-primary-100;
+    transform: scale(0.95);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    background: $color-neutral-100;
+    border-color: $color-border-light;
+    color: $color-text-disabled;
+    opacity: 0.5;
+  }
+
+  // Touch target size for mobile
+  @media (max-width: 768px) {
+    width: 44px;
+    height: 44px;
+  }
+}
+
+.paginator__icon {
+  flex-shrink: 0;
+  display: block;
+}
+
+// ----------------------------------------------------------------------------
+// DISABLED STATES
+// ----------------------------------------------------------------------------
+
+.paginator__button[disabled] {
+  .paginator__icon {
+    opacity: 0.5;
+  }
+}
+
+// ----------------------------------------------------------------------------
+// FOCUS VISIBLE (for keyboard navigation)
+// ----------------------------------------------------------------------------
+
+.paginator__button:focus-visible {
+  outline: 2px solid $color-primary-500;
+  outline-offset: 2px;
+}
+
+.paginator__select:focus-visible {
+  outline: 2px solid $color-primary-500;
+  outline-offset: 2px;
+}
+
+// ----------------------------------------------------------------------------
+// RESPONSIVE DESIGN
+// ----------------------------------------------------------------------------
+
+@media (max-width: 640px) {
+  .paginator {
+    font-size: 13px;
+    min-height: auto;
+  }
+
+  .paginator__label {
+    font-size: 13px;
+  }
+
+  .paginator__select {
+    font-size: 13px;
+    min-width: 60px;
+  }
+
+  .paginator__range {
+    font-size: 13px;
+    min-width: 90px;
+  }
+
+  .paginator__button {
+    width: 40px;
+    height: 40px;
+  }
+}
+
+// ----------------------------------------------------------------------------
+// ACCESSIBILITY ENHANCEMENTS
+// ----------------------------------------------------------------------------
+
+// High contrast mode support
+@media (prefers-contrast: high) {
+  .paginator__button {
+    border-width: 3px;
+
+    &:focus {
+      outline-width: 3px;
+    }
+  }
+
+  .paginator__select {
+    border-width: 3px;
+  }
+}
+
+// Reduced motion support
+@media (prefers-reduced-motion: reduce) {
+  .paginator__button,
+  .paginator__select {
+    transition: none;
+  }
+
+  .paginator__button:active:not(:disabled) {
+    transform: none;
+  }
+}
+
+// ----------------------------------------------------------------------------
+// DARK MODE SUPPORT (for future implementation)
+// ----------------------------------------------------------------------------
+
+@media (prefers-color-scheme: dark) {
+  .paginator {
+    background: $color-background-paper-dark;
+    border-top-color: $color-border-default-dark;
+    color: $color-text-secondary-dark;
+  }
+
+  .paginator__label {
+    color: $color-text-secondary-dark;
+  }
+
+  .paginator__select {
+    background: $color-background-paper-dark;
+    border-color: $color-border-default-dark;
+    color: $color-text-primary-dark;
+
+    // Update custom arrow for dark mode
+    background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%23999' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+
+    &:hover {
+      background-color: lighten($color-background-paper-dark, 5%);
+    }
+
+    &:active {
+      background-color: lighten($color-background-paper-dark, 10%);
+    }
+
+    option {
+      background: $color-background-paper-dark;
+      color: $color-text-primary-dark;
+    }
+  }
+
+  .paginator__range {
+    color: $color-text-primary-dark;
+  }
+
+  .paginator__button {
+    background: $color-background-paper-dark;
+    border-color: $color-border-default-dark;
+    color: $color-text-primary-dark;
+
+    &:hover:not(:disabled) {
+      background: rgba($color-primary-500, 0.15);
+    }
+
+    &:active:not(:disabled) {
+      background: rgba($color-primary-500, 0.25);
+    }
+
+    &:disabled {
+      background: lighten($color-background-paper-dark, 3%);
+      border-color: $color-border-default-dark;
+      color: $color-text-disabled-dark;
+    }
+  }
+}
+
+// ----------------------------------------------------------------------------
+// PRINT STYLES
+// ----------------------------------------------------------------------------
+
+@media print {
+  .paginator {
+    display: none;
+  }
+}
+
+// ----------------------------------------------------------------------------
+// LOADING STATE (optional enhancement)
+// ----------------------------------------------------------------------------
+
+.paginator--loading {
+  pointer-events: none;
+  opacity: 0.6;
+
+  .paginator__button,
+  .paginator__select {
+    cursor: wait;
+  }
+}

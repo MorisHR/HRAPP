@@ -1,0 +1,128 @@
+// PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP
+// PREMIUM RADIO COMPONENT STYLES
+// Custom radio button with design tokens
+// PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP
+
+.radio-wrapper {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  cursor: pointer;
+  user-select: none;
+  transition: all var(--transition-normal);
+
+  &.radio-disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+}
+
+.radio-input {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  outline: none;
+  cursor: inherit;
+
+  &:focus-visible .radio-circle {
+    outline: 2px solid var(--primary-500);
+    outline-offset: 2px;
+    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+  }
+}
+
+.radio-circle {
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--gray-300);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--white);
+  transition: all var(--transition-normal);
+  position: relative;
+
+  .radio-wrapper:hover:not(.radio-disabled) & {
+    border-color: var(--primary-500);
+    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.05);
+  }
+
+  .radio-wrapper.radio-checked & {
+    border-color: var(--primary-500);
+    background-color: var(--white);
+  }
+
+  .radio-wrapper.radio-disabled & {
+    background-color: var(--gray-100);
+    border-color: var(--gray-300);
+  }
+}
+
+.radio-inner-circle {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: var(--primary-500);
+  animation: radio-check-animation 0.2s ease-in-out;
+  transform-origin: center;
+
+  .radio-wrapper.radio-disabled & {
+    background-color: var(--gray-400);
+  }
+}
+
+.radio-label {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--gray-700);
+  line-height: 1.5;
+  transition: color var(--transition-normal);
+
+  .radio-wrapper.radio-checked & {
+    color: var(--gray-900);
+  }
+
+  .radio-wrapper.radio-disabled & {
+    color: var(--gray-500);
+  }
+}
+
+@keyframes radio-check-animation {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+// Dark mode support
+@media (prefers-color-scheme: dark) {
+  .radio-circle {
+    background-color: var(--gray-800);
+    border-color: var(--gray-600);
+
+    .radio-wrapper.radio-checked & {
+      border-color: var(--primary-400);
+      background-color: var(--gray-800);
+    }
+  }
+
+  .radio-inner-circle {
+    background-color: var(--primary-400);
+  }
+
+  .radio-label {
+    color: var(--gray-300);
+
+    .radio-wrapper.radio-checked & {
+      color: var(--gray-100);
+    }
+  }
+}

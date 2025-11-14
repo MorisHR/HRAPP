@@ -1,0 +1,32 @@
+// ============================================================================
+// PREMIUM SPACING SYSTEM - HRMS Design Tokens
+// ============================================================================
+// 8px base grid system for consistent rhythm and alignment
+// ============================================================================
+
+$spacing-base: 8px;
+
+// Core spacing scale
+$spacing-0: 0;
+$spacing-1: calc($spacing-base * 0.5);  // 4px
+$spacing-2: $spacing-base;               // 8px
+$spacing-3: calc($spacing-base * 1.5);  // 12px
+$spacing-4: calc($spacing-base * 2);    // 16px
+$spacing-5: calc($spacing-base * 2.5);  // 20px
+$spacing-6: calc($spacing-base * 3);    // 24px
+$spacing-8: calc($spacing-base * 4);    // 32px
+$spacing-10: calc($spacing-base * 5);   // 40px
+$spacing-12: calc($spacing-base * 6);   // 48px
+$spacing-16: calc($spacing-base * 8);   // 64px
+$spacing-20: calc($spacing-base * 10);  // 80px
+$spacing-24: calc($spacing-base * 12);  // 96px
+$spacing-32: calc($spacing-base * 16);  // 128px
+
+// Semantic spacing
+$spacing-xs: $spacing-1;
+$spacing-sm: $spacing-2;
+$spacing-md: $spacing-4;
+$spacing-lg: $spacing-6;
+$spacing-xl: $spacing-8;
+$spacing-2xl: $spacing-12;
+$spacing-3xl: $spacing-16;

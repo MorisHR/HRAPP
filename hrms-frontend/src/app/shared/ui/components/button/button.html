@@ -1,0 +1,12 @@
+<button
+  [type]="type"
+  [disabled]="disabled || loading"
+  [class]="buttonClasses.join(' ')"
+  (click)="handleClick($event)">
+  <span class="btn__content" [class.btn__content--hidden]="loading">
+    <ng-content></ng-content>
+  </span>
+  @if (loading) {
+    <span class="btn__spinner"></span>
+  }
+</button>

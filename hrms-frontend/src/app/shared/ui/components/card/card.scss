@@ -1,0 +1,75 @@
+@import '../../../../../styles/index';
+
+.card {
+  background-color: $color-background-paper;
+  border-radius: 8px;
+  border: 1px solid $color-border-light;
+  transition: $transition-all;
+  overflow: hidden;
+
+  // Elevation levels
+  &--elevation-0 {
+    box-shadow: $elevation-0;
+  }
+
+  &--elevation-1 {
+    box-shadow: $elevation-1;
+  }
+
+  &--elevation-2 {
+    box-shadow: $elevation-2;
+  }
+
+  &--elevation-3 {
+    box-shadow: $elevation-3;
+  }
+
+  &--elevation-4 {
+    box-shadow: $elevation-4;
+  }
+
+  &--elevation-5 {
+    box-shadow: $elevation-5;
+  }
+
+  // Padding variants
+  &--padding-none {
+    padding: 0;
+  }
+
+  &--padding-small {
+    padding: $spacing-4;
+  }
+
+  &--padding-medium {
+    padding: $spacing-6;
+  }
+
+  &--padding-large {
+    padding: $spacing-8;
+  }
+
+  // Interactive states
+  &--hoverable:hover {
+    box-shadow: $elevation-3;
+    transform: translateY(-2px);
+  }
+
+  &--clickable {
+    cursor: pointer;
+    user-select: none;
+
+    &:hover {
+      box-shadow: $elevation-3;
+      transform: translateY(-2px);
+    }
+
+    &:active {
+      transform: translateY(0);
+    }
+
+    &:focus-visible {
+      @include focus-ring;
+    }
+  }
+}
