@@ -349,7 +349,7 @@ export class GenerateApiKeyDialogComponent {
     private dialogRef: MatDialogRef<GenerateApiKeyDialogComponent>
   ) {
     this.form = this.fb.group({
-      description: ['', [Validators.required, Validators.maxLength(200)]]
+      description: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(200)]]
     });
   }
 

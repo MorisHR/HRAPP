@@ -187,7 +187,7 @@ public class BiometricDeviceService : IBiometricDeviceService
             departmentName = department?.Name;
         }
 
-        return MapToDeviceDto(device, departmentName, attendanceCount, authorizedEmployeeCount);
+        return await MapToDeviceDtoAsync(device, departmentName, attendanceCount, authorizedEmployeeCount);
     }
 
     public async Task<BiometricDeviceDto?> GetDeviceByCodeAsync(string deviceCode)
@@ -214,7 +214,7 @@ public class BiometricDeviceService : IBiometricDeviceService
             departmentName = department?.Name;
         }
 
-        return MapToDeviceDto(device, departmentName, attendanceCount, authorizedEmployeeCount);
+        return await MapToDeviceDtoAsync(device, departmentName, attendanceCount, authorizedEmployeeCount);
     }
 
     public async Task<List<BiometricDeviceDto>> GetAllDevicesAsync(bool activeOnly = true)
@@ -249,7 +249,7 @@ public class BiometricDeviceService : IBiometricDeviceService
                 departmentName = department?.Name;
             }
 
-            result.Add(MapToDeviceDto(device, departmentName, attendanceCount, authorizedEmployeeCount));
+            result.Add(await MapToDeviceDtoAsync(device, departmentName, attendanceCount, authorizedEmployeeCount));
         }
 
         return result;
@@ -287,7 +287,7 @@ public class BiometricDeviceService : IBiometricDeviceService
                 departmentName = department?.Name;
             }
 
-            result.Add(MapToDeviceDto(device, departmentName, attendanceCount, authorizedEmployeeCount));
+            result.Add(await MapToDeviceDtoAsync(device, departmentName, attendanceCount, authorizedEmployeeCount));
         }
 
         return result;
@@ -411,8 +411,25 @@ public class BiometricDeviceService : IBiometricDeviceService
         };
     }
 
-    private BiometricDeviceDto MapToDeviceDto(AttendanceMachine device, string? departmentName, int attendanceCount, int authorizedEmployeeCount)
+    private async Task<BiometricDeviceDto> MapToDeviceDtoAsync(
+        AttendanceMachine device,
+        string? departmentName,
+        int attendanceCount,
+        int authorizedEmployeeCount)
     {
+        // Get API key statistics
+        var apiKeys = await _context.DeviceApiKeys
+            .Where(k => k.DeviceId == device.Id && !k.IsDeleted)
+            .ToListAsync();
+
+        var totalApiKeys = apiKeys.Count;
+        var activeApiKeys = apiKeys.Count(k => k.IsActive && (!k.ExpiresAt.HasValue || k.ExpiresAt.Value > DateTime.UtcNow));
+        var lastApiKeyUsedAt = apiKeys
+            .Where(k => k.LastUsedAt.HasValue)
+            .OrderByDescending(k => k.LastUsedAt)
+            .Select(k => k.LastUsedAt)
+            .FirstOrDefault();
+
         return new BiometricDeviceDto
         {
             Id = device.Id,
@@ -448,6 +465,9 @@ public class BiometricDeviceService : IBiometricDeviceService
             LastSyncAt = device.LastSyncAt,
             TotalAttendanceRecords = attendanceCount,
             AuthorizedEmployeeCount = authorizedEmployeeCount,
+            TotalApiKeys = totalApiKeys,
+            ActiveApiKeys = activeApiKeys,
+            LastApiKeyUsedAt = lastApiKeyUsedAt,
             CreatedAt = device.CreatedAt,
             UpdatedAt = device.UpdatedAt,
             CreatedBy = device.CreatedBy,
@@ -734,7 +754,10 @@ public class BiometricDeviceService : IBiometricDeviceService
     public async Task<GenerateApiKeyResponse> GenerateApiKeyAsync(
         Guid deviceId,
         string description,
-        string createdBy)
+        string createdBy,
+        DateTime? expiresAt = null,
+        string? allowedIpAddresses = null,
+        int rateLimitPerMinute = 60)
     {
         try
         {
@@ -752,27 +775,29 @@ public class BiometricDeviceService : IBiometricDeviceService
                 throw new KeyNotFoundException($"Device with ID {deviceId} not found");
             }
 
-            // Generate API key using DeviceWebhookService method
-            var plaintextKey = await _deviceWebhookService.GenerateDeviceApiKeyAsync(deviceId, createdBy);
+            // Generate API key using DeviceApiKeyService (NOT DeviceWebhookService)
+            var (apiKey, plaintextKey) = await _deviceApiKeyService.GenerateApiKeyAsync(
+                deviceId,
+                description,
+                expiresAt,
+                allowedIpAddresses,
+                rateLimitPerMinute);
 
-            // Get the newly created API key entity
-            var apiKeys = await _deviceApiKeyService.GetDeviceApiKeysAsync(deviceId);
-            var latestKey = apiKeys.OrderByDescending(k => k.CreatedAt).FirstOrDefault();
-
-            if (latestKey == null)
-            {
-                throw new InvalidOperationException("Failed to retrieve generated API key");
-            }
+            // Update createdBy field
+            apiKey.CreatedBy = createdBy;
+            apiKey.UpdatedBy = createdBy;
+            await _context.SaveChangesAsync();
 
             var response = new GenerateApiKeyResponse
             {
-                ApiKeyId = latestKey.Id,
+                ApiKeyId = apiKey.Id,
                 PlaintextKey = plaintextKey,
-                Description = latestKey.Description,
-                ExpiresAt = latestKey.ExpiresAt,
-                IsActive = latestKey.IsActive,
-                CreatedAt = latestKey.CreatedAt,
-                RateLimitPerMinute = latestKey.RateLimitPerMinute
+                Description = apiKey.Description,
+                ExpiresAt = apiKey.ExpiresAt,
+                IsActive = apiKey.IsActive,
+                CreatedAt = apiKey.CreatedAt,
+                RateLimitPerMinute = apiKey.RateLimitPerMinute,
+                AllowedIpAddresses = apiKey.AllowedIpAddresses
             };
 
             _logger.LogInformation(

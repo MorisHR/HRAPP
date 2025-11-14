@@ -44,7 +44,13 @@ public interface IBiometricDeviceService
     /// Generate a new API key for a device
     /// Returns the plaintext key ONLY ONCE - it cannot be retrieved later
     /// </summary>
-    Task<GenerateApiKeyResponse> GenerateApiKeyAsync(Guid deviceId, string description, string createdBy);
+    Task<GenerateApiKeyResponse> GenerateApiKeyAsync(
+        Guid deviceId,
+        string description,
+        string createdBy,
+        DateTime? expiresAt = null,
+        string? allowedIpAddresses = null,
+        int rateLimitPerMinute = 60);
 
     /// <summary>
     /// Revoke an API key (mark as inactive)

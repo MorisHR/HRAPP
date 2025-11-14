@@ -28,12 +28,4 @@ public interface IDeviceWebhookService
     /// <param name="apiKey">API key to validate</param>
     /// <returns>Tuple of (IsValid, TenantId, DeviceGuid)</returns>
     Task<(bool IsValid, Guid? TenantId, Guid? DeviceGuid)> ValidateDeviceApiKeyAsync(string deviceId, string apiKey);
-
-    /// <summary>
-    /// Generate a new API key for a device
-    /// </summary>
-    /// <param name="deviceGuid">Device GUID</param>
-    /// <param name="updatedBy">User generating the key</param>
-    /// <returns>Generated API key</returns>
-    Task<string> GenerateDeviceApiKeyAsync(Guid deviceGuid, string updatedBy);
 }

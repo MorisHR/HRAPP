@@ -15,6 +15,7 @@ using Serilog.Events;
 using Hangfire;
 using Hangfire.PostgreSql;
 using HRMS.BackgroundJobs.Jobs;
+using HRMS.Infrastructure.BackgroundJobs;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using HealthChecks.UI.Client;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
@@ -204,6 +205,14 @@ builder.Services.AddScoped<ISchemaProvisioningService>(provider =>
     return new SchemaProvisioningService(connectionString!, logger, provider);
 });
 
+// Tenant Migration Service - Updates existing tenants with new migrations
+builder.Services.AddScoped<ITenantMigrationService>(provider =>
+{
+    var logger = provider.GetRequiredService<ILogger<TenantMigrationService>>();
+    return new TenantMigrationService(connectionString!, logger);
+});
+Log.Information("Tenant migration service registered for updating existing tenant schemas");
+
 // Register TenantAuthorizationFilter for tenant-scoped endpoints
 builder.Services.AddScoped<TenantAuthorizationFilter>();
 
@@ -382,6 +391,15 @@ builder.Services.AddScoped<DeleteExpiredDraftsJob>();
 builder.Services.AddScoped<AuditLogArchivalJob>();
 builder.Services.AddScoped<AuditLogChecksumVerificationJob>();
 Log.Information("Audit log compliance jobs registered: archival, checksum verification");
+
+// DATABASE MAINTENANCE: Automated database optimization jobs
+// Provides automated materialized view refresh, token cleanup, vacuum maintenance, partition management, and health checks
+builder.Services.AddScoped<DatabaseMaintenanceJobs>(sp =>
+{
+    var logger = sp.GetRequiredService<ILogger<DatabaseMaintenanceJobs>>();
+    return new DatabaseMaintenanceJobs(connectionString!, logger);
+});
+Log.Information("Database maintenance jobs registered: MV refresh, token cleanup, vacuum, partitions, health checks");
 
 // ======================
 // JWT AUTHENTICATION (PRODUCTION-GRADE)
@@ -924,6 +942,14 @@ if (hangfireSettings.DashboardEnabled)
 
     Log.Information("Hangfire dashboard enabled at {Path}", hangfireSettings.DashboardPath);
 }
+
+// ======================
+// DATABASE MAINTENANCE JOBS SCHEDULING
+// ======================
+// Register automated database maintenance jobs: MV refresh, token cleanup, vacuum, partitions, health checks
+// These jobs run on optimized schedules to maintain database performance and health
+DatabaseMaintenanceJobs.RegisterScheduledJobs();
+Log.Information("Database maintenance jobs scheduled: daily-mv-refresh (3 AM), daily-token-cleanup (4 AM), weekly-vacuum (Sun 4 AM), monthly-partition (1st 2 AM), daily-health-check (6 AM)");
 
 // ======================
 // RECURRING BACKGROUND JOBS (Production-Grade)

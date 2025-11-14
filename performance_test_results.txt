@@ -1,0 +1,150 @@
+                                                                version                                                                 
+----------------------------------------------------------------------------------------------------------------------------------------
+ PostgreSQL 16.10 (Ubuntu 16.10-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04) 13.3.0, 64-bit
+(1 row)
+
+ database_name | size  
+---------------+-------
+ hrms_master   | 16 MB
+(1 row)
+
+     metric      | percentage | cache_hits | disk_reads 
+-----------------+------------+------------+------------
+ Cache Hit Ratio |      97.03 |        294 |          9
+(1 row)
+
+        metric         | percentage | cache_hits | disk_reads 
+-----------------------+------------+------------+------------
+ Index Cache Hit Ratio |      89.39 |       1003 |        119
+(1 row)
+
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     QUERY PLAN                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Seq Scan on tenant_siraaj."Employees"  (cost=0.00..1.01 rows=1 width=7983) (actual time=0.014..0.014 rows=0 loops=1)
+   Output: "Id", "EmployeeCode", "FirstName", "LastName", "MiddleName", "Email", "PhoneNumber", "PersonalEmail", "DateOfBirth", "Gender", "MaritalStatus", "AddressLine1", "City", "PostalCode", "EmployeeType", "Nationality", "CountryOfOrigin", "NationalIdCard", "PassportNumber", "PassportIssueDate", "PassportExpiryDate", "VisaType", "VisaNumber", "VisaIssueDate", "VisaExpiryDate", "WorkPermitNumber", "WorkPermitExpiryDate", "TaxResidentStatus", "TaxIdNumber", "NPFNumber", "NSFNumber", "PRGFNumber", "IsNPFEligible", "IsNSFEligible", "JobTitle", "DepartmentId", "ManagerId", "JoiningDate", "ProbationEndDate", "ConfirmationDate", "ResignationDate", "LastWorkingDate", "IsActive", "ContractEndDate", "BasicSalary", "BankName", "BankAccountNumber", "BankBranch", "BankSwiftCode", "SalaryCurrency", "AnnualLeaveBalance", "SickLeaveBalance", "CasualLeaveBalance", "OffboardingReason", "IsOffboarded", "OffboardingDate", "OffboardingNotes", "CreatedAt", "CreatedBy", "UpdatedAt", "UpdatedBy", "IsDeleted", "DeletedAt", "DeletedBy", "AccessFailedCount", "LockoutEnabled", "LockoutEnd", "PasswordHash", "BloodGroup", "AnnualLeaveDays", "SickLeaveDays", "CasualLeaveDays", "CarryForwardAllowed", "HighestQualification", "University", "Skills", "Languages", "ResumeFilePath", "IdCopyFilePath", "CertificatesFilePath", "ContractFilePath", "Notes", "CSGNumber", "Designation", "IndustrySector", "WorkLocation", "ReportingTo", "ProbationPeriodMonths", "EmploymentContractType", "AlternateEmail", "EmploymentStatus", "PaymentFrequency", "PRNumber", "TransportAllowance", "HousingAllowance", "MealAllowance", "WorkPermitType", "ResidencePermitNumber", "EmergencyContactName", "EmergencyContactRelation", "EmergencyContactPhone", "EmergencyContactAddress", "BiometricEnrollmentId", "BiometricEnrollmentDate", "PrimaryLocationId", "AddressLine2", "Village", "District", "Region", "Country"
+   Filter: ((NOT "Employees"."IsDeleted") AND "Employees"."IsActive" AND (("Employees"."EmployeeCode")::text = 'EMP001'::text))
+   Rows Removed by Filter: 1
+   Buffers: shared hit=1
+ Planning:
+   Buffers: shared hit=677 read=3
+ Planning Time: 112.894 ms
+ Execution Time: 0.043 ms
+(9 rows)
+
+                                                 QUERY PLAN                                                 
+------------------------------------------------------------------------------------------------------------
+ Limit  (cost=0.00..1.01 rows=1 width=68) (actual time=0.008..0.009 rows=0 loops=1)
+   Buffers: shared hit=1
+   ->  Seq Scan on "Employees"  (cost=0.00..1.01 rows=1 width=68) (actual time=0.007..0.008 rows=0 loops=1)
+         Filter: ("IsActive" AND (NOT "IsDeleted") AND (("FirstName")::text ~~ 'A%'::text))
+         Rows Removed by Filter: 1
+         Buffers: shared hit=1
+ Planning:
+   Buffers: shared hit=4
+ Planning Time: 0.190 ms
+ Execution Time: 0.018 ms
+(10 rows)
+
+                                                      QUERY PLAN                                                      
+----------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=1.28..1.30 rows=9 width=1203) (actual time=0.031..0.033 rows=9 loops=1)
+   Buffers: shared hit=4
+   ->  Sort  (cost=1.28..1.30 rows=9 width=1203) (actual time=0.030..0.031 rows=9 loops=1)
+         Sort Key: "Date" DESC
+         Sort Method: quicksort  Memory: 27kB
+         Buffers: shared hit=4
+         ->  Seq Scan on "Attendances"  (cost=0.00..1.14 rows=9 width=1203) (actual time=0.007..0.012 rows=9 loops=1)
+               Filter: ((NOT "IsDeleted") AND ("Date" >= '2025-11-01'::date) AND ("Date" < '2025-12-01'::date))
+               Buffers: shared hit=1
+ Planning:
+   Buffers: shared hit=352 read=2
+ Planning Time: 2.301 ms
+ Execution Time: 0.051 ms
+(13 rows)
+
+                                                      QUERY PLAN                                                       
+-----------------------------------------------------------------------------------------------------------------------
+ HashAggregate  (cost=1.17..1.18 rows=1 width=40) (actual time=0.010..0.010 rows=0 loops=1)
+   Group Key: "DeviceId"
+   Batches: 1  Memory Usage: 24kB
+   Buffers: shared hit=1
+   ->  Seq Scan on "Attendances"  (cost=0.00..1.16 rows=1 width=24) (actual time=0.008..0.008 rows=0 loops=1)
+         Filter: (("DeviceId" IS NOT NULL) AND (NOT "IsDeleted") AND ("Date" >= (CURRENT_DATE - '30 days'::interval)))
+         Rows Removed by Filter: 9
+         Buffers: shared hit=1
+ Planning:
+   Buffers: shared hit=18
+ Planning Time: 0.184 ms
+ Execution Time: 0.037 ms
+(12 rows)
+
+                                                                   QUERY PLAN                                                                    
+-------------------------------------------------------------------------------------------------------------------------------------------------
+ Index Scan using "IX_PayrollCycles_Month_Year" on "PayrollCycles"  (cost=0.14..8.16 rows=1 width=985) (actual time=0.004..0.004 rows=0 loops=1)
+   Index Cond: (("Month" = 11) AND ("Year" = 2025))
+   Filter: (NOT "IsDeleted")
+   Buffers: shared hit=2
+ Planning:
+   Buffers: shared hit=110 read=3
+ Planning Time: 14.714 ms
+ Execution Time: 0.026 ms
+(8 rows)
+
+                                                        QUERY PLAN                                                        
+--------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=1.03..1.04 rows=1 width=52) (actual time=0.026..0.026 rows=0 loops=1)
+   Sort Key: "LeaveApplications"."EmployeeId", "LeaveApplications"."StartDate" DESC
+   Sort Method: quicksort  Memory: 25kB
+   Buffers: shared hit=3
+   ->  Nested Loop Semi Join  (cost=0.00..1.02 rows=1 width=52) (actual time=0.005..0.006 rows=0 loops=1)
+         Join Filter: ("Employees"."Id" = "LeaveApplications"."EmployeeId")
+         ->  Seq Scan on "LeaveApplications"  (cost=0.00..0.00 rows=1 width=52) (actual time=0.005..0.005 rows=0 loops=1)
+               Filter: ((NOT "IsDeleted") AND ("StartDate" >= '2025-01-01'::date) AND ("EndDate" <= '2025-12-31'::date))
+         ->  Limit  (cost=0.00..1.01 rows=1 width=16) (never executed)
+               ->  Seq Scan on "Employees"  (cost=0.00..1.01 rows=1 width=16) (never executed)
+                     Filter: ("IsActive" AND (NOT "IsDeleted"))
+ Planning:
+   Buffers: shared hit=225 read=2
+ Planning Time: 5.122 ms
+ Execution Time: 0.048 ms
+(15 rows)
+
+ pg_stat_statements_available 
+------------------------------
+ t
+(1 row)
+
+              name               | setting | unit |                                        short_desc                                         
+---------------------------------+---------+------+-------------------------------------------------------------------------------------------
+ autovacuum                      | on      |      | Starts the autovacuum subprocess.
+ autovacuum_analyze_scale_factor | 0.1     |      | Number of tuple inserts, updates, or deletes prior to analyze as a fraction of reltuples.
+ autovacuum_analyze_threshold    | 50      |      | Minimum number of tuple inserts, updates, or deletes prior to analyze.
+ autovacuum_max_workers          | 3       |      | Sets the maximum number of simultaneously running autovacuum worker processes.
+ autovacuum_naptime              | 60      | s    | Time to sleep between autovacuum runs.
+ autovacuum_vacuum_cost_delay    | 2       | ms   | Vacuum cost delay in milliseconds, for autovacuum.
+ autovacuum_vacuum_cost_limit    | -1      |      | Vacuum cost amount available before napping, for autovacuum.
+ autovacuum_vacuum_scale_factor  | 0.2     |      | Number of tuple updates or deletes prior to vacuum as a fraction of reltuples.
+ autovacuum_vacuum_threshold     | 50      |      | Minimum number of tuple updates or deletes prior to vacuum.
+(9 rows)
+
+              name               | setting | unit |                                       short_desc                                       
+---------------------------------+---------+------+----------------------------------------------------------------------------------------
+ effective_cache_size            | 524288  | 8kB  | Sets the planner's assumption about the total size of the data caches.
+ effective_io_concurrency        | 1       |      | Number of simultaneous requests that can be handled efficiently by the disk subsystem.
+ maintenance_work_mem            | 65536   | kB   | Sets the maximum memory to be used for maintenance operations.
+ max_connections                 | 100     |      | Sets the maximum number of concurrent connections.
+ max_parallel_workers            | 8       |      | Sets the maximum number of parallel workers that can be active at one time.
+ max_parallel_workers_per_gather | 2       |      | Sets the maximum number of parallel processes per executor node.
+ max_worker_processes            | 8       |      | Maximum number of concurrent worker processes.
+ random_page_cost                | 4       |      | Sets the planner's estimate of the cost of a nonsequentially fetched disk page.
+ shared_buffers                  | 16384   | 8kB  | Sets the number of shared memory buffers used by the server.
+ work_mem                        | 4096    | kB   | Sets the maximum memory to be used for query workspaces.
+(10 rows)
+
+     metric      | value  |   grade   
+-----------------+--------+-----------
+ Cache Hit Ratio | 97.03% | GOOD
+ Unused Indexes  | 230    | POOR
+ Table Bloat     | 3.45%  | EXCELLENT
+(3 rows)
+

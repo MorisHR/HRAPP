@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  hrms-devicesync:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: hrms-devicesync
+    restart: unless-stopped
+
+    environment:
+      - DOTNET_ENVIRONMENT=Production
+      - ASPNETCORE_ENVIRONMENT=Production
+
+    volumes:
+      # Mount configuration
+      - ./appsettings.Production.json:/app/appsettings.Production.json:ro
+      - ./appsettings.json:/app/appsettings.json:ro
+
+      # Mount logs directory
+      - ./logs:/app/logs
+
+      # Mount SDK directory
+      - ./SDK:/app/SDK:ro
+
+    # Network mode: host (required to access devices on local network)
+    network_mode: host
+
+    # Logging configuration
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 128M
+
+    # Health check
+    healthcheck:
+      test: ["CMD", "pgrep", "-f", "HRMS.DeviceSync.dll"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s

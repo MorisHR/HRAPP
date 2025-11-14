@@ -46,6 +46,11 @@ public class GenerateApiKeyResponse
     public int RateLimitPerMinute { get; set; }
 
     /// <summary>
+    /// JSON array of allowed IP addresses (optional)
+    /// </summary>
+    public string? AllowedIpAddresses { get; set; }
+
+    /// <summary>
     /// Important security warning message
     /// </summary>
     public string SecurityWarning { get; set; } = "IMPORTANT: Save this API key securely. It will not be shown again and cannot be retrieved later.";

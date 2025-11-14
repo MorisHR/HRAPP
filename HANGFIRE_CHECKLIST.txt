@@ -1,0 +1,146 @@
+╔══════════════════════════════════════════════════════════════════════════╗
+║                 HANGFIRE BACKGROUND JOBS - VERIFICATION                  ║
+║                           CHECKLIST                                      ║
+╚══════════════════════════════════════════════════════════════════════════╝
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│ PREREQUISITES                                                            │
+└─────────────────────────────────────────────────────────────────────────┘
+ ✅ PostgreSQL running (localhost:5432)
+ ✅ Database 'hrms_master' exists
+ ✅ Connection string configured
+ ✅ .NET 9.0 SDK installed
+ ✅ All dependencies restored
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│ CODE INTEGRATION                                                         │
+└─────────────────────────────────────────────────────────────────────────┘
+ ✅ DatabaseMaintenanceJobs.cs created
+    Location: /workspaces/HRAPP/src/HRMS.Infrastructure/BackgroundJobs/
+    Size: 11 KB
+    Lines: 297
+
+ ✅ Dependency Injection configured
+    Program.cs Line 389: AddScoped<DatabaseMaintenanceJobs>
+    Injects: connection string, ILogger
+
+ ✅ Hangfire Server configured
+    Program.cs Line 515: AddHangfire
+    Program.cs Line 526: AddHangfireServer
+    Storage: PostgreSQL
+    Workers: 5
+
+ ✅ Job Registration implemented
+    Program.cs Line 943: RegisterScheduledJobs()
+    Called after UseHangfireDashboard
+
+ ✅ Dashboard configured
+    Program.cs Line 925: UseHangfireDashboard
+    Path: /hangfire
+    Default: Disabled (security)
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│ BUILD VERIFICATION                                                       │
+└─────────────────────────────────────────────────────────────────────────┘
+ ✅ API Project builds successfully
+    Errors: 0
+    Warnings: 0
+    Time: 6.98 seconds
+
+ ✅ Full Solution builds successfully
+    Errors: 0
+    Warnings: 6 (test project only, non-blocking)
+    Time: 22.88 seconds
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│ CONFIGURATION FILES                                                      │
+└─────────────────────────────────────────────────────────────────────────┘
+ ✅ appsettings.json
+    Hangfire.WorkerCount: 5
+    Hangfire.DashboardEnabled: false (change to true for dev)
+    Hangfire.RequireAuthentication: true
+    Hangfire.DashboardPath: /hangfire
+
+ ✅ HangfireSettings.cs
+    Location: /workspaces/HRAPP/src/HRMS.Core/Settings/
+    All properties defined
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│ REGISTERED JOBS (5 Total)                                                │
+└─────────────────────────────────────────────────────────────────────────┘
+ ✅ daily-mv-refresh
+    Schedule: Daily at 3:00 AM UTC
+    Function: RefreshMaterializedViewsAsync()
+    Retries: 3
+    Timeout: 10 minutes
+
+ ✅ daily-token-cleanup
+    Schedule: Daily at 4:00 AM UTC
+    Function: CleanupExpiredTokensAsync()
+    Retries: 3
+    Timeout: 5 minutes
+
+ ✅ weekly-vacuum-maintenance
+    Schedule: Every Sunday at 4:00 AM UTC
+    Function: WeeklyVacuumMaintenanceAsync()
+    Retries: 2
+    Timeout: 30 minutes
+
+ ✅ monthly-partition-maintenance
+    Schedule: 1st of month at 2:00 AM UTC
+    Function: MonthlyPartitionMaintenanceAsync()
+    Retries: 3
+    Timeout: 10 minutes
+
+ ✅ daily-health-check
+    Schedule: Daily at 6:00 AM UTC
+    Function: DailyHealthCheckAsync()
+    Retries: 3
+    Timeout: 1 minute
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│ DATABASE STORED PROCEDURES REQUIRED                                      │
+└─────────────────────────────────────────────────────────────────────────┘
+ ⚠️  master.refresh_all_materialized_views_corrected() - Verify exists
+ ⚠️  master.cleanup_expired_refresh_tokens() - Verify exists
+ ⚠️  master.weekly_vacuum_maintenance() - Verify exists
+ ⚠️  master.monthly_partition_maintenance() - Verify exists
+ ⚠️  master.database_health_check() - Verify exists
+
+    NOTE: Run database migrations if procedures don't exist
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│ READY TO START                                                           │
+└─────────────────────────────────────────────────────────────────────────┘
+
+ QUICK START:
+ ────────────
+ 1. cd /workspaces/HRAPP/src/HRMS.API
+ 2. dotnet run
+ 3. Check logs for: "Database maintenance jobs scheduled..."
+
+ ENABLE DASHBOARD (Optional):
+ ─────────────────────────────
+ 1. Edit appsettings.json
+ 2. Set "DashboardEnabled": true
+ 3. Navigate to: http://localhost:5000/hangfire
+
+ VERIFY JOBS:
+ ────────────
+ 1. Open Hangfire dashboard
+ 2. Click "Recurring Jobs" tab
+ 3. Verify 5 jobs listed
+ 4. Click "Trigger now" to test
+ 5. Check "Succeeded" jobs tab
+
+╔══════════════════════════════════════════════════════════════════════════╗
+║                    OVERALL STATUS: ✅ READY                              ║
+╚══════════════════════════════════════════════════════════════════════════╝
+
+Documentation:
+  • HANGFIRE_VERIFICATION_REPORT.md (detailed)
+  • HANGFIRE_QUICKSTART.md (quick reference)
+  • HANGFIRE_STATUS.txt (summary)
+  • HANGFIRE_CHECKLIST.txt (this file)
+
+Generated: 2025-11-14

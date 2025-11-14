@@ -58,7 +58,8 @@ public class DeviceWebhookService : IDeviceWebhookService
 
             // 2. Get tenant-specific database context
             var connectionString = _configuration.GetConnectionString("DefaultConnection");
-            var dbContext = CreateTenantDbContext(connectionString!, "public"); // TODO: Map tenantId to schema
+            var tenantSchema = await GetTenantSchemaAsync(tenantId.Value);
+            var dbContext = CreateTenantDbContext(connectionString!, tenantSchema);
             await using var _ = dbContext;
 
             // Get device entity
@@ -225,7 +226,8 @@ public class DeviceWebhookService : IDeviceWebhookService
 
             // 2. Get tenant-specific database context
             var connectionString = _configuration.GetConnectionString("DefaultConnection");
-            var dbContext = CreateTenantDbContext(connectionString!, "public"); // TODO: Map tenantId to schema
+            var tenantSchema = await GetTenantSchemaAsync(tenantId.Value);
+            var dbContext = CreateTenantDbContext(connectionString!, tenantSchema);
             await using var _ = dbContext;
 
             // 3. Update device status
@@ -283,38 +285,70 @@ public class DeviceWebhookService : IDeviceWebhookService
         try
         {
             var apiKeyHash = HashApiKey(apiKey);
-
-            // Find device by DeviceCode (which is what we're calling DeviceId in the webhook)
             var connectionString = _configuration.GetConnectionString("DefaultConnection");
-            var dbContext = CreateTenantDbContext(connectionString!, "public"); // TODO: Search across all tenant schemas
-            await using var _ = dbContext;
 
-            var device = await dbContext.AttendanceMachines
-                .FirstOrDefaultAsync(d => d.DeviceCode == deviceId || d.MachineId == deviceId);
-
-            if (device == null)
+            // Get all tenant schemas from master.Tenants table
+            var masterDbContext = CreateTenantDbContext(connectionString!, "master");
+            await using (masterDbContext)
             {
-                _logger.LogWarning("🔒 Device not found: {DeviceId}", deviceId);
+                var tenantSchemas = await masterDbContext.Database.SqlQueryRaw<string>(
+                    "SELECT \"SchemaName\" FROM master.\"Tenants\" WHERE \"IsDeleted\" = false")
+                    .ToListAsync();
+
+                _logger.LogDebug("🔍 Searching for device {DeviceId} across {Count} tenant schemas",
+                    deviceId, tenantSchemas.Count);
+
+                // Search each tenant schema for the device
+                foreach (var schema in tenantSchemas)
+                {
+                    try
+                    {
+                        var tenantDbContext = CreateTenantDbContext(connectionString!, schema);
+                        await using (tenantDbContext)
+                        {
+                            var device = await tenantDbContext.AttendanceMachines
+                                .FirstOrDefaultAsync(d => d.DeviceCode == deviceId || d.MachineId == deviceId);
+
+                            if (device != null)
+                            {
+                                _logger.LogDebug("✅ Found device in schema: {Schema}", schema);
+
+                                // Find valid API key for this device
+                                var apiKeyEntity = await tenantDbContext.DeviceApiKeys
+                                    .FirstOrDefaultAsync(k =>
+                                        k.DeviceId == device.Id &&
+                                        k.ApiKeyHash == apiKeyHash &&
+                                        k.IsActive &&
+                                        (!k.ExpiresAt.HasValue || k.ExpiresAt.Value > DateTime.UtcNow));
+
+                                if (apiKeyEntity != null)
+                                {
+                                    _logger.LogInformation(
+                                        "🔓 Device authenticated: DeviceId={DeviceId}, Schema={Schema}, TenantId={TenantId}",
+                                        deviceId, schema, apiKeyEntity.TenantId);
+                                    return (true, apiKeyEntity.TenantId, device.Id);
+                                }
+                                else
+                                {
+                                    _logger.LogWarning(
+                                        "🔒 Invalid or expired API key for device {DeviceId} in schema {Schema}",
+                                        deviceId, schema);
+                                    return (false, null, null);
+                                }
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "⚠️ Error searching schema {Schema} for device {DeviceId}",
+                            schema, deviceId);
+                        continue;
+                    }
+                }
+
+                _logger.LogWarning("🔒 Device not found in any tenant schema: {DeviceId}", deviceId);
                 return (false, null, null);
             }
-
-            // Find valid API key for this device
-            var apiKeyEntity = await dbContext.DeviceApiKeys
-                .FirstOrDefaultAsync(k =>
-                    k.DeviceId == device.Id &&
-                    k.ApiKeyHash == apiKeyHash &&
-                    k.IsActive &&
-                    (!k.ExpiresAt.HasValue || k.ExpiresAt.Value > DateTime.UtcNow));
-
-            if (apiKeyEntity == null)
-            {
-                _logger.LogWarning(
-                    "🔒 Invalid or expired API key for device: {DeviceId}",
-                    deviceId);
-                return (false, null, null);
-            }
-
-            return (true, apiKeyEntity.TenantId, device.Id);
         }
         catch (Exception ex)
         {
@@ -323,79 +357,30 @@ public class DeviceWebhookService : IDeviceWebhookService
         }
     }
 
-    /// <summary>
-    /// Generate a new API key for a device
-    /// </summary>
-    public async Task<string> GenerateDeviceApiKeyAsync(Guid deviceGuid, string updatedBy)
-    {
-        try
-        {
-            var connectionString = _configuration.GetConnectionString("DefaultConnection");
-            var dbContext = CreateTenantDbContext(connectionString!, "public"); // TODO: Use correct schema
-            await using var _ = dbContext;
-
-            var device = await dbContext.AttendanceMachines
-                .FirstOrDefaultAsync(d => d.Id == deviceGuid);
-
-            if (device == null)
-            {
-                throw new InvalidOperationException("Device not found");
-            }
-
-            // Generate a cryptographically secure API key
-            var apiKey = GenerateSecureApiKey();
-            var apiKeyHash = HashApiKey(apiKey);
-
-            // Create API key entity
-            var apiKeyEntity = new DeviceApiKey
-            {
-                Id = Guid.NewGuid(),
-                TenantId = Guid.Empty, // TODO: Get from device tenant context
-                DeviceId = deviceGuid,
-                ApiKeyHash = apiKeyHash,
-                Description = $"Generated for {device.MachineName}",
-                IsActive = true,
-                ExpiresAt = DateTime.UtcNow.AddYears(1),
-                RateLimitPerMinute = 60,
-                CreatedAt = DateTime.UtcNow,
-                CreatedBy = updatedBy,
-                UpdatedAt = DateTime.UtcNow,
-                UpdatedBy = updatedBy
-            };
-
-            dbContext.DeviceApiKeys.Add(apiKeyEntity);
-            await dbContext.SaveChangesAsync();
-
-            _logger.LogInformation(
-                "🔑 Generated new API key for device: {DeviceId}, ExpiresAt={ExpiresAt}",
-                device.DeviceCode,
-                apiKeyEntity.ExpiresAt);
-
-            return apiKey; // Return plaintext key only once (never stored in DB)
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "❌ Error generating API key for device {DeviceGuid}", deviceGuid);
-            throw;
-        }
-    }
-
     // ==========================================
     // HELPER METHODS
     // ==========================================
 
     /// <summary>
-    /// Generate a cryptographically secure API key
-    /// Format: 32 bytes = 256 bits of entropy, base64 encoded
+    /// Get tenant schema name from tenant ID
     /// </summary>
-    private string GenerateSecureApiKey()
+    private async Task<string> GetTenantSchemaAsync(Guid tenantId)
     {
-        var bytes = new byte[32];
-        using (var rng = RandomNumberGenerator.Create())
+        var connectionString = _configuration.GetConnectionString("DefaultConnection");
+        var masterDbContext = CreateTenantDbContext(connectionString!, "master");
+        await using (masterDbContext)
         {
-            rng.GetBytes(bytes);
+            var schema = await masterDbContext.Database.SqlQueryRaw<string>(
+                $"SELECT \"SchemaName\" FROM master.\"Tenants\" WHERE \"Id\" = '{tenantId}' AND \"IsDeleted\" = false")
+                .FirstOrDefaultAsync();
+
+            if (string.IsNullOrEmpty(schema))
+            {
+                throw new InvalidOperationException($"Tenant schema not found for TenantId: {tenantId}");
+            }
+
+            return schema;
         }
-        return Convert.ToBase64String(bytes);
     }
 
     /// <summary>

@@ -65,6 +65,11 @@ public class BiometricDeviceDto
     public int TotalAttendanceRecords { get; set; }
     public int AuthorizedEmployeeCount { get; set; }
 
+    // API Key Statistics
+    public int TotalApiKeys { get; set; }
+    public int ActiveApiKeys { get; set; }
+    public DateTime? LastApiKeyUsedAt { get; set; }
+
     // Audit
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }

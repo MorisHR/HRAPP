@@ -411,7 +411,10 @@ public class BiometricDevicesController : ControllerBase
             var response = await _deviceService.GenerateApiKeyAsync(
                 deviceId,
                 request.Description,
-                userEmail);
+                userEmail,
+                request.ExpiresAt,
+                request.AllowedIpAddresses,
+                request.RateLimitPerMinute);
 
             _logger.LogInformation(
                 "API key {ApiKeyId} generated for device {DeviceId} by {User}",

@@ -1,0 +1,430 @@
+                                                                version                                                                 
+----------------------------------------------------------------------------------------------------------------------------------------
+ PostgreSQL 16.10 (Ubuntu 16.10-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04) 13.3.0, 64-bit
+(1 row)
+
+  database   | total_size 
+-------------+------------
+ hrms_master | 16 MB
+(1 row)
+
+  schemaname   |         table_name          |                      index_name                       | index_scans | tuples_read | tuples_fetched | index_size 
+---------------+-----------------------------+-------------------------------------------------------+-------------+-------------+----------------+------------
+ tenant_siraaj | AttendanceMachines          | PK_AttendanceMachines                                 |          27 |          27 |             27 | 16 kB
+ tenant_siraaj | __EFMigrationsHistory       | PK___EFMigrationsHistory                              |           9 |           0 |              0 | 16 kB
+ tenant_siraaj | DeviceApiKeys               | IX_DeviceApiKeys_DeviceId_IsActive                    |           8 |           4 |              3 | 16 kB
+ tenant_siraaj | Attendances                 | IX_Attendances_Date_Status                            |           3 |           3 |              3 | 16 kB
+ tenant_siraaj | PayrollCycles               | IX_PayrollCycles_Month_Year                           |           1 |           0 |              0 | 8192 bytes
+ tenant_siraaj | DeviceApiKeys               | PK_DeviceApiKeys                                      |           1 |           1 |              1 | 16 kB
+ tenant_siraaj | EmergencyContacts           | IX_EmergencyContacts_EmployeeId                       |           1 |           0 |              0 | 8192 bytes
+ tenant_siraaj | SalaryComponents            | IX_SalaryComponents_EmployeeId                        |           1 |           0 |              0 | 8192 bytes
+ tenant_siraaj | EmergencyContacts           | PK_EmergencyContacts                                  |           0 |           0 |              0 | 8192 bytes
+ tenant_siraaj | LeaveEncashments            | PK_LeaveEncashments                                   |           0 |           0 |              0 | 8192 bytes
+ tenant_siraaj | Departments                 | IX_Departments_Name                                   |           0 |           0 |              0 | 16 kB
+ tenant_siraaj | LeaveEncashments            | IX_LeaveEncashments_EmployeeId                        |           0 |           0 |              0 | 8192 bytes
+ tenant_siraaj | LeaveApprovals              | PK_LeaveApprovals                                     |           0 |           0 |              0 | 8192 bytes
+ tenant_siraaj | LeaveApprovals              | IX_LeaveApprovals_ApproverId                          |           0 |           0 |              0 | 8192 bytes
+ tenant_siraaj | Departments                 | IX_Departments_DepartmentHeadId                       |           0 |           0 |              0 | 16 kB
+ tenant_siraaj | LeaveBalances               | IX_LeaveBalances_LeaveTypeId                          |           0 |           0 |              0 | 8192 bytes
+ tenant_siraaj | SalaryComponents            | IX_SalaryComponents_IsActive_EffectiveFrom            |           0 |           0 |              0 | 8192 bytes
+ tenant_siraaj | LeaveBalances               | IX_LeaveBalances_EmployeeId_LeaveTypeId_Year          |           0 |           0 |              0 | 8192 bytes
+ tenant_siraaj | Departments                 | idx_siraaj_departments_active                         |           0 |           0 |              0 | 16 kB
+ tenant_siraaj | PayrollCycles               | PK_PayrollCycles                                      |           0 |           0 |              0 | 8192 bytes
+ tenant_siraaj | SalaryComponents            | IX_SalaryComponents_ComponentType                     |           0 |           0 |              0 | 8192 bytes
+ tenant_siraaj | PayrollCycles               | IX_PayrollCycles_Status                               |           0 |           0 |              0 | 8192 bytes
+ tenant_siraaj | PublicHolidays              | PK_PublicHolidays                                     |           0 |           0 |              0 | 8192 bytes
+ tenant_siraaj | PublicHolidays              | IX_PublicHolidays_Date_Year                           |           0 |           0 |              0 | 8192 bytes
+ tenant_siraaj | TenantCustomComplianceRules | PK_TenantCustomComplianceRules                        |           0 |           0 |              0 | 8192 bytes
+ tenant_siraaj | TenantCustomComplianceRules | IX_TenantCustomComplianceRules_RuleCategory           |           0 |           0 |              0 | 8192 bytes
+ tenant_siraaj | TenantCustomComplianceRules | IX_TenantCustomComplianceRules_SectorComplianceRuleId |           0 |           0 |              0 | 8192 bytes
+ tenant_siraaj | TenantSectorConfigurations  | PK_TenantSectorConfigurations                         |           0 |           0 |              0 | 8192 bytes
+ tenant_siraaj | TenantSectorConfigurations  | IX_TenantSectorConfigurations_SectorId                |           0 |           0 |              0 | 8192 bytes
+ tenant_siraaj | LeaveBalances               | PK_LeaveBalances                                      |           0 |           0 |              0 | 8192 bytes
+(30 rows)
+
+  schemaname   |         table_name          |                      index_name                       | index_size 
+---------------+-----------------------------+-------------------------------------------------------+------------
+ tenant_siraaj | Employees                   | IX_Employees_DepartmentId                             | 16 kB
+ tenant_siraaj | Employees                   | IX_Employees_Email                                    | 16 kB
+ tenant_siraaj | Employees                   | IX_Employees_EmployeeCode                             | 16 kB
+ tenant_siraaj | Employees                   | IX_Employees_ManagerId                                | 16 kB
+ tenant_siraaj | Employees                   | IX_Employees_NationalIdCard                           | 16 kB
+ tenant_siraaj | Employees                   | IX_Employees_PassportNumber                           | 16 kB
+ tenant_siraaj | Employees                   | PK_Employees                                          | 16 kB
+ tenant_siraaj | Departments                 | PK_Departments                                        | 16 kB
+ tenant_siraaj | Locations                   | PK_Locations_tenant_siraaj                            | 16 kB
+ tenant_siraaj | DeviceSyncLogs              | PK_DeviceSyncLogs_tenant_siraaj                       | 16 kB
+ tenant_siraaj | Attendances                 | PK_Attendances                                        | 16 kB
+ tenant_siraaj | AttendanceMachines          | IX_AttendanceMachines_IpAddress                       | 16 kB
+ tenant_siraaj | Locations                   | IX_Locations_District_tenant_siraaj                   | 16 kB
+ tenant_siraaj | Locations                   | IX_Locations_Region_tenant_siraaj                     | 16 kB
+ tenant_siraaj | Locations                   | IX_Locations_LocationManagerId_tenant_siraaj          | 16 kB
+ tenant_siraaj | Employees                   | IX_Employees_District_tenant_siraaj                   | 16 kB
+ tenant_siraaj | Employees                   | IX_Employees_Region_tenant_siraaj                     | 16 kB
+ tenant_siraaj | Employees                   | idx_siraaj_employees_department_id                    | 16 kB
+ tenant_siraaj | Attendances                 | idx_siraaj_attendances_employee_id                    | 16 kB
+ tenant_siraaj | AttendanceMachines          | IX_AttendanceMachines_SerialNumber                    | 16 kB
+ tenant_siraaj | AttendanceMachines          | IX_AttendanceMachines_ZKTecoDeviceId                  | 16 kB
+ tenant_siraaj | Attendances                 | IX_Attendances_Date                                   | 16 kB
+ tenant_siraaj | Employees                   | idx_siraaj_employees_active                           | 16 kB
+ tenant_siraaj | Attendances                 | idx_siraaj_attendances_active                         | 16 kB
+ tenant_siraaj | Departments                 | idx_siraaj_departments_active                         | 16 kB
+ tenant_siraaj | Attendances                 | IX_Attendances_EmployeeId_Date                        | 16 kB
+ tenant_siraaj | Employees                   | idx_siraaj_employees_department_status                | 16 kB
+ tenant_siraaj | Attendances                 | idx_siraaj_attendances_employee_date                  | 16 kB
+ tenant_siraaj | Attendances                 | idx_siraaj_attendances_date                           | 16 kB
+ tenant_siraaj | Employees                   | idx_siraaj_employees_email                            | 16 kB
+ tenant_siraaj | Employees                   | idx_siraaj_employees_code                             | 16 kB
+ tenant_siraaj | DeviceApiKeys               | IX_DeviceApiKeys_ApiKeyHash                           | 16 kB
+ tenant_siraaj | DeviceApiKeys               | IX_DeviceApiKeys_DeviceId                             | 16 kB
+ tenant_siraaj | DeviceApiKeys               | IX_DeviceApiKeys_ExpiresAt                            | 16 kB
+ tenant_siraaj | DeviceApiKeys               | IX_DeviceApiKeys_IsActive_ExpiresAt                   | 16 kB
+ tenant_siraaj | DeviceApiKeys               | IX_DeviceApiKeys_LastUsedAt                           | 16 kB
+ tenant_siraaj | DeviceApiKeys               | IX_DeviceApiKeys_TenantId                             | 16 kB
+ tenant_siraaj | Employees                   | IX_Employees_DeptId_Active                            | 16 kB
+ tenant_siraaj | Attendances                 | IX_Attendances_EmployeeId_Date_Perf                   | 16 kB
+ tenant_siraaj | AttendanceMonthlySummary    | AttendanceMonthlySummary_EmployeeId_Month_idx         | 16 kB
+ tenant_siraaj | AttendanceMonthlySummary    | AttendanceMonthlySummary_Month_idx                    | 16 kB
+ tenant_siraaj | EmployeeAttendanceStats     | EmployeeAttendanceStats_EmployeeId_idx                | 16 kB
+ tenant_siraaj | EmployeeAttendanceStats     | EmployeeAttendanceStats_DepartmentId_idx              | 16 kB
+ tenant_siraaj | EmployeeAttendanceStats     | EmployeeAttendanceStats_IsActive_idx                  | 16 kB
+ tenant_siraaj | DepartmentAttendanceSummary | DepartmentAttendanceSummary_DepartmentId_Month_idx    | 16 kB
+ tenant_siraaj | DepartmentAttendanceSummary | DepartmentAttendanceSummary_Month_idx                 | 16 kB
+ tenant_siraaj | AttendanceMachines          | IX_AttendanceMachines_Active                          | 16 kB
+ tenant_siraaj | Employees                   | IX_Employees_EmployeeCode_Active                      | 16 kB
+ tenant_siraaj | Employees                   | IX_Employees_Dept_Active_Covering                     | 16 kB
+ tenant_siraaj | Attendances                 | IX_Attendances_Date_EmployeeId                        | 16 kB
+ tenant_siraaj | Attendances                 | IX_Attendances_Status                                 | 16 kB
+ tenant_siraaj | Departments                 | IX_Departments_Name                                   | 16 kB
+ tenant_siraaj | Departments                 | IX_Departments_Code                                   | 16 kB
+ tenant_siraaj | Employees                   | IX_Employees_Dept_Count                               | 16 kB
+ tenant_siraaj | Departments                 | IX_Departments_DepartmentHeadId                       | 16 kB
+ tenant_siraaj | Attendances                 | IX_Attendances_Payroll_Composite                      | 16 kB
+ tenant_siraaj | Departments                 | IX_Departments_ParentDepartmentId                     | 16 kB
+ tenant_siraaj | Payslips                    | idx_siraaj_payslips_employee_id                       | 8192 bytes
+ tenant_siraaj | LeaveApplications           | idx_siraaj_leave_applications_employee_id             | 8192 bytes
+ tenant_siraaj | LeaveApplications           | idx_siraaj_leave_applications_active                  | 8192 bytes
+ tenant_siraaj | LeaveApplications           | IX_LeaveApplications_Dates                            | 8192 bytes
+ tenant_siraaj | EmployeeDeviceAccesses      | IX_EmployeeDeviceAccesses_EmployeeId                  | 8192 bytes
+ tenant_siraaj | EmployeeDeviceAccesses      | IX_EmployeeDeviceAccesses_DeviceId                    | 8192 bytes
+ tenant_siraaj | LeaveApplications           | IX_LeaveApplications_Approval                         | 8192 bytes
+ tenant_siraaj | AttendanceAnomalies         | PK_AttendanceAnomalies_tenant_siraaj                  | 8192 bytes
+ tenant_siraaj | EmergencyContacts           | PK_EmergencyContacts                                  | 8192 bytes
+ tenant_siraaj | LeaveApplications           | PK_LeaveApplications                                  | 8192 bytes
+ tenant_siraaj | LeaveApprovals              | PK_LeaveApprovals                                     | 8192 bytes
+ tenant_siraaj | LeaveBalances               | PK_LeaveBalances                                      | 8192 bytes
+ tenant_siraaj | LeaveEncashments            | PK_LeaveEncashments                                   | 8192 bytes
+ tenant_siraaj | LeaveTypes                  | PK_LeaveTypes                                         | 8192 bytes
+ tenant_siraaj | PayrollCycles               | PK_PayrollCycles                                      | 8192 bytes
+ tenant_siraaj | Payslips                    | PK_Payslips                                           | 8192 bytes
+ tenant_siraaj | PublicHolidays              | PK_PublicHolidays                                     | 8192 bytes
+ tenant_siraaj | SalaryComponents            | PK_SalaryComponents                                   | 8192 bytes
+ tenant_siraaj | TenantCustomComplianceRules | PK_TenantCustomComplianceRules                        | 8192 bytes
+ tenant_siraaj | TenantSectorConfigurations  | PK_TenantSectorConfigurations                         | 8192 bytes
+ tenant_siraaj | AttendanceCorrections       | IX_AttendanceCorrections_AttendanceId_Status          | 8192 bytes
+ tenant_siraaj | AttendanceCorrections       | IX_AttendanceCorrections_EmployeeId                   | 8192 bytes
+ tenant_siraaj | AttendanceCorrections       | IX_AttendanceCorrections_RequestedBy                  | 8192 bytes
+ tenant_siraaj | LeaveApplications           | IX_LeaveApplications_ApplicationNumber                | 8192 bytes
+ tenant_siraaj | LeaveApplications           | IX_LeaveApplications_ApprovedBy                       | 8192 bytes
+ tenant_siraaj | LeaveApplications           | IX_LeaveApplications_EmployeeId_StartDate_EndDate     | 8192 bytes
+ tenant_siraaj | LeaveApplications           | IX_LeaveApplications_LeaveTypeId                      | 8192 bytes
+ tenant_siraaj | LeaveApplications           | IX_LeaveApplications_RejectedBy                       | 8192 bytes
+ tenant_siraaj | LeaveApprovals              | IX_LeaveApprovals_ApproverId                          | 8192 bytes
+ tenant_siraaj | LeaveApprovals              | IX_LeaveApprovals_LeaveApplicationId_ApprovalLevel    | 8192 bytes
+ tenant_siraaj | LeaveBalances               | IX_LeaveBalances_EmployeeId_LeaveTypeId_Year          | 8192 bytes
+ tenant_siraaj | LeaveBalances               | IX_LeaveBalances_LeaveTypeId                          | 8192 bytes
+ tenant_siraaj | LeaveEncashments            | IX_LeaveEncashments_EmployeeId                        | 8192 bytes
+ tenant_siraaj | LeaveTypes                  | IX_LeaveTypes_TypeCode                                | 8192 bytes
+ tenant_siraaj | PayrollCycles               | IX_PayrollCycles_Status                               | 8192 bytes
+ tenant_siraaj | Payslips                    | IX_Payslips_EmployeeId_Month_Year                     | 8192 bytes
+ tenant_siraaj | Payslips                    | IX_Payslips_PaymentStatus                             | 8192 bytes
+ tenant_siraaj | Payslips                    | IX_Payslips_PayrollCycleId                            | 8192 bytes
+ tenant_siraaj | Payslips                    | IX_Payslips_PayslipNumber                             | 8192 bytes
+ tenant_siraaj | PublicHolidays              | IX_PublicHolidays_Date_Year                           | 8192 bytes
+ tenant_siraaj | SalaryComponents            | IX_SalaryComponents_ComponentType                     | 8192 bytes
+ tenant_siraaj | SalaryComponents            | IX_SalaryComponents_IsActive_EffectiveFrom            | 8192 bytes
+ tenant_siraaj | TenantCustomComplianceRules | IX_TenantCustomComplianceRules_RuleCategory           | 8192 bytes
+ tenant_siraaj | TenantCustomComplianceRules | IX_TenantCustomComplianceRules_SectorComplianceRuleId | 8192 bytes
+ tenant_siraaj | TenantSectorConfigurations  | IX_TenantSectorConfigurations_SectorId                | 8192 bytes
+ tenant_siraaj | Timesheets                  | PK_Timesheets                                         | 8192 bytes
+ tenant_siraaj | TimesheetComments           | PK_TimesheetComments                                  | 8192 bytes
+ tenant_siraaj | TimesheetEntries            | PK_TimesheetEntries                                   | 8192 bytes
+ tenant_siraaj | TimesheetAdjustments        | PK_TimesheetAdjustments                               | 8192 bytes
+ tenant_siraaj | TimesheetAdjustments        | IX_TimesheetAdjustments_AdjustedBy                    | 8192 bytes
+ tenant_siraaj | TimesheetAdjustments        | IX_TimesheetAdjustments_Status                        | 8192 bytes
+ tenant_siraaj | TimesheetAdjustments        | IX_TimesheetAdjustments_TimesheetEntryId              | 8192 bytes
+ tenant_siraaj | TimesheetComments           | IX_TimesheetComments_CommentedAt                      | 8192 bytes
+ tenant_siraaj | TimesheetComments           | IX_TimesheetComments_TimesheetId                      | 8192 bytes
+ tenant_siraaj | TimesheetEntries            | IX_TimesheetEntries_AttendanceId                      | 8192 bytes
+ tenant_siraaj | TimesheetEntries            | IX_TimesheetEntries_Date                              | 8192 bytes
+ tenant_siraaj | TimesheetEntries            | IX_TimesheetEntries_TimesheetId_Date                  | 8192 bytes
+ tenant_siraaj | Timesheets                  | IX_Timesheets_EmployeeId_PeriodStart_PeriodEnd        | 8192 bytes
+ tenant_siraaj | Timesheets                  | IX_Timesheets_PeriodStart_PeriodEnd                   | 8192 bytes
+ tenant_siraaj | Timesheets                  | IX_Timesheets_Status                                  | 8192 bytes
+ tenant_siraaj | Timesheets                  | IX_Timesheets_TenantId                                | 8192 bytes
+ tenant_siraaj | EmployeeDeviceAccesses      | PK_EmployeeDeviceAccesses_tenant_siraaj               | 8192 bytes
+ tenant_siraaj | AttendanceCorrections       | PK_AttendanceCorrections                              | 8192 bytes
+ tenant_siraaj | Employees                   | idx_siraaj_employees_manager_id                       | 8192 bytes
+(121 rows)
+
+        metric         | percentage | grade | cache_hits | disk_reads 
+-----------------------+------------+-------+------------+------------
+ Table Cache Hit Ratio |      97.92 | GOOD  |        329 |          7
+(1 row)
+
+        metric         | percentage | grade | cache_hits | disk_reads 
+-----------------------+------------+-------+------------+------------
+ Index Cache Hit Ratio |      91.10 | FAIR  |       1116 |        109
+(1 row)
+
+  schemaname   |         table_name          | live_tuples | dead_tuples | dead_tuple_percent | last_vacuum | last_autovacuum | last_analyze | last_autoanalyze 
+---------------+-----------------------------+-------------+-------------+--------------------+-------------+-----------------+--------------+------------------
+ tenant_siraaj | Employees                   |           0 |           4 |                  0 |             |                 |              | 
+ tenant_siraaj | DepartmentAttendanceSummary |           3 |           3 |             100.00 |             |                 |              | 
+ tenant_siraaj | DeviceApiKeys               |           1 |           2 |             200.00 |             |                 |              | 
+ tenant_siraaj | EmployeeAttendanceStats     |           1 |           1 |             100.00 |             |                 |              | 
+ tenant_siraaj | AttendanceMonthlySummary    |           1 |           1 |             100.00 |             |                 |              | 
+ tenant_siraaj | TimesheetAdjustments        |           0 |           0 |                  0 |             |                 |              | 
+ tenant_siraaj | TenantSectorConfigurations  |           0 |           0 |                  0 |             |                 |              | 
+ tenant_siraaj | SalaryComponents            |           0 |           0 |                  0 |             |                 |              | 
+ tenant_siraaj | LeaveBalances               |           0 |           0 |                  0 |             |                 |              | 
+ tenant_siraaj | LeaveApprovals              |           0 |           0 |                  0 |             |                 |              | 
+ tenant_siraaj | __EFMigrationsHistory       |           9 |           0 |               0.00 |             |                 |              | 
+ tenant_siraaj | LeaveApplications           |           0 |           0 |                  0 |             |                 |              | 
+ tenant_siraaj | LeaveEncashments            |           0 |           0 |                  0 |             |                 |              | 
+ tenant_siraaj | AttendanceMachines          |           0 |           0 |                  0 |             |                 |              | 
+ tenant_siraaj | AttendanceCorrections       |           0 |           0 |                  0 |             |                 |              | 
+(15 rows)
+
+                                               QUERY PLAN                                               
+--------------------------------------------------------------------------------------------------------
+ Seq Scan on "Employees"  (cost=0.00..1.01 rows=1 width=7983) (actual time=0.008..0.008 rows=0 loops=1)
+   Filter: ((NOT "IsDeleted") AND "IsActive" AND (("EmployeeCode")::text = 'EMP001'::text))
+   Rows Removed by Filter: 1
+   Buffers: shared hit=1
+ Planning:
+   Buffers: shared hit=390
+ Planning Time: 0.948 ms
+ Execution Time: 0.027 ms
+(8 rows)
+
+                                                 QUERY PLAN                                                 
+------------------------------------------------------------------------------------------------------------
+ Limit  (cost=0.00..1.01 rows=1 width=68) (actual time=0.009..0.010 rows=1 loops=1)
+   Buffers: shared hit=1
+   ->  Seq Scan on "Employees"  (cost=0.00..1.01 rows=1 width=68) (actual time=0.008..0.009 rows=1 loops=1)
+         Filter: ("IsActive" AND (NOT "IsDeleted") AND (("FirstName")::text > ''::text))
+         Buffers: shared hit=1
+ Planning:
+   Buffers: shared hit=1
+ Planning Time: 0.140 ms
+ Execution Time: 0.018 ms
+(9 rows)
+
+                                                QUERY PLAN                                                 
+-----------------------------------------------------------------------------------------------------------
+ Aggregate  (cost=1.02..1.03 rows=1 width=24) (actual time=0.010..0.010 rows=1 loops=1)
+   Buffers: shared hit=1
+   ->  Seq Scan on "Employees"  (cost=0.00..1.01 rows=1 width=4) (actual time=0.005..0.006 rows=1 loops=1)
+         Filter: ("IsActive" AND (NOT "IsDeleted"))
+         Buffers: shared hit=1
+ Planning:
+   Buffers: shared hit=4
+ Planning Time: 0.150 ms
+ Execution Time: 0.026 ms
+(9 rows)
+
+                                                      QUERY PLAN                                                      
+----------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=1.28..1.30 rows=9 width=1203) (actual time=0.031..0.033 rows=9 loops=1)
+   Buffers: shared hit=4
+   ->  Sort  (cost=1.28..1.30 rows=9 width=1203) (actual time=0.031..0.032 rows=9 loops=1)
+         Sort Key: "Date" DESC
+         Sort Method: quicksort  Memory: 27kB
+         Buffers: shared hit=4
+         ->  Seq Scan on "Attendances"  (cost=0.00..1.14 rows=9 width=1203) (actual time=0.007..0.013 rows=9 loops=1)
+               Filter: ((NOT "IsDeleted") AND ("Date" >= '2025-11-01'::date) AND ("Date" < '2025-12-01'::date))
+               Buffers: shared hit=1
+ Planning:
+   Buffers: shared hit=165
+ Planning Time: 0.561 ms
+ Execution Time: 0.051 ms
+(13 rows)
+
+                                                          QUERY PLAN                                                          
+------------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=2.40..2.43 rows=9 width=47) (actual time=0.035..0.037 rows=9 loops=1)
+   Sort Key: "Attendances"."EmployeeId", "Attendances"."Date" DESC
+   Sort Method: quicksort  Memory: 25kB
+   Buffers: shared hit=5
+   ->  Nested Loop Semi Join  (cost=0.00..2.26 rows=9 width=47) (actual time=0.012..0.018 rows=9 loops=1)
+         Join Filter: ("Employees"."Id" = "Attendances"."EmployeeId")
+         Buffers: shared hit=2
+         ->  Seq Scan on "Attendances"  (cost=0.00..1.11 rows=9 width=47) (actual time=0.005..0.008 rows=9 loops=1)
+               Filter: ((NOT "IsDeleted") AND ("Date" >= '2025-11-01'::date))
+               Buffers: shared hit=1
+         ->  Materialize  (cost=0.00..1.01 rows=1 width=16) (actual time=0.001..0.001 rows=1 loops=9)
+               Buffers: shared hit=1
+               ->  Limit  (cost=0.00..1.01 rows=1 width=16) (actual time=0.003..0.004 rows=1 loops=1)
+                     Buffers: shared hit=1
+                     ->  Seq Scan on "Employees"  (cost=0.00..1.01 rows=1 width=16) (actual time=0.003..0.003 rows=1 loops=1)
+                           Filter: ("IsActive" AND (NOT "IsDeleted"))
+                           Buffers: shared hit=1
+ Planning:
+   Buffers: shared hit=16
+ Planning Time: 0.399 ms
+ Execution Time: 0.051 ms
+(21 rows)
+
+                                                      QUERY PLAN                                                       
+-----------------------------------------------------------------------------------------------------------------------
+ HashAggregate  (cost=1.17..1.18 rows=1 width=40) (actual time=0.009..0.009 rows=0 loops=1)
+   Group Key: "DeviceId"
+   Batches: 1  Memory Usage: 24kB
+   Buffers: shared hit=1
+   ->  Seq Scan on "Attendances"  (cost=0.00..1.16 rows=1 width=24) (actual time=0.007..0.008 rows=0 loops=1)
+         Filter: (("DeviceId" IS NOT NULL) AND (NOT "IsDeleted") AND ("Date" >= (CURRENT_DATE - '30 days'::interval)))
+         Rows Removed by Filter: 9
+         Buffers: shared hit=1
+ Planning:
+   Buffers: shared hit=11
+ Planning Time: 0.160 ms
+ Execution Time: 0.026 ms
+(12 rows)
+
+                                                                   QUERY PLAN                                                                    
+-------------------------------------------------------------------------------------------------------------------------------------------------
+ Index Scan using "IX_PayrollCycles_Month_Year" on "PayrollCycles"  (cost=0.14..8.16 rows=1 width=985) (actual time=0.003..0.004 rows=0 loops=1)
+   Index Cond: (("Month" = 11) AND ("Year" = 2025))
+   Filter: (NOT "IsDeleted")
+   Buffers: shared hit=2
+ Planning:
+   Buffers: shared hit=74
+ Planning Time: 0.236 ms
+ Execution Time: 0.015 ms
+(8 rows)
+
+                                                                  QUERY PLAN                                                                  
+----------------------------------------------------------------------------------------------------------------------------------------------
+ GroupAggregate  (cost=9.66..9.68 rows=1 width=20) (actual time=0.012..0.013 rows=0 loops=1)
+   Group Key: "PaymentDate", "Status"
+   Buffers: shared hit=7
+   ->  Sort  (cost=9.66..9.66 rows=1 width=12) (actual time=0.012..0.012 rows=0 loops=1)
+         Sort Key: "PaymentDate" DESC, "Status"
+         Sort Method: quicksort  Memory: 25kB
+         Buffers: shared hit=7
+         ->  Bitmap Heap Scan on "PayrollCycles"  (cost=4.30..9.65 rows=1 width=12) (actual time=0.005..0.005 rows=0 loops=1)
+               Recheck Cond: ("Status" = ANY ('{2,3}'::integer[]))
+               Filter: ((NOT "IsDeleted") AND ("PaymentDate" >= '2025-01-01'::date))
+               Buffers: shared hit=4
+               ->  Bitmap Index Scan on "IX_PayrollCycles_Status"  (cost=0.00..4.30 rows=2 width=0) (actual time=0.003..0.003 rows=0 loops=1)
+                     Index Cond: ("Status" = ANY ('{2,3}'::integer[]))
+                     Buffers: shared hit=4
+ Planning:
+   Buffers: shared hit=10
+ Planning Time: 0.082 ms
+ Execution Time: 0.056 ms
+(18 rows)
+
+                                                                QUERY PLAN                                                                 
+-------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=9.65..9.66 rows=1 width=52) (actual time=0.012..0.013 rows=0 loops=1)
+   Buffers: shared hit=4
+   ->  Sort  (cost=9.65..9.66 rows=1 width=52) (actual time=0.011..0.012 rows=0 loops=1)
+         Sort Key: "Status", "PeriodStart" DESC
+         Sort Method: quicksort  Memory: 25kB
+         Buffers: shared hit=4
+         ->  Bitmap Heap Scan on "Timesheets"  (cost=4.30..9.64 rows=1 width=52) (actual time=0.006..0.006 rows=0 loops=1)
+               Recheck Cond: ("Status" = ANY ('{0,1}'::integer[]))
+               Filter: ((NOT "IsDeleted") AND ("PeriodStart" >= '2025-11-01'::date))
+               Buffers: shared hit=4
+               ->  Bitmap Index Scan on "IX_Timesheets_Status"  (cost=0.00..4.29 rows=2 width=0) (actual time=0.004..0.004 rows=0 loops=1)
+                     Index Cond: ("Status" = ANY ('{0,1}'::integer[]))
+                     Buffers: shared hit=4
+ Planning:
+   Buffers: shared hit=69 read=5
+ Planning Time: 53.385 ms
+ Execution Time: 0.044 ms
+(17 rows)
+
+                                                                    QUERY PLAN                                                                    
+--------------------------------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=9.19..9.20 rows=1 width=60) (actual time=0.006..0.006 rows=0 loops=1)
+   Sort Key: "Timesheets"."EmployeeId", "Timesheets"."PeriodStart" DESC
+   Sort Method: quicksort  Memory: 25kB
+   Buffers: shared hit=2
+   ->  Nested Loop Semi Join  (cost=0.14..9.18 rows=1 width=60) (actual time=0.003..0.003 rows=0 loops=1)
+         Join Filter: ("Timesheets"."EmployeeId" = "Employees"."Id")
+         Buffers: shared hit=2
+         ->  Index Scan using "IX_Timesheets_Status" on "Timesheets"  (cost=0.14..8.16 rows=1 width=60) (actual time=0.003..0.003 rows=0 loops=1)
+               Index Cond: ("Status" = 2)
+               Filter: (NOT "IsDeleted")
+               Buffers: shared hit=2
+         ->  Limit  (cost=0.00..1.01 rows=1 width=16) (never executed)
+               ->  Seq Scan on "Employees"  (cost=0.00..1.01 rows=1 width=16) (never executed)
+                     Filter: ("IsActive" AND (NOT "IsDeleted"))
+ Planning:
+   Buffers: shared hit=9
+ Planning Time: 0.239 ms
+ Execution Time: 0.020 ms
+(18 rows)
+
+              name               | setting | unit |                                        short_desc                                         
+---------------------------------+---------+------+-------------------------------------------------------------------------------------------
+ autovacuum                      | on      |      | Starts the autovacuum subprocess.
+ autovacuum_analyze_scale_factor | 0.1     |      | Number of tuple inserts, updates, or deletes prior to analyze as a fraction of reltuples.
+ autovacuum_analyze_threshold    | 50      |      | Minimum number of tuple inserts, updates, or deletes prior to analyze.
+ autovacuum_max_workers          | 3       |      | Sets the maximum number of simultaneously running autovacuum worker processes.
+ autovacuum_naptime              | 60      | s    | Time to sleep between autovacuum runs.
+ autovacuum_vacuum_scale_factor  | 0.2     |      | Number of tuple updates or deletes prior to vacuum as a fraction of reltuples.
+ autovacuum_vacuum_threshold     | 50      |      | Minimum number of tuple updates or deletes prior to vacuum.
+(7 rows)
+
+              name               | setting | unit |                                       short_desc                                       
+---------------------------------+---------+------+----------------------------------------------------------------------------------------
+ effective_cache_size            | 524288  | 8kB  | Sets the planner's assumption about the total size of the data caches.
+ effective_io_concurrency        | 1       |      | Number of simultaneous requests that can be handled efficiently by the disk subsystem.
+ maintenance_work_mem            | 65536   | kB   | Sets the maximum memory to be used for maintenance operations.
+ max_connections                 | 100     |      | Sets the maximum number of concurrent connections.
+ max_parallel_workers            | 8       |      | Sets the maximum number of parallel workers that can be active at one time.
+ max_parallel_workers_per_gather | 2       |      | Sets the maximum number of parallel processes per executor node.
+ max_worker_processes            | 8       |      | Maximum number of concurrent worker processes.
+ random_page_cost                | 4       |      | Sets the planner's estimate of the cost of a nonsequentially fetched disk page.
+ shared_buffers                  | 16384   | 8kB  | Sets the number of shared memory buffers used by the server.
+ work_mem                        | 4096    | kB   | Sets the maximum memory to be used for query workspaces.
+(10 rows)
+
+  schemaname   |  table_name   |             index_name              | index_scans | usage_category | index_size 
+---------------+---------------+-------------------------------------+-------------+----------------+------------
+ tenant_siraaj | Employees     | IX_Employees_Email                  |           0 | NEVER USED     | 16 kB
+ tenant_siraaj | Employees     | IX_Employees_PassportNumber         |           0 | NEVER USED     | 16 kB
+ tenant_siraaj | DeviceApiKeys | IX_DeviceApiKeys_LastUsedAt         |           0 | NEVER USED     | 16 kB
+ tenant_siraaj | Employees     | IX_Employees_DepartmentId           |           0 | NEVER USED     | 16 kB
+ tenant_siraaj | Employees     | IX_Employees_EmployeeCode           |           0 | NEVER USED     | 16 kB
+ tenant_siraaj | Employees     | IX_Employees_NationalIdCard         |           0 | NEVER USED     | 16 kB
+ tenant_siraaj | DeviceApiKeys | IX_DeviceApiKeys_DeviceId           |           0 | NEVER USED     | 16 kB
+ tenant_siraaj | DeviceApiKeys | IX_DeviceApiKeys_IsActive_ExpiresAt |           0 | NEVER USED     | 16 kB
+ tenant_siraaj | DeviceApiKeys | IX_DeviceApiKeys_TenantId           |           0 | NEVER USED     | 16 kB
+ tenant_siraaj | Employees     | PK_Employees                        |           0 | NEVER USED     | 16 kB
+ tenant_siraaj | Departments   | IX_Departments_Name                 |           0 | NEVER USED     | 16 kB
+ tenant_siraaj | Departments   | PK_Departments                      |           0 | NEVER USED     | 16 kB
+ tenant_siraaj | Departments   | IX_Departments_DepartmentHeadId     |           0 | NEVER USED     | 16 kB
+ tenant_siraaj | Employees     | IX_Employees_ManagerId              |           0 | NEVER USED     | 16 kB
+ tenant_siraaj | Departments   | IX_Departments_ParentDepartmentId   |           0 | NEVER USED     | 16 kB
+ tenant_siraaj | DeviceApiKeys | IX_DeviceApiKeys_ApiKeyHash         |           0 | NEVER USED     | 16 kB
+ tenant_siraaj | Departments   | IX_Departments_Code                 |           0 | NEVER USED     | 16 kB
+ tenant_siraaj | DeviceApiKeys | IX_DeviceApiKeys_ExpiresAt          |           0 | NEVER USED     | 16 kB
+ tenant_siraaj | Departments   | idx_siraaj_departments_active       |           0 | NEVER USED     | 16 kB
+ tenant_siraaj | Employees     | IX_Employees_District_tenant_siraaj |           0 | NEVER USED     | 16 kB
+(20 rows)
+
+      category      |           metric           |        value        |     grade      
+--------------------+----------------------------+---------------------+----------------
+ PERFORMANCE METRIC | Table Cache Hit Ratio      | 97.92%              | A GOOD
+ PERFORMANCE METRIC | Index Cache Hit Ratio      | 91.10%              | B FAIR
+ INDEX OPTIMIZATION | Unused Indexes             | 121                 | C NEEDS REVIEW
+ TABLE HEALTH       | Average Table Bloat        | 16.67%              | B FAIR
+ INDEX COVERAGE     | Custom Performance Indexes | 81 indexes deployed | A+ EXCELLENT
+ DATABASE OVERVIEW  | Total Tables in Schema     | 27                  | INFO
+(6 rows)
+

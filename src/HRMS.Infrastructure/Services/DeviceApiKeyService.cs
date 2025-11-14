@@ -8,6 +8,7 @@ using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using HRMS.Application.Interfaces;
 using HRMS.Core.Entities.Tenant;
+using HRMS.Core.Interfaces;
 using HRMS.Infrastructure.Data;
 
 namespace HRMS.Infrastructure.Services;
@@ -35,6 +36,7 @@ public class DeviceApiKeyService : IDeviceApiKeyService
     private readonly ILogger<DeviceApiKeyService> _logger;
     private readonly IAuditLogService _auditLogService;
     private readonly IMemoryCache _cache;
+    private readonly ITenantContext _tenantContext;
 
     // Rate limiting: Track request counts per API key per minute
     // Format: "ratelimit:{apiKeyHash}:{minuteBucket}" => count
@@ -48,12 +50,14 @@ public class DeviceApiKeyService : IDeviceApiKeyService
         TenantDbContext context,
         ILogger<DeviceApiKeyService> logger,
         IAuditLogService auditLogService,
-        IMemoryCache cache)
+        IMemoryCache cache,
+        ITenantContext tenantContext)
     {
         _context = context;
         _logger = logger;
         _auditLogService = auditLogService;
         _cache = cache;
+        _tenantContext = tenantContext;
     }
 
     // ==========================================
@@ -88,11 +92,14 @@ public class DeviceApiKeyService : IDeviceApiKeyService
             expiresAt = DateTime.UtcNow.AddYears(1);
         }
 
+        // Get current tenant ID from context
+        var tenantId = _tenantContext.TenantId ?? throw new InvalidOperationException("Tenant context is required for API key generation");
+
         // Create API key entity
         var apiKey = new DeviceApiKey
         {
             Id = Guid.NewGuid(),
-            TenantId = Guid.Empty, // Will be set by tenant context in controller
+            TenantId = tenantId,
             DeviceId = deviceId,
             ApiKeyHash = apiKeyHash,
             Description = description,

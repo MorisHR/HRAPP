@@ -1,0 +1,53 @@
+{
+  "name": "HRMS Development Environment",
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+
+  // Configure ports to be public by default
+  "forwardPorts": [4200, 5090, 5432],
+  "portsAttributes": {
+    "4200": {
+      "label": "Frontend (Angular)",
+      "onAutoForward": "notify",
+      "visibility": "public"
+    },
+    "5090": {
+      "label": "Backend API (.NET)",
+      "onAutoForward": "notify",
+      "visibility": "public"
+    },
+    "5432": {
+      "label": "PostgreSQL",
+      "onAutoForward": "ignore",
+      "visibility": "private"
+    }
+  },
+
+  // Features to install
+  "features": {
+    "ghcr.io/devcontainers/features/dotnet:1": {
+      "version": "9.0"
+    },
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "20"
+    },
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
+
+  // Post-create commands
+  "postCreateCommand": "echo 'Development container ready!'",
+
+  // VS Code settings
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "bash"
+      },
+      "extensions": [
+        "ms-dotnettools.csharp",
+        "angular.ng-template",
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode"
+      ]
+    }
+  }
+}
