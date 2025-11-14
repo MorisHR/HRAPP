@@ -74,7 +74,9 @@ public class GlobalExceptionHandlingMiddleware
                 ErrorCode = hrmsException.ErrorCode,
                 Message = hrmsException.UserMessage,
                 SuggestedAction = hrmsException.SuggestedAction,
-                CorrelationId = context.TraceIdentifier,
+                // SECURITY: Only expose correlation ID in development (not production)
+                // In production, correlation ID is logged server-side only for support tracking
+                CorrelationId = _environment.IsDevelopment() ? context.TraceIdentifier : null,
                 Timestamp = DateTime.UtcNow,
                 SupportContact = "support@morishr.com" // TODO: Make configurable
             };
@@ -155,7 +157,9 @@ public class GlobalExceptionHandlingMiddleware
                 ErrorCode = errorCode,
                 Message = message,
                 SuggestedAction = suggestedAction,
-                CorrelationId = context.TraceIdentifier,
+                // SECURITY: Only expose correlation ID in development (not production)
+                // In production, correlation ID is logged server-side only for support tracking
+                CorrelationId = _environment.IsDevelopment() ? context.TraceIdentifier : null,
                 Timestamp = DateTime.UtcNow,
                 SupportContact = "support@morishr.com"
             };

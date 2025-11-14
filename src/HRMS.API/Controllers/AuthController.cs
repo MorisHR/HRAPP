@@ -261,23 +261,20 @@ public class AuthController : ControllerBase
     {
         try
         {
-            // DETAILED LOGGING FOR DEBUGGING
+            // SECURITY: Logging MFA setup attempt without exposing sensitive data
             _logger.LogInformation("=== MFA COMPLETE SETUP REQUEST RECEIVED ===");
             _logger.LogInformation("Request object is null: {IsNull}", request == null);
 
             if (request != null)
             {
                 _logger.LogInformation("UserId: {UserId}", request.UserId);
-                _logger.LogInformation("TotpCode: {TotpCode}", request.TotpCode);
-                _logger.LogInformation("Secret: {Secret}", request.Secret);  // Show full secret for debugging
-                _logger.LogInformation("Secret length: {SecretLength}", request.Secret?.Length ?? 0);
-                _logger.LogInformation("BackupCodes count: {BackupCodesCount}", request.BackupCodes?.Count ?? 0);
-
-                // Debug: Show first few backup codes
-                if (request.BackupCodes?.Count > 0)
-                {
-                    _logger.LogInformation("First backup code: {Code}", request.BackupCodes[0]);
-                }
+                // SECURITY: Never log TOTP codes, secrets, or backup codes - these are authentication credentials
+                _logger.LogInformation("Secret present: {SecretPresent}, Secret length: {SecretLength}",
+                    !string.IsNullOrEmpty(request.Secret),
+                    request.Secret?.Length ?? 0);
+                _logger.LogInformation("BackupCodes present: {BackupCodesPresent}, BackupCodes count: {BackupCodesCount}",
+                    request.BackupCodes != null && request.BackupCodes.Count > 0,
+                    request.BackupCodes?.Count ?? 0);
             }
 
             _logger.LogInformation("ModelState.IsValid: {IsValid}", ModelState.IsValid);

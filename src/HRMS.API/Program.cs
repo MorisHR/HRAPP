@@ -877,12 +877,14 @@ app.UseCors("ProductionCorsPolicy");
 // ======================
 // FORTUNE 500: Production-Grade Rate Limiting
 // ======================
-// NEW: Custom sliding window rate limiting with auto-blacklisting, Redis support
-// Replaces basic IpRateLimiting with enterprise-grade DDoS protection
+// PRIMARY: Custom sliding window rate limiting with auto-blacklisting, Redis support
+// This provides enterprise-grade DDoS protection with detailed anomaly detection
 app.UseMiddleware<HRMS.Infrastructure.Middleware.RateLimitMiddleware>();
 
-// LEGACY: AspNetCoreRateLimit (keeping as fallback/secondary layer)
-// TODO: Can be removed once new RateLimitMiddleware is fully tested in production
+// LEGACY FALLBACK: AspNetCoreRateLimit (deprecated)
+// PRODUCTION NOTE: This legacy rate limiting is kept as a safety net during transition period
+// TODO: Remove after confirming RateLimitMiddleware is stable in production (target: Q1 2026)
+// To disable legacy rate limiting, comment out the line below:
 app.UseIpRateLimiting();
 
 // Tenant Resolution (before authentication)
