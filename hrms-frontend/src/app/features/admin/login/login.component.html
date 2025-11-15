@@ -16,6 +16,7 @@
       <h2 class="form-title">Sign In</h2>
 
       <!-- Email Field -->
+      <!-- OLD: Material Design
       <mat-form-field appearance="outline" class="full-width">
         <mat-label>Email</mat-label>
         <input
@@ -33,8 +34,21 @@
           <mat-error>Please enter a valid email</mat-error>
         }
       </mat-form-field>
+      -->
+      <app-input
+        type="email"
+        label="Email"
+        placeholder="admin@hrms.com"
+        [value]="loginForm.get('email')?.value || ''"
+        (valueChange)="loginForm.get('email')?.setValue($event)"
+        [error]="(loginForm.get('email')?.hasError('required') && loginForm.get('email')?.touched) ? 'Email is required' :
+                 (loginForm.get('email')?.hasError('email') && loginForm.get('email')?.touched) ? 'Please enter a valid email' : null"
+        [required]="true"
+        id="email">
+      </app-input>
 
       <!-- Subdomain Field (Optional for Tenant Login) -->
+      <!-- OLD: Material Design
       <mat-form-field appearance="outline" class="full-width">
         <mat-label>Tenant Subdomain (optional)</mat-label>
         <input
@@ -46,8 +60,19 @@
         <mat-icon matPrefix>business</mat-icon>
         <mat-hint>Leave empty for SuperAdmin login</mat-hint>
       </mat-form-field>
+      -->
+      <app-input
+        type="text"
+        label="Tenant Subdomain (optional)"
+        placeholder="e.g., siraaj"
+        [value]="loginForm.get('subdomain')?.value || ''"
+        (valueChange)="loginForm.get('subdomain')?.setValue($event)"
+        hint="Leave empty for SuperAdmin login"
+        id="subdomain">
+      </app-input>
 
       <!-- Password Field -->
+      <!-- OLD: Material Design
       <mat-form-field appearance="outline" class="full-width">
         <mat-label>Password</mat-label>
         <input
@@ -73,6 +98,28 @@
           <mat-error>Password must be at least 6 characters</mat-error>
         }
       </mat-form-field>
+      -->
+      <div class="password-field-wrapper">
+        <app-input
+          [type]="hidePassword() ? 'password' : 'text'"
+          label="Password"
+          placeholder="Enter your password"
+          [value]="loginForm.get('password')?.value || ''"
+          (valueChange)="loginForm.get('password')?.setValue($event)"
+          [error]="(loginForm.get('password')?.hasError('required') && loginForm.get('password')?.touched) ? 'Password is required' :
+                   (loginForm.get('password')?.hasError('minlength') && loginForm.get('password')?.touched) ? 'Password must be at least 6 characters' : null"
+          [required]="true"
+          id="password">
+        </app-input>
+        <button
+          type="button"
+          class="password-toggle-btn"
+          (click)="togglePasswordVisibility()"
+          [attr.aria-label]="'Toggle password visibility'"
+          [attr.aria-pressed]="!hidePassword()">
+          <mat-icon>{{ hidePassword() ? 'visibility_off' : 'visibility' }}</mat-icon>
+        </button>
+      </div>
 
       <!-- Error Message -->
       @if (error()) {
@@ -83,6 +130,7 @@
       }
 
       <!-- Submit Button -->
+      <!-- OLD: Material Design
       <button
         mat-raised-button
         color="primary"
@@ -96,6 +144,20 @@
           <span>Sign In</span>
         }
       </button>
+      -->
+      <app-button
+        type="submit"
+        variant="primary"
+        [disabled]="loginForm.invalid || loading()"
+        [loading]="loading()"
+        [fullWidth]="true"
+        size="large">
+        @if (loading()) {
+          <span>Signing in...</span>
+        } @else {
+          <span>Sign In</span>
+        }
+      </app-button>
 
     </form>
 
