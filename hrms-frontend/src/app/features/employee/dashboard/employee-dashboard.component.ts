@@ -1,16 +1,8 @@
 import { Component, signal, inject } from '@angular/core';
-
-// Material imports (keeping temporarily for backwards compatibility)
-import { MatCardModule } from '@angular/material/card';
-import { MatIconModule } from '@angular/material/icon';
-import { MatButtonModule } from '@angular/material/button';
-import { MatToolbarModule } from '@angular/material/toolbar';
 import { RouterModule } from '@angular/router';
 
-// Custom UI components
-import { CardComponent } from '../../../shared/ui/components/card/card';
-import { IconComponent } from '../../../shared/ui/components/icon/icon';
-import { Toolbar } from '../../../shared/ui/components/toolbar/toolbar';
+// Custom UI Module with all components
+import { UiModule } from '../../../shared/ui/ui.module';
 
 import { AuthService } from '../../../core/services/auth.service';
 import { ThemeService } from '../../../core/services/theme.service';
@@ -19,17 +11,9 @@ import { ThemeService } from '../../../core/services/theme.service';
   selector: 'app-employee-dashboard',
   standalone: true,
   imports: [
-    // Material imports (keeping for now)
-    MatCardModule,
-    MatIconModule,
-    MatButtonModule,
-    MatToolbarModule,
     RouterModule,
-    // Custom UI components
-    CardComponent,
-    IconComponent,
-    Toolbar
-],
+    UiModule
+  ],
   templateUrl: './employee-dashboard.component.html',
   styleUrl: './employee-dashboard.component.scss'
 })

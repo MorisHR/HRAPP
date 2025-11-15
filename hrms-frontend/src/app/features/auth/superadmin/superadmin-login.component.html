@@ -36,7 +36,7 @@
             label="Email address"
             placeholder="admin@morishr.com"
             [value]="email()"
-            (valueChange)="email.set($event)"
+            (valueChange)="email.set(asString($event))"
             [disabled]="isLoading()"
             [required]="true"
             [error]="errorMessage() && !isValidEmail(email()) && email() ? 'Please enter a valid email' : null"
@@ -92,7 +92,7 @@
               [type]="hidePassword() ? 'password' : 'text'"
               placeholder="Enter your password"
               [value]="password()"
-              (valueChange)="password.set($event)"
+              (valueChange)="password.set(asString($event))"
               [disabled]="isLoading()"
               [required]="true"
               [error]="errorMessage() && password().length < 6 && password() ? 'Password must be at least 6 characters' : null"
@@ -175,12 +175,13 @@
         <div class="login-footer">
           <p class="footer-text">© 2025 MorisHR · Administrator Access</p>
         </div>
-      }
+      </div>
+    }
 
-        <!-- ========================================
-        STAGE 2: MFA SETUP (First Login)
-        ======================================== -->
-        @if (loginStage() === 'mfa-setup') {
+    <!-- ========================================
+    STAGE 2: MFA SETUP (First Login)
+    ======================================== -->
+    @if (loginStage() === 'mfa-setup') {
           <div class="header">
             <h1 class="title">Setup Two-Factor Authentication</h1>
             <p class="subtitle">Secure your SuperAdmin account</p>

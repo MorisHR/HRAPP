@@ -188,6 +188,10 @@ export class SuperAdminLoginComponent implements OnInit {
     this.hidePassword.update(value => !value);
   }
 
+  asString(value: string | number): string {
+    return String(value);
+  }
+
   isValidEmail(email: string): boolean {
     const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailPattern.test(email);

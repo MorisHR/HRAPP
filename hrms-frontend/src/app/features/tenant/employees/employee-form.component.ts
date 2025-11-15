@@ -108,7 +108,7 @@ import { UiModule } from '../../../shared/ui/ui.module';
               <div class="form-actions full-width">
                 <app-button
                   type="button"
-                  variant="text"
+                  variant="ghost"
                   (click)="navigateToList()">
                   Cancel
                 </app-button>

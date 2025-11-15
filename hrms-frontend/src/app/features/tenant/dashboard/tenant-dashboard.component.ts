@@ -1,29 +1,20 @@
 import { Component, signal, inject, OnInit, OnDestroy } from '@angular/core';
-
-// Material imports (keeping temporarily for backwards compatibility)
-import { MatCardModule } from '@angular/material/card';
-import { MatIconModule } from '@angular/material/icon';
-import { MatButtonModule } from '@angular/material/button';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { MatTooltipModule } from '@angular/material/tooltip';
 import { RouterModule } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
+import { FormsModule } from '@angular/forms';
 
-// Custom UI components
-import { CardComponent } from '../../../shared/ui/components/card/card';
-import { IconComponent } from '../../../shared/ui/components/icon/icon';
-import { ButtonComponent } from '../../../shared/ui/components/button/button';
-import { ProgressSpinner } from '../../../shared/ui/components/progress-spinner/progress-spinner';
-import { Chip } from '../../../shared/ui/components/chip/chip';
+// Material imports (keeping for form fields and icons)
+import { MatSelectModule } from '@angular/material/select';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+
+// Custom UI Module with all components
+import { UiModule } from '../../../shared/ui/ui.module';
 
 import { AuthService } from '../../../core/services/auth.service';
 import { ThemeService } from '../../../core/services/theme.service';
 import { DashboardService, DashboardStats, AlertItem, ChartDataPoint, ActivityItem, BirthdayItem } from '../../../core/services/dashboard.service';
-import { FormsModule } from '@angular/forms';
-import { MatSelectModule } from '@angular/material/select';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatChipsModule } from '@angular/material/chips';
 import { BaseChartDirective } from 'ng2-charts';
 import {
   Chart,
@@ -69,26 +60,17 @@ interface KpiCard {
   selector: 'app-tenant-dashboard',
   standalone: true,
   imports: [
-    // Material imports (keeping for now)
-    MatCardModule,
-    MatIconModule,
-    MatButtonModule,
-    MatProgressSpinnerModule,
-    MatProgressBarModule,
-    MatTooltipModule,
     RouterModule,
     FormsModule,
+    // Material imports (keeping for form fields and icons)
     MatSelectModule,
     MatFormFieldModule,
-    MatChipsModule,
+    MatIconModule,
+    MatProgressSpinnerModule,
     BaseChartDirective,
-    // Custom UI components
-    CardComponent,
-    IconComponent,
-    ButtonComponent,
-    ProgressSpinner,
-    Chip
-],
+    // Custom UI Module
+    UiModule
+  ],
   templateUrl: './tenant-dashboard.component.html',
   styleUrl: './tenant-dashboard.component.scss'
 })

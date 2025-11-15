@@ -81,6 +81,10 @@ export class TenantLoginComponent implements OnInit {
     return emailPattern.test(email);
   }
 
+  asString(value: string | number): string {
+    return String(value);
+  }
+
   isValidForm(): boolean {
     const emailValue = this.email();
     const passwordValue = this.password();

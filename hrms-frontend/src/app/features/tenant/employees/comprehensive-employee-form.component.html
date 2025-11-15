@@ -775,7 +775,7 @@
         <div class="form-actions">
           <app-button
             type="button"
-            variant="text"
+            variant="ghost"
             [disabled]="loading()"
             (click)="cancel()">
             <mat-icon>close</mat-icon>
@@ -784,7 +784,7 @@
 
           <app-button
             type="button"
-            variant="outlined"
+            variant="secondary"
             [disabled]="saving() || loading()"
             (click)="saveDraft()">
             <mat-icon>save</mat-icon>
