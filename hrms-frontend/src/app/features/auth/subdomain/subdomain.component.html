@@ -8,59 +8,44 @@
 
     <!-- Subdomain Input Form -->
     <div class="form-container">
-      <div class="input-group">
-        <label for="subdomain" class="input-label">Company Domain</label>
-        <div class="domain-input-wrapper">
-          <input
-            type="text"
-            id="subdomain"
-            class="domain-input"
-            placeholder="yourcompany"
-            [value]="subdomain()"
-            (input)="onSubdomainInput($event)"
-            [disabled]="isLoading()"
-            maxlength="63"
-            aria-label="Company subdomain"
-            aria-describedby="subdomain-hint subdomain-error"
-          />
-          <span class="domain-suffix">.morishr.com</span>
-        </div>
-        <p id="subdomain-hint" class="input-hint">
-          Enter your company's unique domain name
-        </p>
-        @if (errorMessage()) {
-          <p id="subdomain-error" class="error-message" role="alert">
-            {{ errorMessage() }}
-          </p>
-        }
+      <div class="input-wrapper-custom">
+        <app-input
+          type="text"
+          label="Company Domain"
+          placeholder="yourcompany"
+          [value]="subdomain()"
+          (valueChange)="onSubdomainInput($event)"
+          [disabled]="isLoading()"
+          [required]="true"
+          [error]="errorMessage()"
+          id="subdomain">
+        </app-input>
+        <span class="domain-suffix">.morishr.com</span>
       </div>
+      <p class="input-hint">
+        Enter your company's unique domain name
+      </p>
 
       <!-- Continue Button -->
-      <button
-        type="button"
-        class="continue-button"
+      <app-button
+        variant="primary"
         [disabled]="!isValidSubdomain() || isLoading()"
-        (click)="onContinue()"
-        aria-label="Continue to login"
-      >
+        [loading]="isLoading()"
+        (click)="onContinue()">
         @if (isLoading()) {
-          <span class="loading-spinner"></span>
-          <span>Verifying...</span>
+          Verifying...
         } @else {
-          <span>Continue</span>
+          Continue
         }
-      </button>
+      </app-button>
 
       <!-- Help Link -->
       <div class="help-container">
-        <button
-          type="button"
-          class="help-link"
-          (click)="openModal()"
-          aria-label="What is my domain?"
-        >
+        <app-button
+          variant="ghost"
+          (click)="openModal()">
           What's my domain?
-        </button>
+        </app-button>
       </div>
     </div>
   </div>
@@ -109,13 +94,11 @@
         </p>
       </div>
       <div class="modal-footer">
-        <button
-          type="button"
-          class="modal-button"
-          (click)="closeModal()"
-        >
+        <app-button
+          variant="primary"
+          (click)="closeModal()">
           Got it
-        </button>
+        </app-button>
       </div>
     </div>
   </div>

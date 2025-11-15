@@ -1,7 +1,8 @@
 import { Component, signal } from '@angular/core';
-
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
+
+import { UiModule } from '../../../shared/ui/ui.module';
 import { TenantContextService } from '../../../core/services/tenant-context.service';
 import { environment } from '../../../../environments/environment';
 
@@ -20,7 +21,7 @@ interface TenantCheckResponse {
 @Component({
   selector: 'app-subdomain',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, UiModule],
   templateUrl: './subdomain.component.html',
   styleUrls: ['./subdomain.component.scss']
 })
@@ -37,22 +38,21 @@ export class SubdomainComponent {
     private tenantContext: TenantContextService
   ) {}
 
-  onSubdomainInput(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    let value = input.value.toLowerCase().trim();
+  onSubdomainInput(value: string | number): void {
+    let cleanValue = String(value).toLowerCase().trim();
 
     // Remove any non-allowed characters
-    value = value.replace(/[^a-z0-9-]/g, '');
+    cleanValue = cleanValue.replace(/[^a-z0-9-]/g, '');
 
     // Ensure it doesn't start or end with hyphen
-    if (value.startsWith('-')) {
-      value = value.substring(1);
+    if (cleanValue.startsWith('-')) {
+      cleanValue = cleanValue.substring(1);
     }
-    if (value.endsWith('-')) {
-      value = value.substring(0, value.length - 1);
+    if (cleanValue.endsWith('-')) {
+      cleanValue = cleanValue.substring(0, cleanValue.length - 1);
     }
 
-    this.subdomain.set(value);
+    this.subdomain.set(cleanValue);
     this.errorMessage.set('');
   }
 
