@@ -6,17 +6,7 @@
 <div [ngClass]="containerClasses">
   <!-- Input Wrapper -->
   <div class="input-wrapper">
-    <!-- Floating Label -->
-    <label
-      *ngIf="showLabel"
-      [for]="id"
-      class="input-label"
-      [class.input-label--required]="required">
-      {{ label }}
-      <span *ngIf="required" class="input-label__required-indicator">*</span>
-    </label>
-
-    <!-- Input Field -->
+    <!-- Input Field (must come BEFORE label for ~ CSS selector to work) -->
     <input
       [id]="id"
       [type]="type"
@@ -33,6 +23,16 @@
       (focus)="onFocus($event)"
       (blur)="onBlur($event)"
     />
+
+    <!-- Floating Label (must come AFTER input for ~ CSS selector to work) -->
+    <label
+      *ngIf="showLabel"
+      [for]="id"
+      class="input-label"
+      [class.input-label--required]="required">
+      {{ label }}
+      <span *ngIf="required" class="input-label__required-indicator">*</span>
+    </label>
 
     <!-- Clear Button -->
     <button
