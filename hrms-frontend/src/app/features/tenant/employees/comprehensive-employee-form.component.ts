@@ -4,22 +4,13 @@ import { Router, ActivatedRoute, RouterModule } from '@angular/router';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Subject, debounceTime, takeUntil } from 'rxjs';
 
-// Material imports
+// Material imports (kept for layout)
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatCardModule } from '@angular/material/card';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatSelectModule } from '@angular/material/select';
-import { MatDatepickerModule } from '@angular/material/datepicker';
-import { MatNativeDateModule } from '@angular/material/core';
-import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatChipsModule } from '@angular/material/chips';
-import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatDividerModule } from '@angular/material/divider';
 
 // Services
 import { EmployeeService } from '../../../core/services/employee.service';
@@ -30,6 +21,9 @@ import { AddressService } from '../../../services/address.service';
 import { DistrictDto, VillageDto } from '../../../models/address.models';
 import { SalaryComponentsService, SalaryComponentDto } from '../../../core/services/salary-components.service';
 
+// Custom UI imports
+import { UiModule } from '../../../shared/ui/ui.module';
+
 @Component({
   selector: 'app-comprehensive-employee-form',
   standalone: true,
@@ -38,20 +32,12 @@ import { SalaryComponentsService, SalaryComponentDto } from '../../../core/servi
     RouterModule,
     MatExpansionModule,
     MatCardModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatButtonModule,
     MatIconModule,
-    MatSelectModule,
-    MatDatepickerModule,
-    MatNativeDateModule,
-    MatCheckboxModule,
     MatProgressBarModule,
     MatProgressSpinnerModule,
     MatChipsModule,
-    MatTooltipModule,
-    MatDividerModule,
-    MatSnackBarModule
+    MatSnackBarModule,
+    UiModule
 ],
   templateUrl: './comprehensive-employee-form.component.html',
   styleUrls: ['./comprehensive-employee-form.component.scss']
@@ -588,5 +574,185 @@ export class ComprehensiveEmployeeFormComponent implements OnInit, OnDestroy {
 
   getNetAdjustment(): number {
     return this.getTotalAllowances() - this.getTotalDeductions();
+  }
+
+  // ==================== CUSTOM UI HELPERS ====================
+
+  // Select options for dropdowns
+  genderOptions = [
+    { value: 'Male', label: 'Male' },
+    { value: 'Female', label: 'Female' },
+    { value: 'Other', label: 'Other' }
+  ];
+
+  nationalityOptions = [
+    { value: 'Mauritian', label: 'Mauritian' },
+    { value: 'French', label: 'French' },
+    { value: 'Indian', label: 'Indian' },
+    { value: 'British', label: 'British' },
+    { value: 'Other', label: 'Other' }
+  ];
+
+  bloodGroupOptions = [
+    { value: 'A+', label: 'A+' },
+    { value: 'A-', label: 'A-' },
+    { value: 'B+', label: 'B+' },
+    { value: 'B-', label: 'B-' },
+    { value: 'O+', label: 'O+' },
+    { value: 'O-', label: 'O-' },
+    { value: 'AB+', label: 'AB+' },
+    { value: 'AB-', label: 'AB-' }
+  ];
+
+  countryOptions = [
+    { value: 'Mauritius', label: 'Mauritius' },
+    { value: 'Rodrigues', label: 'Rodrigues' },
+    { value: 'Agalega', label: 'Agalega' }
+  ];
+
+  employeeTypeOptions = [
+    { value: 'Local', label: 'Local' },
+    { value: 'Expatriate', label: 'Expatriate' }
+  ];
+
+  industrySectorOptions = [
+    { value: 'Manufacturing', label: 'Manufacturing' },
+    { value: 'EPZ', label: 'EPZ (Export Processing Zone)' },
+    { value: 'Tourism', label: 'Tourism & Hospitality' },
+    { value: 'Financial Services', label: 'Financial Services' },
+    { value: 'ICT', label: 'ICT & Technology' },
+    { value: 'Construction', label: 'Construction' },
+    { value: 'Retail', label: 'Retail & Trade' },
+    { value: 'Agriculture', label: 'Agriculture & Fishing' }
+  ];
+
+  employmentContractTypeOptions = [
+    { value: 'Permanent', label: 'Permanent' },
+    { value: 'Fixed-Term', label: 'Fixed-Term' },
+    { value: 'Casual', label: 'Casual' },
+    { value: 'Contract', label: 'Contract' }
+  ];
+
+  employmentStatusOptions = [
+    { value: 'Active', label: 'Active' },
+    { value: 'On Probation', label: 'On Probation' },
+    { value: 'On Leave', label: 'On Leave' },
+    { value: 'Suspended', label: 'Suspended' },
+    { value: 'Terminated', label: 'Terminated' }
+  ];
+
+  paymentFrequencyOptions = [
+    { value: 'Monthly', label: 'Monthly' },
+    { value: 'Bi-weekly', label: 'Bi-weekly' },
+    { value: 'Weekly', label: 'Weekly' },
+    { value: 'Daily', label: 'Daily' }
+  ];
+
+  emergencyContactRelationOptions = [
+    { value: 'Spouse', label: 'Spouse' },
+    { value: 'Parent', label: 'Parent' },
+    { value: 'Sibling', label: 'Sibling' },
+    { value: 'Child', label: 'Child' },
+    { value: 'Friend', label: 'Friend' },
+    { value: 'Other', label: 'Other' }
+  ];
+
+  highestQualificationOptions = [
+    { value: 'High School', label: 'High School' },
+    { value: 'Diploma', label: 'Diploma' },
+    { value: "Bachelor's Degree", label: "Bachelor's Degree" },
+    { value: "Master's Degree", label: "Master's Degree" },
+    { value: 'PhD', label: 'PhD' },
+    { value: 'Professional Certificate', label: 'Professional Certificate' }
+  ];
+
+  workPermitTypeOptions = [
+    { value: 'Occupation Permit', label: 'Occupation Permit' },
+    { value: 'Residence Permit', label: 'Residence Permit' },
+    { value: 'Work Permit', label: 'Work Permit' }
+  ];
+
+  // Convert districts to select options
+  get districtOptions() {
+    return this.districts().map(d => ({
+      value: d.id.toString(),
+      label: d.districtName
+    }));
+  }
+
+  // Convert villages to select options
+  get villageOptions() {
+    return this.villages().map(v => ({
+      value: v.id.toString(),
+      label: `${v.villageName} (${v.postalCode})`
+    }));
+  }
+
+  // Convert departments to select options
+  get departmentOptions() {
+    return this.departments().map(d => ({
+      value: d.name,
+      label: `${d.name} (${d.code})`
+    }));
+  }
+
+  // Error helper for form validation
+  getFieldError(fieldName: string): string | null {
+    const control = this.employeeForm.get(fieldName);
+    if (control && control.invalid && (control.dirty || control.touched)) {
+      if (control.hasError('required')) {
+        return `${this.getFieldLabel(fieldName)} is required`;
+      }
+      if (control.hasError('email')) {
+        return 'Please enter a valid email';
+      }
+      if (control.hasError('minlength')) {
+        const minLength = control.getError('minlength').requiredLength;
+        return `Must be at least ${minLength} characters`;
+      }
+      if (control.hasError('min')) {
+        const min = control.getError('min').min;
+        return `Must be at least ${min}`;
+      }
+    }
+    return null;
+  }
+
+  private getFieldLabel(fieldName: string): string {
+    const labels: Record<string, string> = {
+      'firstName': 'First name',
+      'lastName': 'Last name',
+      'dateOfBirth': 'Date of birth',
+      'gender': 'Gender',
+      'nationality': 'Nationality',
+      'nic': 'NIC',
+      'phoneNumber': 'Phone number',
+      'email': 'Email',
+      'alternateEmail': 'Alternate email',
+      'district': 'District',
+      'addressLine1': 'Address line 1',
+      'country': 'Country',
+      'employeeCode': 'Employee code',
+      'employeeType': 'Employee type',
+      'department': 'Department',
+      'designation': 'Designation',
+      'industrySector': 'Industry sector',
+      'joinDate': 'Join date',
+      'employmentContractType': 'Employment contract type',
+      'employmentStatus': 'Employment status',
+      'baseSalary': 'Base salary',
+      'paymentFrequency': 'Payment frequency',
+      'annualLeaveDays': 'Annual leave days',
+      'sickLeaveDays': 'Sick leave days',
+      'casualLeaveDays': 'Casual leave days',
+      'emergencyContactName': 'Emergency contact name',
+      'emergencyContactRelation': 'Emergency contact relation',
+      'emergencyContactPhone': 'Emergency contact phone',
+      'passportNumber': 'Passport number',
+      'passportExpiryDate': 'Passport expiry date',
+      'visaNumber': 'Visa number',
+      'workPermitNumber': 'Work permit number'
+    };
+    return labels[fieldName] || fieldName;
   }
 }

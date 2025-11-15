@@ -57,192 +57,157 @@
             </mat-expansion-panel-header>
 
             <div class="form-grid">
-              <mat-form-field appearance="outline">
-                <mat-label>First Name *</mat-label>
-                <input matInput formControlName="firstName" placeholder="John">
-                @if (employeeForm.get('firstName')?.hasError('required')) {
-                  <mat-error>
-                    First name is required
-                  </mat-error>
-                }
-                @if (employeeForm.get('firstName')?.hasError('minlength')) {
-                  <mat-error>
-                    Must be at least 2 characters
-                  </mat-error>
-                }
-              </mat-form-field>
+              <app-input
+                label="First Name *"
+                placeholder="John"
+                formControlName="firstName"
+                [required]="true"
+                [error]="getFieldError('firstName')">
+              </app-input>
 
-              <mat-form-field appearance="outline">
-                <mat-label>Last Name *</mat-label>
-                <input matInput formControlName="lastName" placeholder="Doe">
-                @if (employeeForm.get('lastName')?.hasError('required')) {
-                  <mat-error>
-                    Last name is required
-                  </mat-error>
-                }
-              </mat-form-field>
+              <app-input
+                label="Last Name *"
+                placeholder="Doe"
+                formControlName="lastName"
+                [required]="true"
+                [error]="getFieldError('lastName')">
+              </app-input>
 
-              <mat-form-field appearance="outline">
-                <mat-label>Date of Birth *</mat-label>
-                <input matInput [matDatepicker]="dobPicker" formControlName="dateOfBirth">
-                <mat-datepicker-toggle matIconSuffix [for]="dobPicker"></mat-datepicker-toggle>
-                <mat-datepicker #dobPicker></mat-datepicker>
-                <mat-error>Date of birth is required</mat-error>
-              </mat-form-field>
+              <app-datepicker
+                label="Date of Birth *"
+                formControlName="dateOfBirth"
+                [required]="true"
+                [error]="getFieldError('dateOfBirth')">
+              </app-datepicker>
 
-              <mat-form-field appearance="outline">
-                <mat-label>Gender *</mat-label>
-                <mat-select formControlName="gender">
-                  <mat-option value="Male">Male</mat-option>
-                  <mat-option value="Female">Female</mat-option>
-                  <mat-option value="Other">Other</mat-option>
-                </mat-select>
-                <mat-error>Gender is required</mat-error>
-              </mat-form-field>
+              <app-select
+                label="Gender *"
+                placeholder="Select gender"
+                formControlName="gender"
+                [options]="genderOptions"
+                [required]="true"
+                [error]="getFieldError('gender')">
+              </app-select>
 
-              <mat-form-field appearance="outline">
-                <mat-label>Nationality *</mat-label>
-                <mat-select formControlName="nationality">
-                  <mat-option value="Mauritian">Mauritian</mat-option>
-                  <mat-option value="French">French</mat-option>
-                  <mat-option value="Indian">Indian</mat-option>
-                  <mat-option value="British">British</mat-option>
-                  <mat-option value="Other">Other</mat-option>
-                </mat-select>
-                <mat-error>Nationality is required</mat-error>
-              </mat-form-field>
+              <app-select
+                label="Nationality *"
+                placeholder="Select nationality"
+                formControlName="nationality"
+                [options]="nationalityOptions"
+                [required]="true"
+                [error]="getFieldError('nationality')">
+              </app-select>
 
-              <mat-form-field appearance="outline">
-                <mat-label>National Identity Card (NIC) *</mat-label>
-                <input matInput formControlName="nic" placeholder="A1234567890123">
-                <mat-hint>Mauritius NIC format</mat-hint>
-                <mat-error>NIC is required</mat-error>
-              </mat-form-field>
+              <app-input
+                label="National Identity Card (NIC) *"
+                placeholder="A1234567890123"
+                formControlName="nic"
+                hint="Mauritius NIC format"
+                [required]="true"
+                [error]="getFieldError('nic')">
+              </app-input>
 
-              <mat-form-field appearance="outline">
-                <mat-label>Phone Number *</mat-label>
-                <input matInput formControlName="phoneNumber" placeholder="+230 5123 4567">
-                <mat-error>Phone number is required</mat-error>
-              </mat-form-field>
+              <app-input
+                label="Phone Number *"
+                type="tel"
+                placeholder="+230 5123 4567"
+                formControlName="phoneNumber"
+                [required]="true"
+                [error]="getFieldError('phoneNumber')">
+              </app-input>
 
-              <mat-form-field appearance="outline">
-                <mat-label>Email Address *</mat-label>
-                <input matInput type="email" formControlName="email" placeholder="john.doe@company.mu">
-                @if (employeeForm.get('email')?.hasError('required')) {
-                  <mat-error>
-                    Email is required
-                  </mat-error>
-                }
-                @if (employeeForm.get('email')?.hasError('email')) {
-                  <mat-error>
-                    Please enter a valid email
-                  </mat-error>
-                }
-              </mat-form-field>
+              <app-input
+                label="Email Address *"
+                type="email"
+                placeholder="john.doe@company.mu"
+                formControlName="email"
+                [required]="true"
+                [error]="getFieldError('email')">
+              </app-input>
 
-              <mat-form-field appearance="outline">
-                <mat-label>Alternate Email</mat-label>
-                <input matInput type="email" formControlName="alternateEmail">
-                <mat-error>Please enter a valid email</mat-error>
-              </mat-form-field>
+              <app-input
+                label="Alternate Email"
+                type="email"
+                formControlName="alternateEmail"
+                [error]="getFieldError('alternateEmail')">
+              </app-input>
 
-              <mat-form-field appearance="outline">
-                <mat-label>Blood Group</mat-label>
-                <mat-select formControlName="bloodGroup">
-                  <mat-option value="A+">A+</mat-option>
-                  <mat-option value="A-">A-</mat-option>
-                  <mat-option value="B+">B+</mat-option>
-                  <mat-option value="B-">B-</mat-option>
-                  <mat-option value="O+">O+</mat-option>
-                  <mat-option value="O-">O-</mat-option>
-                  <mat-option value="AB+">AB+</mat-option>
-                  <mat-option value="AB-">AB-</mat-option>
-                </mat-select>
-              </mat-form-field>
+              <app-select
+                label="Blood Group"
+                placeholder="Select blood group"
+                formControlName="bloodGroup"
+                [options]="bloodGroupOptions">
+              </app-select>
 
               <!-- Mauritius Address Section -->
               <div class="address-section full-width">
                 <h4 class="subsection-title">Residential Address (Mauritius)</h4>
                 <div class="form-grid">
-                  <mat-form-field appearance="outline">
-                    <mat-label>District *</mat-label>
-                    <mat-select formControlName="district" (selectionChange)="onDistrictChange($event.value)">
-                      @if (districts().length === 0) {
-                        <mat-option disabled>Loading districts...</mat-option>
-                      }
-                      @for (district of districts(); track district.id) {
-                        <mat-option [value]="district.id">
-                          {{ district.districtName }}
-                        </mat-option>
-                      }
-                    </mat-select>
-                    <mat-hint>Select district first</mat-hint>
-                    <mat-error>District is required</mat-error>
-                  </mat-form-field>
+                  <app-select
+                    label="District *"
+                    placeholder="Select district first"
+                    formControlName="district"
+                    [options]="districtOptions"
+                    hint="Select district first"
+                    [required]="true"
+                    [error]="getFieldError('district')"
+                    (valueChange)="onDistrictChange($event)">
+                  </app-select>
 
-                  <mat-form-field appearance="outline">
-                    <mat-label>Village/Locality</mat-label>
-                    <mat-select formControlName="village">
-                      @if (villages().length === 0) {
-                        <mat-option disabled>Select district first</mat-option>
-                      }
-                      @for (village of villages(); track village.id) {
-                        <mat-option [value]="village.id">
-                          {{ village.villageName }} ({{ village.postalCode }})
-                        </mat-option>
-                      }
-                    </mat-select>
-                    <mat-hint>Optional - auto-filled by postal code</mat-hint>
-                  </mat-form-field>
+                  <app-select
+                    label="Village/Locality"
+                    placeholder="Select district first"
+                    formControlName="village"
+                    [options]="villageOptions"
+                    hint="Optional - auto-filled by postal code">
+                  </app-select>
 
-                  <mat-form-field appearance="outline">
-                    <mat-label>Postal Code</mat-label>
-                    <input matInput formControlName="postalCode" placeholder="11302"
-                      (blur)="onPostalCodeBlur(employeeForm.get('postalCode')?.value)">
-                    <mat-hint>Enter postal code to auto-fill address</mat-hint>
-                  </mat-form-field>
+                  <app-input
+                    label="Postal Code"
+                    placeholder="11302"
+                    formControlName="postalCode"
+                    hint="Enter postal code to auto-fill address"
+                    (blur)="onPostalCodeBlur(employeeForm.get('postalCode')?.value)">
+                  </app-input>
 
-                  <mat-form-field appearance="outline">
-                    <mat-label>City/Town</mat-label>
-                    <input matInput formControlName="city" placeholder="Port Louis">
-                    <mat-hint>Auto-filled from postal code</mat-hint>
-                  </mat-form-field>
+                  <app-input
+                    label="City/Town"
+                    placeholder="Port Louis"
+                    formControlName="city"
+                    hint="Auto-filled from postal code">
+                  </app-input>
 
-                  <mat-form-field appearance="outline" class="full-width">
-                    <mat-label>Address Line 1 *</mat-label>
-                    <input matInput formControlName="addressLine1" placeholder="House/Building number, Street name">
-                    @if (employeeForm.get('addressLine1')?.hasError('required')) {
-                      <mat-error>
-                        Address line 1 is required
-                      </mat-error>
-                    }
-                    @if (employeeForm.get('addressLine1')?.hasError('minlength')) {
-                      <mat-error>
-                        Must be at least 10 characters
-                      </mat-error>
-                    }
-                  </mat-form-field>
+                  <app-input
+                    class="full-width"
+                    label="Address Line 1 *"
+                    placeholder="House/Building number, Street name"
+                    formControlName="addressLine1"
+                    [required]="true"
+                    [error]="getFieldError('addressLine1')">
+                  </app-input>
 
-                  <mat-form-field appearance="outline" class="full-width">
-                    <mat-label>Address Line 2</mat-label>
-                    <input matInput formControlName="addressLine2" placeholder="Additional address details (optional)">
-                  </mat-form-field>
+                  <app-input
+                    class="full-width"
+                    label="Address Line 2"
+                    placeholder="Additional address details (optional)"
+                    formControlName="addressLine2">
+                  </app-input>
 
-                  <mat-form-field appearance="outline">
-                    <mat-label>Region</mat-label>
-                    <input matInput formControlName="region" placeholder="e.g., North, South">
-                    <mat-hint>Auto-filled from postal code</mat-hint>
-                  </mat-form-field>
+                  <app-input
+                    label="Region"
+                    placeholder="e.g., North, South"
+                    formControlName="region"
+                    hint="Auto-filled from postal code">
+                  </app-input>
 
-                  <mat-form-field appearance="outline">
-                    <mat-label>Country *</mat-label>
-                    <mat-select formControlName="country">
-                      <mat-option value="Mauritius">Mauritius</mat-option>
-                      <mat-option value="Rodrigues">Rodrigues</mat-option>
-                      <mat-option value="Agalega">Agalega</mat-option>
-                    </mat-select>
-                    <mat-error>Country is required</mat-error>
-                  </mat-form-field>
+                  <app-select
+                    label="Country *"
+                    placeholder="Select country"
+                    formControlName="country"
+                    [options]="countryOptions"
+                    [required]="true"
+                    [error]="getFieldError('country')">
+                  </app-select>
                 </div>
               </div>
 
@@ -251,59 +216,55 @@
                 <div class="expatriate-section full-width">
                   <h4 class="subsection-title">Expatriate Documents</h4>
                   <div class="form-grid">
-                    <mat-form-field appearance="outline">
-                      <mat-label>Passport Number *</mat-label>
-                      <input matInput formControlName="passportNumber">
-                      <mat-error>Passport number is required for expatriates</mat-error>
-                    </mat-form-field>
+                    <app-input
+                      label="Passport Number *"
+                      formControlName="passportNumber"
+                      [required]="true"
+                      [error]="getFieldError('passportNumber')">
+                    </app-input>
 
-                    <mat-form-field appearance="outline">
-                      <mat-label>Passport Expiry Date *</mat-label>
-                      <input matInput [matDatepicker]="passportPicker" formControlName="passportExpiryDate">
-                      <mat-datepicker-toggle matIconSuffix [for]="passportPicker"></mat-datepicker-toggle>
-                      <mat-datepicker #passportPicker></mat-datepicker>
-                      <mat-error>Passport expiry date is required</mat-error>
-                    </mat-form-field>
+                    <app-datepicker
+                      label="Passport Expiry Date *"
+                      formControlName="passportExpiryDate"
+                      [required]="true"
+                      [error]="getFieldError('passportExpiryDate')">
+                    </app-datepicker>
 
-                    <mat-form-field appearance="outline">
-                      <mat-label>Visa Number *</mat-label>
-                      <input matInput formControlName="visaNumber">
-                      <mat-error>Visa number is required for expatriates</mat-error>
-                    </mat-form-field>
+                    <app-input
+                      label="Visa Number *"
+                      formControlName="visaNumber"
+                      [required]="true"
+                      [error]="getFieldError('visaNumber')">
+                    </app-input>
 
-                    <mat-form-field appearance="outline">
-                      <mat-label>Visa Expiry Date</mat-label>
-                      <input matInput [matDatepicker]="visaPicker" formControlName="visaExpiryDate">
-                      <mat-datepicker-toggle matIconSuffix [for]="visaPicker"></mat-datepicker-toggle>
-                      <mat-datepicker #visaPicker></mat-datepicker>
-                    </mat-form-field>
+                    <app-datepicker
+                      label="Visa Expiry Date"
+                      formControlName="visaExpiryDate">
+                    </app-datepicker>
 
-                    <mat-form-field appearance="outline">
-                      <mat-label>Work Permit Number *</mat-label>
-                      <input matInput formControlName="workPermitNumber">
-                      <mat-error>Work permit number is required</mat-error>
-                    </mat-form-field>
+                    <app-input
+                      label="Work Permit Number *"
+                      formControlName="workPermitNumber"
+                      [required]="true"
+                      [error]="getFieldError('workPermitNumber')">
+                    </app-input>
 
-                    <mat-form-field appearance="outline">
-                      <mat-label>Work Permit Expiry Date</mat-label>
-                      <input matInput [matDatepicker]="workPermitPicker" formControlName="workPermitExpiryDate">
-                      <mat-datepicker-toggle matIconSuffix [for]="workPermitPicker"></mat-datepicker-toggle>
-                      <mat-datepicker #workPermitPicker></mat-datepicker>
-                    </mat-form-field>
+                    <app-datepicker
+                      label="Work Permit Expiry Date"
+                      formControlName="workPermitExpiryDate">
+                    </app-datepicker>
 
-                    <mat-form-field appearance="outline">
-                      <mat-label>Work Permit Type</mat-label>
-                      <mat-select formControlName="workPermitType">
-                        <mat-option value="Occupation Permit">Occupation Permit</mat-option>
-                        <mat-option value="Residence Permit">Residence Permit</mat-option>
-                        <mat-option value="Work Permit">Work Permit</mat-option>
-                      </mat-select>
-                    </mat-form-field>
+                    <app-select
+                      label="Work Permit Type"
+                      placeholder="Select permit type"
+                      formControlName="workPermitType"
+                      [options]="workPermitTypeOptions">
+                    </app-select>
 
-                    <mat-form-field appearance="outline">
-                      <mat-label>Residence Permit Number</mat-label>
-                      <input matInput formControlName="residencePermitNumber">
-                    </mat-form-field>
+                    <app-input
+                      label="Residence Permit Number"
+                      formControlName="residencePermitNumber">
+                    </app-input>
                   </div>
                 </div>
               }
@@ -323,103 +284,93 @@
             </mat-expansion-panel-header>
 
             <div class="form-grid">
-              <mat-form-field appearance="outline">
-                <mat-label>Employee Code *</mat-label>
-                <input matInput formControlName="employeeCode" placeholder="EMP001">
-                <mat-hint>Unique identifier</mat-hint>
-                <mat-error>Employee code is required</mat-error>
-              </mat-form-field>
+              <app-input
+                label="Employee Code *"
+                placeholder="EMP001"
+                formControlName="employeeCode"
+                hint="Unique identifier"
+                [required]="true"
+                [error]="getFieldError('employeeCode')">
+              </app-input>
 
-              <mat-form-field appearance="outline">
-                <mat-label>Employee Type *</mat-label>
-                <mat-select formControlName="employeeType">
-                  <mat-option value="Local">Local</mat-option>
-                  <mat-option value="Expatriate">Expatriate</mat-option>
-                </mat-select>
-                <mat-error>Employee type is required</mat-error>
-              </mat-form-field>
+              <app-select
+                label="Employee Type *"
+                placeholder="Select employee type"
+                formControlName="employeeType"
+                [options]="employeeTypeOptions"
+                [required]="true"
+                [error]="getFieldError('employeeType')">
+              </app-select>
 
-              <mat-form-field appearance="outline">
-                <mat-label>Department *</mat-label>
-                <mat-select formControlName="department">
-                  @if (departments().length === 0) {
-                    <mat-option disabled>Loading departments...</mat-option>
-                  }
-                  @for (dept of departments(); track dept.id) {
-                    <mat-option [value]="dept.name">
-                      {{ dept.name }} ({{ dept.code }})
-                    </mat-option>
-                  }
-                </mat-select>
-                <mat-error>Department is required</mat-error>
-              </mat-form-field>
+              <app-select
+                label="Department *"
+                placeholder="Select department"
+                formControlName="department"
+                [options]="departmentOptions"
+                [required]="true"
+                [error]="getFieldError('department')">
+              </app-select>
 
-              <mat-form-field appearance="outline">
-                <mat-label>Designation *</mat-label>
-                <input matInput formControlName="designation" placeholder="Production Manager">
-                <mat-error>Designation is required</mat-error>
-              </mat-form-field>
+              <app-input
+                label="Designation *"
+                placeholder="Production Manager"
+                formControlName="designation"
+                [required]="true"
+                [error]="getFieldError('designation')">
+              </app-input>
 
-              <mat-form-field appearance="outline">
-                <mat-label>Industry Sector *</mat-label>
-                <mat-select formControlName="industrySector">
-                  <mat-option value="Manufacturing">Manufacturing</mat-option>
-                  <mat-option value="EPZ">EPZ (Export Processing Zone)</mat-option>
-                  <mat-option value="Tourism">Tourism & Hospitality</mat-option>
-                  <mat-option value="Financial Services">Financial Services</mat-option>
-                  <mat-option value="ICT">ICT & Technology</mat-option>
-                  <mat-option value="Construction">Construction</mat-option>
-                  <mat-option value="Retail">Retail & Trade</mat-option>
-                  <mat-option value="Agriculture">Agriculture & Fishing</mat-option>
-                </mat-select>
-                <mat-error>Industry sector is required</mat-error>
-              </mat-form-field>
+              <app-select
+                label="Industry Sector *"
+                placeholder="Select industry sector"
+                formControlName="industrySector"
+                [options]="industrySectorOptions"
+                [required]="true"
+                [error]="getFieldError('industrySector')">
+              </app-select>
 
-              <mat-form-field appearance="outline">
-                <mat-label>Work Location</mat-label>
-                <input matInput formControlName="workLocation" placeholder="Head Office">
-              </mat-form-field>
+              <app-input
+                label="Work Location"
+                placeholder="Head Office"
+                formControlName="workLocation">
+              </app-input>
 
-              <mat-form-field appearance="outline">
-                <mat-label>Reporting To</mat-label>
-                <input matInput formControlName="reportingTo" placeholder="Manager name">
-              </mat-form-field>
+              <app-input
+                label="Reporting To"
+                placeholder="Manager name"
+                formControlName="reportingTo">
+              </app-input>
 
-              <mat-form-field appearance="outline">
-                <mat-label>Join Date *</mat-label>
-                <input matInput [matDatepicker]="joinPicker" formControlName="joinDate">
-                <mat-datepicker-toggle matIconSuffix [for]="joinPicker"></mat-datepicker-toggle>
-                <mat-datepicker #joinPicker></mat-datepicker>
-                <mat-error>Join date is required</mat-error>
-              </mat-form-field>
+              <app-datepicker
+                label="Join Date *"
+                formControlName="joinDate"
+                [required]="true"
+                [error]="getFieldError('joinDate')">
+              </app-datepicker>
 
-              <mat-form-field appearance="outline">
-                <mat-label>Probation Period (Months)</mat-label>
-                <input matInput type="number" formControlName="probationPeriodMonths" placeholder="3">
-              </mat-form-field>
+              <app-input
+                label="Probation Period (Months)"
+                type="number"
+                placeholder="3"
+                formControlName="probationPeriodMonths">
+              </app-input>
 
-              <mat-form-field appearance="outline">
-                <mat-label>Employment Contract Type *</mat-label>
-                <mat-select formControlName="employmentContractType">
-                  <mat-option value="Permanent">Permanent</mat-option>
-                  <mat-option value="Fixed-Term">Fixed-Term</mat-option>
-                  <mat-option value="Casual">Casual</mat-option>
-                  <mat-option value="Contract">Contract</mat-option>
-                </mat-select>
-                <mat-error>Contract type is required</mat-error>
-              </mat-form-field>
+              <app-select
+                label="Employment Contract Type *"
+                placeholder="Select contract type"
+                formControlName="employmentContractType"
+                [options]="employmentContractTypeOptions"
+                [required]="true"
+                [error]="getFieldError('employmentContractType')">
+              </app-select>
 
-              <mat-form-field appearance="outline">
-                <mat-label>Employment Status *</mat-label>
-                <mat-select formControlName="employmentStatus">
-                  <mat-option value="Active">Active</mat-option>
-                  <mat-option value="On Probation">On Probation</mat-option>
-                  <mat-option value="On Leave">On Leave</mat-option>
-                  <mat-option value="Suspended">Suspended</mat-option>
-                  <mat-option value="Terminated">Terminated</mat-option>
-                </mat-select>
-                <mat-error>Employment status is required</mat-error>
-              </mat-form-field>
+              <app-select
+                label="Employment Status *"
+                placeholder="Select employment status"
+                formControlName="employmentStatus"
+                [options]="employmentStatusOptions"
+                [required]="true"
+                [error]="getFieldError('employmentStatus')">
+              </app-select>
             </div>
           </mat-expansion-panel>
 
@@ -436,56 +387,61 @@
             </mat-expansion-panel-header>
 
             <div class="form-grid">
-              <mat-form-field appearance="outline">
-                <mat-label>Base Salary (MUR) *</mat-label>
-                <input matInput type="number" formControlName="baseSalary" placeholder="30000">
-                <mat-icon matPrefix>currency_rupee</mat-icon>
-                <mat-error>Base salary is required</mat-error>
-              </mat-form-field>
+              <app-input
+                label="Base Salary (MUR) *"
+                type="number"
+                placeholder="30000"
+                formControlName="baseSalary"
+                [required]="true"
+                [error]="getFieldError('baseSalary')">
+              </app-input>
 
-              <mat-form-field appearance="outline">
-                <mat-label>Payment Frequency *</mat-label>
-                <mat-select formControlName="paymentFrequency">
-                  <mat-option value="Monthly">Monthly</mat-option>
-                  <mat-option value="Bi-weekly">Bi-weekly</mat-option>
-                  <mat-option value="Weekly">Weekly</mat-option>
-                  <mat-option value="Daily">Daily</mat-option>
-                </mat-select>
-                <mat-error>Payment frequency is required</mat-error>
-              </mat-form-field>
+              <app-select
+                label="Payment Frequency *"
+                placeholder="Select frequency"
+                formControlName="paymentFrequency"
+                [options]="paymentFrequencyOptions"
+                [required]="true"
+                [error]="getFieldError('paymentFrequency')">
+              </app-select>
 
-              <mat-form-field appearance="outline">
-                <mat-label>Transport Allowance (MUR)</mat-label>
-                <input matInput type="number" formControlName="transportAllowance" placeholder="0">
-                <mat-icon matPrefix>directions_car</mat-icon>
-              </mat-form-field>
+              <app-input
+                label="Transport Allowance (MUR)"
+                type="number"
+                placeholder="0"
+                formControlName="transportAllowance">
+              </app-input>
 
-              <mat-form-field appearance="outline">
-                <mat-label>Housing Allowance (MUR)</mat-label>
-                <input matInput type="number" formControlName="housingAllowance" placeholder="0">
-                <mat-icon matPrefix>home</mat-icon>
-              </mat-form-field>
+              <app-input
+                label="Housing Allowance (MUR)"
+                type="number"
+                placeholder="0"
+                formControlName="housingAllowance">
+              </app-input>
 
-              <mat-form-field appearance="outline">
-                <mat-label>Meal Allowance (MUR)</mat-label>
-                <input matInput type="number" formControlName="mealAllowance" placeholder="0">
-                <mat-icon matPrefix>restaurant</mat-icon>
-              </mat-form-field>
+              <app-input
+                label="Meal Allowance (MUR)"
+                type="number"
+                placeholder="0"
+                formControlName="mealAllowance">
+              </app-input>
 
-              <mat-form-field appearance="outline" class="full-width">
-                <mat-label>Bank Name</mat-label>
-                <input matInput formControlName="bankName" placeholder="MCB, SBM, etc.">
-              </mat-form-field>
+              <app-input
+                class="full-width"
+                label="Bank Name"
+                placeholder="MCB, SBM, etc."
+                formControlName="bankName">
+              </app-input>
 
-              <mat-form-field appearance="outline">
-                <mat-label>Bank Account Number</mat-label>
-                <input matInput formControlName="bankAccountNumber">
-              </mat-form-field>
+              <app-input
+                label="Bank Account Number"
+                formControlName="bankAccountNumber">
+              </app-input>
 
-              <mat-form-field appearance="outline">
-                <mat-label>Bank Branch Code</mat-label>
-                <input matInput formControlName="bankBranchCode">
-              </mat-form-field>
+              <app-input
+                label="Bank Branch Code"
+                formControlName="bankBranchCode">
+              </app-input>
             </div>
           </mat-expansion-panel>
 
@@ -502,28 +458,31 @@
             </mat-expansion-panel-header>
 
             <div class="form-grid">
-              <mat-form-field appearance="outline">
-                <mat-label>CSG Number</mat-label>
-                <input matInput formControlName="csgNumber" placeholder="Contribution Sociale Générale">
-                <mat-hint>Contribution Sociale Générale</mat-hint>
-              </mat-form-field>
+              <app-input
+                label="CSG Number"
+                placeholder="Contribution Sociale Générale"
+                formControlName="csgNumber"
+                hint="Contribution Sociale Générale">
+              </app-input>
 
-              <mat-form-field appearance="outline">
-                <mat-label>NSF Number</mat-label>
-                <input matInput formControlName="nsfNumber" placeholder="National Savings Fund">
-                <mat-hint>National Savings Fund</mat-hint>
-              </mat-form-field>
+              <app-input
+                label="NSF Number"
+                placeholder="National Savings Fund"
+                formControlName="nsfNumber"
+                hint="National Savings Fund">
+              </app-input>
 
-              <mat-form-field appearance="outline">
-                <mat-label>Tax ID Number (TAN)</mat-label>
-                <input matInput formControlName="taxIdNumber">
-              </mat-form-field>
+              <app-input
+                label="Tax ID Number (TAN)"
+                formControlName="taxIdNumber">
+              </app-input>
 
-              <mat-form-field appearance="outline">
-                <mat-label>PRGF Number</mat-label>
-                <input matInput formControlName="prNumber" placeholder="Portable Retirement Gratuity Fund">
-                <mat-hint>Portable Retirement Gratuity Fund</mat-hint>
-              </mat-form-field>
+              <app-input
+                label="PRGF Number"
+                placeholder="Portable Retirement Gratuity Fund"
+                formControlName="prNumber"
+                hint="Portable Retirement Gratuity Fund">
+              </app-input>
             </div>
           </mat-expansion-panel>
 
@@ -540,30 +499,38 @@
             </mat-expansion-panel-header>
 
             <div class="form-grid">
-              <mat-form-field appearance="outline">
-                <mat-label>Annual Leave Days *</mat-label>
-                <input matInput type="number" formControlName="annualLeaveDays" placeholder="20">
-                <mat-icon matSuffix>event</mat-icon>
-                <mat-error>Annual leave days required</mat-error>
-              </mat-form-field>
+              <app-input
+                label="Annual Leave Days *"
+                type="number"
+                placeholder="20"
+                formControlName="annualLeaveDays"
+                [required]="true"
+                [error]="getFieldError('annualLeaveDays')">
+              </app-input>
 
-              <mat-form-field appearance="outline">
-                <mat-label>Sick Leave Days *</mat-label>
-                <input matInput type="number" formControlName="sickLeaveDays" placeholder="15">
-                <mat-icon matSuffix>local_hospital</mat-icon>
-                <mat-error>Sick leave days required</mat-error>
-              </mat-form-field>
+              <app-input
+                label="Sick Leave Days *"
+                type="number"
+                placeholder="15"
+                formControlName="sickLeaveDays"
+                [required]="true"
+                [error]="getFieldError('sickLeaveDays')">
+              </app-input>
 
-              <mat-form-field appearance="outline">
-                <mat-label>Casual Leave Days *</mat-label>
-                <input matInput type="number" formControlName="casualLeaveDays" placeholder="5">
-                <mat-icon matSuffix>calendar_today</mat-icon>
-                <mat-error>Casual leave days required</mat-error>
-              </mat-form-field>
+              <app-input
+                label="Casual Leave Days *"
+                type="number"
+                placeholder="5"
+                formControlName="casualLeaveDays"
+                [required]="true"
+                [error]="getFieldError('casualLeaveDays')">
+              </app-input>
 
-              <mat-checkbox formControlName="carryForwardAllowed" class="full-width">
-                Allow carry forward of unused leave
-              </mat-checkbox>
+              <app-checkbox
+                class="full-width"
+                label="Allow carry forward of unused leave"
+                formControlName="carryForwardAllowed">
+              </app-checkbox>
             </div>
           </mat-expansion-panel>
 
@@ -580,35 +547,35 @@
             </mat-expansion-panel-header>
 
             <div class="form-grid">
-              <mat-form-field appearance="outline">
-                <mat-label>Contact Name *</mat-label>
-                <input matInput formControlName="emergencyContactName">
-                <mat-error>Emergency contact name is required</mat-error>
-              </mat-form-field>
+              <app-input
+                label="Contact Name *"
+                formControlName="emergencyContactName"
+                [required]="true"
+                [error]="getFieldError('emergencyContactName')">
+              </app-input>
 
-              <mat-form-field appearance="outline">
-                <mat-label>Relation *</mat-label>
-                <mat-select formControlName="emergencyContactRelation">
-                  <mat-option value="Spouse">Spouse</mat-option>
-                  <mat-option value="Parent">Parent</mat-option>
-                  <mat-option value="Sibling">Sibling</mat-option>
-                  <mat-option value="Child">Child</mat-option>
-                  <mat-option value="Friend">Friend</mat-option>
-                  <mat-option value="Other">Other</mat-option>
-                </mat-select>
-                <mat-error>Relation is required</mat-error>
-              </mat-form-field>
+              <app-select
+                label="Relation *"
+                placeholder="Select relation"
+                formControlName="emergencyContactRelation"
+                [options]="emergencyContactRelationOptions"
+                [required]="true"
+                [error]="getFieldError('emergencyContactRelation')">
+              </app-select>
 
-              <mat-form-field appearance="outline">
-                <mat-label>Contact Phone *</mat-label>
-                <input matInput formControlName="emergencyContactPhone">
-                <mat-error>Emergency contact phone is required</mat-error>
-              </mat-form-field>
+              <app-input
+                label="Contact Phone *"
+                type="tel"
+                formControlName="emergencyContactPhone"
+                [required]="true"
+                [error]="getFieldError('emergencyContactPhone')">
+              </app-input>
 
-              <mat-form-field appearance="outline" class="full-width">
-                <mat-label>Contact Address</mat-label>
-                <textarea matInput formControlName="emergencyContactAddress" rows="2"></textarea>
-              </mat-form-field>
+              <app-input
+                class="full-width"
+                label="Contact Address"
+                formControlName="emergencyContactAddress">
+              </app-input>
             </div>
           </mat-expansion-panel>
 
@@ -625,33 +592,31 @@
             </mat-expansion-panel-header>
 
             <div class="form-grid">
-              <mat-form-field appearance="outline">
-                <mat-label>Highest Qualification</mat-label>
-                <mat-select formControlName="highestQualification">
-                  <mat-option value="High School">High School</mat-option>
-                  <mat-option value="Diploma">Diploma</mat-option>
-                  <mat-option value="Bachelor's Degree">Bachelor's Degree</mat-option>
-                  <mat-option value="Master's Degree">Master's Degree</mat-option>
-                  <mat-option value="PhD">PhD</mat-option>
-                  <mat-option value="Professional Certificate">Professional Certificate</mat-option>
-                </mat-select>
-              </mat-form-field>
+              <app-select
+                label="Highest Qualification"
+                placeholder="Select qualification"
+                formControlName="highestQualification"
+                [options]="highestQualificationOptions">
+              </app-select>
 
-              <mat-form-field appearance="outline">
-                <mat-label>University/Institution</mat-label>
-                <input matInput formControlName="university">
-              </mat-form-field>
+              <app-input
+                label="University/Institution"
+                formControlName="university">
+              </app-input>
 
-              <mat-form-field appearance="outline" class="full-width">
-                <mat-label>Skills</mat-label>
-                <textarea matInput formControlName="skills" rows="2"
-                placeholder="e.g., Leadership, Communication, Technical skills"></textarea>
-              </mat-form-field>
+              <app-input
+                class="full-width"
+                label="Skills"
+                placeholder="e.g., Leadership, Communication, Technical skills"
+                formControlName="skills">
+              </app-input>
 
-              <mat-form-field appearance="outline" class="full-width">
-                <mat-label>Languages</mat-label>
-                <input matInput formControlName="languages" placeholder="e.g., English, French, Creole">
-              </mat-form-field>
+              <app-input
+                class="full-width"
+                label="Languages"
+                placeholder="e.g., English, French, Creole"
+                formControlName="languages">
+              </app-input>
 
               <div class="document-uploads full-width">
                 <h4 class="subsection-title">Document Uploads</h4>
@@ -795,11 +760,12 @@
             </mat-expansion-panel-header>
 
             <div class="form-grid">
-              <mat-form-field appearance="outline" class="full-width">
-                <mat-label>Notes</mat-label>
-                <textarea matInput formControlName="notes" rows="5"
-                placeholder="Any additional information or remarks about the employee"></textarea>
-              </mat-form-field>
+              <app-input
+                class="full-width"
+                label="Notes"
+                placeholder="Any additional information or remarks about the employee"
+                formControlName="notes">
+              </app-input>
             </div>
           </mat-expansion-panel>
 
@@ -807,23 +773,32 @@
 
         <!-- Form Actions -->
         <div class="form-actions">
-          <button mat-button type="button" (click)="cancel()" [disabled]="loading()">
+          <app-button
+            type="button"
+            variant="text"
+            [disabled]="loading()"
+            (click)="cancel()">
             <mat-icon>close</mat-icon>
             Cancel
-          </button>
+          </app-button>
 
-          <button mat-stroked-button type="button" (click)="saveDraft()" [disabled]="saving() || loading()">
+          <app-button
+            type="button"
+            variant="outlined"
+            [disabled]="saving() || loading()"
+            (click)="saveDraft()">
             <mat-icon>save</mat-icon>
             Save Draft
-          </button>
+          </app-button>
 
-          <button mat-raised-button color="primary" type="submit" [disabled]="loading() || !employeeForm.valid">
-            @if (loading()) {
-              <mat-spinner diameter="20"></mat-spinner>
-            }
+          <app-button
+            type="submit"
+            variant="primary"
+            [disabled]="loading() || !employeeForm.valid"
+            [loading]="loading()">
             <mat-icon>check_circle</mat-icon>
             {{ isEditMode() ? 'Update Employee' : 'Create Employee' }}
-          </button>
+          </app-button>
         </div>
       </form>
     </mat-card-content>
