@@ -3,16 +3,10 @@ import { Component, signal, inject, OnInit } from '@angular/core';
 import { Router, ActivatedRoute, RouterModule } from '@angular/router';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatSelectModule } from '@angular/material/select';
-import { MatDatepickerModule } from '@angular/material/datepicker';
-import { MatNativeDateModule } from '@angular/material/core';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { EmployeeService } from '../../../core/services/employee.service';
 import { CreateEmployeeRequest } from '../../../core/models/employee.model';
+import { UiModule } from '../../../shared/ui/ui.module';
 
 @Component({
   selector: 'app-employee-form',
@@ -21,14 +15,8 @@ import { CreateEmployeeRequest } from '../../../core/models/employee.model';
     ReactiveFormsModule,
     RouterModule,
     MatCardModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatButtonModule,
     MatIconModule,
-    MatSelectModule,
-    MatDatepickerModule,
-    MatNativeDateModule,
-    MatProgressSpinnerModule
+    UiModule
 ],
   template: `
     <div class="employee-form-container">
@@ -41,98 +29,96 @@ import { CreateEmployeeRequest } from '../../../core/models/employee.model';
             <h1>{{ isEditMode() ? 'Edit Employee' : 'Add New Employee' }}</h1>
           </mat-card-title>
         </mat-card-header>
-    
+
         <mat-card-content>
           <form [formGroup]="employeeForm" (ngSubmit)="onSubmit()">
             <div class="form-grid">
               <!-- Basic Information -->
               <h3 class="section-title">Basic Information</h3>
-    
-              <mat-form-field appearance="outline" class="full-width">
-                <mat-label>Full Name</mat-label>
-                <input matInput formControlName="fullName" placeholder="Enter full name">
-                @if (employeeForm.get('fullName')?.hasError('required')) {
-                  <mat-error>
-                    Full name is required
-                  </mat-error>
-                }
-              </mat-form-field>
-    
-              <mat-form-field appearance="outline" class="full-width">
-                <mat-label>Email</mat-label>
-                <input matInput type="email" formControlName="email" placeholder="employee@company.com">
-                @if (employeeForm.get('email')?.hasError('required')) {
-                  <mat-error>
-                    Email is required
-                  </mat-error>
-                }
-                @if (employeeForm.get('email')?.hasError('email')) {
-                  <mat-error>
-                    Please enter a valid email
-                  </mat-error>
-                }
-              </mat-form-field>
-    
-              <mat-form-field appearance="outline">
-                <mat-label>Employee Code</mat-label>
-                <input matInput formControlName="employeeCode" placeholder="EMP001">
-                @if (employeeForm.get('employeeCode')?.hasError('required')) {
-                  <mat-error>
-                    Employee code is required
-                  </mat-error>
-                }
-              </mat-form-field>
-    
-              <mat-form-field appearance="outline">
-                <mat-label>Employee Type</mat-label>
-                <mat-select formControlName="employeeType">
-                  <mat-option value="Local">Local</mat-option>
-                  <mat-option value="Expatriate">Expatriate</mat-option>
-                </mat-select>
-              </mat-form-field>
-    
-              <mat-form-field appearance="outline">
-                <mat-label>Phone Number</mat-label>
-                <input matInput formControlName="phoneNumber" placeholder="+1234567890">
-              </mat-form-field>
-    
-              <mat-form-field appearance="outline">
-                <mat-label>Join Date</mat-label>
-                <input matInput [matDatepicker]="joinPicker" formControlName="joinDate">
-                <mat-datepicker-toggle matIconSuffix [for]="joinPicker"></mat-datepicker-toggle>
-                <mat-datepicker #joinPicker></mat-datepicker>
-              </mat-form-field>
-    
+
+              <app-input
+                class="full-width"
+                label="Full Name"
+                placeholder="Enter full name"
+                formControlName="fullName"
+                [required]="true"
+                [error]="getFieldError('fullName')">
+              </app-input>
+
+              <app-input
+                class="full-width"
+                label="Email"
+                type="email"
+                placeholder="employee@company.com"
+                formControlName="email"
+                [required]="true"
+                [error]="getFieldError('email')">
+              </app-input>
+
+              <app-input
+                label="Employee Code"
+                placeholder="EMP001"
+                formControlName="employeeCode"
+                [required]="true"
+                [error]="getFieldError('employeeCode')">
+              </app-input>
+
+              <app-select
+                label="Employee Type"
+                placeholder="Select employee type"
+                formControlName="employeeType"
+                [options]="employeeTypeOptions"
+                [required]="true">
+              </app-select>
+
+              <app-input
+                label="Phone Number"
+                type="tel"
+                placeholder="+1234567890"
+                formControlName="phoneNumber">
+              </app-input>
+
+              <app-datepicker
+                label="Join Date"
+                formControlName="joinDate">
+              </app-datepicker>
+
               <!-- Department & Position -->
               <h3 class="section-title full-width">Department & Position</h3>
-    
-              <mat-form-field appearance="outline">
-                <mat-label>Department</mat-label>
-                <input matInput formControlName="department" placeholder="e.g., Engineering">
-              </mat-form-field>
-    
-              <mat-form-field appearance="outline">
-                <mat-label>Designation</mat-label>
-                <input matInput formControlName="designation" placeholder="e.g., Software Engineer">
-              </mat-form-field>
-    
+
+              <app-input
+                label="Department"
+                placeholder="e.g., Engineering"
+                formControlName="department">
+              </app-input>
+
+              <app-input
+                label="Designation"
+                placeholder="e.g., Software Engineer"
+                formControlName="designation">
+              </app-input>
+
               @if (error()) {
                 <div class="error-message full-width">
                   <mat-icon>error</mat-icon>
                   <span>{{ error() }}</span>
                 </div>
               }
-    
+
               <div class="form-actions full-width">
-                <button mat-button type="button" routerLink="/tenant/employees">
+                <app-button
+                  type="button"
+                  variant="text"
+                  (click)="navigateToList()">
                   Cancel
-                </button>
-                <button mat-raised-button color="primary" type="submit" [disabled]="loading() || !employeeForm.valid">
-                  @if (loading()) {
-                    <mat-spinner diameter="20"></mat-spinner>
-                  }
+                </app-button>
+                <app-button
+                  type="submit"
+                  variant="primary"
+                  [disabled]="loading() || !employeeForm.valid"
+                  [loading]="loading()">
                   {{ isEditMode() ? 'Update Employee' : 'Create Employee' }}
-                </button>
+                </app-button>
               </div>
             </div>
           </form>
@@ -224,6 +210,12 @@ export class EmployeeFormComponent implements OnInit {
   loading = signal(false);
   error = signal<string | null>(null);
 
+  // Options for select components
+  employeeTypeOptions = [
+    { value: 'Local', label: 'Local' },
+    { value: 'Expatriate', label: 'Expatriate' }
+  ];
+
   constructor() {
     console.log('📝 Employee Form Component initialized');
 
@@ -284,5 +276,40 @@ export class EmployeeFormComponent implements OnInit {
         this.loading.set(false);
       }
     });
+  }
+
+  getFieldError(fieldName: string): string | null {
+    const control = this.employeeForm.get(fieldName);
+    if (control && control.invalid && (control.dirty || control.touched)) {
+      if (control.hasError('required')) {
+        return `${this.getFieldLabel(fieldName)} is required`;
+      }
+      if (control.hasError('email')) {
+        return 'Please enter a valid email';
+      }
+      if (control.hasError('minlength')) {
+        const minLength = control.getError('minlength').requiredLength;
+        return `Must be at least ${minLength} characters`;
+      }
+    }
+    return null;
+  }
+
+  private getFieldLabel(fieldName: string): string {
+    const labels: Record<string, string> = {
+      'fullName': 'Full name',
+      'email': 'Email',
+      'employeeCode': 'Employee code',
+      'employeeType': 'Employee type',
+      'phoneNumber': 'Phone number',
+      'joinDate': 'Join date',
+      'department': 'Department',
+      'designation': 'Designation'
+    };
+    return labels[fieldName] || fieldName;
+  }
+
+  navigateToList(): void {
+    this.router.navigate(['/tenant/employees']);
   }
 }
