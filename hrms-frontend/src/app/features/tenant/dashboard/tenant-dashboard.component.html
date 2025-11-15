@@ -34,38 +34,34 @@
 
       <!-- Error State -->
       @if (error() && !loading()) {
-        <mat-card class="error-card">
-          <mat-card-content>
-            <div class="error-content">
-              <mat-icon color="warn">error_outline</mat-icon>
-              <div class="error-text">
-                <h3>Failed to load dashboard data</h3>
-                <p>{{ error() }}</p>
-              </div>
-              <button mat-raised-button color="primary" (click)="retry()">
-                <mat-icon>refresh</mat-icon>
-                Retry
-              </button>
+        <app-card class="error-card" [elevation]="2" padding="large">
+          <div class="error-content">
+            <app-icon name="error_outline"></app-icon>
+            <div class="error-text">
+              <h3>Failed to load dashboard data</h3>
+              <p>{{ error() }}</p>
             </div>
-          </mat-card-content>
-        </mat-card>
+            <button mat-raised-button color="primary" (click)="retry()">
+              <mat-icon>refresh</mat-icon>
+              Retry
+            </button>
+          </div>
+        </app-card>
       }
 
       <!-- Loading State (Skeleton) -->
       @if (loading()) {
         <div class="stats-grid">
           @for (card of kpiCards; track card.title) {
-            <mat-card class="stat-card skeleton">
-              <mat-card-content>
-                <div class="stat-icon">
-                  <div class="skeleton-circle"></div>
-                </div>
-                <div class="stat-info">
-                  <div class="skeleton-line skeleton-title"></div>
-                  <div class="skeleton-line skeleton-subtitle"></div>
-                </div>
-              </mat-card-content>
-            </mat-card>
+            <app-card class="stat-card skeleton" [elevation]="1" padding="large">
+              <div class="stat-icon">
+                <div class="skeleton-circle"></div>
+              </div>
+              <div class="stat-info">
+                <div class="skeleton-line skeleton-title"></div>
+                <div class="skeleton-line skeleton-subtitle"></div>
+              </div>
+            </app-card>
           }
         </div>
       }
@@ -74,17 +70,15 @@
       @if (!loading() && !error() && stats()) {
         <div class="stats-grid">
           @for (card of kpiCards; track card.title) {
-            <mat-card class="stat-card" [class.positive]="isPositiveGrowth(card, stats()!)" [class.negative]="isNegativeGrowth(card, stats()!)">
-              <mat-card-content>
-                <div class="stat-icon">
-                  <mat-icon [color]="getCardColor(card, stats()!)">{{ card.icon }}</mat-icon>
-                </div>
-                <div class="stat-info">
-                  <h3>{{ card.getValue(stats()!) }}{{ card.suffix }}</h3>
-                  <p>{{ card.title }}</p>
-                </div>
-              </mat-card-content>
-            </mat-card>
+            <app-card class="stat-card" [class.positive]="isPositiveGrowth(card, stats()!)" [class.negative]="isNegativeGrowth(card, stats()!)" [elevation]="2" [hoverable]="true" padding="large">
+              <div class="stat-icon">
+                <app-icon [name]="card.icon"></app-icon>
+              </div>
+              <div class="stat-info">
+                <h3>{{ card.getValue(stats()!) }}{{ card.suffix }}</h3>
+                <p>{{ card.title }}</p>
+              </div>
+            </app-card>
           }
         </div>
       }
@@ -94,7 +88,7 @@
         <div class="alerts-section">
           <div class="section-header">
             <h2>
-              <mat-icon>notification_important</mat-icon>
+              <app-icon name="notification_important"></app-icon>
               Urgent Alerts
             </h2>
             <span class="alert-count">{{ alerts().length }}</span>
@@ -102,22 +96,20 @@
 
           <div class="alerts-grid">
             @for (alert of alerts(); track alert.id) {
-              <mat-card class="alert-card" [class]="'severity-' + alert.severity">
-                <mat-card-content>
-                  <div class="alert-icon">
-                    <mat-icon [color]="getSeverityColor(alert.severity)">{{ alert.icon }}</mat-icon>
-                  </div>
-                  <div class="alert-content">
-                    <h3>{{ alert.title }}</h3>
-                    <p>{{ alert.description }}</p>
-                  </div>
-                  <div class="alert-action">
-                    <button mat-icon-button [routerLink]="alert.actionUrl" matTooltip="View Details">
-                      <mat-icon>arrow_forward</mat-icon>
-                    </button>
-                  </div>
-                </mat-card-content>
-              </mat-card>
+              <app-card class="alert-card" [class]="'severity-' + alert.severity" [elevation]="2" [hoverable]="true" padding="large">
+                <div class="alert-icon">
+                  <app-icon [name]="alert.icon"></app-icon>
+                </div>
+                <div class="alert-content">
+                  <h3>{{ alert.title }}</h3>
+                  <p>{{ alert.description }}</p>
+                </div>
+                <div class="alert-action">
+                  <button mat-icon-button [routerLink]="alert.actionUrl" matTooltip="View Details">
+                    <mat-icon>arrow_forward</mat-icon>
+                  </button>
+                </div>
+              </app-card>
             }
           </div>
         </div>
@@ -129,61 +121,55 @@
           <h2>Analytics & Insights</h2>
           <div class="charts-grid">
             <!-- Department Headcount Chart -->
-            <mat-card class="chart-card">
-              <mat-card-header>
-                <mat-card-title>
-                  <mat-icon>corporate_fare</mat-icon>
+            <app-card class="chart-card" [elevation]="2" [hoverable]="true" padding="medium">
+              <div class="chart-header">
+                <h3>
+                  <app-icon name="corporate_fare"></app-icon>
                   Department Headcount
-                </mat-card-title>
-              </mat-card-header>
-              <mat-card-content>
-                <div class="chart-container">
-                  <canvas baseChart
-                    [data]="departmentChartData"
-                    [options]="departmentChartOptions"
-                    type="bar">
-                  </canvas>
-                </div>
-              </mat-card-content>
-            </mat-card>
+                </h3>
+              </div>
+              <div class="chart-container">
+                <canvas baseChart
+                  [data]="departmentChartData"
+                  [options]="departmentChartOptions"
+                  type="bar">
+                </canvas>
+              </div>
+            </app-card>
 
             <!-- Employee Growth Chart -->
-            <mat-card class="chart-card">
-              <mat-card-header>
-                <mat-card-title>
-                  <mat-icon>trending_up</mat-icon>
+            <app-card class="chart-card" [elevation]="2" [hoverable]="true" padding="medium">
+              <div class="chart-header">
+                <h3>
+                  <app-icon name="trending_up"></app-icon>
                   Employee Growth (12 Months)
-                </mat-card-title>
-              </mat-card-header>
-              <mat-card-content>
-                <div class="chart-container">
-                  <canvas baseChart
-                    [data]="growthChartData"
-                    [options]="growthChartOptions"
-                    type="line">
-                  </canvas>
-                </div>
-              </mat-card-content>
-            </mat-card>
+                </h3>
+              </div>
+              <div class="chart-container">
+                <canvas baseChart
+                  [data]="growthChartData"
+                  [options]="growthChartOptions"
+                  type="line">
+                </canvas>
+              </div>
+            </app-card>
 
             <!-- Employee Type Distribution Chart -->
-            <mat-card class="chart-card">
-              <mat-card-header>
-                <mat-card-title>
-                  <mat-icon>pie_chart</mat-icon>
+            <app-card class="chart-card" [elevation]="2" [hoverable]="true" padding="medium">
+              <div class="chart-header">
+                <h3>
+                  <app-icon name="pie_chart"></app-icon>
                   Employee Type Distribution
-                </mat-card-title>
-              </mat-card-header>
-              <mat-card-content>
-                <div class="chart-container">
-                  <canvas baseChart
-                    [data]="typeChartData"
-                    [options]="typeChartOptions"
-                    type="doughnut">
-                  </canvas>
-                </div>
-              </mat-card-content>
-            </mat-card>
+                </h3>
+              </div>
+              <div class="chart-container">
+                <canvas baseChart
+                  [data]="typeChartData"
+                  [options]="typeChartOptions"
+                  type="doughnut">
+                </canvas>
+              </div>
+            </app-card>
           </div>
         </div>
       }
@@ -193,33 +179,25 @@
         <div class="quick-actions">
           <h2>Quick Actions</h2>
           <div class="actions-grid">
-            <mat-card class="action-card" routerLink="/tenant/employees/new">
-              <mat-card-content>
-                <mat-icon>person_add</mat-icon>
-                <h3>Add Employee</h3>
-              </mat-card-content>
-            </mat-card>
+            <app-card class="action-card" [elevation]="2" [hoverable]="true" [clickable]="true" padding="large" routerLink="/tenant/employees/new">
+              <app-icon name="person_add"></app-icon>
+              <h3>Add Employee</h3>
+            </app-card>
 
-            <mat-card class="action-card" routerLink="/tenant/leave">
-              <mat-card-content>
-                <mat-icon>approval</mat-icon>
-                <h3>Approve Leaves</h3>
-              </mat-card-content>
-            </mat-card>
+            <app-card class="action-card" [elevation]="2" [hoverable]="true" [clickable]="true" padding="large" routerLink="/tenant/leave">
+              <app-icon name="approval"></app-icon>
+              <h3>Approve Leaves</h3>
+            </app-card>
 
-            <mat-card class="action-card" routerLink="/tenant/payroll">
-              <mat-card-content>
-                <mat-icon>account_balance</mat-icon>
-                <h3>Process Payroll</h3>
-              </mat-card-content>
-            </mat-card>
+            <app-card class="action-card" [elevation]="2" [hoverable]="true" [clickable]="true" padding="large" routerLink="/tenant/payroll">
+              <app-icon name="account_balance"></app-icon>
+              <h3>Process Payroll</h3>
+            </app-card>
 
-            <mat-card class="action-card" routerLink="/tenant/reports">
-              <mat-card-content>
-                <mat-icon>summarize</mat-icon>
-                <h3>View Reports</h3>
-              </mat-card-content>
-            </mat-card>
+            <app-card class="action-card" [elevation]="2" [hoverable]="true" [clickable]="true" padding="large" routerLink="/tenant/reports">
+              <app-icon name="summarize"></app-icon>
+              <h3>View Reports</h3>
+            </app-card>
           </div>
         </div>
       }
@@ -230,21 +208,21 @@
           <div class="widgets-grid">
             <!-- Recent Activity Feed -->
             <div class="widget-container">
-              <mat-card class="widget-card">
-                <mat-card-header>
-                  <mat-card-title>
-                    <mat-icon>timeline</mat-icon>
+              <app-card class="widget-card" [elevation]="2" [hoverable]="true" padding="none">
+                <div class="widget-header">
+                  <h3>
+                    <app-icon name="timeline"></app-icon>
                     Recent Activity
-                  </mat-card-title>
-                </mat-card-header>
-                <mat-card-content>
+                  </h3>
+                </div>
+                <div class="widget-content">
                   @if (activitiesLoading()) {
                     <div class="widget-loading">
                       <mat-progress-spinner diameter="40" mode="indeterminate"></mat-progress-spinner>
                     </div>
                   } @else if (activities().length === 0) {
                     <div class="widget-empty">
-                      <mat-icon>info</mat-icon>
+                      <app-icon name="info"></app-icon>
                       <p>No recent activity</p>
                     </div>
                   } @else {
@@ -252,7 +230,7 @@
                       @for (activity of activities(); track activity.id) {
                         <div class="activity-item">
                           <div class="activity-icon">
-                            <mat-icon color="accent">{{ activity.icon }}</mat-icon>
+                            <app-icon [name]="activity.icon"></app-icon>
                           </div>
                           <div class="activity-content">
                             <h4>{{ activity.title }}</h4>
@@ -263,27 +241,27 @@
                       }
                     </div>
                   }
-                </mat-card-content>
-              </mat-card>
+                </div>
+              </app-card>
             </div>
 
             <!-- Upcoming Birthdays -->
             <div class="widget-container">
-              <mat-card class="widget-card">
-                <mat-card-header>
-                  <mat-card-title>
-                    <mat-icon>cake</mat-icon>
+              <app-card class="widget-card" [elevation]="2" [hoverable]="true" padding="none">
+                <div class="widget-header">
+                  <h3>
+                    <app-icon name="cake"></app-icon>
                     Upcoming Birthdays
-                  </mat-card-title>
-                </mat-card-header>
-                <mat-card-content>
+                  </h3>
+                </div>
+                <div class="widget-content">
                   @if (birthdaysLoading()) {
                     <div class="widget-loading">
                       <mat-progress-spinner diameter="40" mode="indeterminate"></mat-progress-spinner>
                     </div>
                   } @else if (birthdays().length === 0) {
                     <div class="widget-empty">
-                      <mat-icon>info</mat-icon>
+                      <app-icon name="info"></app-icon>
                       <p>No upcoming birthdays in the next 30 days</p>
                     </div>
                   } @else {
@@ -291,14 +269,14 @@
                       @for (birthday of birthdays(); track birthday.employeeId) {
                         <div class="birthday-item">
                           <div class="birthday-icon">
-                            <mat-icon color="accent">cake</mat-icon>
+                            <app-icon name="cake"></app-icon>
                           </div>
                           <div class="birthday-content">
                             <h4>{{ birthday.employeeName }}</h4>
                             <p>{{ birthday.department }}</p>
                             <span class="birthday-date">
                               @if (birthday.daysUntil === 0) {
-                                <mat-chip class="today-chip">Today</mat-chip>
+                                <app-chip class="today-chip" color="accent">Today</app-chip>
                               } @else if (birthday.daysUntil === 1) {
                                 Tomorrow
                               } @else {
@@ -310,8 +288,8 @@
                       }
                     </div>
                   }
-                </mat-card-content>
-              </mat-card>
+                </div>
+              </app-card>
             </div>
           </div>
         </div>

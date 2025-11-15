@@ -1,5 +1,6 @@
 import { Component, signal, inject, OnInit, OnDestroy } from '@angular/core';
 
+// Material imports (keeping temporarily for backwards compatibility)
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
@@ -8,6 +9,13 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { RouterModule } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
+
+// Custom UI components
+import { CardComponent } from '../../../shared/ui/components/card/card';
+import { IconComponent } from '../../../shared/ui/components/icon/icon';
+import { ButtonComponent } from '../../../shared/ui/components/button/button';
+import { ProgressSpinner } from '../../../shared/ui/components/progress-spinner/progress-spinner';
+import { Chip } from '../../../shared/ui/components/chip/chip';
 
 import { AuthService } from '../../../core/services/auth.service';
 import { ThemeService } from '../../../core/services/theme.service';
@@ -61,6 +69,7 @@ interface KpiCard {
   selector: 'app-tenant-dashboard',
   standalone: true,
   imports: [
+    // Material imports (keeping for now)
     MatCardModule,
     MatIconModule,
     MatButtonModule,
@@ -72,7 +81,13 @@ interface KpiCard {
     MatSelectModule,
     MatFormFieldModule,
     MatChipsModule,
-    BaseChartDirective
+    BaseChartDirective,
+    // Custom UI components
+    CardComponent,
+    IconComponent,
+    ButtonComponent,
+    ProgressSpinner,
+    Chip
 ],
   templateUrl: './tenant-dashboard.component.html',
   styleUrl: './tenant-dashboard.component.scss'
