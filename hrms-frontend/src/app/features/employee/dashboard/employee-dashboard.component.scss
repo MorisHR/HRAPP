@@ -12,10 +12,15 @@
 // TOOLBAR
 // ───────────────────────────────────────────────────────────────
 
-mat-toolbar {
+mat-toolbar,
+app-toolbar {
   background: var(--color-card) !important;
   border-bottom: 1px solid var(--color-border);
   box-shadow: var(--shadow-sm);
+  display: flex;
+  align-items: center;
+  padding: 0 var(--spacing-lg);
+  height: 64px;
 
   .toolbar-spacer {
     flex: 1 1 auto;
@@ -81,11 +86,14 @@ mat-toolbar {
     border-color: var(--color-accent);
   }
 
-  mat-card-content {
+  // Support both Material and custom cards
+  mat-card-content,
+  & {
     padding: var(--spacing-xl) !important;
     text-align: center;
 
-    mat-icon {
+    mat-icon,
+    app-icon {
       font-size: 48px;
       width: 48px;
       height: 48px;
@@ -150,11 +158,14 @@ mat-toolbar {
     border-color: var(--color-accent);
   }
 
-  mat-card-content {
+  // Support both Material and custom cards
+  mat-card-content,
+  & {
     padding: var(--spacing-xl) !important;
     text-align: center;
 
-    mat-icon {
+    mat-icon,
+    app-icon {
       font-size: 48px;
       width: 48px;
       height: 48px;
