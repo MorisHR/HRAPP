@@ -19,6 +19,7 @@
 
       <form (ngSubmit)="onSubmit()" class="login-form">
         <!-- Email Input -->
+        <!-- OLD: Custom HTML/CSS
         <div class="input-group">
           <label for="email" class="input-label">Email address</label>
           <input
@@ -35,81 +36,145 @@
             aria-required="true"
             />
           </div>
+        -->
+        <app-input
+          type="email"
+          label="Email address"
+          placeholder="you@example.com"
+          [value]="email()"
+          (valueChange)="email.set($event)"
+          [disabled]="isLoading()"
+          [required]="true"
+          [error]="errorMessage() && !isValidEmail(email()) && email() ? 'Please enter a valid email' : null"
+          id="email">
+        </app-input>
 
-          <!-- Password Input -->
-          <div class="input-group">
-            <div class="password-label-wrapper">
-              <label for="password" class="input-label">Password</label>
-              <a href="/auth/forgot-password?returnUrl=/auth/login" class="forgot-password-link">Forgot Password?</a>
+        <!-- Password Input -->
+        <!-- OLD: Custom HTML/CSS
+        <div class="input-group">
+          <div class="password-label-wrapper">
+            <label for="password" class="input-label">Password</label>
+            <a href="/auth/forgot-password?returnUrl=/auth/login" class="forgot-password-link">Forgot Password?</a>
+          </div>
+          <div class="password-wrapper">
+            <input
+              [type]="hidePassword() ? 'password' : 'text'"
+              id="password"
+              class="form-input password-input"
+              placeholder="Enter your password"
+              [value]="password()"
+              (input)="password.set($any($event.target).value)"
+              [disabled]="isLoading()"
+              autocomplete="current-password"
+              required
+              aria-label="Password"
+              aria-required="true"
+              />
+              <button
+                type="button"
+                class="password-toggle"
+                (click)="togglePasswordVisibility()"
+                [attr.aria-label]="hidePassword() ? 'Show password' : 'Hide password'"
+                >
+                @if (hidePassword()) {
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                    <circle cx="12" cy="12" r="3"></circle>
+                  </svg>
+                }
+                @if (!hidePassword()) {
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                    <line x1="1" y1="1" x2="23" y2="23"></line>
+                  </svg>
+                }
+              </button>
             </div>
-            <div class="password-wrapper">
-              <input
-                [type]="hidePassword() ? 'password' : 'text'"
-                id="password"
-                class="form-input password-input"
-                placeholder="Enter your password"
-                [value]="password()"
-                (input)="password.set($any($event.target).value)"
-                [disabled]="isLoading()"
-                autocomplete="current-password"
-                required
-                aria-label="Password"
-                aria-required="true"
-                />
-                <button
-                  type="button"
-                  class="password-toggle"
-                  (click)="togglePasswordVisibility()"
-                  [attr.aria-label]="hidePassword() ? 'Show password' : 'Hide password'"
-                  >
-                  @if (hidePassword()) {
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                      <circle cx="12" cy="12" r="3"></circle>
-                    </svg>
-                  }
-                  @if (!hidePassword()) {
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
-                      <line x1="1" y1="1" x2="23" y2="23"></line>
-                    </svg>
-                  }
-                </button>
-              </div>
-            </div>
-
-            <!-- Error Message -->
-            @if (errorMessage()) {
-              <div class="error-message" role="alert">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <circle cx="12" cy="12" r="10"></circle>
-                  <line x1="12" y1="8" x2="12" y2="12"></line>
-                  <line x1="12" y1="16" x2="12.01" y2="16"></line>
-                </svg>
-                <span>{{ errorMessage() }}</span>
-              </div>
+          </div>
+        -->
+        <div class="password-label-wrapper">
+          <label class="input-label-custom">Password</label>
+          <a href="/auth/forgot-password?returnUrl=/auth/login" class="forgot-password-link">Forgot Password?</a>
+        </div>
+        <div class="password-field-wrapper">
+          <app-input
+            [type]="hidePassword() ? 'password' : 'text'"
+            placeholder="Enter your password"
+            [value]="password()"
+            (valueChange)="password.set($event)"
+            [disabled]="isLoading()"
+            [required]="true"
+            [error]="errorMessage() && password().length < 6 && password() ? 'Password must be at least 6 characters' : null"
+            id="password">
+          </app-input>
+          <button
+            type="button"
+            class="password-toggle-btn"
+            (click)="togglePasswordVisibility()"
+            [attr.aria-label]="hidePassword() ? 'Show password' : 'Hide password'"
+            >
+            @if (hidePassword()) {
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+              </svg>
             }
-
-            <!-- Submit Button -->
-            <button
-              type="submit"
-              class="submit-button"
-              [disabled]="!isValidForm() || isLoading()"
-              aria-label="Sign in"
-              >
-              @if (isLoading()) {
-                <span class="loading-spinner"></span>
-                <span>Signing in...</span>
-              } @else {
-                <span>Sign in</span>
-              }
-            </button>
-          </form>
+            @if (!hidePassword()) {
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                <line x1="1" y1="1" x2="23" y2="23"></line>
+              </svg>
+            }
+          </button>
         </div>
 
-        <!-- Footer -->
-        <div class="login-footer">
-          <p class="footer-text">Powered by <strong>MorisHR</strong></p>
-        </div>
-      </div>
+        <!-- Error Message -->
+        @if (errorMessage()) {
+          <div class="error-message" role="alert">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            <span>{{ errorMessage() }}</span>
+          </div>
+        }
+
+        <!-- Submit Button -->
+        <!-- OLD: Custom HTML/CSS
+        <button
+          type="submit"
+          class="submit-button"
+          [disabled]="!isValidForm() || isLoading()"
+          aria-label="Sign in"
+          >
+          @if (isLoading()) {
+            <span class="loading-spinner"></span>
+            <span>Signing in...</span>
+          } @else {
+            <span>Sign in</span>
+          }
+        </button>
+        -->
+        <app-button
+          type="submit"
+          variant="primary"
+          [disabled]="!isValidForm() || isLoading()"
+          [loading]="isLoading()"
+          [fullWidth]="true"
+          size="large">
+          @if (isLoading()) {
+            <span>Signing in...</span>
+          } @else {
+            <span>Sign in</span>
+          }
+        </app-button>
+      </form>
     </div>
+
+    <!-- Footer -->
+    <div class="login-footer">
+      <p class="footer-text">Powered by <strong>MorisHR</strong></p>
+    </div>
+  </div>
+</div>

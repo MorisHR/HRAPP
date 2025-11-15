@@ -83,6 +83,56 @@
         margin-bottom: 0.5rem;
         letter-spacing: 0.2px;
       }
+    }
+
+    // Custom label for password field (when using app-input without label)
+    .password-label-wrapper {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.5rem;
+
+      .input-label-custom {
+        display: block;
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: #333;
+        letter-spacing: 0.2px;
+      }
+    }
+
+    // Password field with toggle button for app-input
+    .password-field-wrapper {
+      position: relative;
+      margin-bottom: 1.25rem;
+
+      .password-toggle-btn {
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 8px;
+        color: #666;
+        transition: color 0.2s ease;
+        z-index: 10;
+
+        &:hover {
+          color: #1a1a1a;
+        }
+
+        &:focus {
+          outline: 2px solid #3B82F6;
+          outline-offset: 2px;
+          border-radius: 4px;
+        }
+
+        svg {
+          display: block;
+        }
+      }
 
       .forgot-password-link {
         font-size: 0.8125rem;

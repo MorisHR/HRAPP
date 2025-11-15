@@ -5,11 +5,12 @@ import { Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { TenantContextService } from '../../../core/services/tenant-context.service';
 import { SessionManagementService } from '../../../core/services/session-management.service';
+import { UiModule } from '../../../shared/ui/ui.module';
 
 @Component({
   selector: 'app-tenant-login',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, UiModule],
   templateUrl: './tenant-login.component.html',
   styleUrls: ['./tenant-login.component.scss']
 })
