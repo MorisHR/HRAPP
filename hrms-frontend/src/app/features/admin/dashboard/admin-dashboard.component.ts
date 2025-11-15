@@ -1,9 +1,15 @@
 import { Component, signal, inject, OnInit } from '@angular/core';
 
+// Material imports (keeping temporarily for backwards compatibility)
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { RouterModule } from '@angular/router';
+
+// Custom UI components
+import { CardComponent } from '../../../shared/ui/components/card/card';
+import { IconComponent } from '../../../shared/ui/components/icon/icon';
+
 import { TenantService } from '../../../core/services/tenant.service';
 
 interface DashboardStats {
@@ -17,10 +23,14 @@ interface DashboardStats {
   selector: 'app-admin-dashboard',
   standalone: true,
   imports: [
+    // Material imports (keeping for now)
     MatCardModule,
     MatIconModule,
     MatButtonModule,
-    RouterModule
+    RouterModule,
+    // Custom UI components
+    CardComponent,
+    IconComponent
 ],
   templateUrl: './admin-dashboard.component.html',
   styleUrl: './admin-dashboard.component.scss'

@@ -3,6 +3,7 @@
     <h1 class="dashboard-title">Dashboard</h1>
 
     <!-- Stats Cards -->
+    <!-- OLD MATERIAL CARDS (commented for reference):
     <div class="stats-grid">
       <mat-card class="stat-card">
         <mat-card-content>
@@ -15,137 +16,125 @@
           </div>
         </mat-card-content>
       </mat-card>
+    -->
 
-      <mat-card class="stat-card">
-        <mat-card-content>
-          <div class="stat-info">
-            <p class="stat-label">Active Tenants</p>
-            <h3 class="stat-value">{{ stats().activeTenants }}</h3>
-          </div>
-          <div class="stat-icon">
-            <mat-icon>check_circle</mat-icon>
-          </div>
-        </mat-card-content>
-      </mat-card>
+    <div class="stats-grid">
+      <app-card class="stat-card" [elevation]="2" [hoverable]="true" padding="medium">
+        <div class="stat-info">
+          <p class="stat-label">Total Tenants</p>
+          <h3 class="stat-value">{{ stats().totalTenants }}</h3>
+        </div>
+        <div class="stat-icon">
+          <app-icon name="business"></app-icon>
+        </div>
+      </app-card>
 
-      <mat-card class="stat-card">
-        <mat-card-content>
-          <div class="stat-info">
-            <p class="stat-label">Total Employees</p>
-            <h3 class="stat-value">{{ stats().totalEmployees }}</h3>
-          </div>
-          <div class="stat-icon">
-            <mat-icon>people</mat-icon>
-          </div>
-        </mat-card-content>
-      </mat-card>
+      <app-card class="stat-card" [elevation]="2" [hoverable]="true" padding="medium">
+        <div class="stat-info">
+          <p class="stat-label">Active Tenants</p>
+          <h3 class="stat-value">{{ stats().activeTenants }}</h3>
+        </div>
+        <div class="stat-icon">
+          <app-icon name="check_circle"></app-icon>
+        </div>
+      </app-card>
 
-      <mat-card class="stat-card">
-        <mat-card-content>
-          <div class="stat-info">
-            <p class="stat-label">Monthly Revenue</p>
-            <h3 class="stat-value">${{ stats().monthlyRevenue }}</h3>
-          </div>
-          <div class="stat-icon">
-            <mat-icon>payments</mat-icon>
-          </div>
-        </mat-card-content>
-      </mat-card>
+      <app-card class="stat-card" [elevation]="2" [hoverable]="true" padding="medium">
+        <div class="stat-info">
+          <p class="stat-label">Total Employees</p>
+          <h3 class="stat-value">{{ stats().totalEmployees }}</h3>
+        </div>
+        <div class="stat-icon">
+          <app-icon name="people"></app-icon>
+        </div>
+      </app-card>
+
+      <app-card class="stat-card" [elevation]="2" [hoverable]="true" padding="medium">
+        <div class="stat-info">
+          <p class="stat-label">Monthly Revenue</p>
+          <h3 class="stat-value">${{ stats().monthlyRevenue }}</h3>
+        </div>
+        <div class="stat-icon">
+          <app-icon name="payments"></app-icon>
+        </div>
+      </app-card>
     </div>
 
     <!-- Quick Actions -->
     <div class="quick-actions">
       <h2>Quick Actions</h2>
       <div class="actions-grid">
-        <mat-card class="action-card" routerLink="/admin/tenants">
-          <mat-card-content>
-            <div class="icon-wrapper">
-              <mat-icon>business_center</mat-icon>
-            </div>
-            <h3>Manage Tenants</h3>
-            <p>View, create, and manage tenant organizations</p>
-          </mat-card-content>
-        </mat-card>
+        <app-card class="action-card" [elevation]="2" [hoverable]="true" [clickable]="true" padding="large" routerLink="/admin/tenants">
+          <div class="icon-wrapper">
+            <app-icon name="business_center"></app-icon>
+          </div>
+          <h3>Manage Tenants</h3>
+          <p>View, create, and manage tenant organizations</p>
+        </app-card>
 
-        <mat-card class="action-card" routerLink="/admin/tenants/new">
-          <mat-card-content>
-            <div class="icon-wrapper">
-              <mat-icon>add_business</mat-icon>
-            </div>
-            <h3>Create Tenant</h3>
-            <p>Onboard a new tenant organization</p>
-          </mat-card-content>
-        </mat-card>
+        <app-card class="action-card" [elevation]="2" [hoverable]="true" [clickable]="true" padding="large" routerLink="/admin/tenants/new">
+          <div class="icon-wrapper">
+            <app-icon name="add_business"></app-icon>
+          </div>
+          <h3>Create Tenant</h3>
+          <p>Onboard a new tenant organization</p>
+        </app-card>
 
-        <mat-card class="action-card" routerLink="/admin/audit-logs">
-          <mat-card-content>
-            <div class="icon-wrapper">
-              <mat-icon>history</mat-icon>
-            </div>
-            <h3>Audit Logs</h3>
-            <p>View system-wide audit trail and security events</p>
-          </mat-card-content>
-        </mat-card>
+        <app-card class="action-card" [elevation]="2" [hoverable]="true" [clickable]="true" padding="large" routerLink="/admin/audit-logs">
+          <div class="icon-wrapper">
+            <app-icon name="history"></app-icon>
+          </div>
+          <h3>Audit Logs</h3>
+          <p>View system-wide audit trail and security events</p>
+        </app-card>
 
-        <mat-card class="action-card" routerLink="/admin/security-alerts">
-          <mat-card-content>
-            <div class="icon-wrapper">
-              <mat-icon>security</mat-icon>
-            </div>
-            <h3>Security Alerts</h3>
-            <p>Real-time threat detection and security monitoring</p>
-          </mat-card-content>
-        </mat-card>
+        <app-card class="action-card" [elevation]="2" [hoverable]="true" [clickable]="true" padding="large" routerLink="/admin/security-alerts">
+          <div class="icon-wrapper">
+            <app-icon name="security"></app-icon>
+          </div>
+          <h3>Security Alerts</h3>
+          <p>Real-time threat detection and security monitoring</p>
+        </app-card>
 
-        <mat-card class="action-card" routerLink="/admin/anomaly-detection">
-          <mat-card-content>
-            <div class="icon-wrapper">
-              <mat-icon>warning</mat-icon>
-            </div>
-            <h3>Anomaly Detection</h3>
-            <p>AI-powered threat detection and suspicious activity monitoring</p>
-          </mat-card-content>
-        </mat-card>
+        <app-card class="action-card" [elevation]="2" [hoverable]="true" [clickable]="true" padding="large" routerLink="/admin/anomaly-detection">
+          <div class="icon-wrapper">
+            <app-icon name="warning"></app-icon>
+          </div>
+          <h3>Anomaly Detection</h3>
+          <p>AI-powered threat detection and suspicious activity monitoring</p>
+        </app-card>
 
-        <mat-card class="action-card" routerLink="/admin/legal-hold">
-          <mat-card-content>
-            <div class="icon-wrapper">
-              <mat-icon>gavel</mat-icon>
-            </div>
-            <h3>Legal Hold</h3>
-            <p>Manage legal holds and eDiscovery for compliance</p>
-          </mat-card-content>
-        </mat-card>
+        <app-card class="action-card" [elevation]="2" [hoverable]="true" [clickable]="true" padding="large" routerLink="/admin/legal-hold">
+          <div class="icon-wrapper">
+            <app-icon name="gavel"></app-icon>
+          </div>
+          <h3>Legal Hold</h3>
+          <p>Manage legal holds and eDiscovery for compliance</p>
+        </app-card>
 
-        <mat-card class="action-card" routerLink="/admin/compliance-reports">
-          <mat-card-content>
-            <div class="icon-wrapper">
-              <mat-icon>assessment</mat-icon>
-            </div>
-            <h3>Compliance Reports</h3>
-            <p>SOX, GDPR, and regulatory compliance reports</p>
-          </mat-card-content>
-        </mat-card>
+        <app-card class="action-card" [elevation]="2" [hoverable]="true" [clickable]="true" padding="large" routerLink="/admin/compliance-reports">
+          <div class="icon-wrapper">
+            <app-icon name="assessment"></app-icon>
+          </div>
+          <h3>Compliance Reports</h3>
+          <p>SOX, GDPR, and regulatory compliance reports</p>
+        </app-card>
 
-        <mat-card class="action-card" routerLink="/admin/activity-correlation">
-          <mat-card-content>
-            <div class="icon-wrapper">
-              <mat-icon>timeline</mat-icon>
-            </div>
-            <h3>Activity Correlation</h3>
-            <p>User activity timeline and pattern analysis</p>
-          </mat-card-content>
-        </mat-card>
+        <app-card class="action-card" [elevation]="2" [hoverable]="true" [clickable]="true" padding="large" routerLink="/admin/activity-correlation">
+          <div class="icon-wrapper">
+            <app-icon name="timeline"></app-icon>
+          </div>
+          <h3>Activity Correlation</h3>
+          <p>User activity timeline and pattern analysis</p>
+        </app-card>
 
-        <mat-card class="action-card">
-          <mat-card-content>
-            <div class="icon-wrapper">
-              <mat-icon>settings</mat-icon>
-            </div>
-            <h3>Settings</h3>
-            <p>Configure system settings</p>
-          </mat-card-content>
-        </mat-card>
+        <app-card class="action-card" [elevation]="2" [hoverable]="true" [clickable]="true" padding="large">
+          <div class="icon-wrapper">
+            <app-icon name="settings"></app-icon>
+          </div>
+          <h3>Settings</h3>
+          <p>Configure system settings</p>
+        </app-card>
       </div>
     </div>
   </div>
