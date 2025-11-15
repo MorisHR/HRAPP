@@ -4,13 +4,14 @@ import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } 
 import { Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { SessionManagementService } from '../../../core/services/session-management.service';
+import { UiModule } from '../../../shared/ui/ui.module';
 
 type LoginStage = 'credentials' | 'mfa-setup' | 'mfa-verify';
 
 @Component({
   selector: 'app-superadmin-login',
   standalone: true,
-  imports: [FormsModule, ReactiveFormsModule],
+  imports: [FormsModule, ReactiveFormsModule, UiModule],
   templateUrl: './superadmin-login.component.html',
   styleUrls: ['./superadmin-login.component.scss']
 })
