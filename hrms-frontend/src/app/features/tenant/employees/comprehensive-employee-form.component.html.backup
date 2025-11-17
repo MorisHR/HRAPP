@@ -4,7 +4,7 @@
     <mat-card-header>
       <div class="header-content">
         <button mat-icon-button routerLink="/tenant/employees" class="back-button">
-          <app-icon name="arrow_back"></app-icon>
+          <mat-icon>arrow_back</mat-icon>
         </button>
         <div class="header-text">
           <h1>{{ isEditMode() ? 'Edit Employee' : 'Add New Employee' }}</h1>
@@ -25,7 +25,9 @@
         [color]="completionPercentage() === 100 ? 'primary' : 'accent'">
       </mat-progress-bar>
       <div class="save-status">
-        <app-icon [name]="saving() ? 'cloud_upload' : 'cloud_done'" [class.saving]="saving()"></app-icon>
+        <mat-icon [class.saving]="saving()">
+          {{ saving() ? 'cloud_upload' : 'cloud_done' }}
+        </mat-icon>
         <span>{{ getSaveStatusText() }}</span>
       </div>
     </div>
@@ -33,7 +35,7 @@
     <!-- Error Message -->
     @if (error()) {
       <div class="error-banner">
-        <app-icon name="error"></app-icon>
+        <mat-icon>error</mat-icon>
         <span>{{ error() }}</span>
       </div>
     }
@@ -46,7 +48,7 @@
           <mat-expansion-panel [expanded]="personalInfoExpanded">
             <mat-expansion-panel-header>
               <mat-panel-title>
-                <app-icon name="person"></app-icon>
+                <mat-icon>person</mat-icon>
                 Personal Information
               </mat-panel-title>
               <mat-panel-description>
@@ -273,7 +275,7 @@
           <mat-expansion-panel>
             <mat-expansion-panel-header>
               <mat-panel-title>
-                <app-icon name="work"></app-icon>
+                <mat-icon>work</mat-icon>
                 Employment Details
               </mat-panel-title>
               <mat-panel-description>
@@ -376,7 +378,7 @@
           <mat-expansion-panel>
             <mat-expansion-panel-header>
               <mat-panel-title>
-                <app-icon name="payments"></app-icon>
+                <mat-icon>payments</mat-icon>
                 Compensation & Banking
               </mat-panel-title>
               <mat-panel-description>
@@ -447,7 +449,7 @@
           <mat-expansion-panel>
             <mat-expansion-panel-header>
               <mat-panel-title>
-                <app-icon name="verified_user"></app-icon>
+                <mat-icon>verified_user</mat-icon>
                 Statutory Compliance (Mauritius)
               </mat-panel-title>
               <mat-panel-description>
@@ -488,7 +490,7 @@
           <mat-expansion-panel>
             <mat-expansion-panel-header>
               <mat-panel-title>
-                <app-icon name="event_available"></app-icon>
+                <mat-icon>event_available</mat-icon>
                 Leave Entitlements
               </mat-panel-title>
               <mat-panel-description>
@@ -536,7 +538,7 @@
           <mat-expansion-panel>
             <mat-expansion-panel-header>
               <mat-panel-title>
-                <app-icon name="contact_phone"></app-icon>
+                <mat-icon>contact_phone</mat-icon>
                 Emergency Contact
               </mat-panel-title>
               <mat-panel-description>
@@ -581,7 +583,7 @@
           <mat-expansion-panel>
             <mat-expansion-panel-header>
               <mat-panel-title>
-                <app-icon name="school"></app-icon>
+                <mat-icon>school</mat-icon>
                 Qualifications & Documents
               </mat-panel-title>
               <mat-panel-description>
@@ -619,7 +621,7 @@
               <div class="document-uploads full-width">
                 <h4 class="subsection-title">Document Uploads</h4>
                 <p class="info-text">
-                  <app-icon name="info"></app-icon>
+                  <mat-icon>info</mat-icon>
                   Document upload feature will be implemented with file storage integration
                 </p>
               </div>
@@ -631,7 +633,7 @@
             <mat-expansion-panel>
               <mat-expansion-panel-header>
                 <mat-panel-title>
-                  <app-icon name="account_balance_wallet"></app-icon>
+                  <mat-icon>account_balance_wallet</mat-icon>
                   Salary Components
                 </mat-panel-title>
                 <mat-panel-description>
@@ -649,10 +651,10 @@
                 <!-- Empty State -->
                 @if (!loadingSalaryComponents() && employeeSalaryComponents().length === 0) {
                   <div class="empty-state">
-                    <app-icon name="inbox"></app-icon>
+                    <mat-icon>inbox</mat-icon>
                     <p>No salary components assigned yet</p>
                     <button mat-raised-button color="primary" (click)="openSalaryComponentsManagement()">
-                      <app-icon name="add"></app-icon>
+                      <mat-icon>add</mat-icon>
                       Add Components
                     </button>
                   </div>
@@ -663,7 +665,7 @@
                     <div class="components-header">
                       <h3>Active Components</h3>
                       <button mat-raised-button color="primary" (click)="openSalaryComponentsManagement()">
-                        <app-icon name="settings"></app-icon>
+                        <mat-icon>settings</mat-icon>
                         Manage All
                       </button>
                     </div>
@@ -684,22 +686,24 @@
                             </div>
                             <div class="component-details">
                               <div class="detail-row">
-                                <app-icon name="event"></app-icon>
+                                <mat-icon>event</mat-icon>
                                 <span>Effective: {{ formatDate(component.effectiveDate) }}</span>
                               </div>
                               @if (component.endDate) {
                                 <div class="detail-row">
-                                  <app-icon name="event_busy"></app-icon>
+                                  <mat-icon>event_busy</mat-icon>
                                   <span>End: {{ formatDate(component.endDate) }}</span>
                                 </div>
                               }
                               <div class="detail-row">
-                                <app-icon [name]="component.isRecurring ? 'loop' : 'event_note' "></app-icon>
+                                <mat-icon>{{ component.isRecurring ? 'loop' : 'event_note' }}</mat-icon>
                                 <span>{{ component.isRecurring ? 'Recurring' : 'One-time' }}</span>
                               </div>
                               @if (component.requiresApproval) {
                                 <div class="detail-row">
-                                  <app-icon [name]="component.isApproved ? 'check_circle' : 'schedule'" [class]="component.isApproved ? 'approved' : 'pending'"></app-icon>
+                                  <mat-icon [class]="component.isApproved ? 'approved' : 'pending'">
+                                    {{ component.isApproved ? 'check_circle' : 'schedule' }}
+                                  </mat-icon>
                                   <span>{{ component.isApproved ? 'Approved' : 'Pending Approval' }}</span>
                                 </div>
                               }
@@ -716,21 +720,21 @@
                     <!-- Summary -->
                     <div class="components-summary">
                       <div class="summary-item allowances">
-                        <app-icon name="add_circle"></app-icon>
+                        <mat-icon>add_circle</mat-icon>
                         <div>
                           <span class="label">Total Allowances</span>
                           <span class="value">{{ formatCurrency(getTotalAllowances()) }}</span>
                         </div>
                       </div>
                       <div class="summary-item deductions">
-                        <app-icon name="remove_circle"></app-icon>
+                        <mat-icon>remove_circle</mat-icon>
                         <div>
                           <span class="label">Total Deductions</span>
                           <span class="value">{{ formatCurrency(getTotalDeductions()) }}</span>
                         </div>
                       </div>
                       <div class="summary-item net">
-                        <app-icon name="account_balance"></app-icon>
+                        <mat-icon>account_balance</mat-icon>
                         <div>
                           <span class="label">Net Adjustment</span>
                           <span class="value">{{ formatCurrency(getNetAdjustment()) }}</span>
@@ -747,7 +751,7 @@
           <mat-expansion-panel>
             <mat-expansion-panel-header>
               <mat-panel-title>
-                <app-icon name="notes"></app-icon>
+                <mat-icon>notes</mat-icon>
                 Additional Information
               </mat-panel-title>
               <mat-panel-description>
@@ -774,7 +778,7 @@
             variant="ghost"
             [disabled]="loading()"
             (click)="cancel()">
-            <app-icon name="close"></app-icon>
+            <mat-icon>close</mat-icon>
             Cancel
           </app-button>
 
@@ -783,7 +787,7 @@
             variant="secondary"
             [disabled]="saving() || loading()"
             (click)="saveDraft()">
-            <app-icon name="save"></app-icon>
+            <mat-icon>save</mat-icon>
             Save Draft
           </app-button>
 
@@ -792,7 +796,7 @@
             variant="primary"
             [disabled]="loading() || !employeeForm.valid"
             [loading]="loading()">
-            <app-icon name="check_circle"></app-icon>
+            <mat-icon>check_circle</mat-icon>
             {{ isEditMode() ? 'Update Employee' : 'Create Employee' }}
           </app-button>
         </div>
