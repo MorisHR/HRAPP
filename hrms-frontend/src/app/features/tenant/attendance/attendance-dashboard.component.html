@@ -13,22 +13,22 @@
       <div class="header-actions">
         <!-- Connection Status -->
         <div class="connection-status" [ngClass]="connectionState()">
-          <mat-icon>{{ isConnected() ? 'cloud_done' : 'cloud_off' }}</mat-icon>
+          <app-icon [name]="isConnected() ? 'cloud_done' : 'cloud_off'"></app-icon>
           <span>{{ connectionState() | titlecase }}</span>
         </div>
 
         <!-- Action Buttons -->
         <button mat-icon-button (click)="refresh()" matTooltip="Refresh Data">
-          <mat-icon>refresh</mat-icon>
+          <app-icon name="refresh"></app-icon>
         </button>
 
         <button mat-icon-button (click)="exportToCSV()" matTooltip="Export to CSV">
-          <mat-icon>download</mat-icon>
+          <app-icon name="download"></app-icon>
         </button>
 
         @if (!isConnected()) {
           <button mat-icon-button (click)="reconnect()" matTooltip="Reconnect">
-            <mat-icon>sync</mat-icon>
+            <app-icon name="sync"></app-icon>
           </button>
         }
       </div>
@@ -37,10 +37,10 @@
     <!-- Error Banner -->
     @if (error()) {
       <div class="error-banner">
-        <mat-icon>error</mat-icon>
+        <app-icon name="error"></app-icon>
         <span>{{ error() }}</span>
         <button mat-icon-button (click)="error.set(null)">
-          <mat-icon>close</mat-icon>
+          <app-icon name="close"></app-icon>
         </button>
       </div>
     }
@@ -48,7 +48,7 @@
     <!-- Connection Error Banner -->
     @if (connectionError()) {
       <div class="error-banner warning">
-        <mat-icon>warning</mat-icon>
+        <app-icon name="warning"></app-icon>
         <span>Connection Error: {{ connectionError() }}</span>
         <button mat-button (click)="reconnect()">Reconnect</button>
       </div>
@@ -72,7 +72,7 @@
           <mat-card class="stat-card" [ngClass]="card.color">
             <mat-card-content>
               <div class="stat-icon">
-                <mat-icon>{{ card.icon }}</mat-icon>
+                <app-icon [name]="card.icon"></app-icon>
               </div>
               <div class="stat-details">
                 <div class="stat-label">{{ card.title }}</div>
@@ -97,7 +97,7 @@
       <mat-card class="device-panel">
         <mat-card-header>
           <mat-card-title>
-            <mat-icon>devices</mat-icon>
+            <app-icon name="devices"></app-icon>
             Device Status
             <span class="device-health" [ngClass]="deviceStats().healthPercentage >= 80 ? 'healthy' : 'unhealthy'">
               {{ deviceStats().healthPercentage }}% Healthy
@@ -134,20 +134,20 @@
                   <mat-divider></mat-divider>
                   <div class="device-stats">
                     <div class="device-stat">
-                      <mat-icon>touch_app</mat-icon>
+                      <app-icon name="touch_app"></app-icon>
                       <span>{{ device.punchCountToday }} punches</span>
                     </div>
                     <div class="device-stat">
-                      <mat-icon>schedule</mat-icon>
+                      <app-icon name="schedule"></app-icon>
                       <span>{{ formatLastSync(device.lastSyncTime) }}</span>
                     </div>
                   </div>
                   <div class="device-actions">
                     <button mat-icon-button (click)="testDevice(device)" matTooltip="Test Connection">
-                      <mat-icon>wifi_tethering</mat-icon>
+                      <app-icon name="wifi_tethering"></app-icon>
                     </button>
                     <button mat-icon-button (click)="syncDevice(device)" matTooltip="Sync Now">
-                      <mat-icon>sync</mat-icon>
+                      <app-icon name="sync"></app-icon>
                     </button>
                   </div>
                 </div>
@@ -155,7 +155,7 @@
             </div>
           } @else {
             <div class="empty-state">
-              <mat-icon>devices_other</mat-icon>
+              <app-icon name="devices_other"></app-icon>
               <p>No devices configured</p>
             </div>
           }
@@ -213,7 +213,7 @@
               </mat-form-field>
               <!-- Clear Filters -->
               <button mat-raised-button (click)="clearFilters()" class="clear-filters-btn">
-                <mat-icon>clear</mat-icon>
+                <app-icon name="clear"></app-icon>
                 Clear
               </button>
             </div>
@@ -223,10 +223,10 @@
         <mat-card class="table-card">
           <mat-card-header>
             <mat-card-title>
-              <mat-icon>list</mat-icon>
+              <app-icon name="list"></app-icon>
               Recent Punches
               <mat-chip class="live-indicator">
-                <mat-icon>fiber_manual_record</mat-icon>
+                <app-icon name="fiber_manual_record"></app-icon>
                 LIVE
               </mat-chip>
             </mat-card-title>
@@ -267,7 +267,7 @@
                   <th mat-header-cell *matHeaderCellDef mat-sort-header>Device</th>
                   <td mat-cell *matCellDef="let punch" [class.new-punch]="punch.isNew">
                     <div class="device-cell">
-                      <mat-icon>devices</mat-icon>
+                      <app-icon name="devices"></app-icon>
                       <div>
                         <div class="device-name">{{ punch.deviceName }}</div>
                         @if (punch.deviceLocation) {
@@ -291,7 +291,7 @@
                   <th mat-header-cell *matHeaderCellDef mat-sort-header>Method</th>
                   <td mat-cell *matCellDef="let punch" [class.new-punch]="punch.isNew">
                     <div class="method-cell">
-                      <mat-icon>{{ getVerificationMethodIcon(punch.verificationMethod) }}</mat-icon>
+                      <app-icon [name]="getVerificationMethodIcon(punch.verificationMethod)"></app-icon>
                       <span>{{ punch.verificationMethod }}</span>
                     </div>
                   </td>
@@ -325,7 +325,7 @@
                 <tr class="mat-row no-data-row" *matNoDataRow>
                   <td class="mat-cell" [attr.colspan]="displayedColumns.length">
                     <div class="empty-state">
-                      <mat-icon>schedule</mat-icon>
+                      <app-icon name="schedule"></app-icon>
                       <p>No punch records available</p>
                       <p class="hint">Waiting for real-time data...</p>
                     </div>
@@ -345,23 +345,23 @@
         @if (recentPunches().length > 0) {
           <div class="live-feed-mobile">
             <h3>
-              <mat-icon>fiber_manual_record</mat-icon>
+              <app-icon name="fiber_manual_record"></app-icon>
               Live Feed
             </h3>
             <div class="feed-list">
               @for (punch of recentPunches().slice(0, 10); track punch) {
                 <div class="feed-item" [class.new-punch]="punch.isNew">
                   <div class="feed-header">
-                    <mat-icon>person</mat-icon>
+                    <app-icon name="person"></app-icon>
                     <span class="employee-name">{{ punch.employeeName }}</span>
                     <mat-chip [ngClass]="getPunchTypeColor(punch.punchType)" class="feed-chip">
                       {{ punch.punchType }}
                     </mat-chip>
                   </div>
                   <div class="feed-details">
-                    <span><mat-icon>schedule</mat-icon> {{ formatTime(punch.timestamp) }}</span>
-                    <span><mat-icon>devices</mat-icon> {{ punch.deviceName }}</span>
-                    <span><mat-icon>{{ getVerificationMethodIcon(punch.verificationMethod) }}</mat-icon> {{ punch.verificationMethod }}</span>
+                    <span><app-icon name="schedule"></app-icon> {{ formatTime(punch.timestamp) }}</span>
+                    <span><app-icon name="devices"></app-icon> {{ punch.deviceName }}</span>
+                    <span><app-icon [name]="getVerificationMethodIcon(punch.verificationMethod)"></app-icon> {{ punch.verificationMethod }}</span>
                   </div>
                   <div class="feed-quality">
                     <mat-progress-bar

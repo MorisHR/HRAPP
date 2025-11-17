@@ -1,4 +1,4 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
@@ -32,6 +32,7 @@ import { ReportsService, DashboardSummaryDto } from '../../../core/services/repo
     MatDividerModule,
     MatTooltipModule
   ],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="reports-dashboard">
       <div class="header">

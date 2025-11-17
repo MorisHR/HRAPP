@@ -3,11 +3,11 @@
     <mat-card-title>Biometric Devices</mat-card-title>
     <div class="header-actions">
       <button mat-raised-button color="primary" (click)="onRefresh()" class="refresh-button">
-        <mat-icon>refresh</mat-icon>
+        <app-icon name="refresh"></app-icon>
         Refresh
       </button>
       <button mat-raised-button color="primary" (click)="onAdd()" class="add-button">
-        <mat-icon>add</mat-icon>
+        <app-icon name="add"></app-icon>
         Add Device
       </button>
     </div>
@@ -121,9 +121,9 @@
                   color="accent"
                   >
                   @if (isTestingConnection(device.id)) {
-                    <mat-icon>sync</mat-icon>
+                    <app-icon name="sync"></app-icon>
                   } @else {
-                    <mat-icon>wifi_tethering</mat-icon>
+                    <app-icon name="wifi_tethering"></app-icon>
                   }
                 </button>
                 <!-- Sync Now Button -->
@@ -136,9 +136,9 @@
                   color="primary"
                   >
                   @if (isSyncing(device.id)) {
-                    <mat-icon>sync</mat-icon>
+                    <app-icon name="sync"></app-icon>
                   } @else {
-                    <mat-icon>cloud_sync</mat-icon>
+                    <app-icon name="cloud_sync"></app-icon>
                   }
                 </button>
                 <!-- Edit Button -->
@@ -148,7 +148,7 @@
                   matTooltip="Edit Device"
                   class="edit-button"
                   >
-                  <mat-icon>edit</mat-icon>
+                  <app-icon name="edit"></app-icon>
                 </button>
                 <!-- Delete Button -->
                 <button
@@ -158,7 +158,7 @@
                   matTooltip="Delete Device"
                   class="delete-button"
                   >
-                  <mat-icon>delete</mat-icon>
+                  <app-icon name="delete"></app-icon>
                 </button>
               </div>
             </td>
@@ -173,7 +173,7 @@
                 <h3>No Biometric Devices Registered</h3>
                 <p>Click "Add Device" to register your first biometric attendance device.</p>
                 <button mat-raised-button color="primary" (click)="onAdd()">
-                  <mat-icon>add</mat-icon>
+                  <app-icon name="add"></app-icon>
                   Add Your First Device
                 </button>
               </div>
@@ -187,28 +187,28 @@
     @if (!loading() && !error() && machines().length) {
       <div class="statistics-summary">
         <div class="stat-card">
-          <mat-icon>devices</mat-icon>
+          <app-icon name="devices"></app-icon>
           <div class="stat-info">
             <span class="stat-label">Total Machines</span>
             <span class="stat-value">{{ machines().length || 0 }}</span>
           </div>
         </div>
         <div class="stat-card online">
-          <mat-icon>check_circle</mat-icon>
+          <app-icon name="check_circle"></app-icon>
           <div class="stat-info">
             <span class="stat-label">Online</span>
             <span class="stat-value">{{ getOnlineDeviceCount() }}</span>
           </div>
         </div>
         <div class="stat-card warning">
-          <mat-icon>warning</mat-icon>
+          <app-icon name="warning"></app-icon>
           <div class="stat-info">
             <span class="stat-label">Warning</span>
             <span class="stat-value">{{ getWarningDeviceCount() }}</span>
           </div>
         </div>
         <div class="stat-card offline">
-          <mat-icon>cancel</mat-icon>
+          <app-icon name="cancel"></app-icon>
           <div class="stat-info">
             <span class="stat-label">Offline</span>
             <span class="stat-value">{{ getOfflineDeviceCount() }}</span>

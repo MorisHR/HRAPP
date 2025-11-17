@@ -7,11 +7,11 @@
     </div>
     <div class="header-actions">
       <button mat-raised-button color="primary" (click)="toggleForm()" [disabled]="loading()">
-        <mat-icon>{{ showForm() ? 'close' : 'add' }}</mat-icon>
+        <app-icon [name]="showForm() ? 'close' : 'add'"></app-icon>
         {{ showForm() ? 'Cancel' : 'Apply Leave' }}
       </button>
       <button mat-raised-button routerLink="/employee/dashboard" class="back-button">
-        <mat-icon>arrow_back</mat-icon>
+        <app-icon name="arrow_back"></app-icon>
         Back
       </button>
     </div>
@@ -123,7 +123,7 @@
                 <mat-spinner diameter="20" class="inline-spinner"></mat-spinner>
                 Submitting...
               } @else {
-                <mat-icon>send</mat-icon>
+                <app-icon name="send"></app-icon>
                 Submit Request
               }
             </button>
@@ -139,7 +139,7 @@
     <mat-card class="stat-card">
       <mat-card-content>
         <div class="stat-icon info">
-          <mat-icon>assignment</mat-icon>
+          <app-icon name="assignment"></app-icon>
         </div>
         <div class="stat-details">
           <div class="stat-value">{{ stats().total }}</div>
@@ -151,7 +151,7 @@
     <mat-card class="stat-card">
       <mat-card-content>
         <div class="stat-icon warning">
-          <mat-icon>pending</mat-icon>
+          <app-icon name="pending"></app-icon>
         </div>
         <div class="stat-details">
           <div class="stat-value">{{ stats().pending }}</div>
@@ -163,7 +163,7 @@
     <mat-card class="stat-card">
       <mat-card-content>
         <div class="stat-icon success">
-          <mat-icon>check_circle</mat-icon>
+          <app-icon name="check_circle"></app-icon>
         </div>
         <div class="stat-details">
           <div class="stat-value">{{ stats().approved }}</div>
@@ -175,7 +175,7 @@
     <mat-card class="stat-card">
       <mat-card-content>
         <div class="stat-icon error">
-          <mat-icon>cancel</mat-icon>
+          <app-icon name="cancel"></app-icon>
         </div>
         <div class="stat-details">
           <div class="stat-value">{{ stats().rejected }}</div>
@@ -190,7 +190,7 @@
     <mat-card-header>
       <mat-card-title>Leave History</mat-card-title>
       <button mat-icon-button (click)="loadLeaveData()" [disabled]="loading()">
-        <mat-icon>refresh</mat-icon>
+        <app-icon name="refresh"></app-icon>
       </button>
     </mat-card-header>
 
@@ -202,7 +202,7 @@
         </div>
       } @else if (leaveRequests().length === 0) {
         <div class="empty-state">
-          <mat-icon>inbox</mat-icon>
+          <app-icon name="inbox"></app-icon>
           <p>No leave requests found</p>
           <button mat-raised-button color="primary" (click)="toggleForm()">
             Apply for Leave
@@ -259,7 +259,7 @@
                     color="warn"
                     (click)="cancelRequest(request)"
                     matTooltip="Cancel request">
-                    <mat-icon>cancel</mat-icon>
+                    <app-icon name="cancel"></app-icon>
                   </button>
                 } @else {
                   <span class="text-muted">-</span>

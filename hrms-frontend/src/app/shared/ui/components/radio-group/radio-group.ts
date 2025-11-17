@@ -95,4 +95,8 @@ export class RadioGroup {
     }
     return currentIndex;
   }
+
+  trackByValue(index: number, option: RadioOption): any {
+    return option.value;
+  }
 }

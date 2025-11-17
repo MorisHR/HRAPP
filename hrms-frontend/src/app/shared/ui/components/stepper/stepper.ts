@@ -104,4 +104,8 @@ export class Stepper {
     }
     return stepIndex + 1;
   }
+
+  trackByIndex(index: number, step: Step): number {
+    return index;
+  }
 }

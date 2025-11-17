@@ -5,7 +5,7 @@
     <mat-card-header>
       <mat-card-title>Active Legal Holds</mat-card-title>
       <button mat-raised-button color="primary">
-        <mat-icon>add</mat-icon>
+        <app-icon name="add"></app-icon>
         Create Legal Hold
       </button>
     </mat-card-header>
@@ -55,15 +55,15 @@
             <th mat-header-cell *matHeaderCellDef>Actions</th>
             <td mat-cell *matCellDef="let hold">
               <button mat-icon-button (click)="viewDetails(hold)" matTooltip="View Details">
-                <mat-icon>visibility</mat-icon>
+                <app-icon name="visibility"></app-icon>
               </button>
               <button mat-icon-button (click)="exportEDiscovery(hold)" matTooltip="Export eDiscovery">
-                <mat-icon>download</mat-icon>
+                <app-icon name="download"></app-icon>
               </button>
               @if (hold.status === 'ACTIVE') {
                 <button mat-icon-button (click)="releaseLegalHold(hold)"
                   matTooltip="Release Hold">
-                  <mat-icon>lock_open</mat-icon>
+                  <app-icon name="lock_open"></app-icon>
                 </button>
               }
             </td>

@@ -4,7 +4,7 @@
 // SuperAdmin dashboard for platform health and observability
 // ═══════════════════════════════════════════════════════════
 
-import { Component, signal, inject, OnInit, OnDestroy } from '@angular/core';
+import { Component, signal, inject, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { interval, Subscription } from 'rxjs';
 import { switchMap, startWith } from 'rxjs/operators';
@@ -45,7 +45,8 @@ import { DashboardMetrics } from '../../../../core/models/monitoring.models';
     UiModule
   ],
   templateUrl: './monitoring-dashboard.component.html',
-  styleUrl: './monitoring-dashboard.component.scss'
+  styleUrl: './monitoring-dashboard.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class MonitoringDashboardComponent implements OnInit, OnDestroy {
   private monitoringService = inject(MonitoringService);

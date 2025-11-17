@@ -11,7 +11,7 @@
       (change)="changePageSize(+$any($event.target).value)"
       aria-label="Items per page"
     >
-      <option *ngFor="let option of pageSizeOptions" [value]="option">
+      <option *ngFor="let option of pageSizeOptions; trackBy: trackByIndex" [value]="option">
         {{ option }}
       </option>
     </select>

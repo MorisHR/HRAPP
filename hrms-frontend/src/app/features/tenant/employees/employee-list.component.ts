@@ -1,4 +1,4 @@
-import { Component, signal, inject, OnInit, computed } from '@angular/core';
+import { Component, signal, inject, OnInit, computed, ChangeDetectionStrategy } from '@angular/core';
 
 import { RouterModule } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
@@ -41,6 +41,7 @@ import { ErrorTrackingService } from '../../../core/services/error-tracking.serv
     TableComponent,
     ProgressSpinner
 ],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="employee-list-container">
       <!-- Feature Flag Toggle (Development Only) -->

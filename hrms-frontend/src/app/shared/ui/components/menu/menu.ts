@@ -212,4 +212,8 @@ export class MenuComponent implements OnDestroy {
   onDocumentKeyDown(event: KeyboardEvent): void {
     this.handleKeyDown(event);
   }
+
+  trackByIndex(index: number, item: MenuItem): number {
+    return index;
+  }
 }

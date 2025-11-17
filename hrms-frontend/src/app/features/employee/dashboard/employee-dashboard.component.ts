@@ -1,4 +1,4 @@
-import { Component, signal, inject } from '@angular/core';
+import { Component, signal, inject, ChangeDetectionStrategy } from '@angular/core';
 import { RouterModule } from '@angular/router';
 
 // Custom UI Module with all components
@@ -15,7 +15,8 @@ import { ThemeService } from '../../../core/services/theme.service';
     UiModule
   ],
   templateUrl: './employee-dashboard.component.html',
-  styleUrl: './employee-dashboard.component.scss'
+  styleUrl: './employee-dashboard.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class EmployeeDashboardComponent {
   private authService = inject(AuthService);

@@ -1,7 +1,7 @@
 <div class="stepper" [class.stepper-horizontal]="orientation === 'horizontal'" [class.stepper-vertical]="orientation === 'vertical'">
   <!-- Step Headers -->
   <div class="stepper-header">
-    <ng-container *ngFor="let step of steps; let i = index; let isLast = last">
+    <ng-container *ngFor="let step of steps; let i = index; let isLast = last; trackBy: trackByIndex">
       <div
         class="step-header"
         [class.step-completed]="getStepState(i) === 'completed'"

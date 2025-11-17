@@ -3,7 +3,7 @@
         <h1>Welcome to HR Portal</h1>
         @if (!loading() && !error() && stats()) {
           <button mat-icon-button (click)="loadDashboardData()" matTooltip="Refresh">
-            <mat-icon>refresh</mat-icon>
+            <app-icon name="refresh"></app-icon>
           </button>
         }
       </div>
@@ -42,7 +42,7 @@
               <p>{{ error() }}</p>
             </div>
             <button mat-raised-button color="primary" (click)="retry()">
-              <mat-icon>refresh</mat-icon>
+              <app-icon name="refresh"></app-icon>
               Retry
             </button>
           </div>
@@ -106,7 +106,7 @@
                 </div>
                 <div class="alert-action">
                   <button mat-icon-button [routerLink]="alert.actionUrl" matTooltip="View Details">
-                    <mat-icon>arrow_forward</mat-icon>
+                    <app-icon name="arrow_forward"></app-icon>
                   </button>
                 </div>
               </app-card>

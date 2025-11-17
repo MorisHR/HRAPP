@@ -93,7 +93,7 @@
       <!-- Options List -->
       <ul class="select__options" role="listbox">
         <li
-          *ngFor="let option of filteredOptions; let i = index"
+          *ngFor="let option of filteredOptions; let i = index; trackBy: trackByValue"
           class="select__option"
           [class.select__option--selected]="isSelected(option)"
           [class.select__option--disabled]="option.disabled"

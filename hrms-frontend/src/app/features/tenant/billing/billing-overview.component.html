@@ -7,7 +7,7 @@
     </div>
     <div class="header-actions">
       <button mat-raised-button color="primary" (click)="refresh()">
-        <mat-icon>refresh</mat-icon>
+        <app-icon name="refresh"></app-icon>
         Refresh
       </button>
     </div>
@@ -43,11 +43,11 @@
         </div>
         <div class="error-actions">
           <button mat-raised-button color="primary" (click)="refresh()">
-            <mat-icon>refresh</mat-icon>
+            <app-icon name="refresh"></app-icon>
             Try Again
           </button>
           <button mat-button (click)="contactSupport()">
-            <mat-icon>support_agent</mat-icon>
+            <app-icon name="support_agent"></app-icon>
             Contact Support
           </button>
         </div>
@@ -63,7 +63,7 @@
       <mat-card class="subscription-card">
         <mat-card-header>
           <mat-card-title>
-            <mat-icon>workspace_premium</mat-icon>
+            <app-icon name="workspace_premium"></app-icon>
             Current Subscription
           </mat-card-title>
         </mat-card-header>
@@ -110,11 +110,11 @@
         </mat-card-content>
         <mat-card-actions>
           <button mat-button color="primary" (click)="upgradeTier()">
-            <mat-icon>arrow_upward</mat-icon>
+            <app-icon name="arrow_upward"></app-icon>
             Upgrade Tier
           </button>
           <button mat-button (click)="contactSupport()">
-            <mat-icon>support_agent</mat-icon>
+            <app-icon name="support_agent"></app-icon>
             Contact Support
           </button>
         </mat-card-actions>
@@ -124,7 +124,7 @@
       <mat-card class="payment-status-card" [class.has-outstanding]="outstandingAmount() > 0">
         <mat-card-header>
           <mat-card-title>
-            <mat-icon>payment</mat-icon>
+            <app-icon name="payment"></app-icon>
             Payment Status
           </mat-card-title>
         </mat-card-header>
@@ -156,7 +156,7 @@
 
               @if (nextPaymentDue()!.status === 'Overdue') {
                 <div class="overdue-warning">
-                  <mat-icon>warning</mat-icon>
+                  <app-icon name="warning"></app-icon>
                   <span>This payment is overdue. Please contact support to arrange payment.</span>
                 </div>
               }
@@ -174,7 +174,7 @@
         @if (outstandingAmount() > 0) {
           <mat-card-actions>
             <button mat-raised-button color="accent" (click)="contactSupport()">
-              <mat-icon>payment</mat-icon>
+              <app-icon name="payment"></app-icon>
               Arrange Payment
             </button>
           </mat-card-actions>
@@ -186,14 +186,14 @@
     <mat-card class="payment-history-card">
       <mat-card-header>
         <mat-card-title>
-          <mat-icon>history</mat-icon>
+          <app-icon name="history"></app-icon>
           Payment History
         </mat-card-title>
       </mat-card-header>
       <mat-card-content>
         @if (payments().length === 0) {
           <div class="empty-state">
-            <mat-icon>receipt_long</mat-icon>
+            <app-icon name="receipt_long"></app-icon>
             <h3>No Payment History</h3>
             <p>Your payment history will appear here once payments are recorded.</p>
           </div>
@@ -250,14 +250,14 @@
                     mat-icon-button
                     (click)="viewPaymentDetails(payment)"
                     matTooltip="View Payment Details">
-                    <mat-icon>visibility</mat-icon>
+                    <app-icon name="visibility"></app-icon>
                   </button>
                   <button
                     mat-icon-button
                     [disabled]="!payment.invoiceNumber"
                     (click)="downloadInvoice(payment)"
                     matTooltip="Download Invoice">
-                    <mat-icon>download</mat-icon>
+                    <app-icon name="download"></app-icon>
                   </button>
                 </td>
               </ng-container>

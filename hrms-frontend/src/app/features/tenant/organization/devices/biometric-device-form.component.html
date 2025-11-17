@@ -13,7 +13,7 @@
           <mat-spinner diameter="20"></mat-spinner>
         }
         @if (!testingConnection) {
-          <mat-icon>wifi_tethering</mat-icon>
+          <app-icon name="wifi_tethering"></app-icon>
         }
         Test Connection
       </button>
@@ -37,7 +37,7 @@
         <!-- ============================================ -->
         <div class="form-section">
           <div class="section-header">
-            <mat-icon>info</mat-icon>
+            <app-icon name="info"></app-icon>
             <h3>Device Information</h3>
           </div>
           <div class="form-grid">
@@ -121,7 +121,7 @@
         <!-- ============================================ -->
         <div class="form-section network-section">
           <div class="section-header highlighted">
-            <mat-icon>router</mat-icon>
+            <app-icon name="router"></app-icon>
             <h3>Network Configuration</h3>
             <span class="badge important">Critical</span>
           </div>
@@ -194,7 +194,7 @@
             </mat-form-field>
             <!-- Network Configuration Info Box -->
             <div class="info-box full-width">
-              <mat-icon>info</mat-icon>
+              <app-icon name="info"></app-icon>
               <div class="info-content">
                 <strong>Network Setup Tips:</strong>
                 <ul>
@@ -213,7 +213,7 @@
         <!-- ============================================ -->
         <div class="form-section">
           <div class="section-header">
-            <mat-icon>lock</mat-icon>
+            <app-icon name="lock"></app-icon>
             <h3>Device Credentials</h3>
             <span class="badge optional">Optional</span>
           </div>
@@ -243,7 +243,7 @@
                   [attr.aria-label]="'Hide password'"
                   [attr.aria-pressed]="hidePassword"
                   >
-                  <mat-icon>{{ hidePassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+                  <app-icon [name]="hidePassword ? 'visibility_off' : 'visibility'"></app-icon>
                 </button>
                 <mat-hint>Device admin password (if required)</mat-hint>
               </mat-form-field>
@@ -255,7 +255,7 @@
           <!-- ============================================ -->
           <div class="form-section">
             <div class="section-header">
-              <mat-icon>sync</mat-icon>
+              <app-icon name="sync"></app-icon>
               <h3>Synchronization Settings</h3>
             </div>
             <div class="form-grid">
@@ -305,7 +305,7 @@
           <!-- ============================================ -->
           <div class="form-section collapsible-section">
             <div class="section-header">
-              <mat-icon>badge</mat-icon>
+              <app-icon name="badge"></app-icon>
               <h3>Device Identification</h3>
               <span class="badge optional">Optional</span>
             </div>
@@ -339,7 +339,7 @@
                 [disabled]="savingDevice"
                 class="cancel-button"
                 >
-                <mat-icon>close</mat-icon>
+                <app-icon name="close"></app-icon>
                 Cancel
               </button>
             </div>
@@ -356,7 +356,7 @@
                   <mat-spinner diameter="20"></mat-spinner>
                 }
                 @if (!testingConnection) {
-                  <mat-icon>wifi_tethering</mat-icon>
+                  <app-icon name="wifi_tethering"></app-icon>
                 }
                 {{ testingConnection ? 'Testing...' : 'Test Connection' }}
               </button>
@@ -371,7 +371,7 @@
                   <mat-spinner diameter="20"></mat-spinner>
                 }
                 @if (!savingDevice) {
-                  <mat-icon>save</mat-icon>
+                  <app-icon name="save"></app-icon>
                 }
                 {{ savingDevice ? 'Saving...' : getSubmitButtonText() }}
               </button>
@@ -380,7 +380,7 @@
           <!-- Form Validation Summary -->
           @if (deviceForm.invalid && deviceForm.touched) {
             <div class="validation-summary">
-              <mat-icon>error</mat-icon>
+              <app-icon name="error"></app-icon>
               <span>Please fix the validation errors above before submitting</span>
             </div>
           }

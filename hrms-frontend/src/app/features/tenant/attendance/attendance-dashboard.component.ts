@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, signal, computed, inject, ViewChild } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, computed, inject, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
@@ -78,7 +78,8 @@ interface StatCard {
     MatSnackBarModule
   ],
   templateUrl: './attendance-dashboard.component.html',
-  styleUrls: ['./attendance-dashboard.component.scss']
+  styleUrls: ['./attendance-dashboard.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class AttendanceDashboardComponent implements OnInit, OnDestroy {
   private realtimeService = inject(AttendanceRealtimeService);

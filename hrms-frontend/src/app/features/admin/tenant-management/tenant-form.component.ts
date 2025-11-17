@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, signal, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router, RouterModule, ActivatedRoute } from '@angular/router';
@@ -34,7 +34,8 @@ import { Observable } from 'rxjs';
     MatSnackBarModule
   ],
   templateUrl: './tenant-form.component.html',
-  styleUrl: './tenant-form.component.scss'
+  styleUrl: './tenant-form.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class TenantFormComponent implements OnInit {
   private fb = inject(FormBuilder);

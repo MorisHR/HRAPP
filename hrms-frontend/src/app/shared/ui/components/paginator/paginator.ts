@@ -118,4 +118,8 @@ export class Paginator {
       length: this.length
     });
   }
+
+  trackByIndex(index: number, item: number): number {
+    return item;
+  }
 }

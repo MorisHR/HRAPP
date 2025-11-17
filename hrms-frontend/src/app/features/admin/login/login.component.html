@@ -89,7 +89,7 @@
           (click)="togglePasswordVisibility()"
           [attr.aria-label]="'Toggle password visibility'"
           [attr.aria-pressed]="!hidePassword()">
-          <mat-icon>{{ hidePassword() ? 'visibility_off' : 'visibility' }}</mat-icon>
+          <app-icon [name]="hidePassword() ? 'visibility_off' : 'visibility'"></app-icon>
         </button>
         @if (loginForm.get('password')?.hasError('required') && loginForm.get('password')?.touched) {
           <mat-error>Password is required</mat-error>

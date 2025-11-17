@@ -1,4 +1,4 @@
-import { Component, signal, inject, OnInit, ViewChild } from '@angular/core';
+import { Component, signal, inject, OnInit, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 
 import { MatTableModule, MatTableDataSource } from '@angular/material/table';
 import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
@@ -31,7 +31,8 @@ import { Tenant, TenantStatus } from '../../../core/models/tenant.model';
     RouterModule
 ],
   templateUrl: './tenant-list.component.html',
-  styleUrl: './tenant-list.component.scss'
+  styleUrl: './tenant-list.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class TenantListComponent implements OnInit {
   private tenantService = inject(TenantService);

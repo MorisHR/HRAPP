@@ -1,4 +1,4 @@
-import { Component, signal, inject, OnInit, OnDestroy } from '@angular/core';
+import { Component, signal, inject, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
 import { FormsModule } from '@angular/forms';
@@ -72,7 +72,8 @@ interface KpiCard {
     UiModule
   ],
   templateUrl: './tenant-dashboard.component.html',
-  styleUrl: './tenant-dashboard.component.scss'
+  styleUrl: './tenant-dashboard.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class TenantDashboardComponent implements OnInit, OnDestroy {
   private authService = inject(AuthService);

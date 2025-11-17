@@ -11,7 +11,7 @@
   aria-orientation="vertical">
 
   <div class="menu-items">
-    <ng-container *ngFor="let item of items; let i = index">
+    <ng-container *ngFor="let item of items; let i = index; trackBy: trackByIndex">
       <!-- Divider -->
       <div
         *ngIf="item.divider"

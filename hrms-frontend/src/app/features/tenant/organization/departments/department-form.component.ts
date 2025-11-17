@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, inject } from '@angular/core';
+import { Component, OnInit, signal, inject, ChangeDetectionStrategy } from '@angular/core';
 
 import { RouterModule, Router, ActivatedRoute } from '@angular/router';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
@@ -33,6 +33,7 @@ interface Employee {
     MatCheckboxModule,
     MatProgressSpinnerModule
 ],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="department-form-container">
       <div class="page-header">

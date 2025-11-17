@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, inject } from '@angular/core';
+import { Component, OnInit, signal, inject, ChangeDetectionStrategy } from '@angular/core';
 
 import { RouterModule, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -31,6 +31,7 @@ import { DepartmentService, DepartmentDto } from './services/department.service'
     MatTooltipModule,
     MatDialogModule
 ],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="department-list-container">
       <div class="page-header">

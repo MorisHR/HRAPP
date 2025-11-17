@@ -212,4 +212,8 @@ export class SelectComponent {
       this.isOpen = false;
     }
   }
+
+  trackByValue(index: number, option: SelectOption): any {
+    return option.value;
+  }
 }

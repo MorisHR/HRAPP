@@ -3,7 +3,7 @@
   <div class="dashboard-header">
     <h1>Subscription Management</h1>
     <button mat-raised-button color="primary" (click)="refresh()">
-      <mat-icon>refresh</mat-icon>
+      <app-icon name="refresh"></app-icon>
       Refresh
     </button>
   </div>
@@ -148,7 +148,7 @@
 
           @if (overduePayments().length === 0) {
             <div class="empty-state">
-              <mat-icon>check_circle</mat-icon>
+              <app-icon name="check_circle"></app-icon>
               <p>No overdue payments</p>
             </div>
           } @else {
@@ -208,20 +208,20 @@
                         color="primary"
                         matTooltip="Record Payment"
                         (click)="recordPayment(payment.id)">
-                        <mat-icon>payment</mat-icon>
+                        <app-icon name="payment"></app-icon>
                       </button>
                       <button
                         mat-icon-button
                         color="accent"
                         matTooltip="Send Reminder"
                         (click)="sendReminder(payment.id)">
-                        <mat-icon>email</mat-icon>
+                        <app-icon name="email"></app-icon>
                       </button>
                       <button
                         mat-icon-button
                         matTooltip="View Details"
                         (click)="viewPaymentDetails(payment)">
-                        <mat-icon>visibility</mat-icon>
+                        <app-icon name="visibility"></app-icon>
                       </button>
                     </div>
                   </td>
@@ -246,7 +246,7 @@
 
           @if (pendingPayments().length === 0) {
             <div class="empty-state">
-              <mat-icon>check_circle</mat-icon>
+              <app-icon name="check_circle"></app-icon>
               <p>No pending payments</p>
             </div>
           } @else {
@@ -306,20 +306,20 @@
                         color="primary"
                         matTooltip="Record Payment"
                         (click)="recordPayment(payment.id)">
-                        <mat-icon>payment</mat-icon>
+                        <app-icon name="payment"></app-icon>
                       </button>
                       <button
                         mat-icon-button
                         color="accent"
                         matTooltip="Send Reminder"
                         (click)="sendReminder(payment.id)">
-                        <mat-icon>email</mat-icon>
+                        <app-icon name="email"></app-icon>
                       </button>
                       <button
                         mat-icon-button
                         matTooltip="View Details"
                         (click)="viewPaymentDetails(payment)">
-                        <mat-icon>visibility</mat-icon>
+                        <app-icon name="visibility"></app-icon>
                       </button>
                     </div>
                   </td>
@@ -344,7 +344,7 @@
 
           @if (upcomingRenewals().length === 0) {
             <div class="empty-state">
-              <mat-icon>event_available</mat-icon>
+              <app-icon name="event_available"></app-icon>
               <p>No upcoming renewals in the next 30 days</p>
             </div>
           } @else {
@@ -410,7 +410,7 @@
 
             @if (overview()!.recentlySuspendedTenants.length === 0) {
               <div class="empty-state">
-                <mat-icon>check_circle</mat-icon>
+                <app-icon name="check_circle"></app-icon>
                 <p>No recently suspended tenants</p>
               </div>
             } @else {

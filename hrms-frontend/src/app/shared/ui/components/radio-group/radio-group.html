@@ -14,7 +14,7 @@
 
   <div class="radio-group-options">
     <app-radio
-      *ngFor="let option of options; let i = index"
+      *ngFor="let option of options; let i = index; trackBy: trackByValue"
       [label]="option.label"
       [value]="option.value"
       [checked]="isChecked(option.value)"

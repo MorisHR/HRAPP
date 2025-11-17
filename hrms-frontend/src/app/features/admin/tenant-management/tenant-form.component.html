@@ -1,7 +1,7 @@
 <div class="tenant-form-container">
   <mat-toolbar color="primary">
     <button mat-icon-button routerLink="/admin/tenants">
-      <mat-icon>arrow_back</mat-icon>
+      <app-icon name="arrow_back"></app-icon>
     </button>
     <span>Create New Tenant</span>
   </mat-toolbar>
@@ -13,7 +13,7 @@
       <mat-card class="form-section">
         <mat-card-header>
           <mat-card-title>
-            <mat-icon>business</mat-icon>
+            <app-icon name="business"></app-icon>
             Company Information
           </mat-card-title>
         </mat-card-header>
@@ -67,7 +67,7 @@
       <mat-card class="form-section">
         <mat-card-header>
           <mat-card-title>
-            <mat-icon>business_center</mat-icon>
+            <app-icon name="business_center"></app-icon>
             Industry Sector
           </mat-card-title>
         </mat-card-header>
@@ -94,7 +94,7 @@
       <mat-card class="form-section">
         <mat-card-header>
           <mat-card-title>
-            <mat-icon>credit_card</mat-icon>
+            <app-icon name="credit_card"></app-icon>
             Subscription Plan
           </mat-card-title>
         </mat-card-header>
@@ -129,7 +129,7 @@
           @if (selectedTier()) {
             <div class="pricing-summary-card">
               <div class="summary-header">
-                <mat-icon>receipt</mat-icon>
+                <app-icon name="receipt"></app-icon>
                 <h3>Subscription Summary</h3>
               </div>
 
@@ -144,7 +144,7 @@
               <div class="summary-limits">
                 <div class="limit-item">
                   <div class="limit-icon">
-                    <mat-icon>group</mat-icon>
+                    <app-icon name="group"></app-icon>
                   </div>
                   <div class="limit-text">
                     <span class="limit-label">Maximum Users</span>
@@ -154,7 +154,7 @@
 
                 <div class="limit-item">
                   <div class="limit-icon">
-                    <mat-icon>storage</mat-icon>
+                    <app-icon name="storage"></app-icon>
                   </div>
                   <div class="limit-text">
                     <span class="limit-label">Storage Limit</span>
@@ -164,7 +164,7 @@
 
                 <div class="limit-item">
                   <div class="limit-icon">
-                    <mat-icon>api</mat-icon>
+                    <app-icon name="api"></app-icon>
                   </div>
                   <div class="limit-text">
                     <span class="limit-label">API Calls</span>
@@ -177,13 +177,13 @@
                 <h4>All Enterprise Features Included:</h4>
                 <ul class="features-list">
                   @for (feature of enterpriseFeatures; track feature) {
-                    <li><mat-icon>check_circle</mat-icon> {{ feature }}</li>
+                    <li><app-icon name="check_circle"></app-icon> {{ feature }}</li>
                   }
                 </ul>
               </div>
 
               <div class="summary-note">
-                <mat-icon>info</mat-icon>
+                <app-icon name="info"></app-icon>
                 <span>Need higher limits? You can upgrade anytime or contact us for custom enterprise pricing.</span>
               </div>
             </div>
@@ -195,7 +195,7 @@
       <mat-card class="form-section">
         <mat-card-header>
           <mat-card-title>
-            <mat-icon>admin_panel_settings</mat-icon>
+            <app-icon name="admin_panel_settings"></app-icon>
             Admin User Account
           </mat-card-title>
         </mat-card-header>
