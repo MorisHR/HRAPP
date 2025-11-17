@@ -1,0 +1,69 @@
+apiVersion: container.cnrm.cloud.google.com/v1beta1
+kind: ContainerNodePool
+metadata:
+  name: preemptible-jobs-pool
+  namespace: hrms-production
+  labels:
+    cost-optimization: "true"
+    workload-type: background-jobs
+spec:
+  clusterRef:
+    name: hrms-cluster
+  location: us-central1
+  nodeCount: 2
+  autoscaling:
+    minNodeCount: 1
+    maxNodeCount: 5
+  nodeConfig:
+    machineType: n1-standard-2
+    preemptible: true
+    diskSizeGb: 50
+    diskType: pd-standard
+    oauthScopes:
+    - https://www.googleapis.com/auth/cloud-platform
+    labels:
+      workload-type: background-jobs
+      cost-optimized: "true"
+      node-pool: preemptible-jobs
+    taints:
+    - key: workload-type
+      value: background-jobs
+      effect: NoSchedule
+    metadata:
+      disable-legacy-endpoints: "true"
+    shieldedInstanceConfig:
+      enableSecureBoot: true
+      enableIntegrityMonitoring: true
+  management:
+    autoRepair: true
+    autoUpgrade: true
+---
+# Alternative: Terraform-friendly YAML (convert to HCL)
+# resource "google_container_node_pool" "preemptible_jobs_pool" {
+#   name       = "preemptible-jobs-pool"
+#   cluster    = google_container_cluster.hrms_cluster.name
+#   node_count = 2
+#
+#   autoscaling {
+#     min_node_count = 1
+#     max_node_count = 5
+#   }
+#
+#   node_config {
+#     preemptible  = true
+#     machine_type = "n1-standard-2"
+#     disk_size_gb = 50
+#     disk_type    = "pd-standard"
+#
+#     labels = {
+#       workload-type  = "background-jobs"
+#       cost-optimized = "true"
+#     }
+#
+#     taint {
+#       key    = "workload-type"
+#       value  = "background-jobs"
+#       effect = "NO_SCHEDULE"
+#     }
+#   }
+# }

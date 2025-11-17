@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using HRMS.Core.Entities.Master;
 using HRMS.Core.Interfaces;
@@ -13,9 +14,11 @@ namespace HRMS.API.Controllers;
 /// <summary>
 /// Setup API for first-time system initialization
 /// FORTUNE 500 ENHANCED: Cryptographically secure password generation, audit logging, forced password change
+/// SECURITY: Public access only for initial setup - endpoints validate system state
 /// </summary>
 [ApiController]
 [Route("api/admin/[controller]")]
+[Authorize(Roles = "SuperAdmin")] // CRITICAL FIX: Restrict setup operations to SuperAdmin only
 public class SetupController : ControllerBase
 {
     private readonly MasterDbContext _context;

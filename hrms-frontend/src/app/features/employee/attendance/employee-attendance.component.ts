@@ -1,18 +1,10 @@
 import { Component, OnInit, signal, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
-import { MatCardModule } from '@angular/material/card';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { MatTableModule } from '@angular/material/table';
-import { MatChipsModule } from '@angular/material/chips';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatDialogModule, MatDialog } from '@angular/material/dialog';
-import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { AttendanceService } from '../../../core/services/attendance.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { Attendance, AttendanceStatus } from '../../../core/models/attendance.model';
+import { UiModule, ToastService, DialogService } from '../../../shared/ui/ui.module';
 
 interface AttendanceRecord {
   id: string;
@@ -30,22 +22,14 @@ interface AttendanceRecord {
   imports: [
     CommonModule,
     RouterModule,
-    MatCardModule,
-    MatButtonModule,
-    MatIconModule,
-    MatTableModule,
-    MatChipsModule,
-    MatProgressSpinnerModule,
-    MatTooltipModule,
-    MatDialogModule,
-    MatSnackBarModule
+    UiModule
   ],
   templateUrl: './employee-attendance.component.html',
   styleUrl: './employee-attendance.component.scss'
 })
 export class EmployeeAttendanceComponent implements OnInit {
-  private dialog = inject(MatDialog);
-  private snackBar = inject(MatSnackBar);
+  private dialog = inject(DialogService);
+  private toast = inject(ToastService);
   private attendanceService = inject(AttendanceService);
   private authService = inject(AuthService);
 
@@ -92,7 +76,7 @@ export class EmployeeAttendanceComponent implements OnInit {
       this.loadAttendanceRecords();
       this.checkCurrentStatus();
     } else {
-      this.snackBar.open('Unable to load employee information', 'Close', { duration: 3000 });
+      this.toast.error('Unable to load employee information', 3000);
     }
   }
 
@@ -118,7 +102,7 @@ export class EmployeeAttendanceComponent implements OnInit {
         this.loading.set(false);
         // Fallback to mock data for demo if API fails
         this.attendanceRecords.set(this.generateMockRecords());
-        this.snackBar.open('⚠️ Using demo data. API connection issue.', 'Close', { duration: 5000 });
+      this.toast.warning('Using demo data. API connection issue.', 5000);
       }
     });
   }
@@ -173,18 +157,18 @@ export class EmployeeAttendanceComponent implements OnInit {
     const status = this.currentStatus();
 
     if (status === 'checked-in') {
-      this.snackBar.open('You are already checked in', 'Close', { duration: 3000 });
+      this.toast.info('You are already checked in', 3000);
       return;
     }
 
     if (status === 'checked-out') {
-      this.snackBar.open('You have already completed today\'s attendance', 'Close', { duration: 3000 });
+      this.toast.info('You have already completed today\'s attendance', 3000);
       return;
     }
 
     const empId = this.employeeId();
     if (!empId) {
-      this.snackBar.open('Employee ID not found', 'Close', { duration: 3000 });
+      this.toast.error('Employee ID not found', 3000);
       return;
     }
 
@@ -196,10 +180,9 @@ export class EmployeeAttendanceComponent implements OnInit {
         this.currentStatus.set('checked-in');
         this.loading.set(false);
 
-        this.snackBar.open(
-          `✓ Check-in recorded at ${now.toLocaleTimeString()}`,
-          'Close',
-          { duration: 5000, panelClass: ['success-snackbar'] }
+        this.toast.success(
+          `Check-in recorded at ${now.toLocaleTimeString()}`,
+          5000
         );
 
         this.loadAttendanceRecords();
@@ -207,10 +190,9 @@ export class EmployeeAttendanceComponent implements OnInit {
       error: (err) => {
         console.error('Check-in failed:', err);
         this.loading.set(false);
-        this.snackBar.open(
-          '❌ Check-in failed. Please try again.',
-          'Close',
-          { duration: 3000 }
+        this.toast.error(
+          'Check-in failed. Please try again.',
+          3000
         );
       }
     });
@@ -221,13 +203,13 @@ export class EmployeeAttendanceComponent implements OnInit {
     const status = this.currentStatus();
 
     if (status !== 'checked-in') {
-      this.snackBar.open('You must check in first', 'Close', { duration: 3000 });
+      this.toast.warning('You must check in first', 3000);
       return;
     }
 
     const empId = this.employeeId();
     if (!empId) {
-      this.snackBar.open('Employee ID not found', 'Close', { duration: 3000 });
+      this.toast.error('Employee ID not found', 3000);
       return;
     }
 
@@ -239,10 +221,9 @@ export class EmployeeAttendanceComponent implements OnInit {
         this.currentStatus.set('checked-out');
         this.loading.set(false);
 
-        this.snackBar.open(
-          `✓ Check-out recorded at ${now.toLocaleTimeString()}`,
-          'Close',
-          { duration: 5000, panelClass: ['success-snackbar'] }
+        this.toast.success(
+          `Check-out recorded at ${now.toLocaleTimeString()}`,
+          5000
         );
 
         this.loadAttendanceRecords();
@@ -250,24 +231,23 @@ export class EmployeeAttendanceComponent implements OnInit {
       error: (err) => {
         console.error('Check-out failed:', err);
         this.loading.set(false);
-        this.snackBar.open(
-          '❌ Check-out failed. Please try again.',
-          'Close',
-          { duration: 3000 }
+        this.toast.error(
+          'Check-out failed. Please try again.',
+          3000
         );
       }
     });
   }
 
-  getStatusColor(status: string): string {
-    const colors: Record<string, string> = {
+  getStatusColor(status: string): 'primary' | 'success' | 'warning' | 'error' | 'neutral' {
+    const colors: Record<string, 'primary' | 'success' | 'warning' | 'error' | 'neutral'> = {
       'present': 'success',
-      'late': 'warn',
+      'late': 'warning',
       'absent': 'error',
-      'half-day': 'accent',
-      'on-leave': 'primary'
+      'half-day': 'primary',
+      'on-leave': 'neutral'
     };
-    return colors[status] || '';
+    return colors[status] || 'neutral';
   }
 
   getStatusLabel(status: string): string {

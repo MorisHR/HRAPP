@@ -1,0 +1,92 @@
+[
+  {
+    "name": "timestamp",
+    "type": "TIMESTAMP",
+    "mode": "REQUIRED",
+    "description": "When the activity occurred"
+  },
+  {
+    "name": "tenant_id",
+    "type": "STRING",
+    "mode": "REQUIRED",
+    "description": "Unique identifier for the tenant"
+  },
+  {
+    "name": "activity_type",
+    "type": "STRING",
+    "mode": "REQUIRED",
+    "description": "Type of activity (user_login, record_created, report_generated, etc.)"
+  },
+  {
+    "name": "user_count",
+    "type": "INTEGER",
+    "mode": "NULLABLE",
+    "description": "Number of active users at this time"
+  },
+  {
+    "name": "request_count",
+    "type": "INTEGER",
+    "mode": "NULLABLE",
+    "description": "Number of API requests made"
+  },
+  {
+    "name": "data_volume_mb",
+    "type": "FLOAT",
+    "mode": "NULLABLE",
+    "description": "Volume of data processed in megabytes"
+  },
+  {
+    "name": "feature_usage",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "JSON string mapping features to usage counts"
+  },
+  {
+    "name": "module_name",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Module or feature area (employees, payroll, attendance, etc.)"
+  },
+  {
+    "name": "avg_response_time_ms",
+    "type": "FLOAT",
+    "mode": "NULLABLE",
+    "description": "Average response time for requests in this period"
+  },
+  {
+    "name": "error_count",
+    "type": "INTEGER",
+    "mode": "NULLABLE",
+    "description": "Number of errors encountered"
+  },
+  {
+    "name": "subscription_tier",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Tenant's subscription tier (starter, professional, enterprise)"
+  },
+  {
+    "name": "billing_cycle_day",
+    "type": "INTEGER",
+    "mode": "NULLABLE",
+    "description": "Day of the month for billing cycle (1-31)"
+  },
+  {
+    "name": "storage_used_gb",
+    "type": "FLOAT",
+    "mode": "NULLABLE",
+    "description": "Total storage used by tenant in gigabytes"
+  },
+  {
+    "name": "peak_concurrent_users",
+    "type": "INTEGER",
+    "mode": "NULLABLE",
+    "description": "Peak number of concurrent users in the period"
+  },
+  {
+    "name": "total_employees",
+    "type": "INTEGER",
+    "mode": "NULLABLE",
+    "description": "Total number of employees in the system"
+  }
+]

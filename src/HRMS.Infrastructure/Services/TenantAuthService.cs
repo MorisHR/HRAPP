@@ -28,6 +28,7 @@ public class TenantAuthService
     private readonly string _connectionString;
     private readonly ILogger<TenantAuthService> _logger;
     private readonly IAuditLogService _auditLogService;
+    private readonly PasswordValidationService _passwordValidationService;
 
     public TenantAuthService(
         MasterDbContext masterContext,
@@ -35,7 +36,8 @@ public class TenantAuthService
         IOptions<JwtSettings> jwtSettings,
         IConfiguration configuration,
         ILogger<TenantAuthService> logger,
-        IAuditLogService auditLogService)
+        IAuditLogService auditLogService,
+        PasswordValidationService passwordValidationService)
     {
         _masterContext = masterContext;
         _passwordHasher = passwordHasher;
@@ -44,6 +46,7 @@ public class TenantAuthService
             ?? throw new InvalidOperationException("Connection string not found");
         _logger = logger;
         _auditLogService = auditLogService;
+        _passwordValidationService = passwordValidationService;
     }
 
     public async Task<(string Token, string RefreshToken, DateTime ExpiresAt, Employee User, Guid TenantId)?> LoginAsync(
@@ -61,7 +64,7 @@ public class TenantAuthService
             _logger.LogWarning("Tenant not found for subdomain: {Subdomain}", subdomain);
 
             // Audit log: Failed login - tenant not found
-            _ = _auditLogService.LogAuthenticationAsync(
+            await _auditLogService.LogAuthenticationAsync(
                 AuditActionType.LOGIN_FAILED,
                 userId: null,
                 userEmail: email,
@@ -78,7 +81,7 @@ public class TenantAuthService
             _logger.LogWarning("Tenant is not active: {TenantId}, Status: {Status}", tenant.Id, tenant.Status);
 
             // Audit log: Failed login - inactive tenant
-            _ = _auditLogService.LogAuthenticationAsync(
+            await _auditLogService.LogAuthenticationAsync(
                 AuditActionType.LOGIN_FAILED,
                 userId: null,
                 userEmail: email,
@@ -111,7 +114,7 @@ public class TenantAuthService
             _logger.LogWarning("Employee not found in tenant {TenantId}: {Email}", tenant.Id, email);
 
             // Audit log: Failed login - employee not found
-            _ = _auditLogService.LogAuthenticationAsync(
+            await _auditLogService.LogAuthenticationAsync(
                 AuditActionType.LOGIN_FAILED,
                 userId: null,
                 userEmail: email,
@@ -128,7 +131,7 @@ public class TenantAuthService
             _logger.LogWarning("Employee account is not active: {EmployeeId}", employee.Id);
 
             // Audit log: Failed login - inactive employee
-            _ = _auditLogService.LogAuthenticationAsync(
+            await _auditLogService.LogAuthenticationAsync(
                 AuditActionType.LOGIN_FAILED,
                 userId: employee.Id,
                 userEmail: email,
@@ -145,7 +148,7 @@ public class TenantAuthService
             _logger.LogWarning("Employee has been offboarded: {EmployeeId}", employee.Id);
 
             // Audit log: Failed login - employee offboarded
-            _ = _auditLogService.LogAuthenticationAsync(
+            await _auditLogService.LogAuthenticationAsync(
                 AuditActionType.LOGIN_FAILED,
                 userId: employee.Id,
                 userEmail: email,
@@ -173,7 +176,7 @@ public class TenantAuthService
                     employee.Id, employee.LockoutEnd.Value);
 
                 // Audit log: Login attempt on locked account
-                _ = _auditLogService.LogAuthenticationAsync(
+                await _auditLogService.LogAuthenticationAsync(
                     AuditActionType.LOGIN_FAILED,
                     userId: employee.Id,
                     userEmail: email,
@@ -210,7 +213,7 @@ public class TenantAuthService
                 _logger.LogWarning("Employee account locked due to failed login attempts: {EmployeeId}", employee.Id);
 
                 // Audit log: Account locked
-                _ = _auditLogService.LogAuthenticationAsync(
+                await _auditLogService.LogAuthenticationAsync(
                     AuditActionType.ACCOUNT_LOCKED,
                     userId: employee.Id,
                     userEmail: email,
@@ -228,7 +231,7 @@ public class TenantAuthService
             _logger.LogWarning("Invalid password for employee: {Email} in tenant {TenantId}", email, tenant.Id);
 
             // Audit log: Failed login - invalid password
-            _ = _auditLogService.LogAuthenticationAsync(
+            await _auditLogService.LogAuthenticationAsync(
                 AuditActionType.LOGIN_FAILED,
                 userId: employee.Id,
                 userEmail: email,
@@ -303,7 +306,7 @@ public class TenantAuthService
             employee.Id, tenant.Id);
 
         // Audit log: Successful login
-        _ = _auditLogService.LogAuthenticationAsync(
+        await _auditLogService.LogAuthenticationAsync(
             AuditActionType.LOGIN_SUCCESS,
             userId: employee.Id,
             userEmail: email,
@@ -421,101 +424,129 @@ public class TenantAuthService
     /// <summary>
     /// Refreshes access token using refresh token for tenant employees
     /// Implements token rotation: old refresh token revoked, new one issued
+    /// CONCURRENCY FIX: Uses database-level locking to prevent concurrent token refresh race condition
     /// </summary>
     public async Task<(string AccessToken, string RefreshToken)> RefreshTokenAsync(string refreshToken, string ipAddress)
     {
         _logger.LogInformation("Tenant token refresh requested from IP {IpAddress}", ipAddress);
 
-        // Find and validate refresh token
-        var token = await _masterContext.RefreshTokens
-            .FirstOrDefaultAsync(rt => rt.Token == refreshToken && rt.TenantId != null && rt.EmployeeId != null);
+        // CONCURRENCY FIX: Use execution strategy with transaction and row-level locking
+        var strategy = _masterContext.Database.CreateExecutionStrategy();
 
-        if (token == null)
+        return await strategy.ExecuteAsync(async () =>
         {
-            _logger.LogWarning("Tenant refresh token not found");
-            throw new UnauthorizedAccessException("Invalid refresh token");
-        }
+            await using var transaction = await _masterContext.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable);
 
-        if (!token.IsActive)
-        {
-            _logger.LogWarning("Inactive tenant refresh token used: Expired={IsExpired}, Revoked={IsRevoked}", token.IsExpired, token.IsRevoked);
-            throw new UnauthorizedAccessException("Refresh token is expired or revoked");
-        }
+            try
+            {
+                // CRITICAL: Use SELECT FOR UPDATE (via FromSqlRaw) to lock the row
+                // This prevents concurrent refresh token requests from racing
+                var token = await _masterContext.RefreshTokens
+                    .FromSqlRaw(@"
+                        SELECT * FROM ""RefreshTokens""
+                        WHERE ""Token"" = {0}
+                        AND ""TenantId"" IS NOT NULL
+                        AND ""EmployeeId"" IS NOT NULL
+                        FOR UPDATE
+                    ", refreshToken)
+                    .FirstOrDefaultAsync();
 
-        // Get tenant information
-        var tenant = await _masterContext.Tenants
-            .FirstOrDefaultAsync(t => t.Id == token.TenantId);
+                if (token == null)
+                {
+                    _logger.LogWarning("Tenant refresh token not found");
+                    throw new UnauthorizedAccessException("Invalid refresh token");
+                }
 
-        if (tenant == null)
-        {
-            _logger.LogWarning("Tenant not found for refresh token: {TenantId}", token.TenantId);
-            throw new UnauthorizedAccessException("Invalid tenant");
-        }
+                if (!token.IsActive)
+                {
+                    _logger.LogWarning("Inactive tenant refresh token used: Expired={IsExpired}, Revoked={IsRevoked}", token.IsExpired, token.IsRevoked);
+                    throw new UnauthorizedAccessException("Refresh token is expired or revoked");
+                }
 
-        // Get employee from tenant schema
-        var optionsBuilder = new DbContextOptionsBuilder<TenantDbContext>();
-        optionsBuilder.UseNpgsql(_connectionString, o =>
-        {
-            o.MigrationsHistoryTable("__EFMigrationsHistory", tenant.SchemaName);
-            o.EnableRetryOnFailure(3, TimeSpan.FromSeconds(5), null);
+                // Get tenant information
+                var tenant = await _masterContext.Tenants
+                    .FirstOrDefaultAsync(t => t.Id == token.TenantId);
+
+                if (tenant == null)
+                {
+                    _logger.LogWarning("Tenant not found for refresh token: {TenantId}", token.TenantId);
+                    throw new UnauthorizedAccessException("Invalid tenant");
+                }
+
+                // Get employee from tenant schema
+                var optionsBuilder = new DbContextOptionsBuilder<TenantDbContext>();
+                optionsBuilder.UseNpgsql(_connectionString, o =>
+                {
+                    o.MigrationsHistoryTable("__EFMigrationsHistory", tenant.SchemaName);
+                    o.EnableRetryOnFailure(3, TimeSpan.FromSeconds(5), null);
+                });
+
+                await using var tenantContext = new TenantDbContext(optionsBuilder.Options, tenant.SchemaName);
+
+                var employee = await tenantContext.Employees
+                    .FirstOrDefaultAsync(e => e.Id == token.EmployeeId);
+
+                if (employee == null || !employee.IsActive || employee.IsOffboarded)
+                {
+                    _logger.LogWarning("Employee not found or inactive for refresh token: {EmployeeId}", token.EmployeeId);
+                    throw new UnauthorizedAccessException("Invalid employee or account inactive");
+                }
+
+                // Check if employee is a manager
+                var isManager = await tenantContext.Employees
+                    .AnyAsync(e => e.ManagerId == employee.Id && !e.IsDeleted);
+
+                // SECURITY: Token Rotation
+                // Generate new refresh token and revoke the old one
+                var newRefreshToken = GenerateRefreshToken(ipAddress);
+                newRefreshToken.TenantId = token.TenantId;
+                newRefreshToken.EmployeeId = token.EmployeeId;
+
+                // Revoke old token
+                token.RevokedAt = DateTime.UtcNow;
+                token.RevokedByIp = ipAddress;
+                token.ReplacedByToken = newRefreshToken.Token;
+                token.ReasonRevoked = "Replaced by new token (rotation)";
+
+                // Save new refresh token
+                _masterContext.RefreshTokens.Add(newRefreshToken);
+                await _masterContext.SaveChangesAsync();
+
+                // Commit transaction - ensures atomicity of token rotation
+                await transaction.CommitAsync();
+
+                // Generate new access token
+                var accessToken = GenerateTenantJwtToken(
+                    employee.Id,
+                    employee.Email,
+                    employee.FullName,
+                    employee.JobTitle,
+                    isManager,
+                    tenant.Id,
+                    tenant.Subdomain,
+                    tenant.SchemaName
+                );
+
+                _logger.LogInformation("Tenant token refreshed successfully for employee {EmployeeId} in tenant {TenantId}",
+                    token.EmployeeId, token.TenantId);
+
+                // Audit log: Token refreshed
+                await _auditLogService.LogAuthenticationAsync(
+                    AuditActionType.TOKEN_REFRESHED,
+                    userId: employee.Id,
+                    userEmail: employee.Email,
+                    success: true,
+                    tenantId: tenant.Id
+                );
+
+                return (accessToken, newRefreshToken.Token);
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
         });
-
-        await using var tenantContext = new TenantDbContext(optionsBuilder.Options, tenant.SchemaName);
-
-        var employee = await tenantContext.Employees
-            .FirstOrDefaultAsync(e => e.Id == token.EmployeeId);
-
-        if (employee == null || !employee.IsActive || employee.IsOffboarded)
-        {
-            _logger.LogWarning("Employee not found or inactive for refresh token: {EmployeeId}", token.EmployeeId);
-            throw new UnauthorizedAccessException("Invalid employee or account inactive");
-        }
-
-        // Check if employee is a manager
-        var isManager = await tenantContext.Employees
-            .AnyAsync(e => e.ManagerId == employee.Id && !e.IsDeleted);
-
-        // SECURITY: Token Rotation
-        // Generate new refresh token and revoke the old one
-        var newRefreshToken = GenerateRefreshToken(ipAddress);
-        newRefreshToken.TenantId = token.TenantId;
-        newRefreshToken.EmployeeId = token.EmployeeId;
-
-        // Revoke old token
-        token.RevokedAt = DateTime.UtcNow;
-        token.RevokedByIp = ipAddress;
-        token.ReplacedByToken = newRefreshToken.Token;
-        token.ReasonRevoked = "Replaced by new token (rotation)";
-
-        // Save new refresh token
-        _masterContext.RefreshTokens.Add(newRefreshToken);
-        await _masterContext.SaveChangesAsync();
-
-        // Generate new access token
-        var accessToken = GenerateTenantJwtToken(
-            employee.Id,
-            employee.Email,
-            employee.FullName,
-            employee.JobTitle,
-            isManager,
-            tenant.Id,
-            tenant.Subdomain,
-            tenant.SchemaName
-        );
-
-        _logger.LogInformation("Tenant token refreshed successfully for employee {EmployeeId} in tenant {TenantId}",
-            token.EmployeeId, token.TenantId);
-
-        // Audit log: Token refreshed
-        _ = _auditLogService.LogAuthenticationAsync(
-            AuditActionType.TOKEN_REFRESHED,
-            userId: employee.Id,
-            userEmail: employee.Email,
-            success: true,
-            tenantId: tenant.Id
-        );
-
-        return (accessToken, newRefreshToken.Token);
     }
 
     /// <summary>
@@ -543,12 +574,197 @@ public class TenantAuthService
             token.EmployeeId, token.TenantId, token.ReasonRevoked);
 
         // Audit log: Logout
-        _ = _auditLogService.LogAuthenticationAsync(
+        await _auditLogService.LogAuthenticationAsync(
             AuditActionType.LOGOUT,
             userId: token.EmployeeId,
             userEmail: null,
             success: true,
             tenantId: token.TenantId
         );
+    }
+
+    /// <summary>
+    /// Set/Reset employee password using token from welcome email or forgot password flow
+    /// SECURITY FEATURES:
+    /// - Token expiry validation (24 hours)
+    /// - Password complexity enforcement
+    /// - Single-use token (revoked after use)
+    /// - MustChangePassword flag cleared after successful setup
+    /// FORTUNE 500: Used for initial password setup after tenant activation
+    /// </summary>
+    /// <param name="token">Password reset token from email</param>
+    /// <param name="newPassword">New password to set</param>
+    /// <param name="subdomain">Tenant subdomain</param>
+    /// <returns>(success, message)</returns>
+    public async Task<(bool Success, string Message)> SetEmployeePasswordAsync(
+        string token,
+        string newPassword,
+        string subdomain)
+    {
+        try
+        {
+            // Validate inputs
+            if (string.IsNullOrWhiteSpace(token) || string.IsNullOrWhiteSpace(newPassword) || string.IsNullOrWhiteSpace(subdomain))
+            {
+                return (false, "Invalid request. Token, password, and subdomain are required.");
+            }
+
+            // Get tenant by subdomain
+            var tenant = await _masterContext.Tenants
+                .AsNoTracking()
+                .FirstOrDefaultAsync(t => t.Subdomain.ToLower() == subdomain.ToLower() && t.Status == TenantStatus.Active);
+
+            if (tenant == null)
+            {
+                _logger.LogWarning("Tenant not found or not active for subdomain: {Subdomain}", subdomain);
+                return (false, "Invalid or expired password reset link.");
+            }
+
+            // Connect to tenant schema
+            var optionsBuilder = new DbContextOptionsBuilder<TenantDbContext>();
+            optionsBuilder.UseNpgsql(_connectionString);
+
+            using var tenantDbContext = new TenantDbContext(optionsBuilder.Options, tenant.SchemaName, null!);
+
+            // Find employee by password reset token
+            var employee = await tenantDbContext.Employees
+                .FirstOrDefaultAsync(e => e.PasswordResetToken == token && e.IsActive);
+
+            if (employee == null)
+            {
+                _logger.LogWarning("Employee not found with password reset token in tenant: {TenantId}", tenant.Id);
+                return (false, "Invalid or expired password reset link.");
+            }
+
+            // Check token expiry
+            if (!employee.PasswordResetTokenExpiry.HasValue || employee.PasswordResetTokenExpiry.Value < DateTime.UtcNow)
+            {
+                _logger.LogWarning("Password reset token expired for employee: {EmployeeId}", employee.Id);
+                return (false, "Password reset link has expired. Please request a new one.");
+            }
+
+            // ==============================================
+            // FORTRESS-GRADE PASSWORD VALIDATION
+            // ==============================================
+
+            // 1. Validate password strength (Fortune 500 standards)
+            var (isValid, validationError) = _passwordValidationService.ValidatePasswordStrength(newPassword);
+            if (!isValid)
+            {
+                _logger.LogWarning("Weak password rejected for employee: {EmployeeId}, Reason: {Reason}",
+                    employee.Id, validationError);
+
+                // FORTRESS-GRADE AUDIT: Log failed password setup attempt
+                await _auditLogService.LogAuthenticationAsync(
+                    AuditActionType.PASSWORD_RESET_FAILED,
+                    userId: employee.Id,
+                    userEmail: employee.Email,
+                    success: false,
+                    tenantId: tenant.Id
+                );
+
+                return (false, validationError);
+            }
+
+            // 2. Check password history (no reuse of last 5 passwords)
+            if (_passwordValidationService.IsPasswordReused(newPassword, employee.PasswordHistory))
+            {
+                _logger.LogWarning("Password reuse attempt blocked for employee: {EmployeeId}", employee.Id);
+
+                // FORTRESS-GRADE AUDIT: Log password reuse attempt (security critical)
+                await _auditLogService.LogSecurityEventAsync(
+                    AuditActionType.PASSWORD_RESET_FAILED,
+                    AuditSeverity.WARNING,
+                    employee.Id,
+                    description: $"Password reuse attempt blocked for employee {employee.Email}",
+                    additionalInfo: System.Text.Json.JsonSerializer.Serialize(new
+                    {
+                        employeeId = employee.Id,
+                        employeeEmail = employee.Email,
+                        reason = "Password matches one of last 5 passwords",
+                        tenantId = tenant.Id,
+                        subdomain = tenant.Subdomain
+                    })
+                );
+
+                return (false, "Password cannot be the same as your last 5 passwords. Please choose a different password.");
+            }
+
+            // 3. Calculate password entropy (Fortune 500: aim for 50+ bits)
+            var entropy = _passwordValidationService.CalculatePasswordEntropy(newPassword);
+            _logger.LogInformation("Password entropy for employee {EmployeeId}: {Entropy} bits", employee.Id, entropy);
+
+            // ==============================================
+            // SECURE PASSWORD STORAGE & HISTORY MANAGEMENT
+            // ==============================================
+
+            // Hash the new password with Argon2
+            var passwordHash = _passwordHasher.HashPassword(newPassword);
+
+            // Update password history before changing the hash
+            var updatedHistory = _passwordValidationService.UpdatePasswordHistory(
+                employee.PasswordHash ?? passwordHash, // Use current hash if exists, otherwise new hash
+                employee.PasswordHistory
+            );
+
+            // Update employee password and clear reset token
+            employee.PasswordHash = passwordHash;
+            employee.PasswordHistory = updatedHistory;
+            employee.PasswordResetToken = null;
+            employee.PasswordResetTokenExpiry = null;
+            employee.MustChangePassword = false;
+            employee.LastPasswordChangeDate = DateTime.UtcNow;
+
+            await tenantDbContext.SaveChangesAsync();
+
+            _logger.LogInformation("Password successfully set for employee: {EmployeeId} in tenant: {TenantId}", employee.Id, tenant.Id);
+
+            // ==============================================
+            // FORTRESS-GRADE AUDIT: Log successful password setup with security metrics
+            // ==============================================
+            await _auditLogService.LogAuthenticationAsync(
+                AuditActionType.PASSWORD_RESET_COMPLETED,
+                userId: employee.Id,
+                userEmail: employee.Email,
+                success: true,
+                tenantId: tenant.Id
+            );
+
+            // Additional security event logging with detailed metrics
+            await _auditLogService.LogSecurityEventAsync(
+                AuditActionType.PASSWORD_RESET_COMPLETED,
+                AuditSeverity.INFO,
+                employee.Id,
+                description: $"Employee {employee.Email} successfully set password via activation token",
+                additionalInfo: System.Text.Json.JsonSerializer.Serialize(new
+                {
+                    employeeId = employee.Id,
+                    employeeEmail = employee.Email,
+                    employeeCode = employee.EmployeeCode,
+                    passwordEntropy = Math.Round(entropy, 2), // Password strength in bits
+                    passwordHistoryLength = employee.PasswordHistory != null
+                        ? System.Text.Json.JsonSerializer.Deserialize<List<string>>(employee.PasswordHistory)?.Count ?? 0
+                        : 0,
+                    tenantId = tenant.Id,
+                    tenantName = tenant.CompanyName,
+                    subdomain = tenant.Subdomain,
+                    setupMethod = "ActivationToken",
+                    timestamp = DateTime.UtcNow
+                })
+            );
+
+            _logger.LogInformation(
+                "FORTRESS_AUDIT: Password setup completed for {Email} (Entropy: {Entropy} bits, History depth: {HistoryCount})",
+                employee.Email,
+                Math.Round(entropy, 2),
+                employee.PasswordHistory != null ? System.Text.Json.JsonSerializer.Deserialize<List<string>>(employee.PasswordHistory)?.Count ?? 0 : 0);
+
+            return (true, "Password set successfully. You can now log in with your new password.");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error setting employee password with token: {Token}", token);
+            return (false, "An error occurred while setting your password. Please try again later.");
+        }
     }
 }

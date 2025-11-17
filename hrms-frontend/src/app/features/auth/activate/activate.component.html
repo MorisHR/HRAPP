@@ -22,7 +22,14 @@
           </p>
         }
       </div>
-      <button (click)="goToLogin()" class="btn-primary">Go to Login</button>
+      <!-- MIGRATED TO CUSTOM UI COMPONENT -->
+      <app-button
+        variant="primary"
+        [fullWidth]="true"
+        (click)="goToLogin()"
+      >
+        Go to Login
+      </app-button>
     </div>
   }
 
@@ -33,8 +40,28 @@
       <h2>Activation Failed</h2>
       <p class="error-message">{{ error }}</p>
       <div class="error-actions">
-        <button (click)="contactSupport()" class="btn-secondary">Contact Support</button>
-        <button (click)="goToLogin()" class="btn-outline">Try Login</button>
+        <!-- MIGRATED TO CUSTOM UI COMPONENT -->
+        <app-button
+          variant="primary"
+          [fullWidth]="true"
+          (click)="goToResendActivation()"
+        >
+          Resend Activation Email
+        </app-button>
+        <app-button
+          variant="secondary"
+          [fullWidth]="true"
+          (click)="contactSupport()"
+        >
+          Contact Support
+        </app-button>
+        <app-button
+          variant="ghost"
+          [fullWidth]="true"
+          (click)="goToLogin()"
+        >
+          Try Login
+        </app-button>
       </div>
     </div>
   }

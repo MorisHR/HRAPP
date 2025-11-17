@@ -1,0 +1,196 @@
+# ============================================================================
+# Fortune 50 Database Alerting Rules
+# Purpose: SLA-based alerts for PostgreSQL performance and health
+# Severity Levels: P0 (Critical), P1 (High), P2 (Warning), P3 (Info)
+# ============================================================================
+
+groups:
+  - name: database_health
+    interval: 30s
+    rules:
+      # ========================================================================
+      # CRITICAL ALERTS (P0/P1) - Immediate Response Required
+      # ========================================================================
+
+      - alert: DatabaseDown
+        expr: up{job="postgresql"} == 0
+        for: 1m
+        labels:
+          severity: P0
+          priority: critical
+          component: database
+        annotations:
+          summary: "PostgreSQL database is DOWN"
+          description: "PostgreSQL instance {{ $labels.instance }} is unreachable for {{ $value }} seconds"
+          impact: "COMPLETE SERVICE OUTAGE - All tenant operations blocked"
+          action: "1. Check database service status\n2. Review database logs\n3. Verify network connectivity\n4. Initiate DR failover if needed"
+          runbook: "https://docs.hrms.com/runbooks/database-down"
+
+      - alert: CacheHitRateCritical
+        expr: |
+          (
+            SELECT cache_hit_rate
+            FROM monitoring.performance_metrics
+            ORDER BY captured_at DESC
+            LIMIT 1
+          ) < 90
+        for: 5m
+        labels:
+          severity: P1
+          priority: critical
+          component: database
+        annotations:
+          summary: "Database cache hit rate critically low"
+          description: "Cache hit rate is {{ $value }}% (threshold: <90%)"
+          impact: "Severe performance degradation - 10x slower queries expected"
+          action: "1. Increase shared_buffers\n2. Analyze query patterns\n3. Review working set size\n4. Consider vertical scaling"
+          runbook: "https://docs.hrms.com/runbooks/low-cache-hit-rate"
+
+      - alert: ConnectionPoolExhausted
+        expr: |
+          (
+            SELECT connection_utilization_pct
+            FROM monitoring.performance_metrics
+            ORDER BY captured_at DESC
+            LIMIT 1
+          ) > 90
+        for: 2m
+        labels:
+          severity: P1
+          priority: critical
+          component: database
+        annotations:
+          summary: "Database connection pool near exhaustion"
+          description: "Connection utilization is {{ $value }}% (threshold: >90%)"
+          impact: "New connections will be rejected - service degradation imminent"
+          action: "1. Increase max_connections\n2. Identify connection leaks\n3. Review connection pooling config\n4. Kill idle connections if needed"
+          runbook: "https://docs.hrms.com/runbooks/connection-pool-exhausted"
+
+      - alert: HighRollbackRate
+        expr: |
+          (
+            SELECT rollback_rate_pct
+            FROM monitoring.performance_metrics
+            ORDER BY captured_at DESC
+            LIMIT 1
+          ) > 5
+        for: 5m
+        labels:
+          severity: P1
+          priority: critical
+          component: database
+        annotations:
+          summary: "High transaction rollback rate detected"
+          description: "Rollback rate is {{ $value }}% (threshold: >5%)"
+          impact: "Data integrity issues or application errors"
+          action: "1. Review application logs for errors\n2. Analyze failed transactions\n3. Check for deadlocks\n4. Verify data validation logic"
+          runbook: "https://docs.hrms.com/runbooks/high-rollback-rate"
+
+      # ========================================================================
+      # WARNING ALERTS (P2) - Monitor Closely
+      # ========================================================================
+
+      - alert: CacheHitRateDegraded
+        expr: |
+          (
+            SELECT cache_hit_rate
+            FROM monitoring.performance_metrics
+            ORDER BY captured_at DESC
+            LIMIT 1
+          ) < 95 AND > 90
+        for: 10m
+        labels:
+          severity: P2
+          priority: warning
+          component: database
+        annotations:
+          summary: "Database cache hit rate below optimal"
+          description: "Cache hit rate is {{ $value }}% (target: >95%)"
+          impact: "Minor performance degradation - queries running slower than optimal"
+          action: "1. Monitor trend\n2. Review query patterns\n3. Consider shared_buffers tuning"
+
+      - alert: ConnectionPoolHigh
+        expr: |
+          (
+            SELECT connection_utilization_pct
+            FROM monitoring.performance_metrics
+            ORDER BY captured_at DESC
+            LIMIT 1
+          ) > 70 AND < 90
+        for: 10m
+        labels:
+          severity: P2
+          priority: warning
+          component: database
+        annotations:
+          summary: "Database connection pool utilization high"
+          description: "Connection utilization is {{ $value }}% (threshold: >70%)"
+          impact: "Reduced connection availability - may impact scalability"
+          action: "1. Monitor connection trends\n2. Review connection pooling\n3. Plan capacity increase"
+
+      - alert: SlowQueriesDetected
+        expr: |
+          (
+            SELECT slow_queries_count
+            FROM monitoring.performance_metrics
+            ORDER BY captured_at DESC
+            LIMIT 1
+          ) > 10
+        for: 5m
+        labels:
+          severity: P2
+          priority: warning
+          component: database
+        annotations:
+          summary: "Slow queries detected (>100ms)"
+          description: "{{ $value }} slow queries in last minute (threshold: >10)"
+          impact: "User experience degradation - some operations taking longer than expected"
+          action: "1. Query monitoring.get_slow_queries()\n2. Analyze execution plans\n3. Add missing indexes\n4. Optimize problematic queries"
+
+      - alert: HighDiskIO
+        expr: |
+          (
+            SELECT blocks_read
+            FROM monitoring.performance_metrics
+            ORDER BY captured_at DESC
+            LIMIT 1
+          ) > (
+            SELECT AVG(blocks_read) * 2
+            FROM monitoring.performance_metrics
+            WHERE captured_at > NOW() - INTERVAL '1 hour'
+          )
+        for: 5m
+        labels:
+          severity: P2
+          priority: warning
+          component: database
+        annotations:
+          summary: "Disk I/O spike detected"
+          description: "Disk reads 2x above baseline ({{ $value }} blocks)"
+          impact: "Performance degradation due to excessive disk I/O"
+          action: "1. Identify large table scans\n2. Review missing indexes\n3. Check for cache eviction\n4. Analyze query patterns"
+
+  - name: database_capacity
+    interval: 5m
+    rules:
+      # ========================================================================
+      # CAPACITY PLANNING ALERTS
+      # ========================================================================
+
+      - alert: DatabaseGrowthHigh
+        expr: |
+          (
+            SELECT SUM(schema_size_mb)
+            FROM monitoring.tenant_activity
+            WHERE measured_at > (SELECT MAX(measured_at) - INTERVAL '1 minute' FROM monitoring.tenant_activity)
+          ) > 10000
+        for: 1h
+        labels:
+          severity: P3
+          priority: info
+          component: database
+        annotations:
+          summary: "Database size exceeds 10GB"
+          description: "Total database size: {{ $value }}MB"
+          impact: "Approaching capacity limits - may need storage expansion"
+          action: "1. Review data retention policies\n2. Archive old data\n3. Plan storage upgrade"

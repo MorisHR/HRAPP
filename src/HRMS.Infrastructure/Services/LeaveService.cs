@@ -176,11 +176,15 @@ public class LeaveService : ILeaveService
             throw new InvalidOperationException(validationError);
 
         var employee = await _context.Employees
+            .AsNoTracking()
             .Include(e => e.Department)
             .FirstOrDefaultAsync(e => e.Id == employeeId && !e.IsDeleted);
 
         if (employee == null)
-            throw new InvalidOperationException("Employee not found");
+        {
+            _logger.LogWarning("SECURITY: Employee {EmployeeId} not found in current tenant context", employeeId);
+            throw new KeyNotFoundException($"Employee with ID {employeeId} not found or access denied");
+        }
 
         var leaveType = await _context.LeaveTypes.FindAsync(request.LeaveTypeId);
         if (leaveType == null)
@@ -649,9 +653,15 @@ public class LeaveService : ILeaveService
 
     public async Task InitializeLeaveBalanceAsync(Guid employeeId, int year)
     {
-        var employee = await _context.Employees.FindAsync(employeeId);
+        var employee = await _context.Employees
+            .AsNoTracking()
+            .FirstOrDefaultAsync(e => e.Id == employeeId && !e.IsDeleted);
+
         if (employee == null)
-            throw new InvalidOperationException("Employee not found");
+        {
+            _logger.LogWarning("SECURITY: Employee {EmployeeId} not found in current tenant context", employeeId);
+            throw new KeyNotFoundException($"Employee with ID {employeeId} not found or access denied");
+        }
 
         var leaveTypes = await _context.LeaveTypes
             .Where(lt => lt.IsActive && !lt.IsDeleted)
@@ -943,9 +953,15 @@ public class LeaveService : ILeaveService
 
     public async Task<LeaveEncashmentDto> CalculateLeaveEncashmentAsync(Guid employeeId, DateTime lastWorkingDay)
     {
-        var employee = await _context.Employees.FindAsync(employeeId);
+        var employee = await _context.Employees
+            .AsNoTracking()
+            .FirstOrDefaultAsync(e => e.Id == employeeId && !e.IsDeleted);
+
         if (employee == null)
-            throw new InvalidOperationException("Employee not found");
+        {
+            _logger.LogWarning("SECURITY: Employee {EmployeeId} not found in current tenant context", employeeId);
+            throw new KeyNotFoundException($"Employee with ID {employeeId} not found or access denied");
+        }
 
         var year = lastWorkingDay.Year;
         var balances = await _context.LeaveBalances

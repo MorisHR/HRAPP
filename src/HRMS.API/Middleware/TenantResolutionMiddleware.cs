@@ -22,7 +22,7 @@ public class TenantResolutionMiddleware
     {
         try
         {
-            // Resolve tenant from request
+            // Resolve tenant from request (uses cache for sub-millisecond lookup)
             if (tenantService is TenantService service)
             {
                 var (tenantId, schemaName) = await service.ResolveTenantFromRequestAsync();

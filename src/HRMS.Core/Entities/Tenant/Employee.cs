@@ -410,6 +410,59 @@ public class Employee : BaseEntity
     public DateTime? LockoutEnd { get; set; }
     public int AccessFailedCount { get; set; } = 0;
 
+    /// <summary>
+    /// Password reset token for secure password setup/reset flow
+    /// Single-use, time-limited (24 hours expiry)
+    /// Used for: Initial password setup, forgot password flow
+    /// </summary>
+    public string? PasswordResetToken { get; set; }
+
+    /// <summary>
+    /// Password reset token expiration timestamp
+    /// Default: 24 hours from token generation
+    /// Fortune 500 best practice: Short-lived tokens for security
+    /// </summary>
+    public DateTime? PasswordResetTokenExpiry { get; set; }
+
+    /// <summary>
+    /// Force Password Change: Flag to force password change on next login
+    /// Used for: Initial login after activation, security breach, admin-forced reset
+    /// Fortune 500 compliance: Ensures users set their own passwords
+    /// </summary>
+    public bool MustChangePassword { get; set; } = false;
+
+    /// <summary>
+    /// Last password change date for password rotation policies
+    /// Fortune 500 requirement: Track password age for compliance
+    /// </summary>
+    public DateTime? LastPasswordChangeDate { get; set; }
+
+    /// <summary>
+    /// Password history: JSON array of last 5 password hashes
+    /// FORTUNE 500 COMPLIANCE: Prevents password reuse (PCI-DSS, NIST 800-63B)
+    /// Format: ["hash1", "hash2", "hash3", "hash4", "hash5"]
+    /// Maintained as rolling window - oldest removed when 6th password added
+    /// </summary>
+    public string? PasswordHistory { get; set; }
+
+    /// <summary>
+    /// Two-Factor Authentication: Is 2FA enabled for this employee?
+    /// Fortune 500 best practice: MFA for privileged/admin users
+    /// </summary>
+    public bool IsTwoFactorEnabled { get; set; } = false;
+
+    /// <summary>
+    /// Two-Factor Authentication: TOTP secret key (encrypted)
+    /// Used for Google Authenticator, Authy, etc.
+    /// </summary>
+    public string? TwoFactorSecret { get; set; }
+
+    /// <summary>
+    /// Is this employee an administrator for the tenant?
+    /// Admins have full access to tenant data and settings
+    /// </summary>
+    public bool IsAdmin { get; set; } = false;
+
     // ==============================================
     // LOCATION & BIOMETRIC ACCESS
     // ==============================================

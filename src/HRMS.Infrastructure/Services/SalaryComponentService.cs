@@ -30,9 +30,15 @@ public class SalaryComponentService : ISalaryComponentService
             dto.ComponentName, dto.EmployeeId);
 
         // Validate employee exists
-        var employee = await _context.Employees.FindAsync(dto.EmployeeId);
+        var employee = await _context.Employees
+            .AsNoTracking()
+            .FirstOrDefaultAsync(e => e.Id == dto.EmployeeId && !e.IsDeleted);
+
         if (employee == null)
-            throw new InvalidOperationException("Employee not found");
+        {
+            _logger.LogWarning("SECURITY: Employee {EmployeeId} not found in current tenant context", dto.EmployeeId);
+            throw new KeyNotFoundException($"Employee with ID {dto.EmployeeId} not found or access denied");
+        }
 
         var component = new SalaryComponent
         {
@@ -80,6 +86,16 @@ public class SalaryComponentService : ISalaryComponentService
 
     public async Task<List<SalaryComponentDto>> GetEmployeeComponentsAsync(Guid employeeId, bool activeOnly = true)
     {
+        // SECURITY: Validate employee exists in current tenant context (HIGH PRIORITY - IDOR Prevention)
+        var employeeExists = await _context.Employees
+            .AnyAsync(e => e.Id == employeeId && !e.IsDeleted);
+
+        if (!employeeExists)
+        {
+            _logger.LogWarning("SECURITY: Employee {EmployeeId} not found in current tenant context during salary component query", employeeId);
+            throw new KeyNotFoundException($"Employee with ID {employeeId} not found or access denied");
+        }
+
         var query = _context.SalaryComponents
             .Include(sc => sc.Employee)
             .Where(sc => sc.EmployeeId == employeeId && !sc.IsDeleted);
@@ -118,7 +134,10 @@ public class SalaryComponentService : ISalaryComponentService
             .FirstOrDefaultAsync(sc => sc.Id == id && !sc.IsDeleted);
 
         if (component == null)
-            throw new InvalidOperationException("Salary component not found");
+        {
+            _logger.LogWarning("SECURITY: Salary component {ComponentId} not found in current tenant context", id);
+            throw new KeyNotFoundException($"Salary component with ID {id} not found or access denied");
+        }
 
         // Update only provided fields
         if (dto.Amount.HasValue)
@@ -147,7 +166,10 @@ public class SalaryComponentService : ISalaryComponentService
             .FirstOrDefaultAsync(sc => sc.Id == id && !sc.IsDeleted);
 
         if (component == null)
-            throw new InvalidOperationException("Salary component not found");
+        {
+            _logger.LogWarning("SECURITY: Salary component {ComponentId} not found in current tenant context", id);
+            throw new KeyNotFoundException($"Salary component with ID {id} not found or access denied");
+        }
 
         component.IsActive = false;
         component.EffectiveTo = DateTime.UtcNow.Date;
@@ -165,7 +187,10 @@ public class SalaryComponentService : ISalaryComponentService
             .FirstOrDefaultAsync(sc => sc.Id == id && !sc.IsDeleted);
 
         if (component == null)
-            throw new InvalidOperationException("Salary component not found");
+        {
+            _logger.LogWarning("SECURITY: Salary component {ComponentId} not found in current tenant context", id);
+            throw new KeyNotFoundException($"Salary component with ID {id} not found or access denied");
+        }
 
         component.IsDeleted = true;
         component.DeletedAt = DateTime.UtcNow;
@@ -177,6 +202,16 @@ public class SalaryComponentService : ISalaryComponentService
 
     public async Task<decimal> GetTotalAllowancesAsync(Guid employeeId, int month, int year)
     {
+        // SECURITY: Validate employee exists in current tenant context (HIGH PRIORITY - IDOR Prevention)
+        var employeeExists = await _context.Employees
+            .AnyAsync(e => e.Id == employeeId && !e.IsDeleted);
+
+        if (!employeeExists)
+        {
+            _logger.LogWarning("SECURITY: Employee {EmployeeId} not found in current tenant context during allowances calculation", employeeId);
+            return 0m; // Fail-safe: Return 0 to avoid breaking payroll generation
+        }
+
         var targetDate = new DateTime(year, month, 1);
 
         var allowances = await _context.SalaryComponents
@@ -204,7 +239,9 @@ public class SalaryComponentService : ISalaryComponentService
             else if (allowance.CalculationMethod == "Percentage")
             {
                 // Calculate based on percentage of base salary
-                var employee = await _context.Employees.FindAsync(employeeId);
+                var employee = await _context.Employees
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(e => e.Id == employeeId && !e.IsDeleted);
                 if (employee != null)
                 {
                     var baseAmount = allowance.PercentageBase == "GrossSalary"
@@ -221,6 +258,16 @@ public class SalaryComponentService : ISalaryComponentService
 
     public async Task<decimal> GetTotalDeductionsAsync(Guid employeeId, int month, int year)
     {
+        // SECURITY: Validate employee exists in current tenant context (HIGH PRIORITY - IDOR Prevention)
+        var employeeExists = await _context.Employees
+            .AnyAsync(e => e.Id == employeeId && !e.IsDeleted);
+
+        if (!employeeExists)
+        {
+            _logger.LogWarning("SECURITY: Employee {EmployeeId} not found in current tenant context during deductions calculation", employeeId);
+            return 0m; // Fail-safe: Return 0 to avoid breaking payroll generation
+        }
+
         var targetDate = new DateTime(year, month, 1);
 
         var deductions = await _context.SalaryComponents
@@ -248,7 +295,9 @@ public class SalaryComponentService : ISalaryComponentService
             else if (deduction.CalculationMethod == "Percentage")
             {
                 // Calculate based on percentage of base salary
-                var employee = await _context.Employees.FindAsync(employeeId);
+                var employee = await _context.Employees
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(e => e.Id == employeeId && !e.IsDeleted);
                 if (employee != null)
                 {
                     var baseAmount = deduction.PercentageBase == "GrossSalary"
@@ -269,7 +318,10 @@ public class SalaryComponentService : ISalaryComponentService
             .FirstOrDefaultAsync(sc => sc.Id == id && !sc.IsDeleted);
 
         if (component == null)
-            throw new InvalidOperationException("Salary component not found");
+        {
+            _logger.LogWarning("SECURITY: Salary component {ComponentId} not found in current tenant context", id);
+            throw new KeyNotFoundException($"Salary component with ID {id} not found or access denied");
+        }
 
         if (!component.RequiresApproval)
             throw new InvalidOperationException("This component does not require approval");

@@ -1,0 +1,161 @@
+<div class="infrastructure-health">
+  <div class="page-header">
+    <h1>Infrastructure Health</h1>
+    <div class="header-actions">
+      <app-button variant="secondary" (clicked)="loadData()">
+        Refresh
+      </app-button>
+    </div>
+  </div>
+
+  @if (error()) {
+    <div class="error-message">
+      <p>{{ error() }}</p>
+      <app-button variant="primary" (clicked)="loadData()">
+        Retry
+      </app-button>
+    </div>
+  }
+
+  <!-- Infrastructure Metrics Cards -->
+  <div class="metrics-grid">
+    @if (metrics(); as m) {
+      <app-card [padding]="'medium'" class="metric-card">
+        <div class="metric-content">
+          <div class="metric-label">Database Version</div>
+          <div class="metric-value metric-healthy">
+            {{ m.databaseVersion }}
+          </div>
+        </div>
+      </app-card>
+
+      <app-card [padding]="'medium'" class="metric-card">
+        <div class="metric-content">
+          <div class="metric-label">Uptime</div>
+          <div class="metric-value metric-healthy">
+            {{ m.uptimeHours }}h
+          </div>
+        </div>
+      </app-card>
+
+      <app-card [padding]="'medium'" class="metric-card">
+        <div class="metric-content">
+          <div class="metric-label">Cache Hit Rate</div>
+          <div class="metric-value" [class]="getMetricStatusClass(m.cacheHitRate, 95)">
+            {{ m.cacheHitRate }}%
+          </div>
+          <div class="metric-bar">
+            <div class="metric-bar-fill" [style.width.%]="m.cacheHitRate"></div>
+          </div>
+        </div>
+      </app-card>
+
+      <app-card [padding]="'medium'" class="metric-card">
+        <div class="metric-content">
+          <div class="metric-label">Connection Utilization</div>
+          <div class="metric-value" [class]="getMetricStatusClass(m.connectionUtilization, 80)">
+            {{ m.connectionUtilization }}%
+          </div>
+          <div class="metric-bar">
+            <div class="metric-bar-fill" [style.width.%]="m.connectionUtilization"></div>
+          </div>
+        </div>
+      </app-card>
+
+      <app-card [padding]="'medium'" class="metric-card">
+        <div class="metric-content">
+          <div class="metric-label">Active Connections</div>
+          <div class="metric-value metric-healthy">
+            {{ m.activeConnections }} / {{ m.maxConnections }}
+          </div>
+        </div>
+      </app-card>
+
+      <app-card [padding]="'medium'" class="metric-card">
+        <div class="metric-content">
+          <div class="metric-label">Database Size</div>
+          <div class="metric-value metric-healthy">
+            {{ m.databaseSizeFormatted }}
+          </div>
+        </div>
+      </app-card>
+    } @else {
+      @for (i of [1,2,3,4,5,6]; track i) {
+        <app-card [padding]="'medium'" class="metric-card skeleton">
+          <div class="metric-content">
+            <div class="skeleton-line"></div>
+            <div class="skeleton-line"></div>
+          </div>
+        </app-card>
+      }
+    }
+  </div>
+
+  <!-- Slow Queries Section -->
+  <app-card [padding]="'large'" class="queries-card">
+    <div class="card-header">
+      <h2>Slow Queries</h2>
+      <div class="header-controls">
+        <app-select
+          [label]="'Minimum Execution Time'"
+          [options]="minExecutionOptions"
+          [value]="minExecutionTime()"
+          (valueChange)="onFilterChange($event)">
+        </app-select>
+        <app-button variant="secondary" (clicked)="exportToCSV()">
+          Export CSV
+        </app-button>
+      </div>
+    </div>
+
+    @if (loading()) {
+      <div class="loading-state">
+        <p>Loading slow queries...</p>
+      </div>
+    } @else if (slowQueries().length === 0) {
+      <div class="empty-state">
+        <p>No slow queries found</p>
+      </div>
+    } @else {
+      <div class="table-container">
+        <table class="queries-table">
+          <thead>
+            <tr>
+              <th>Query</th>
+              <th class="text-right">Avg Time</th>
+              <th class="text-right">P95 Time</th>
+              <th class="text-right">Executions</th>
+              <th class="text-center">Severity</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (query of paginatedQueries(); track query.queryId) {
+              <tr>
+                <td class="query-text">{{ query.queryText }}</td>
+                <td class="text-right">{{ (query.avgExecutionTimeMs / 1000).toFixed(2) }}s</td>
+                <td class="text-right">{{ (query.p95ExecutionTimeMs / 1000).toFixed(2) }}s</td>
+                <td class="text-right">{{ query.executionCount | number }}</td>
+                <td class="text-center">
+                  <app-badge
+                    [content]="query.severity"
+                    [color]="getSeverityColor(query.severity)">
+                  </app-badge>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <div class="table-footer">
+        <app-paginator
+          [length]="totalQueries()"
+          [pageSize]="pageSize()"
+          [pageIndex]="pageIndex()"
+          [pageSizeOptions]="[5, 10, 25, 50]"
+          (page)="onPageChange($event)">
+        </app-paginator>
+      </div>
+    }
+  </app-card>
+</div>

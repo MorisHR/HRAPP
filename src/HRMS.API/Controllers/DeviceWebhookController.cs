@@ -12,7 +12,7 @@ namespace HRMS.API.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/device-webhook")]
-[AllowAnonymous] // Devices use API key authentication, not JWT
+[Authorize] // Default secure - specific endpoints allow anonymous access
 public class DeviceWebhookController : ControllerBase
 {
     private readonly IDeviceWebhookService _webhookService;
@@ -52,6 +52,7 @@ public class DeviceWebhookController : ControllerBase
     /// ```
     /// </remarks>
     [HttpPost("attendance")]
+    [AllowAnonymous] // Biometric devices use API key authentication
     [ProducesResponseType(typeof(DeviceWebhookResponseDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
@@ -129,6 +130,7 @@ public class DeviceWebhookController : ControllerBase
     /// and provide device health information.
     /// </remarks>
     [HttpPost("heartbeat")]
+    [AllowAnonymous] // Biometric devices use API key authentication
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult> ReceiveHeartbeat([FromBody] DeviceHeartbeatDto dto)
@@ -184,6 +186,7 @@ public class DeviceWebhookController : ControllerBase
     /// GET /api/device-webhook/ping
     /// </summary>
     [HttpGet("ping")]
+    [AllowAnonymous] // Health check endpoint for device connectivity testing
     [ProducesResponseType(StatusCodes.Status200OK)]
     public ActionResult Ping()
     {

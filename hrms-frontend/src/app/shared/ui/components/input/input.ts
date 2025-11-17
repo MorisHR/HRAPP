@@ -4,7 +4,7 @@
 // Production-ready text input with floating labels and validation
 // ═══════════════════════════════════════════════════════════
 
-import { Component, Input, Output, EventEmitter, forwardRef, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, Input, Output, EventEmitter, forwardRef, OnChanges, OnInit, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 
@@ -23,7 +23,7 @@ export type InputType = 'text' | 'email' | 'password' | 'number' | 'tel' | 'url'
     }
   ]
 })
-export class InputComponent implements ControlValueAccessor, OnChanges {
+export class InputComponent implements ControlValueAccessor, OnChanges, OnInit {
   @Input() type: InputType = 'text';
   @Input() label: string = '';
   @Input() placeholder: string = '';
@@ -44,6 +44,11 @@ export class InputComponent implements ControlValueAccessor, OnChanges {
 
   isFocused: boolean = false;
   internalValue: string | number = '';
+
+  // Initialize internalValue from value input on component init
+  ngOnInit(): void {
+    this.internalValue = this.value || '';
+  }
 
   // Sync value input to internalValue when it changes
   ngOnChanges(changes: SimpleChanges): void {

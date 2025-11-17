@@ -1,0 +1,98 @@
+[
+  {
+    "name": "timestamp",
+    "type": "TIMESTAMP",
+    "mode": "REQUIRED",
+    "description": "When the metric was recorded"
+  },
+  {
+    "name": "metric_type",
+    "type": "STRING",
+    "mode": "REQUIRED",
+    "description": "Type of metric (cpu, memory, disk, network, etc.)"
+  },
+  {
+    "name": "metric_name",
+    "type": "STRING",
+    "mode": "REQUIRED",
+    "description": "Name of the specific metric being measured"
+  },
+  {
+    "name": "metric_value",
+    "type": "FLOAT",
+    "mode": "REQUIRED",
+    "description": "Numeric value of the metric"
+  },
+  {
+    "name": "tenant_id",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Tenant ID if metric is tenant-specific, null for system-wide metrics"
+  },
+  {
+    "name": "instance_id",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Instance or pod identifier where metric was collected"
+  },
+  {
+    "name": "service_name",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Service or component name (api, database, cache, etc.)"
+  },
+  {
+    "name": "metric_unit",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Unit of measurement (%, MB, ms, requests/sec, etc.)"
+  },
+  {
+    "name": "labels",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "JSON string of additional metric labels and tags"
+  },
+  {
+    "name": "min_value",
+    "type": "FLOAT",
+    "mode": "NULLABLE",
+    "description": "Minimum value in the aggregation period"
+  },
+  {
+    "name": "max_value",
+    "type": "FLOAT",
+    "mode": "NULLABLE",
+    "description": "Maximum value in the aggregation period"
+  },
+  {
+    "name": "avg_value",
+    "type": "FLOAT",
+    "mode": "NULLABLE",
+    "description": "Average value in the aggregation period"
+  },
+  {
+    "name": "p50_value",
+    "type": "FLOAT",
+    "mode": "NULLABLE",
+    "description": "50th percentile (median) value"
+  },
+  {
+    "name": "p95_value",
+    "type": "FLOAT",
+    "mode": "NULLABLE",
+    "description": "95th percentile value"
+  },
+  {
+    "name": "p99_value",
+    "type": "FLOAT",
+    "mode": "NULLABLE",
+    "description": "99th percentile value"
+  },
+  {
+    "name": "sample_count",
+    "type": "INTEGER",
+    "mode": "NULLABLE",
+    "description": "Number of samples in the aggregation period"
+  }
+]

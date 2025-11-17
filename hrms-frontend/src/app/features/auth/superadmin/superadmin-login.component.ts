@@ -294,12 +294,24 @@ export class SuperAdminLoginComponent implements OnInit {
         console.error('SuperAdmin login error:', error);
         this.isLoading.set(false);
 
-        if (error.status === 401) {
+        // FORTUNE 500 ERROR HANDLING: User-friendly messages for all scenarios
+        if (error.status === 0) {
+          // Network error - CORS, connection refused, timeout
+          this.errorMessage.set('Cannot connect to server. Please check your internet connection and try again.');
+        } else if (error.status === 401) {
           this.errorMessage.set('Invalid credentials. SuperAdmin access denied.');
+        } else if (error.status === 404) {
+          this.errorMessage.set('Login service unavailable. Please contact support.');
+        } else if (error.status === 429) {
+          this.errorMessage.set('Too many login attempts. Please try again later.');
         } else if (error.status >= 500) {
-          this.errorMessage.set('Server error. Please try again later.');
+          this.errorMessage.set('Server error. Please try again later or contact support.');
+        } else if (error.error?.message) {
+          this.errorMessage.set(error.error.message);
+        } else if (error.message) {
+          this.errorMessage.set(error.message);
         } else {
-          this.errorMessage.set(error.message || 'Login failed. Please try again.');
+          this.errorMessage.set('Login failed. Please try again or contact support.');
         }
       }
     });

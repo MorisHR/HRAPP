@@ -37,6 +37,13 @@ public class CreateTenantRequest
     // Tenant Type
     public bool IsGovernmentEntity { get; set; } = false;
 
+    /// <summary>
+    /// FORTUNE 500 PATTERN: Industry sector for compliance and reporting
+    /// Nullable = backwards compatible (existing API calls work)
+    /// References: master.IndustrySectors table
+    /// </summary>
+    public int? SectorId { get; set; }
+
     // Subscription Period (optional - for trial/paid setup)
     public DateTime? TrialEndDate { get; set; }
     public DateTime? SubscriptionEndDate { get; set; }

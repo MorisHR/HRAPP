@@ -62,7 +62,7 @@ public class AuthService : IAuthService
             _logger.LogWarning("Login attempt failed: User not found for email {Email}", email);
 
             // Audit log: Failed login attempt
-            _ = _auditLogService.LogAuthenticationAsync(
+            await _auditLogService.LogAuthenticationAsync(
                 AuditActionType.LOGIN_FAILED,
                 userId: null,
                 userEmail: email,
@@ -79,7 +79,7 @@ public class AuthService : IAuthService
             _logger.LogWarning("Login attempt failed: User {Email} is deactivated", email);
 
             // Audit log: Failed login attempt - inactive account
-            _ = _auditLogService.LogAuthenticationAsync(
+            await _auditLogService.LogAuthenticationAsync(
                 AuditActionType.LOGIN_FAILED,
                 userId: adminUser.Id,
                 userEmail: email,
@@ -101,7 +101,7 @@ public class AuthService : IAuthService
                 _logger.LogWarning("Login attempt blocked: IP {IpAddress} not whitelisted for user {Email}", ipAddress, email);
 
                 // Audit log: IP restriction violation (CRITICAL security event)
-                _ = _auditLogService.LogSecurityEventAsync(
+                await _auditLogService.LogSecurityEventAsync(
                     AuditActionType.UNAUTHORIZED_ACCESS_ATTEMPT,
                     AuditSeverity.CRITICAL,
                     adminUser.Id,
@@ -116,7 +116,7 @@ public class AuthService : IAuthService
                 );
 
                 // Also log as failed authentication
-                _ = _auditLogService.LogAuthenticationAsync(
+                await _auditLogService.LogAuthenticationAsync(
                     AuditActionType.LOGIN_FAILED,
                     userId: adminUser.Id,
                     userEmail: email,
@@ -142,7 +142,7 @@ public class AuthService : IAuthService
                 email, adminUser.PasswordExpiresAt.Value);
 
             // Audit log: Password expired
-            _ = _auditLogService.LogSecurityEventAsync(
+            await _auditLogService.LogSecurityEventAsync(
                 AuditActionType.PASSWORD_EXPIRED,
                 AuditSeverity.WARNING,
                 adminUser.Id,
@@ -175,7 +175,7 @@ public class AuthService : IAuthService
                 _logger.LogWarning("Login attempt failed: Account {Email} is locked until {LockoutEnd}", email, adminUser.LockoutEnd.Value);
 
                 // Audit log: Login attempt on locked account
-                _ = _auditLogService.LogAuthenticationAsync(
+                await _auditLogService.LogAuthenticationAsync(
                     AuditActionType.LOGIN_FAILED,
                     userId: adminUser.Id,
                     userEmail: email,
@@ -215,7 +215,7 @@ public class AuthService : IAuthService
                 _logger.LogWarning("Account {Email} locked due to {FailedAttempts} failed login attempts", email, adminUser.AccessFailedCount);
 
                 // Audit log: Account locked
-                _ = _auditLogService.LogAuthenticationAsync(
+                await _auditLogService.LogAuthenticationAsync(
                     AuditActionType.ACCOUNT_LOCKED,
                     userId: adminUser.Id,
                     userEmail: email,
@@ -235,7 +235,7 @@ public class AuthService : IAuthService
             _logger.LogWarning("Login attempt failed: Invalid password for {Email} (attempt {Count})", email, adminUser.AccessFailedCount);
 
             // Audit log: Failed login - invalid password
-            _ = _auditLogService.LogAuthenticationAsync(
+            await _auditLogService.LogAuthenticationAsync(
                 AuditActionType.LOGIN_FAILED,
                 userId: adminUser.Id,
                 userEmail: email,
@@ -297,7 +297,7 @@ public class AuthService : IAuthService
         _logger.LogInformation("User {Email} logged in successfully from IP {IpAddress}", email, ipAddress);
 
         // Audit log: Successful login
-        _ = _auditLogService.LogAuthenticationAsync(
+        await _auditLogService.LogAuthenticationAsync(
             AuditActionType.LOGIN_SUCCESS,
             userId: adminUser.Id,
             userEmail: email,
@@ -394,7 +394,7 @@ public class AuthService : IAuthService
         _logger.LogInformation("Account {UserId} unlocked manually", userId);
 
         // Audit log: Account unlocked
-        _ = _auditLogService.LogAuthenticationAsync(
+        await _auditLogService.LogAuthenticationAsync(
             AuditActionType.ACCOUNT_UNLOCKED,
             userId: adminUser.Id,
             userEmail: adminUser.Email,
@@ -447,7 +447,7 @@ public class AuthService : IAuthService
                     _logger.LogWarning("Password change failed: Invalid current password for user {UserId}", userId);
 
                     // Audit log: Failed password change
-                    _ = _auditLogService.LogAuthenticationAsync(
+                    await _auditLogService.LogAuthenticationAsync(
                         AuditActionType.PASSWORD_CHANGE_FAILED,
                         userId: adminUser.Id,
                         userEmail: adminUser.Email,
@@ -483,7 +483,7 @@ public class AuthService : IAuthService
                         _logger.LogWarning("Password change failed: Password was used previously for user {UserId}", userId);
 
                         // Audit log: Password reuse attempt
-                        _ = _auditLogService.LogSecurityEventAsync(
+                        await _auditLogService.LogSecurityEventAsync(
                             AuditActionType.PASSWORD_CHANGE_FAILED,
                             AuditSeverity.WARNING,
                             adminUser.Id,
@@ -530,7 +530,7 @@ public class AuthService : IAuthService
 
             // Audit log: Successful password change
             var isSelfService = performedBySuperAdminId == null || performedBySuperAdminId == userId;
-            _ = _auditLogService.LogAuthenticationAsync(
+            await _auditLogService.LogAuthenticationAsync(
                 AuditActionType.PASSWORD_CHANGED,
                 userId: adminUser.Id,
                 userEmail: adminUser.Email,
@@ -707,7 +707,7 @@ public class AuthService : IAuthService
         _logger.LogInformation("Token refreshed successfully for user {UserId}", token.AdminUserId);
 
         // Audit log: Token refreshed
-        _ = _auditLogService.LogAuthenticationAsync(
+        await _auditLogService.LogAuthenticationAsync(
             AuditActionType.TOKEN_REFRESHED,
             userId: token.AdminUser.Id,
             userEmail: token.AdminUser.Email,
@@ -740,7 +740,7 @@ public class AuthService : IAuthService
         _logger.LogInformation("Refresh token revoked for user {UserId}, reason: {Reason}", token.AdminUserId, token.ReasonRevoked);
 
         // Audit log: Logout
-        _ = _auditLogService.LogAuthenticationAsync(
+        await _auditLogService.LogAuthenticationAsync(
             AuditActionType.LOGOUT,
             userId: token.AdminUser?.Id,
             userEmail: token.AdminUser?.Email,
@@ -852,7 +852,7 @@ public class AuthService : IAuthService
             _logger.LogInformation("MFA enabled successfully for user {UserId}", adminUserId);
 
             // Audit log: MFA setup completed
-            _ = _auditLogService.LogAuthenticationAsync(
+            await _auditLogService.LogAuthenticationAsync(
                 AuditActionType.MFA_SETUP_COMPLETED,
                 userId: adminUser.Id,
                 userEmail: adminUser.Email,
@@ -890,7 +890,7 @@ public class AuthService : IAuthService
                 _logger.LogInformation("MFA validation successful for user {UserId}", adminUserId);
 
                 // Audit log: MFA verification success
-                _ = _auditLogService.LogAuthenticationAsync(
+                await _auditLogService.LogAuthenticationAsync(
                     AuditActionType.MFA_VERIFICATION_SUCCESS,
                     userId: adminUser.Id,
                     userEmail: adminUser.Email,
@@ -903,7 +903,7 @@ public class AuthService : IAuthService
                 _logger.LogWarning("MFA validation failed for user {UserId}: Invalid TOTP code", adminUserId);
 
                 // Audit log: MFA verification failed
-                _ = _auditLogService.LogAuthenticationAsync(
+                await _auditLogService.LogAuthenticationAsync(
                     AuditActionType.MFA_VERIFICATION_FAILED,
                     userId: adminUser.Id,
                     userEmail: adminUser.Email,
@@ -950,7 +950,7 @@ public class AuthService : IAuthService
                 _logger.LogInformation("Backup code validated and revoked for user {UserId}", adminUserId);
 
                 // Audit log: MFA verification success (backup code)
-                _ = _auditLogService.LogAuthenticationAsync(
+                await _auditLogService.LogAuthenticationAsync(
                     AuditActionType.MFA_VERIFICATION_SUCCESS,
                     userId: adminUser.Id,
                     userEmail: adminUser.Email,
@@ -964,7 +964,7 @@ public class AuthService : IAuthService
                 _logger.LogWarning("Backup code validation failed for user {UserId}: Invalid code", adminUserId);
 
                 // Audit log: MFA verification failed (backup code)
-                _ = _auditLogService.LogAuthenticationAsync(
+                await _auditLogService.LogAuthenticationAsync(
                     AuditActionType.MFA_VERIFICATION_FAILED,
                     userId: adminUser.Id,
                     userEmail: adminUser.Email,
@@ -1246,7 +1246,7 @@ public class AuthService : IAuthService
             }
 
             // Audit log: Password reset requested
-            _ = _auditLogService.LogAuthenticationAsync(
+            await _auditLogService.LogAuthenticationAsync(
                 AuditActionType.PASSWORD_RESET_REQUESTED,
                 userId: adminUser.Id,
                 userEmail: adminUser.Email,
@@ -1287,7 +1287,7 @@ public class AuthService : IAuthService
                 _logger.LogWarning("Password reset attempted with invalid token");
 
                 // Audit log: Failed password reset attempt
-                _ = _auditLogService.LogSecurityEventAsync(
+                await _auditLogService.LogSecurityEventAsync(
                     AuditActionType.PASSWORD_RESET_FAILED,
                     AuditSeverity.WARNING,
                     userId: null,
@@ -1309,7 +1309,7 @@ public class AuthService : IAuthService
                 _logger.LogWarning("Password reset attempted with expired token for user {Email}", adminUser.Email);
 
                 // Audit log: Expired token attempt
-                _ = _auditLogService.LogSecurityEventAsync(
+                await _auditLogService.LogSecurityEventAsync(
                     AuditActionType.PASSWORD_RESET_FAILED,
                     AuditSeverity.WARNING,
                     adminUser.Id,
@@ -1348,7 +1348,7 @@ public class AuthService : IAuthService
                         _logger.LogWarning("Password reset failed: Password reuse attempt for user {Email}", adminUser.Email);
 
                         // Audit log: Password reuse attempt
-                        _ = _auditLogService.LogSecurityEventAsync(
+                        await _auditLogService.LogSecurityEventAsync(
                             AuditActionType.PASSWORD_RESET_FAILED,
                             AuditSeverity.WARNING,
                             adminUser.Id,
@@ -1400,7 +1400,7 @@ public class AuthService : IAuthService
             await _context.SaveChangesAsync();
 
             // Audit log: Successful password reset
-            _ = _auditLogService.LogAuthenticationAsync(
+            await _auditLogService.LogAuthenticationAsync(
                 AuditActionType.PASSWORD_RESET_COMPLETED,
                 userId: adminUser.Id,
                 userEmail: adminUser.Email,

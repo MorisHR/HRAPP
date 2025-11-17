@@ -117,14 +117,14 @@
           (click)="togglePasswordVisibility()"
           [attr.aria-label]="'Toggle password visibility'"
           [attr.aria-pressed]="!hidePassword()">
-          <mat-icon>{{ hidePassword() ? 'visibility_off' : 'visibility' }}</mat-icon>
+          <app-icon [name]="hidePassword() ? 'visibility_off' : 'visibility'"></app-icon>
         </button>
       </div>
 
       <!-- Error Message -->
       @if (error()) {
         <div class="error-message">
-          <mat-icon>error_outline</mat-icon>
+          <app-icon name="error_outline"></app-icon>
           <span>{{ error() }}</span>
         </div>
       }

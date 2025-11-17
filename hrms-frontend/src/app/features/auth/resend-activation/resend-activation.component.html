@@ -1,0 +1,153 @@
+<div class="resend-activation-container">
+  <div class="resend-activation-card">
+    <!-- Header -->
+    <div class="card-header">
+      <div class="icon-container">
+        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+          <polyline points="22,6 12,13 2,6"></polyline>
+        </svg>
+      </div>
+      <h2>Resend Activation Email</h2>
+      <p class="subtitle">Didn't receive your activation email? We'll send you a new one.</p>
+    </div>
+
+    <!-- Success State -->
+    @if (showSuccess()) {
+      <div class="success-message-box">
+        <div class="success-icon">✓</div>
+        <h3>Email Sent Successfully!</h3>
+        <p class="success-text">{{ successMessage() }}</p>
+
+        <div class="info-boxes">
+          <div class="info-box">
+            <p class="info-title">📧 Check Your Inbox</p>
+            <p class="info-text">The activation email should arrive within a few minutes. Don't forget to check your spam folder!</p>
+          </div>
+
+          @if (remainingAttempts() !== null) {
+            <div class="info-box warning">
+              <p class="info-title">⏱️ Rate Limit</p>
+              <p class="info-text">{{ getRemainingAttemptsMessage() }}</p>
+            </div>
+          }
+
+          <div class="info-box">
+            <p class="info-title">⏰ Link Expires In</p>
+            <p class="info-text">24 hours - Please activate your account before it expires.</p>
+          </div>
+        </div>
+
+        <div class="action-buttons">
+          <app-button
+            variant="primary"
+            [fullWidth]="true"
+            (clicked)="goToLogin()"
+          >
+            Go to Login
+          </app-button>
+        </div>
+      </div>
+    }
+
+    <!-- Form State -->
+    @if (!showSuccess()) {
+      <form class="resend-form" (ngSubmit)="onResend()" #resendForm="ngForm">
+        <!-- Subdomain Input -->
+        <div class="form-group">
+          <app-input
+            label="Company Subdomain"
+            type="text"
+            [value]="subdomain()"
+            (valueChange)="onSubdomainInput($event)"
+            placeholder="yourcompany"
+            [required]="true"
+            [disabled]="isLoading()"
+            helperText="Enter your company's subdomain (e.g., 'acme' for acme.morishr.com)"
+          >
+          </app-input>
+
+          @if (subdomain() && !isValidSubdomain()) {
+            <p class="validation-error">
+              Subdomain must be 3-50 characters, lowercase letters, numbers, and hyphens only
+            </p>
+          }
+        </div>
+
+        <!-- Email Input -->
+        <div class="form-group">
+          <app-input
+            label="Email Address"
+            type="email"
+            [value]="email()"
+            (valueChange)="onEmailInput($event)"
+            placeholder="admin@yourcompany.com"
+            [required]="true"
+            [disabled]="isLoading()"
+            helperText="Enter the email address used during registration"
+          >
+          </app-input>
+
+          @if (email() && !isValidEmail()) {
+            <p class="validation-error">
+              Please enter a valid email address
+            </p>
+          }
+        </div>
+
+        <!-- Error Messages -->
+        @if (errorMessage()) {
+          <div class="error-message-box" [class.rate-limited]="isRateLimited()">
+            <div class="error-icon">
+              {{ isRateLimited() ? '⏱️' : '❌' }}
+            </div>
+            <p class="error-message">{{ errorMessage() }}</p>
+            @if (isRateLimited() && retryAfterMinutes() > 0) {
+              <p class="retry-message">{{ getRetryMessage() }}</p>
+            }
+          </div>
+        }
+
+        <!-- Security Notice -->
+        <div class="security-notice">
+          <p class="notice-icon">🔒</p>
+          <p class="notice-text">
+            <strong>Security:</strong> For your protection, activation email resends are limited to 3 attempts per hour per company.
+          </p>
+        </div>
+
+        <!-- Submit Button -->
+        <div class="form-actions">
+          <app-button
+            type="submit"
+            variant="primary"
+            [fullWidth]="true"
+            [disabled]="!isFormValid()"
+            [loading]="isLoading()"
+          >
+            {{ isLoading() ? 'Sending...' : 'Resend Activation Email' }}
+          </app-button>
+
+          <app-button
+            variant="ghost"
+            [fullWidth]="true"
+            [disabled]="isLoading()"
+            (clicked)="goToLogin()"
+          >
+            Back to Login
+          </app-button>
+        </div>
+      </form>
+    }
+
+    <!-- Footer Help -->
+    <div class="card-footer">
+      <p class="help-text">
+        Still having trouble?
+        <a href="javascript:void(0)" (click)="contactSupport()" class="support-link">
+          Contact Support
+        </a>
+      </p>
+    </div>
+  </div>
+</div>

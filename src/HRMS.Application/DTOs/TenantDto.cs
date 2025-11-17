@@ -57,4 +57,13 @@ public class TenantDto
     // Admin User
     public string AdminUserName { get; set; } = string.Empty;
     public string AdminEmail { get; set; } = string.Empty;
+
+    /// <summary>
+    /// FORTUNE 500 PATTERN: Industry sector for compliance and reporting
+    /// Denormalized for performance (avoid extra DB join in API responses)
+    /// </summary>
+    public int? SectorId { get; set; }
+    public string? SectorCode { get; set; }
+    public string? SectorName { get; set; }
+    public DateTime? SectorSelectedAt { get; set; }
 }

@@ -1,0 +1,191 @@
+# ============================================================================
+# Fortune 50 Multi-Tenant Monitoring Alerts
+# Purpose: Tenant-specific performance and capacity alerts
+# Pattern: Per-tenant SLA monitoring and capacity planning
+# ============================================================================
+
+groups:
+  - name: tenant_performance
+    interval: 1m
+    rules:
+      # ========================================================================
+      # TENANT-SPECIFIC PERFORMANCE ALERTS
+      # ========================================================================
+
+      - alert: TenantHighErrorRate
+        expr: |
+          (
+            SELECT tenant_subdomain, AVG(error_rate_pct) as avg_error_rate
+            FROM monitoring.tenant_activity
+            WHERE measured_at > NOW() - INTERVAL '10 minutes'
+            GROUP BY tenant_subdomain
+            HAVING AVG(error_rate_pct) > 5
+          )
+        for: 10m
+        labels:
+          severity: P2
+          priority: warning
+          component: tenant
+        annotations:
+          summary: "High error rate for tenant {{ $labels.tenant_subdomain }}"
+          description: "Error rate: {{ $value }}% (threshold: >5%)"
+          impact: "Single tenant experiencing service issues"
+          action: "1. Review tenant-specific logs\n2. Check for data issues\n3. Verify tenant configuration\n4. Contact tenant if persistent"
+
+      - alert: TenantResponseTimeDegraded
+        expr: |
+          (
+            SELECT tenant_subdomain, AVG(avg_response_time_ms) as avg_time
+            FROM monitoring.tenant_activity
+            WHERE measured_at > NOW() - INTERVAL '10 minutes'
+            GROUP BY tenant_subdomain
+            HAVING AVG(avg_response_time_ms) > 500
+          )
+        for: 10m
+        labels:
+          severity: P2
+          priority: warning
+          component: tenant
+        annotations:
+          summary: "Slow response time for tenant {{ $labels.tenant_subdomain }}"
+          description: "Average response time: {{ $value }}ms (threshold: >500ms)"
+          impact: "Tenant-specific performance degradation"
+          action: "1. Review tenant database queries\n2. Check for large datasets\n3. Analyze tenant-specific operations\n4. Consider data archival"
+
+      - alert: TenantCacheHitRateLow
+        expr: |
+          (
+            SELECT tenant_subdomain, AVG(cache_hit_rate_pct) as avg_cache_hit
+            FROM monitoring.tenant_activity
+            WHERE measured_at > NOW() - INTERVAL '15 minutes'
+            GROUP BY tenant_subdomain
+            HAVING AVG(cache_hit_rate_pct) < 80
+          )
+        for: 15m
+        labels:
+          severity: P3
+          priority: info
+          component: tenant
+        annotations:
+          summary: "Low cache hit rate for tenant {{ $labels.tenant_subdomain }}"
+          description: "Cache hit rate: {{ $value }}% (threshold: <80%)"
+          impact: "Tenant experiencing more database hits than optimal"
+          action: "1. Review tenant query patterns\n2. Optimize caching strategy\n3. Check for cache invalidation issues"
+
+  - name: tenant_capacity
+    interval: 5m
+    rules:
+      # ========================================================================
+      # CAPACITY PLANNING ALERTS
+      # ========================================================================
+
+      - alert: TenantSchemaLarge
+        expr: |
+          (
+            SELECT tenant_subdomain, MAX(schema_size_mb) as size_mb
+            FROM monitoring.tenant_activity
+            WHERE measured_at > (SELECT MAX(measured_at) - INTERVAL '5 minutes' FROM monitoring.tenant_activity)
+            GROUP BY tenant_subdomain
+            HAVING MAX(schema_size_mb) > 1000
+          )
+        for: 1h
+        labels:
+          severity: P3
+          priority: info
+          component: capacity
+        annotations:
+          summary: "Large schema size for tenant {{ $labels.tenant_subdomain }}"
+          description: "Schema size: {{ $value }}MB (threshold: >1000MB)"
+          impact: "Tenant approaching storage limits"
+          action: "1. Review tenant data retention\n2. Suggest data archival\n3. Plan storage upgrade\n4. Contact tenant about growth"
+
+      - alert: TenantEmployeeCountHigh
+        expr: |
+          (
+            SELECT tenant_subdomain, MAX(employee_count) as emp_count
+            FROM monitoring.tenant_activity
+            WHERE measured_at > (SELECT MAX(measured_at) - INTERVAL '5 minutes' FROM monitoring.tenant_activity)
+            GROUP BY tenant_subdomain
+            HAVING MAX(employee_count) > 5000
+          )
+        for: 1h
+        labels:
+          severity: P3
+          priority: info
+          component: capacity
+        annotations:
+          summary: "High employee count for tenant {{ $labels.tenant_subdomain }}"
+          description: "Employee count: {{ $value }} (threshold: >5000)"
+          impact: "Large tenant may need performance optimization"
+          action: "1. Review tenant tier/plan\n2. Consider dedicated resources\n3. Optimize large-scale queries\n4. Plan capacity upgrades"
+
+      - alert: InactiveTenantDetected
+        expr: |
+          (
+            SELECT tenant_subdomain
+            FROM monitoring.tenant_activity
+            WHERE measured_at > NOW() - INTERVAL '24 hours'
+            GROUP BY tenant_subdomain
+            HAVING SUM(api_requests_count) = 0
+          )
+        for: 24h
+        labels:
+          severity: P3
+          priority: info
+          component: capacity
+        annotations:
+          summary: "Inactive tenant detected: {{ $labels.tenant_subdomain }}"
+          description: "No API requests in last 24 hours"
+          impact: "Tenant may have churned or experiencing issues"
+          action: "1. Contact tenant for health check\n2. Verify account status\n3. Check for billing issues\n4. Review onboarding status"
+
+  - name: tenant_scaling
+    interval: 5m
+    rules:
+      # ========================================================================
+      # SCALING ALERTS
+      # ========================================================================
+
+      - alert: ConcurrentTenantsHigh
+        expr: |
+          (
+            SELECT COUNT(DISTINCT tenant_subdomain)
+            FROM monitoring.tenant_activity
+            WHERE measured_at > NOW() - INTERVAL '5 minutes'
+          ) > 100
+        for: 10m
+        labels:
+          severity: P2
+          priority: warning
+          component: scaling
+        annotations:
+          summary: "High concurrent tenant count"
+          description: "{{ $value }} active tenants in last 5 minutes"
+          impact: "System approaching designed capacity limits"
+          action: "1. Monitor resource utilization\n2. Verify connection pooling\n3. Plan horizontal scaling\n4. Review auto-scaling rules"
+
+      - alert: TenantActivitySpike
+        expr: |
+          (
+            SELECT SUM(api_requests_count)
+            FROM monitoring.tenant_activity
+            WHERE measured_at > NOW() - INTERVAL '5 minutes'
+          ) > (
+            SELECT AVG(total_requests) * 2
+            FROM (
+              SELECT SUM(api_requests_count) as total_requests
+              FROM monitoring.tenant_activity
+              WHERE measured_at > NOW() - INTERVAL '1 hour'
+              GROUP BY DATE_TRUNC('5 minutes', measured_at)
+            ) sub
+          )
+        for: 5m
+        labels:
+          severity: P2
+          priority: warning
+          component: scaling
+        annotations:
+          summary: "Tenant activity spike detected"
+          description: "Request volume 2x above baseline"
+          impact: "Unusual load increase - may indicate viral growth or attack"
+          action: "1. Identify tenant(s) causing spike\n2. Verify legitimate traffic\n3. Enable auto-scaling\n4. Monitor system health"

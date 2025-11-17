@@ -522,18 +522,55 @@ public class EmailService : IEmailService
         }
     }
 
-    public async Task<bool> SendTenantWelcomeEmailAsync(
+    public async Task<bool> SendTenantActivationReminderAsync(
         string toEmail,
         string tenantName,
+        string activationToken,
         string adminFirstName,
-        string subdomain)
+        int daysSinceCreation,
+        int daysRemaining)
     {
         try
         {
-            var loginUrl = $"{_frontendUrl}/login";
+            var activationUrl = $"{_frontendUrl}/activate?token={activationToken}";
 
-            var subject = $"Welcome to MorisHR - {tenantName}";
-            var htmlBody = GetTenantWelcomeTemplate(adminFirstName, tenantName, loginUrl, subdomain);
+            // Different subject lines based on urgency
+            var subject = daysSinceCreation switch
+            {
+                3 => $"Haven't activated yet? We're here to help - {tenantName}",
+                7 => $"Your activation link expires in {daysRemaining} days - {tenantName}",
+                14 => $"Halfway to expiration - Activate your account today - {tenantName}",
+                21 => $"Final reminder: Only {daysRemaining} days left to activate - {tenantName}",
+                _ => $"Reminder: Activate your MorisHR account - {tenantName}"
+            };
+
+            var htmlBody = GetTenantActivationReminderTemplate(
+                adminFirstName, tenantName, activationUrl, daysSinceCreation, daysRemaining);
+
+            return await SendEmailWithMailKitAsync(toEmail, subject, htmlBody);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to send tenant activation reminder email to {Email}", toEmail);
+            return false;
+        }
+    }
+
+    public async Task<bool> SendTenantWelcomeEmailAsync(
+        string toEmail,
+        string adminFirstName,
+        string subdomain,
+        string? passwordResetToken = null)
+    {
+        try
+        {
+            var loginUrl = $"{_frontendUrl}/auth/subdomain";
+            var passwordSetupUrl = !string.IsNullOrEmpty(passwordResetToken)
+                ? $"{_frontendUrl}/set-password?token={passwordResetToken}"
+                : null;
+
+            var subject = $"Welcome to MorisHR - Your Account is Ready!";
+            var htmlBody = GetTenantWelcomeTemplate(adminFirstName, subdomain, loginUrl, passwordSetupUrl);
 
             return await SendEmailWithMailKitAsync(toEmail, subject, htmlBody);
         }
@@ -715,8 +752,146 @@ public class EmailService : IEmailService
 </html>";
     }
 
-    private string GetTenantWelcomeTemplate(string firstName, string tenantName, string loginUrl, string subdomain)
+    private string GetTenantActivationReminderTemplate(
+        string firstName,
+        string tenantName,
+        string activationUrl,
+        int daysSinceCreation,
+        int daysRemaining)
     {
+        // Customize message based on reminder milestone
+        string headline, message, urgencyColor, urgencyText;
+
+        switch (daysSinceCreation)
+        {
+            case 3:
+                headline = "Just checking in!";
+                message = $"We noticed you haven't activated your MorisHR account yet. Need any help getting started?";
+                urgencyColor = "#17a2b8"; // info blue
+                urgencyText = "No rush - you still have plenty of time!";
+                break;
+            case 7:
+                headline = "Don't miss out!";
+                message = $"Your activation link will expire in <strong>{daysRemaining} days</strong>. Activate now to start managing your HR operations.";
+                urgencyColor = "#ffc107"; // warning yellow
+                urgencyText = $"Expires in {daysRemaining} days";
+                break;
+            case 14:
+                headline = "Time is flying!";
+                message = $"You're halfway to the expiration date. Don't let your activation link expire - it only takes a minute to activate!";
+                urgencyColor = "#fd7e14"; // orange
+                urgencyText = $"Only {daysRemaining} days remaining";
+                break;
+            case 21:
+                headline = "Final reminder!";
+                message = $"<strong>Your activation link expires in just {daysRemaining} days.</strong> This is your last reminder before your account is automatically deleted.";
+                urgencyColor = "#dc3545"; // danger red
+                urgencyText = $"URGENT: {daysRemaining} days left!";
+                break;
+            default:
+                headline = "Activate your account";
+                message = $"You have {daysRemaining} days remaining to activate your MorisHR account.";
+                urgencyColor = "#667eea";
+                urgencyText = $"{daysRemaining} days remaining";
+                break;
+        }
+
+        return $@"
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset=""utf-8"">
+    <meta name=""viewport"" content=""width=device-width, initial-scale=1.0"">
+    <title>Activation Reminder - MorisHR</title>
+</head>
+<body style=""margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f4f4f4;"">
+    <table role=""presentation"" style=""width: 100%; border-collapse: collapse;"">
+        <tr>
+            <td align=""center"" style=""padding: 40px 0;"">
+                <table role=""presentation"" style=""width: 600px; border-collapse: collapse; background-color: #ffffff; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);"">
+                    <tr>
+                        <td style=""background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 30px; text-align: center;"">
+                            <h1 style=""color: #ffffff; margin: 0; font-size: 28px; font-weight: bold;"">MorisHR</h1>
+                            <p style=""color: #ffffff; margin: 10px 0 0 0; font-size: 14px; opacity: 0.9;"">Human Resource Management System</p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style=""padding: 40px 30px;"">
+                            <h2 style=""color: #333333; margin: 0 0 20px 0; font-size: 24px;"">{headline}</h2>
+                            <p style=""color: #666666; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;"">
+                                Hi {firstName},
+                            </p>
+                            <p style=""color: #666666; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;"">
+                                {message}
+                            </p>
+                            <div style=""background-color: {urgencyColor}; background: linear-gradient(135deg, {urgencyColor} 0%, {urgencyColor}dd 100%); color: #ffffff; padding: 20px; margin: 30px 0; border-radius: 8px; text-align: center;"">
+                                <p style=""margin: 0; font-size: 18px; font-weight: bold;"">{urgencyText}</p>
+                            </div>
+                            <p style=""color: #666666; font-size: 16px; line-height: 1.6; margin: 0 0 30px 0;"">
+                                Your account for <strong>{tenantName}</strong> is almost ready. Just click the button below to activate:
+                            </p>
+                            <table role=""presentation"" style=""margin: 30px 0;"">
+                                <tr>
+                                    <td align=""center"">
+                                        <a href=""{activationUrl}"" style=""display: inline-block; padding: 16px 40px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #ffffff; text-decoration: none; border-radius: 5px; font-size: 16px; font-weight: bold;"">
+                                            Activate Now
+                                        </a>
+                                    </td>
+                                </tr>
+                            </table>
+                            <p style=""color: #666666; font-size: 14px; line-height: 1.6; margin: 20px 0;"">
+                                Or copy and paste this link into your browser:<br>
+                                <a href=""{activationUrl}"" style=""color: #667eea; word-break: break-all;"">{activationUrl}</a>
+                            </p>
+                            <div style=""background-color: #e9ecef; border-left: 4px solid #6c757d; padding: 15px; margin: 20px 0;"">
+                                <p style=""color: #495057; font-size: 14px; margin: 0;"">
+                                    <strong>Need help?</strong> If you're experiencing any issues or have questions, our support team is here to help at <a href=""mailto:support@morishr.com"" style=""color: #667eea; text-decoration: none;"">support@morishr.com</a>
+                                </p>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style=""background-color: #f8f9fa; padding: 30px; text-align: center; border-top: 1px solid #e9ecef;"">
+                            <p style=""color: #6c757d; font-size: 12px; margin: 0 0 10px 0;"">
+                                This is an automated reminder. If you've already activated, please disregard this email.
+                            </p>
+                            <p style=""color: #6c757d; font-size: 12px; margin: 0;"">
+                                &copy; 2025 MorisHR. All rights reserved.
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>";
+    }
+
+    private string GetTenantWelcomeTemplate(string firstName, string subdomain, string loginUrl, string? passwordSetupUrl)
+    {
+        var passwordSetupSection = !string.IsNullOrEmpty(passwordSetupUrl)
+            ? $@"
+                            <div style=""background-color: #fff3cd; border-left: 4px solid #ff9800; padding: 20px; margin: 20px 0;"">
+                                <p style=""color: #856404; font-size: 16px; margin: 0 0 15px 0; font-weight: bold;"">
+                                    🔐 Set Up Your Password
+                                </p>
+                                <p style=""color: #856404; font-size: 14px; margin: 0 0 15px 0;"">
+                                    Before you can access your account, you need to create a secure password.
+                                    Click the button below to set up your password (link expires in 24 hours).
+                                </p>
+                                <table role=""presentation"" style=""margin: 0;"">
+                                    <tr>
+                                        <td align=""center"">
+                                            <a href=""{passwordSetupUrl}"" style=""display: inline-block; padding: 14px 32px; background-color: #ff9800; color: #ffffff; text-decoration: none; border-radius: 5px; font-size: 15px; font-weight: bold;"">
+                                                Set Your Password
+                                            </a>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>"
+            : "";
+
         return $@"
 <!DOCTYPE html>
 <html>
@@ -732,51 +907,56 @@ public class EmailService : IEmailService
                 <table role=""presentation"" style=""width: 600px; border-collapse: collapse; background-color: #ffffff; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);"">
                     <tr>
                         <td style=""background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 30px; text-align: center;"">
-                            <h1 style=""color: #ffffff; margin: 0; font-size: 28px; font-weight: bold;"">Welcome to MorisHR!</h1>
+                            <h1 style=""color: #ffffff; margin: 0; font-size: 28px; font-weight: bold;"">🎉 Welcome to MorisHR!</h1>
                         </td>
                     </tr>
                     <tr>
                         <td style=""padding: 40px 30px;"">
                             <h2 style=""color: #333333; margin: 0 0 20px 0; font-size: 24px;"">Congratulations, {firstName}!</h2>
                             <p style=""color: #666666; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;"">
-                                Your account for <strong>{tenantName}</strong> has been successfully activated.
-                                You can now access your HRMS dashboard and start managing your workforce.
+                                Your MorisHR account has been successfully activated! You're now ready to streamline your HR operations
+                                and empower your workforce with our comprehensive HRMS platform.
                             </p>
+                            {passwordSetupSection}
                             <div style=""background-color: #e7f3ff; border-left: 4px solid #2196f3; padding: 15px; margin: 20px 0;"">
                                 <p style=""color: #0d47a1; font-size: 14px; margin: 0 0 10px 0;"">
-                                    <strong>Your Login Details:</strong>
+                                    <strong>📍 Your Account Details:</strong>
                                 </p>
                                 <p style=""color: #0d47a1; font-size: 14px; margin: 0;"">
-                                    Subdomain: <strong>{subdomain}</strong><br>
-                                    Login URL: <a href=""{loginUrl}"" style=""color: #2196f3;"">{loginUrl}</a>
+                                    <strong>Subdomain:</strong> {subdomain}.morishr.com<br>
+                                    <strong>Login Page:</strong> <a href=""{loginUrl}"" style=""color: #2196f3;"">{loginUrl}</a>
                                 </p>
                             </div>
-                            <table role=""presentation"" style=""margin: 30px 0;"">
-                                <tr>
-                                    <td align=""center"">
-                                        <a href=""{loginUrl}"" style=""display: inline-block; padding: 16px 40px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #ffffff; text-decoration: none; border-radius: 5px; font-size: 16px; font-weight: bold;"">
-                                            Go to Dashboard
-                                        </a>
-                                    </td>
-                                </tr>
-                            </table>
-                            <h3 style=""color: #333333; margin: 30px 0 15px 0; font-size: 18px;"">What's Next?</h3>
+                            <h3 style=""color: #333333; margin: 30px 0 15px 0; font-size: 18px;"">🚀 Getting Started</h3>
                             <ul style=""color: #666666; font-size: 14px; line-height: 1.8; margin: 0; padding-left: 20px;"">
-                                <li>Complete your company profile</li>
-                                <li>Add departments and employee records</li>
-                                <li>Configure payroll settings</li>
-                                <li>Set up biometric attendance devices</li>
-                                <li>Invite team members to join</li>
+                                <li><strong>Set your password</strong> using the link above (if you haven't already)</li>
+                                <li>Complete your company profile and customize settings</li>
+                                <li>Add departments and organizational structure</li>
+                                <li>Onboard your first employees</li>
+                                <li>Configure payroll and compliance settings</li>
+                                <li>Set up biometric attendance devices (optional)</li>
                             </ul>
+                            <div style=""background-color: #f0f8ff; padding: 20px; margin: 30px 0; border-radius: 8px; border: 1px solid #b3d9ff;"">
+                                <p style=""color: #004085; font-size: 14px; margin: 0 0 10px 0; font-weight: bold;"">
+                                    💡 Pro Tip: Secure Your Account
+                                </p>
+                                <p style=""color: #004085; font-size: 13px; margin: 0; line-height: 1.6;"">
+                                    After setting your password, we recommend enabling Two-Factor Authentication (2FA)
+                                    from your account settings for enhanced security. Fortune 500 companies trust MorisHR
+                                    with their HR data - we take security seriously!
+                                </p>
+                            </div>
                         </td>
                     </tr>
                     <tr>
                         <td style=""background-color: #f8f9fa; padding: 30px; text-align: center; border-top: 1px solid #e9ecef;"">
                             <p style=""color: #6c757d; font-size: 12px; margin: 0 0 10px 0;"">
-                                Need help? Contact us at <a href=""mailto:support@morishr.com"" style=""color: #667eea; text-decoration: none;"">support@morishr.com</a>
+                                Need help? Our support team is here for you!<br>
+                                📧 <a href=""mailto:support@morishr.com"" style=""color: #667eea; text-decoration: none;"">support@morishr.com</a> |
+                                📞 +230-xxx-xxxx
                             </p>
                             <p style=""color: #6c757d; font-size: 12px; margin: 0;"">
-                                &copy; 2025 MorisHR. All rights reserved.
+                                &copy; 2025 MorisHR. All rights reserved. | <a href=""https://morishr.com/privacy"" style=""color: #667eea; text-decoration: none;"">Privacy Policy</a>
                             </p>
                         </td>
                     </tr>

@@ -1,363 +1,384 @@
 // ═══════════════════════════════════════════════════════════
-// PREMIUM DATEPICKER COMPONENT
-// Part of the Fortune 500-grade HRMS design system
-// Production-ready date picker to replace Material datepicker
+// Datepicker Component - Enhanced Full Calendar UI
+// Fortune 500-grade date selection component
+// Replaces Angular Material's MatDatepickerModule
 // ═══════════════════════════════════════════════════════════
 
-import { Component, Input, Output, EventEmitter, HostListener, ElementRef } from '@angular/core';
+import { Component, input, model, computed, signal, ElementRef, ViewChild, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
-
-interface CalendarDate {
-  date: Date;
-  day: number;
-  month: number;
-  year: number;
-  isCurrentMonth: boolean;
-  isToday: boolean;
-  isSelected: boolean;
-  isDisabled: boolean;
-  isWeekend: boolean;
-}
+import { IconComponent } from '../icon/icon';
+import { InputComponent } from '../input/input';
+import { ButtonComponent } from '../button/button';
 
 @Component({
   selector: 'app-datepicker',
-  imports: [CommonModule],
-  templateUrl: './datepicker.html',
-  styleUrl: './datepicker.scss'
+  standalone: true,
+  imports: [CommonModule, IconComponent, InputComponent, ButtonComponent],
+  template: `
+    <div class="datepicker">
+      <app-input
+        [value]="formattedValue()"
+        [placeholder]="placeholder()"
+        [label]="label()"
+        [required]="required()"
+        [disabled]="disabled()"
+        [error]="error()"
+        [readonly]="true"
+        (click)="toggleCalendar()"
+      >
+        <app-icon name="calendar_today" class="calendar-icon"></app-icon>
+      </app-input>
+
+      @if (showCalendar()) {
+        <div class="calendar-overlay" (click)="closeCalendar()"></div>
+        <div class="calendar-popup" #calendarPopup>
+          <!-- Calendar Header -->
+          <div class="calendar-header">
+            <app-button
+              variant="ghost"
+              size="small"
+              (click)="previousMonth()"
+              [disabled]="disabled()">
+              <app-icon name="chevron_left"></app-icon>
+            </app-button>
+            <div class="month-year">
+              {{ currentMonthYear() }}
+            </div>
+            <app-button
+              variant="ghost"
+              size="small"
+              (click)="nextMonth()"
+              [disabled]="disabled()">
+              <app-icon name="chevron_right"></app-icon>
+            </app-button>
+          </div>
+
+          <!-- Weekday Headers -->
+          <div class="weekday-headers">
+            @for (day of weekdays; track day) {
+              <div class="weekday">{{ day }}</div>
+            }
+          </div>
+
+          <!-- Calendar Days -->
+          <div class="calendar-days">
+            @for (day of calendarDays(); track day.date) {
+              <button
+                type="button"
+                class="day-cell"
+                [class.other-month]="!day.currentMonth"
+                [class.selected]="day.selected"
+                [class.today]="day.today"
+                [disabled]="disabled() || !day.currentMonth"
+                (click)="selectDate(day.date)">
+                {{ day.day }}
+              </button>
+            }
+          </div>
+
+          <!-- Calendar Footer -->
+          <div class="calendar-footer">
+            <app-button
+              variant="ghost"
+              size="small"
+              (click)="selectToday()">
+              Today
+            </app-button>
+            <app-button
+              variant="ghost"
+              size="small"
+              (click)="clearDate()">
+              Clear
+            </app-button>
+          </div>
+        </div>
+      }
+    </div>
+  `,
+  styles: [`
+    .datepicker {
+      position: relative;
+      width: 100%;
+    }
+
+    .calendar-icon {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      pointer-events: none;
+      color: #666;
+    }
+
+    .calendar-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.3);
+      z-index: 998;
+    }
+
+    .calendar-popup {
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0;
+      background: white;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      padding: 16px;
+      z-index: 999;
+      min-width: 320px;
+      animation: slideDown 0.2s ease-out;
+    }
+
+    @keyframes slideDown {
+      from {
+        opacity: 0;
+        transform: translateY(-8px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .calendar-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+
+    .month-year {
+      font-size: 16px;
+      font-weight: 600;
+      color: #1a1a1a;
+    }
+
+    .weekday-headers {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+      margin-bottom: 8px;
+    }
+
+    .weekday {
+      text-align: center;
+      font-size: 12px;
+      font-weight: 600;
+      color: #666;
+      padding: 8px 4px;
+    }
+
+    .calendar-days {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+    }
+
+    .day-cell {
+      aspect-ratio: 1;
+      border: none;
+      background: transparent;
+      border-radius: 4px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+      color: #1a1a1a;
+    }
+
+    .day-cell:hover:not(:disabled) {
+      background: #f5f5f5;
+    }
+
+    .day-cell.other-month {
+      color: #bbb;
+    }
+
+    .day-cell.selected {
+      background: #1976d2;
+      color: white;
+      font-weight: 600;
+    }
+
+    .day-cell.today {
+      border: 2px solid #1976d2;
+    }
+
+    .day-cell:disabled {
+      cursor: not-allowed;
+      opacity: 0.5;
+    }
+
+    .calendar-footer {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid #e0e0e0;
+    }
+  `]
 })
-export class DatepickerComponent {
-  @Input() label: string = '';
-  @Input() value: Date | null = null;
-  @Input() minDate: Date | null = null;
-  @Input() maxDate: Date | null = null;
-  @Input() disabled: boolean = false;
-  @Input() required: boolean = false;
-  @Input() placeholder: string = 'MM/DD/YYYY';
-  @Input() error: string | null = null;
+export class Datepicker {
+  @ViewChild('calendarPopup', { read: ElementRef }) calendarPopup?: ElementRef;
 
-  @Output() valueChange = new EventEmitter<Date>();
+  value = model<Date | null>(null);
+  placeholder = input<string>('Select date');
+  label = input<string>('');
+  required = input<boolean>(false);
+  disabled = input<boolean>(false);
+  error = input<string | null>(null);
+  minDate = input<Date | null>(null);
+  maxDate = input<Date | null>(null);
 
-  isOpen: boolean = false;
-  viewDate: Date = new Date(); // Current month/year being viewed
-  focusedDate: Date | null = null;
+  protected showCalendar = signal(false);
+  protected currentDate = signal(new Date());
+  protected weekdays = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
 
-  // Month and year arrays for dropdowns
-  months: string[] = [
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December'
-  ];
-
-  years: number[] = [];
-
-  // Days of week
-  weekDays: string[] = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-
-  constructor(private elementRef: ElementRef) {
-    this.initializeYears();
-  }
-
-  ngOnInit(): void {
-    // Set view date to selected value or today
-    if (this.value) {
-      this.viewDate = new Date(this.value);
-    }
-  }
-
-  // ============================================================================
-  // INITIALIZATION
-  // ============================================================================
-
-  initializeYears(): void {
-    const currentYear = new Date().getFullYear();
-    const startYear = currentYear - 100;
-    const endYear = currentYear + 10;
-
-    for (let year = startYear; year <= endYear; year++) {
-      this.years.push(year);
-    }
-  }
-
-  // ============================================================================
-  // CALENDAR GENERATION
-  // ============================================================================
-
-  get calendarDates(): CalendarDate[] {
-    const dates: CalendarDate[] = [];
-    const year = this.viewDate.getFullYear();
-    const month = this.viewDate.getMonth();
-
-    // First day of the month
-    const firstDay = new Date(year, month, 1);
-    const lastDay = new Date(year, month + 1, 0);
-
-    // Start from the beginning of the week containing the first day
-    const startDate = new Date(firstDay);
-    startDate.setDate(startDate.getDate() - startDate.getDay());
-
-    // Generate 6 weeks (42 days) to ensure consistent grid
-    for (let i = 0; i < 42; i++) {
-      const date = new Date(startDate);
-      date.setDate(date.getDate() + i);
-
-      const calendarDate: CalendarDate = {
-        date: date,
-        day: date.getDate(),
-        month: date.getMonth(),
-        year: date.getFullYear(),
-        isCurrentMonth: date.getMonth() === month,
-        isToday: this.isToday(date),
-        isSelected: this.isSelectedDate(date),
-        isDisabled: this.isDateDisabled(date),
-        isWeekend: date.getDay() === 0 || date.getDay() === 6
-      };
-
-      dates.push(calendarDate);
-    }
-
-    return dates;
-  }
-
-  // ============================================================================
-  // DATE UTILITIES
-  // ============================================================================
-
-  isToday(date: Date): boolean {
-    const today = new Date();
-    return this.isSameDay(date, today);
-  }
-
-  isSelectedDate(date: Date): boolean {
-    if (!this.value) return false;
-    return this.isSameDay(date, this.value);
-  }
-
-  isSameDay(date1: Date, date2: Date): boolean {
-    return date1.getFullYear() === date2.getFullYear() &&
-           date1.getMonth() === date2.getMonth() &&
-           date1.getDate() === date2.getDate();
-  }
-
-  isDateDisabled(date: Date): boolean {
-    if (this.minDate && date < this.minDate) {
-      return true;
-    }
-    if (this.maxDate && date > this.maxDate) {
-      return true;
-    }
-    return false;
-  }
-
-  // ============================================================================
-  // DISPLAY VALUES
-  // ============================================================================
-
-  get displayValue(): string {
-    if (!this.value) return '';
-    return this.formatDate(this.value);
-  }
-
-  formatDate(date: Date): string {
+  protected formattedValue = computed(() => {
+    const date = this.value();
+    if (!date) return '';
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
     const year = date.getFullYear();
     return `${month}/${day}/${year}`;
-  }
+  });
 
-  get currentMonth(): number {
-    return this.viewDate.getMonth();
-  }
+  protected currentMonthYear = computed(() => {
+    const date = this.currentDate();
+    return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  });
 
-  get currentYear(): number {
-    return this.viewDate.getFullYear();
-  }
-
-  // ============================================================================
-  // USER INTERACTIONS
-  // ============================================================================
-
-  toggleCalendar(): void {
-    if (this.disabled) return;
-    this.isOpen = !this.isOpen;
-
-    if (this.isOpen) {
-      // Reset view to selected date or today
-      if (this.value) {
-        this.viewDate = new Date(this.value);
-      } else {
-        this.viewDate = new Date();
-      }
-      this.focusedDate = this.value || new Date();
-    }
-  }
-
-  selectDate(calendarDate: CalendarDate): void {
-    if (calendarDate.isDisabled) return;
-
-    this.value = calendarDate.date;
-    this.valueChange.emit(this.value);
-    this.isOpen = false;
-  }
-
-  selectToday(): void {
+  protected calendarDays = computed(() => {
+    const current = this.currentDate();
+    const year = current.getFullYear();
+    const month = current.getMonth();
+    const selectedDate = this.value();
     const today = new Date();
-    if (!this.isDateDisabled(today)) {
-      this.value = today;
-      this.valueChange.emit(this.value);
-      this.isOpen = false;
+
+    // First day of month
+    const firstDay = new Date(year, month, 1);
+    const startingDayOfWeek = firstDay.getDay();
+
+    // Last day of month
+    const lastDay = new Date(year, month + 1, 0);
+    const daysInMonth = lastDay.getDate();
+
+    // Previous month days
+    const prevMonth = new Date(year, month, 0);
+    const daysInPrevMonth = prevMonth.getDate();
+
+    const days: Array<{
+      date: Date;
+      day: number;
+      currentMonth: boolean;
+      selected: boolean;
+      today: boolean;
+    }> = [];
+
+    // Previous month overflow days
+    for (let i = startingDayOfWeek - 1; i >= 0; i--) {
+      const day = daysInPrevMonth - i;
+      const date = new Date(year, month - 1, day);
+      days.push({
+        date,
+        day,
+        currentMonth: false,
+        selected: false,
+        today: false
+      });
+    }
+
+    // Current month days
+    for (let day = 1; day <= daysInMonth; day++) {
+      const date = new Date(year, month, day);
+      const isSelected = selectedDate
+        ? date.toDateString() === selectedDate.toDateString()
+        : false;
+      const isToday = date.toDateString() === today.toDateString();
+
+      days.push({
+        date,
+        day,
+        currentMonth: true,
+        selected: isSelected,
+        today: isToday
+      });
+    }
+
+    // Next month overflow days
+    const remainingDays = 42 - days.length; // 6 weeks * 7 days
+    for (let day = 1; day <= remainingDays; day++) {
+      const date = new Date(year, month + 1, day);
+      days.push({
+        date,
+        day,
+        currentMonth: false,
+        selected: false,
+        today: false
+      });
+    }
+
+    return days;
+  });
+
+  protected toggleCalendar(): void {
+    if (this.disabled()) return;
+    this.showCalendar.update(v => !v);
+    if (this.showCalendar() && this.value()) {
+      this.currentDate.set(new Date(this.value()!));
     }
   }
 
-  clearDate(): void {
-    this.value = null;
-    this.valueChange.emit(null as any);
-    this.isOpen = false;
+  protected closeCalendar(): void {
+    this.showCalendar.set(false);
   }
 
-  // ============================================================================
-  // NAVIGATION
-  // ============================================================================
-
-  previousMonth(): void {
-    this.viewDate = new Date(this.viewDate.getFullYear(), this.viewDate.getMonth() - 1, 1);
+  protected previousMonth(): void {
+    this.currentDate.update(date => {
+      const newDate = new Date(date);
+      newDate.setMonth(newDate.getMonth() - 1);
+      return newDate;
+    });
   }
 
-  nextMonth(): void {
-    this.viewDate = new Date(this.viewDate.getFullYear(), this.viewDate.getMonth() + 1, 1);
+  protected nextMonth(): void {
+    this.currentDate.update(date => {
+      const newDate = new Date(date);
+      newDate.setMonth(newDate.getMonth() + 1);
+      return newDate;
+    });
   }
 
-  onMonthChange(event: Event): void {
-    const select = event.target as HTMLSelectElement;
-    const newMonth = parseInt(select.value, 10);
-    this.viewDate = new Date(this.viewDate.getFullYear(), newMonth, 1);
+  protected selectDate(date: Date): void {
+    const min = this.minDate();
+    const max = this.maxDate();
+
+    if (min && date < min) return;
+    if (max && date > max) return;
+
+    this.value.set(new Date(date));
+    this.closeCalendar();
   }
 
-  onYearChange(event: Event): void {
-    const select = event.target as HTMLSelectElement;
-    const newYear = parseInt(select.value, 10);
-    this.viewDate = new Date(newYear, this.viewDate.getMonth(), 1);
+  protected selectToday(): void {
+    this.selectDate(new Date());
   }
 
-  // ============================================================================
-  // KEYBOARD NAVIGATION
-  // ============================================================================
-
-  handleKeyDown(event: KeyboardEvent): void {
-    if (!this.isOpen || this.disabled) return;
-
-    const currentFocus = this.focusedDate || this.value || new Date();
-
-    switch (event.key) {
-      case 'Escape':
-        event.preventDefault();
-        this.isOpen = false;
-        break;
-
-      case 'Enter':
-        event.preventDefault();
-        if (this.focusedDate && !this.isDateDisabled(this.focusedDate)) {
-          this.value = this.focusedDate;
-          this.valueChange.emit(this.value);
-          this.isOpen = false;
-        }
-        break;
-
-      case 'ArrowLeft':
-        event.preventDefault();
-        this.focusedDate = new Date(currentFocus);
-        this.focusedDate.setDate(this.focusedDate.getDate() - 1);
-        this.updateViewForFocusedDate();
-        break;
-
-      case 'ArrowRight':
-        event.preventDefault();
-        this.focusedDate = new Date(currentFocus);
-        this.focusedDate.setDate(this.focusedDate.getDate() + 1);
-        this.updateViewForFocusedDate();
-        break;
-
-      case 'ArrowUp':
-        event.preventDefault();
-        this.focusedDate = new Date(currentFocus);
-        this.focusedDate.setDate(this.focusedDate.getDate() - 7);
-        this.updateViewForFocusedDate();
-        break;
-
-      case 'ArrowDown':
-        event.preventDefault();
-        this.focusedDate = new Date(currentFocus);
-        this.focusedDate.setDate(this.focusedDate.getDate() + 7);
-        this.updateViewForFocusedDate();
-        break;
-
-      case 'Home':
-        event.preventDefault();
-        this.focusedDate = new Date(currentFocus.getFullYear(), currentFocus.getMonth(), 1);
-        this.updateViewForFocusedDate();
-        break;
-
-      case 'End':
-        event.preventDefault();
-        this.focusedDate = new Date(currentFocus.getFullYear(), currentFocus.getMonth() + 1, 0);
-        this.updateViewForFocusedDate();
-        break;
-
-      case 'PageUp':
-        event.preventDefault();
-        this.previousMonth();
-        break;
-
-      case 'PageDown':
-        event.preventDefault();
-        this.nextMonth();
-        break;
-    }
+  protected clearDate(): void {
+    this.value.set(null);
+    this.closeCalendar();
   }
-
-  updateViewForFocusedDate(): void {
-    if (!this.focusedDate) return;
-
-    // If focused date is in a different month, update view
-    if (this.focusedDate.getMonth() !== this.viewDate.getMonth() ||
-        this.focusedDate.getFullYear() !== this.viewDate.getFullYear()) {
-      this.viewDate = new Date(this.focusedDate);
-    }
-  }
-
-  isDateFocused(date: Date): boolean {
-    if (!this.focusedDate) return false;
-    return this.isSameDay(date, this.focusedDate);
-  }
-
-  // ============================================================================
-  // CLICK OUTSIDE TO CLOSE
-  // ============================================================================
 
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent): void {
-    if (!this.elementRef.nativeElement.contains(event.target)) {
-      this.isOpen = false;
+    const target = event.target as HTMLElement;
+    const clickedInside = target.closest('.datepicker');
+    if (!clickedInside && this.showCalendar()) {
+      this.closeCalendar();
     }
-  }
-
-  // ============================================================================
-  // COMPUTED CLASSES
-  // ============================================================================
-
-  get containerClasses(): string[] {
-    return [
-      'datepicker-container',
-      this.error ? 'datepicker-container--error' : '',
-      this.disabled ? 'datepicker-container--disabled' : ''
-    ].filter(Boolean);
-  }
-
-  get inputClasses(): string[] {
-    return [
-      'datepicker-input',
-      this.value ? 'datepicker-input--filled' : '',
-      this.error ? 'datepicker-input--error' : '',
-      this.disabled ? 'datepicker-input--disabled' : '',
-      this.isOpen ? 'datepicker-input--focused' : ''
-    ].filter(Boolean);
   }
 }

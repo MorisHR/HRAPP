@@ -1,0 +1,269 @@
+{
+  "dashboard": {
+    "id": null,
+    "uid": "hrms-api-performance",
+    "title": "HRMS API Performance - Fortune 50",
+    "tags": ["api", "performance", "response-time", "fortune50"],
+    "timezone": "browser",
+    "schemaVersion": 36,
+    "version": 1,
+    "refresh": "10s",
+    "time": {
+      "from": "now-15m",
+      "to": "now"
+    },
+    "panels": [
+      {
+        "id": 1,
+        "title": "Requests Per Second",
+        "type": "graph",
+        "gridPos": {"x": 0, "y": 0, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "SELECT DATE_TRUNC('minute', recorded_at) as time, COUNT(*) as requests FROM monitoring.api_performance WHERE recorded_at > NOW() - INTERVAL '15 minutes' GROUP BY DATE_TRUNC('minute', recorded_at) ORDER BY time",
+            "format": "time_series",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "reqps",
+            "color": {"mode": "palette-classic"}
+          }
+        }
+      },
+      {
+        "id": 2,
+        "title": "API Error Rate",
+        "type": "gauge",
+        "gridPos": {"x": 12, "y": 0, "w": 6, "h": 8},
+        "targets": [
+          {
+            "expr": "SELECT ROUND(100.0 * COUNT(*) FILTER (WHERE status_code >= 400) / NULLIF(COUNT(*), 0), 2) as error_rate FROM monitoring.api_performance WHERE recorded_at > NOW() - INTERVAL '5 minutes'",
+            "format": "time_series",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent",
+            "min": 0,
+            "max": 100,
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "green"},
+                {"value": 0.1, "color": "yellow"},
+                {"value": 1, "color": "red"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 3,
+        "title": "p95 Response Time",
+        "type": "gauge",
+        "gridPos": {"x": 18, "y": 0, "w": 6, "h": 8},
+        "targets": [
+          {
+            "expr": "SELECT PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY response_time_ms) as p95 FROM monitoring.api_performance WHERE recorded_at > NOW() - INTERVAL '5 minutes'",
+            "format": "time_series",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "ms",
+            "min": 0,
+            "max": 500,
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "green"},
+                {"value": 200, "color": "yellow"},
+                {"value": 400, "color": "red"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 4,
+        "title": "Response Time Distribution (p50, p95, p99)",
+        "type": "timeseries",
+        "gridPos": {"x": 0, "y": 8, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "SELECT DATE_TRUNC('minute', recorded_at) as time, PERCENTILE_CONT(0.50) WITHIN GROUP (ORDER BY response_time_ms) as p50, PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY response_time_ms) as p95, PERCENTILE_CONT(0.99) WITHIN GROUP (ORDER BY response_time_ms) as p99 FROM monitoring.api_performance WHERE recorded_at > NOW() - INTERVAL '15 minutes' GROUP BY DATE_TRUNC('minute', recorded_at) ORDER BY time",
+            "format": "time_series",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "ms",
+            "custom": {
+              "lineWidth": 2,
+              "fillOpacity": 0,
+              "showPoints": "never"
+            }
+          },
+          "overrides": [
+            {
+              "matcher": {"id": "byName", "options": "p50"},
+              "properties": [{"id": "color", "value": {"fixedColor": "green"}}]
+            },
+            {
+              "matcher": {"id": "byName", "options": "p95"},
+              "properties": [{"id": "color", "value": {"fixedColor": "blue"}}]
+            },
+            {
+              "matcher": {"id": "byName", "options": "p99"},
+              "properties": [{"id": "color", "value": {"fixedColor": "orange"}}]
+            }
+          ]
+        }
+      },
+      {
+        "id": 5,
+        "title": "Top 10 Slowest Endpoints",
+        "type": "table",
+        "gridPos": {"x": 12, "y": 8, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "SELECT endpoint, http_method, COUNT(*) as requests, ROUND(AVG(response_time_ms), 2) as avg_time_ms, ROUND(PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY response_time_ms), 2) as p95_time_ms FROM monitoring.api_performance WHERE recorded_at > NOW() - INTERVAL '15 minutes' GROUP BY endpoint, http_method ORDER BY avg_time_ms DESC LIMIT 10",
+            "format": "table",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "custom": {
+              "align": "auto",
+              "displayMode": "auto"
+            }
+          }
+        }
+      },
+      {
+        "id": 6,
+        "title": "Request Heatmap (Time Series)",
+        "type": "heatmap",
+        "gridPos": {"x": 0, "y": 16, "w": 24, "h": 8},
+        "targets": [
+          {
+            "expr": "SELECT recorded_at as time, response_time_ms FROM monitoring.api_performance WHERE recorded_at > NOW() - INTERVAL '1 hour'",
+            "format": "time_series",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "custom": {
+              "hideFrom": {
+                "tooltip": false,
+                "viz": false,
+                "legend": false
+              }
+            }
+          }
+        }
+      },
+      {
+        "id": 7,
+        "title": "Error Breakdown by Status Code",
+        "type": "piechart",
+        "gridPos": {"x": 0, "y": 24, "w": 8, "h": 8},
+        "targets": [
+          {
+            "expr": "SELECT status_code, COUNT(*) as count FROM monitoring.api_performance WHERE recorded_at > NOW() - INTERVAL '1 hour' AND status_code >= 400 GROUP BY status_code ORDER BY count DESC",
+            "format": "table",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short"
+          }
+        }
+      },
+      {
+        "id": 8,
+        "title": "Slow Requests (>100ms)",
+        "type": "stat",
+        "gridPos": {"x": 8, "y": 24, "w": 4, "h": 8},
+        "targets": [
+          {
+            "expr": "SELECT COUNT(*) as slow_requests FROM monitoring.api_performance WHERE recorded_at > NOW() - INTERVAL '5 minutes' AND response_time_ms > 100",
+            "format": "time_series",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short",
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "green"},
+                {"value": 10, "color": "yellow"},
+                {"value": 50, "color": "red"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 9,
+        "title": "Average Request Size",
+        "type": "stat",
+        "gridPos": {"x": 12, "y": 24, "w": 6, "h": 8},
+        "targets": [
+          {
+            "expr": "SELECT ROUND(AVG(request_size_bytes), 2) as avg_size FROM monitoring.api_performance WHERE recorded_at > NOW() - INTERVAL '5 minutes' AND request_size_bytes IS NOT NULL",
+            "format": "time_series",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "bytes",
+            "color": {"mode": "value"}
+          }
+        }
+      },
+      {
+        "id": 10,
+        "title": "Average Response Size",
+        "type": "stat",
+        "gridPos": {"x": 18, "y": 24, "w": 6, "h": 8},
+        "targets": [
+          {
+            "expr": "SELECT ROUND(AVG(response_size_bytes), 2) as avg_size FROM monitoring.api_performance WHERE recorded_at > NOW() - INTERVAL '5 minutes' AND response_size_bytes IS NOT NULL",
+            "format": "time_series",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "bytes",
+            "color": {"mode": "value"}
+          }
+        }
+      }
+    ],
+    "annotations": {
+      "list": [
+        {
+          "name": "Critical Errors",
+          "datasource": "PostgreSQL",
+          "enable": true,
+          "iconColor": "red",
+          "query": "SELECT recorded_at as time, endpoint as text, status_code as tags FROM monitoring.api_performance WHERE status_code >= 500 AND recorded_at > NOW() - INTERVAL '1 hour'"
+        }
+      ]
+    }
+  },
+  "overwrite": true
+}

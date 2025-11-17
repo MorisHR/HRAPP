@@ -1,0 +1,132 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cloudsql-proxy
+  namespace: hrms-production
+  labels:
+    app: cloudsql-proxy
+    component: infrastructure
+    cost-optimization: "true"
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: cloudsql-proxy
+  template:
+    metadata:
+      labels:
+        app: cloudsql-proxy
+        version: v1
+    spec:
+      serviceAccountName: cloudsql-proxy-sa
+
+      containers:
+      - name: cloud-sql-proxy
+        image: gcr.io/cloudsql-docker/gce-proxy:latest
+        imagePullPolicy: IfNotPresent
+
+        command:
+          - "/cloud_sql_proxy"
+          - "-instances=PROJECT_ID:REGION:hrms-master=tcp:0.0.0.0:5432"
+          - "-instances=PROJECT_ID:REGION:hrms-read-replica=tcp:0.0.0.0:5433"
+          - "-ip_address_types=PRIVATE"
+          - "-log_debug_stdout=true"
+
+        ports:
+        - name: postgres-master
+          containerPort: 5432
+          protocol: TCP
+        - name: postgres-replica
+          containerPort: 5433
+          protocol: TCP
+
+        securityContext:
+          runAsNonRoot: true
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "100m"
+          limits:
+            memory: "128Mi"
+            cpu: "200m"
+
+        livenessProbe:
+          tcpSocket:
+            port: 5432
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+
+        readinessProbe:
+          tcpSocket:
+            port: 5432
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+
+      # Spread pods across availability zones for HA
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - cloudsql-proxy
+              topologyKey: topology.kubernetes.io/zone
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cloudsql-proxy
+  namespace: hrms-production
+  labels:
+    app: cloudsql-proxy
+  annotations:
+    cloud.google.com/neg: '{"ingress": false}'
+spec:
+  type: ClusterIP
+  selector:
+    app: cloudsql-proxy
+  ports:
+  - name: postgres-master
+    port: 5432
+    targetPort: 5432
+    protocol: TCP
+  - name: postgres-replica
+    port: 5433
+    targetPort: 5433
+    protocol: TCP
+  sessionAffinity: ClientIP
+  sessionAffinityConfig:
+    clientIP:
+      timeoutSeconds: 10800
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: cloudsql-proxy-sa
+  namespace: hrms-production
+  annotations:
+    iam.gke.io/gcp-service-account: cloudsql-proxy@PROJECT_ID.iam.gserviceaccount.com
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: cloudsql-proxy-pdb
+  namespace: hrms-production
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: cloudsql-proxy

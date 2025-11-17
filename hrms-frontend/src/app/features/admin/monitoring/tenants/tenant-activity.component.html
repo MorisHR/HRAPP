@@ -1,0 +1,154 @@
+<div class="tenant-activity">
+  <div class="page-header">
+    <h1>Tenant Activity</h1>
+    <div class="header-actions">
+      <app-button variant="secondary" (clicked)="loadData()">
+        Refresh
+      </app-button>
+    </div>
+  </div>
+
+  @if (error()) {
+    <div class="error-message">
+      <p>{{ error() }}</p>
+      <app-button variant="primary" (clicked)="loadData()">
+        Retry
+      </app-button>
+    </div>
+  }
+
+  <!-- At-Risk Tenants Section -->
+  @if (atRiskTenants().length > 0) {
+    <app-card [padding]="'large'" class="at-risk-card">
+      <div class="alert-header">
+        <h2>At-Risk Tenants (Health Score &lt; 50)</h2>
+        <app-badge [content]="atRiskTenants().length" [color]="'error'"></app-badge>
+      </div>
+
+      <div class="at-risk-list">
+        @for (tenant of atRiskTenants(); track tenant.tenantId) {
+          <div class="at-risk-item">
+            <div class="tenant-info">
+              <div class="tenant-name">{{ tenant.companyName }}</div>
+              <div class="tenant-subdomain">{{ tenant.subdomain }}</div>
+            </div>
+            <div class="tenant-metrics">
+              <div class="metric">
+                <span class="metric-label">Health:</span>
+                <span [class]="getHealthScoreClass(tenant.healthScore)">
+                  {{ tenant.healthScore }}
+                </span>
+              </div>
+              <div class="metric">
+                <span class="metric-label">Error Rate:</span>
+                <span class="text-error">{{ tenant.errorRate }}%</span>
+              </div>
+              <div class="metric">
+                <span class="metric-label">Users:</span>
+                <span>{{ tenant.activeUsersLast24h }}</span>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    </app-card>
+  }
+
+  <!-- Tenants Table -->
+  <app-card [padding]="'large'" class="tenants-card">
+    <div class="card-header">
+      <h2>All Tenants</h2>
+      <div class="header-filters">
+        <app-select
+          [label]="'Status'"
+          [options]="statusOptions"
+          [value]="selectedStatus()"
+          (valueChange)="onStatusChange($event)">
+        </app-select>
+        <app-select
+          [label]="'Tier'"
+          [options]="tierOptions"
+          [value]="selectedTier()"
+          (valueChange)="onTierChange($event)">
+        </app-select>
+        <app-select
+          [label]="'Minimum Users'"
+          [options]="minUsersOptions"
+          [value]="minUsers()"
+          (valueChange)="onMinUsersChange($event)">
+        </app-select>
+        <app-button variant="secondary" (clicked)="exportToCSV()">
+          Export CSV
+        </app-button>
+      </div>
+    </div>
+
+    @if (loading()) {
+      <div class="loading-state">
+        <p>Loading tenants...</p>
+      </div>
+    } @else if (filteredTenants().length === 0) {
+      <div class="empty-state">
+        <p>No tenants found matching the current filters</p>
+      </div>
+    } @else {
+      <div class="table-container">
+        <table class="tenants-table">
+          <thead>
+            <tr>
+              <th>Subdomain</th>
+              <th>Company</th>
+              <th class="text-center">Tier</th>
+              <th class="text-right">Active Users</th>
+              <th class="text-right">Requests</th>
+              <th class="text-right">Error Rate</th>
+              <th class="text-right">Storage</th>
+              <th class="text-center">Health Score</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (tenant of paginatedTenants(); track tenant.tenantId) {
+              <tr [class.at-risk-row]="tenant.healthScore < 50">
+                <td class="subdomain-cell">
+                  <code>{{ tenant.subdomain }}</code>
+                </td>
+                <td>{{ tenant.companyName }}</td>
+                <td class="text-center">
+                  <app-chip
+                    [label]="tenant.tier"
+                    [color]="getTierColor(tenant.tier)"
+                    [variant]="'filled'">
+                  </app-chip>
+                </td>
+                <td class="text-right">{{ tenant.activeUsersLast24h | number }}</td>
+                <td class="text-right">{{ tenant.totalRequests | number }}</td>
+                <td class="text-right" [class.text-error]="tenant.errorRate > 2">
+                  {{ tenant.errorRate | number: '1.2-2' }}%
+                </td>
+                <td class="text-right">{{ tenant.schemaSizeFormatted }}</td>
+                <td class="text-center">
+                  <div class="health-score" [class]="getHealthScoreClass(tenant.healthScore)">
+                    {{ tenant.healthScore }}
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <div class="table-footer">
+        <div class="results-info">
+          Showing {{ paginatedTenants().length }} of {{ totalTenants() }} tenants
+        </div>
+        <app-paginator
+          [length]="totalTenants()"
+          [pageSize]="pageSize()"
+          [pageIndex]="pageIndex()"
+          [pageSizeOptions]="[5, 10, 25, 50]"
+          (page)="onPageChange($event)">
+        </app-paginator>
+      </div>
+    }
+  </app-card>
+</div>

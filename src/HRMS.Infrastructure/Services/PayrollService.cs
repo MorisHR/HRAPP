@@ -1230,9 +1230,15 @@ public class PayrollService : IPayrollService
 
     public async Task<decimal> CalculateOvertimePayAsync(Guid employeeId, int month, int year)
     {
-        var employee = await _context.Employees.FindAsync(employeeId);
+        var employee = await _context.Employees
+            .AsNoTracking()
+            .FirstOrDefaultAsync(e => e.Id == employeeId && !e.IsDeleted);
+
         if (employee == null)
-            return 0m;
+        {
+            _logger.LogWarning("SECURITY: Employee {EmployeeId} not found in current tenant context", employeeId);
+            throw new KeyNotFoundException($"Employee with ID {employeeId} not found or access denied");
+        }
 
         var hourlyRate = employee.BasicSalary / STANDARD_MONTHLY_HOURS;
 
@@ -1261,6 +1267,17 @@ public class PayrollService : IPayrollService
 
     public async Task<decimal> Calculate13thMonthBonusAsync(Guid employeeId, int year)
     {
+        // SECURITY: Validate employee exists in current tenant context (CRITICAL FIX - IDOR Prevention)
+        var employee = await _context.Employees
+            .AsNoTracking()
+            .FirstOrDefaultAsync(e => e.Id == employeeId && !e.IsDeleted);
+
+        if (employee == null)
+        {
+            _logger.LogWarning("SECURITY: Employee {EmployeeId} not found in current tenant context during 13th month bonus calculation", employeeId);
+            throw new KeyNotFoundException($"Employee with ID {employeeId} not found or access denied");
+        }
+
         var payslips = await _context.Payslips
             .Where(p => p.EmployeeId == employeeId)
             .Where(p => p.Year == year)
@@ -1269,14 +1286,23 @@ public class PayrollService : IPayrollService
 
         var annualGross = payslips.Sum(p => p.TotalGrossSalary);
 
+        _logger.LogInformation("Calculated 13th month bonus for employee {EmployeeId}, year {Year}: {Amount}",
+            employeeId, year, annualGross / 12);
+
         return Math.Round(annualGross / 12, 2);
     }
 
     public async Task<decimal> CalculateGratuityAsync(Guid employeeId, DateTime resignationDate)
     {
-        var employee = await _context.Employees.FindAsync(employeeId);
+        var employee = await _context.Employees
+            .AsNoTracking()
+            .FirstOrDefaultAsync(e => e.Id == employeeId && !e.IsDeleted);
+
         if (employee == null)
-            return 0m;
+        {
+            _logger.LogWarning("SECURITY: Employee {EmployeeId} not found in current tenant context", employeeId);
+            throw new KeyNotFoundException($"Employee with ID {employeeId} not found or access denied");
+        }
 
         // Only for employees hired before PRGF (Jan 2020)
         if (employee.JoiningDate >= PRGF_IMPLEMENTATION_DATE)
@@ -1296,9 +1322,15 @@ public class PayrollService : IPayrollService
 
     public async Task<decimal> CalculateLeaveEncashmentAsync(Guid employeeId)
     {
-        var employee = await _context.Employees.FindAsync(employeeId);
+        var employee = await _context.Employees
+            .AsNoTracking()
+            .FirstOrDefaultAsync(e => e.Id == employeeId && !e.IsDeleted);
+
         if (employee == null)
-            return 0m;
+        {
+            _logger.LogWarning("SECURITY: Employee {EmployeeId} not found in current tenant context", employeeId);
+            throw new KeyNotFoundException($"Employee with ID {employeeId} not found or access denied");
+        }
 
         var currentYear = DateTime.UtcNow.Year;
         var leaveBalance = await _context.LeaveBalances
@@ -1486,6 +1518,16 @@ public class PayrollService : IPayrollService
 
     private async Task<decimal> GetOvertimeHoursAsync(Guid employeeId, int month, int year)
     {
+        // SECURITY: Defense-in-depth - Validate employee exists before querying attendance
+        var employeeExists = await _context.Employees
+            .AnyAsync(e => e.Id == employeeId && !e.IsDeleted);
+
+        if (!employeeExists)
+        {
+            _logger.LogWarning("SECURITY: Attempt to query overtime for non-existent employee {EmployeeId}", employeeId);
+            return 0m; // Fail-safe: Return 0 instead of throwing to avoid breaking payroll generation
+        }
+
         var startDate = new DateTime(year, month, 1);
         var endDate = startDate.AddMonths(1).AddDays(-1);
 
@@ -1501,6 +1543,16 @@ public class PayrollService : IPayrollService
     private async Task<(int workingDays, int actualDaysWorked, decimal paidLeaveDays, decimal unpaidLeaveDays)> GetAttendanceDataAsync(
         Guid employeeId, int month, int year)
     {
+        // SECURITY: Defense-in-depth - Validate employee exists before querying attendance and leave data
+        var employeeExists = await _context.Employees
+            .AnyAsync(e => e.Id == employeeId && !e.IsDeleted);
+
+        if (!employeeExists)
+        {
+            _logger.LogWarning("SECURITY: Attempt to query attendance data for non-existent employee {EmployeeId}", employeeId);
+            return (0, 0, 0m, 0m); // Fail-safe: Return zeros to avoid breaking payroll generation
+        }
+
         var startDate = new DateTime(year, month, 1);
         var endDate = startDate.AddMonths(1).AddDays(-1);
 

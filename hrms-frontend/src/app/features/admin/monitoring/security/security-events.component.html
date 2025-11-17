@@ -1,0 +1,263 @@
+<div class="security-events">
+  <div class="page-header">
+    <h1>Security Events</h1>
+    <div class="header-actions">
+      <app-button variant="secondary" (clicked)="loadData()">
+        Refresh
+      </app-button>
+    </div>
+  </div>
+
+  @if (error()) {
+    <div class="error-message">
+      <p>{{ error() }}</p>
+      <app-button variant="primary" (clicked)="loadData()">
+        Retry
+      </app-button>
+    </div>
+  }
+
+  <!-- Critical Events Section -->
+  @if (criticalEvents().length > 0) {
+    <app-card [padding]="'large'" class="critical-card">
+      <div class="alert-header">
+        <h2>Critical Unreviewed Events</h2>
+        <app-badge [content]="criticalEvents().length" [color]="'error'"></app-badge>
+      </div>
+
+      <div class="critical-list">
+        @for (event of criticalEvents(); track event.eventId) {
+          <div class="critical-item" (click)="onRowClick(event)">
+            <div class="event-info">
+              <div class="event-type">
+                <app-badge [content]="getEventTypeLabel(event.eventType)" [color]="'error'"></app-badge>
+              </div>
+              <div class="event-details">
+                <div class="detail-row">
+                  <strong>User:</strong> {{ event.userEmail }}
+                </div>
+                <div class="detail-row">
+                  <strong>IP:</strong> {{ event.ipAddress }}
+                </div>
+                <div class="detail-row">
+                  <strong>Tenant:</strong> {{ event.tenantSubdomain }}
+                </div>
+              </div>
+            </div>
+            <div class="event-time">
+              {{ formatTimestamp(event.occurredAt) }}
+            </div>
+          </div>
+        }
+      </div>
+    </app-card>
+  }
+
+  <!-- Events Table -->
+  <app-card [padding]="'large'" class="events-card">
+    <div class="card-header">
+      <h2>All Security Events</h2>
+      <div class="header-filters">
+        <app-select
+          [label]="'Event Type'"
+          [options]="eventTypeOptions"
+          [value]="selectedEventType()"
+          (valueChange)="onEventTypeChange($event)">
+        </app-select>
+        <app-select
+          [label]="'Severity'"
+          [options]="severityOptions"
+          [value]="selectedSeverity()"
+          (valueChange)="onSeverityChange($event)">
+        </app-select>
+        <app-select
+          [label]="'Tenant'"
+          [options]="tenantOptions"
+          [value]="selectedTenant()"
+          (valueChange)="onTenantChange($event)">
+        </app-select>
+        <div class="toggle-filters">
+          <app-toggle
+            [label]="'Reviewed Only'"
+            [checked]="showReviewedOnly()"
+            (checkedChange)="onReviewedFilterChange($event)">
+          </app-toggle>
+          <app-toggle
+            [label]="'Unreviewed Only'"
+            [checked]="showUnreviewedOnly()"
+            (checkedChange)="onUnreviewedFilterChange($event)">
+          </app-toggle>
+        </div>
+        <app-button variant="secondary" (clicked)="exportToCSV()">
+          Export CSV
+        </app-button>
+      </div>
+    </div>
+
+    @if (loading()) {
+      <div class="loading-state">
+        <p>Loading security events...</p>
+      </div>
+    } @else if (filteredEvents().length === 0) {
+      <div class="empty-state">
+        <p>No security events found matching the current filters</p>
+      </div>
+    } @else {
+      <div class="table-container">
+        <table class="events-table">
+          <thead>
+            <tr>
+              <th>Event Type</th>
+              <th class="text-center">Severity</th>
+              <th>User</th>
+              <th>IP Address</th>
+              <th>Tenant</th>
+              <th>Timestamp</th>
+              <th class="text-center">Blocked</th>
+              <th class="text-center">Reviewed</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (event of paginatedEvents(); track event.eventId) {
+              <tr (click)="onRowClick(event)" class="clickable-row"
+                  [class.unreviewed-row]="event.reviewedBy === null && event.severity === 'Critical'">
+                <td>{{ getEventTypeLabel(event.eventType) }}</td>
+                <td class="text-center">
+                  <app-badge
+                    [content]="event.severity"
+                    [color]="getSeverityColor(event.severity)">
+                  </app-badge>
+                </td>
+                <td class="user-cell">{{ event.userEmail }}</td>
+                <td class="ip-cell">
+                  <code>{{ event.ipAddress }}</code>
+                </td>
+                <td>{{ event.tenantSubdomain }}</td>
+                <td class="timestamp-cell">{{ formatTimestamp(event.occurredAt) }}</td>
+                <td class="text-center">
+                  @if (event.isBlocked) {
+                    <span class="status-icon blocked">✓</span>
+                  } @else {
+                    <span class="status-icon">—</span>
+                  }
+                </td>
+                <td class="text-center">
+                  @if (event.isReviewed) {
+                    <span class="status-icon reviewed">✓</span>
+                  } @else {
+                    <span class="status-icon pending">⏱</span>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <div class="table-footer">
+        <div class="results-info">
+          Showing {{ paginatedEvents().length }} of {{ totalEvents() }} events
+        </div>
+        <app-paginator
+          [length]="totalEvents()"
+          [pageSize]="pageSize()"
+          [pageIndex]="pageIndex()"
+          [pageSizeOptions]="[5, 10, 25, 50]"
+          (page)="onPageChange($event)">
+        </app-paginator>
+      </div>
+    }
+  </app-card>
+</div>
+
+<!-- Event Details Dialog -->
+@if (showEventDialog() && selectedEvent(); as event) {
+  <div class="dialog-overlay" (click)="closeDialog()">
+    <div class="dialog-content" (click)="$event.stopPropagation()">
+      <div class="dialog-header">
+        <h2>Security Event Details</h2>
+        <button class="close-btn" (click)="closeDialog()">×</button>
+      </div>
+
+      <div class="dialog-body">
+        <div class="event-detail-grid">
+          <div class="detail-item">
+            <label>Event Type</label>
+            <div>
+              <app-badge [content]="getEventTypeLabel(event.eventType)"
+                         [color]="getSeverityColor(event.severity)">
+              </app-badge>
+            </div>
+          </div>
+
+          <div class="detail-item">
+            <label>Severity</label>
+            <div>
+              <app-badge [content]="event.severity"
+                         [color]="getSeverityColor(event.severity)">
+              </app-badge>
+            </div>
+          </div>
+
+          <div class="detail-item">
+            <label>User</label>
+            <div>{{ event.userEmail }}</div>
+          </div>
+
+          <div class="detail-item">
+            <label>IP Address</label>
+            <div><code>{{ event.ipAddress }}</code></div>
+          </div>
+
+          <div class="detail-item">
+            <label>Tenant</label>
+            <div>{{ event.tenantSubdomain }}</div>
+          </div>
+
+          <div class="detail-item">
+            <label>Timestamp</label>
+            <div>{{ formatTimestamp(event.occurredAt) }}</div>
+          </div>
+
+          <div class="detail-item">
+            <label>Blocked</label>
+            <div>{{ event.isBlocked ? 'Yes' : 'No' }}</div>
+          </div>
+
+          <div class="detail-item">
+            <label>Reviewed</label>
+            <div>{{ event.isReviewed ? 'Yes' : 'No' }}</div>
+          </div>
+
+          <div class="detail-item full-width">
+            <label>Description</label>
+            <div class="details-text">{{ event.description }}</div>
+          </div>
+        </div>
+
+        @if (!event.isReviewed) {
+          <div class="review-section">
+            <h3>Review Event</h3>
+            <textarea
+              [(ngModel)]="reviewNotes"
+              placeholder="Add review notes..."
+              rows="4"
+              class="review-textarea">
+            </textarea>
+          </div>
+        }
+      </div>
+
+      <div class="dialog-footer">
+        <app-button variant="secondary" (clicked)="closeDialog()">
+          Close
+        </app-button>
+        @if (!event.isReviewed) {
+          <app-button variant="primary" (clicked)="submitReview()">
+            Mark as Reviewed
+          </app-button>
+        }
+      </div>
+    </div>
+  </div>
+}

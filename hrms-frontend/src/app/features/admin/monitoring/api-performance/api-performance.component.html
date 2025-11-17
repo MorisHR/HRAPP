@@ -1,0 +1,190 @@
+<div class="api-performance">
+  <div class="page-header">
+    <h1>API Performance</h1>
+    <div class="header-actions">
+      <app-button variant="secondary" (clicked)="loadData()">
+        Refresh
+      </app-button>
+    </div>
+  </div>
+
+  @if (error()) {
+    <div class="error-message">
+      <p>{{ error() }}</p>
+      <app-button variant="primary" (clicked)="loadData()">
+        Retry
+      </app-button>
+    </div>
+  }
+
+  <!-- Summary Cards -->
+  <div class="summary-grid">
+    <app-card [padding]="'medium'">
+      <div class="summary-content">
+        <div class="summary-label">Total Endpoints</div>
+        <div class="summary-value">{{ totalEndpoints() }}</div>
+      </div>
+    </app-card>
+
+    <app-card [padding]="'medium'">
+      <div class="summary-content">
+        <div class="summary-label">SLA Violations</div>
+        <div class="summary-value" [class.text-error]="slaViolations() > 0">
+          {{ slaViolations() }}
+        </div>
+      </div>
+    </app-card>
+
+    <app-card [padding]="'medium'">
+      <div class="summary-content">
+        <div class="summary-label">Avg Error Rate</div>
+        <div class="summary-value">
+          {{ averageErrorRate() | number: '1.2-2' }}%
+        </div>
+      </div>
+    </app-card>
+  </div>
+
+  <!-- Performance Chart Placeholder -->
+  <app-card [padding]="'large'" class="chart-card">
+    <h2>Response Time Trends (Last 24h)</h2>
+    <div class="chart-placeholder">
+      <svg viewBox="0 0 800 200" class="trend-chart">
+        <!-- Simple trend line visualization -->
+        <defs>
+          <linearGradient id="areaGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:0.3" />
+            <stop offset="100%" style="stop-color:#3b82f6;stop-opacity:0.05" />
+          </linearGradient>
+        </defs>
+
+        <!-- Grid lines -->
+        @for (y of [40, 80, 120, 160]; track y) {
+          <line [attr.x1]="50" [attr.y1]="y" [attr.x2]="750" [attr.y2]="y"
+                stroke="#e5e7eb" stroke-width="1" />
+        }
+
+        <!-- Trend area -->
+        <path d="M 50 160 L 150 140 L 250 145 L 350 120 L 450 135 L 550 125 L 650 130 L 750 115 L 750 200 L 50 200 Z"
+              fill="url(#areaGradient)" />
+
+        <!-- Trend line -->
+        <path d="M 50 160 L 150 140 L 250 145 L 350 120 L 450 135 L 550 125 L 650 130 L 750 115"
+              stroke="#3b82f6" stroke-width="2" fill="none" />
+
+        <!-- Data points -->
+        @for (point of [{x: 50, y: 160}, {x: 150, y: 140}, {x: 250, y: 145},
+                        {x: 350, y: 120}, {x: 450, y: 135}, {x: 550, y: 125},
+                        {x: 650, y: 130}, {x: 750, y: 115}]; track point.x) {
+          <circle [attr.cx]="point.x" [attr.cy]="point.y" r="4" fill="#3b82f6" />
+        }
+
+        <!-- Y-axis labels -->
+        <text x="35" y="165" text-anchor="end" font-size="12" fill="#6b7280">0ms</text>
+        <text x="35" y="125" text-anchor="end" font-size="12" fill="#6b7280">500ms</text>
+        <text x="35" y="85" text-anchor="end" font-size="12" fill="#6b7280">1000ms</text>
+        <text x="35" y="45" text-anchor="end" font-size="12" fill="#6b7280">1500ms</text>
+      </svg>
+      <p class="chart-note">Real-time charting will be implemented with a charting library</p>
+    </div>
+  </app-card>
+
+  <!-- Endpoints Table -->
+  <app-card [padding]="'large'" class="endpoints-card">
+    <div class="card-header">
+      <h2>API Endpoints</h2>
+      <div class="header-filters">
+        <app-select
+          [label]="'Tenant'"
+          [options]="tenantOptions"
+          [value]="selectedTenant()"
+          (valueChange)="onTenantChange($event)">
+        </app-select>
+        <app-select
+          [label]="'Endpoint'"
+          [options]="endpointOptions"
+          [value]="selectedEndpoint()"
+          (valueChange)="onEndpointChange($event)">
+        </app-select>
+        <app-datepicker
+          [label]="'From'"
+          [value]="dateFrom()"
+          (valueChange)="onDateFromChange($event)">
+        </app-datepicker>
+        <app-datepicker
+          [label]="'To'"
+          [value]="dateTo()"
+          (valueChange)="onDateToChange($event)">
+        </app-datepicker>
+        <app-button variant="secondary" (clicked)="exportToCSV()">
+          Export CSV
+        </app-button>
+      </div>
+    </div>
+
+    @if (loading()) {
+      <div class="loading-state">
+        <p>Loading API endpoints...</p>
+      </div>
+    } @else if (endpoints().length === 0) {
+      <div class="empty-state">
+        <p>No API endpoints found</p>
+      </div>
+    } @else {
+      <div class="table-container">
+        <table class="endpoints-table">
+          <thead>
+            <tr>
+              <th>Endpoint</th>
+              <th class="text-center">Method</th>
+              <th class="text-right">Total Requests</th>
+              <th class="text-right">P95</th>
+              <th class="text-right">P99</th>
+              <th class="text-right">Error Rate</th>
+              <th class="text-center">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (endpoint of paginatedEndpoints(); track endpoint.endpoint) {
+              <tr [class.sla-violation]="isSlaViolation(endpoint)">
+                <td class="endpoint-path">{{ endpoint.endpoint }}</td>
+                <td class="text-center">
+                  <app-badge
+                    [content]="endpoint.httpMethod"
+                    [color]="getMethodColor(endpoint.httpMethod)">
+                  </app-badge>
+                </td>
+                <td class="text-right">{{ endpoint.totalRequests | number }}</td>
+                <td class="text-right" [class.text-error]="endpoint.p95ResponseTimeMs > 1000">
+                  {{ endpoint.p95ResponseTimeMs }}ms
+                </td>
+                <td class="text-right" [class.text-error]="endpoint.p99ResponseTimeMs > 2000">
+                  {{ endpoint.p99ResponseTimeMs }}ms
+                </td>
+                <td class="text-right" [class.text-error]="endpoint.errorRate > 5">
+                  {{ endpoint.errorRate | number: '1.2-2' }}%
+                </td>
+                <td class="text-center">
+                  <app-badge
+                    [content]="endpoint.performanceStatus"
+                    [color]="getStatusColor(endpoint.performanceStatus)">
+                  </app-badge>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <div class="table-footer">
+        <app-paginator
+          [length]="totalEndpoints()"
+          [pageSize]="pageSize()"
+          [pageIndex]="pageIndex()"
+          [pageSizeOptions]="[5, 10, 25, 50]"
+          (page)="onPageChange($event)">
+        </app-paginator>
+      </div>
+    }
+  </app-card>
+</div>

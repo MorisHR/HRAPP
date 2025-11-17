@@ -1,0 +1,325 @@
+{
+  "dashboard": {
+    "id": null,
+    "uid": "hrms-multi-tenant",
+    "title": "HRMS Multi-Tenant Insights - Fortune 50",
+    "tags": ["multi-tenant", "saas", "tenant-isolation", "fortune50"],
+    "timezone": "browser",
+    "schemaVersion": 36,
+    "version": 1,
+    "refresh": "30s",
+    "time": {
+      "from": "now-6h",
+      "to": "now"
+    },
+    "panels": [
+      {
+        "id": 1,
+        "title": "Active Tenants (Last 5 Minutes)",
+        "type": "stat",
+        "gridPos": {"x": 0, "y": 0, "w": 4, "h": 6},
+        "targets": [
+          {
+            "expr": "SELECT COUNT(DISTINCT tenant_subdomain) as active_tenants FROM monitoring.tenant_activity WHERE measured_at > NOW() - INTERVAL '5 minutes'",
+            "format": "time_series",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short",
+            "color": {"mode": "value"},
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "blue"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 2,
+        "title": "Total Employee Count Across All Tenants",
+        "type": "stat",
+        "gridPos": {"x": 4, "y": 0, "w": 4, "h": 6},
+        "targets": [
+          {
+            "expr": "SELECT SUM(employee_count) as total_employees FROM monitoring.tenant_activity WHERE measured_at > (SELECT MAX(measured_at) - INTERVAL '1 minute' FROM monitoring.tenant_activity)",
+            "format": "time_series",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short",
+            "color": {"mode": "value"},
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "green"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 3,
+        "title": "Active Payroll Cycles",
+        "type": "stat",
+        "gridPos": {"x": 8, "y": 0, "w": 4, "h": 6},
+        "targets": [
+          {
+            "expr": "SELECT SUM(active_payroll_cycles) as total_payroll FROM monitoring.tenant_activity WHERE measured_at > (SELECT MAX(measured_at) - INTERVAL '1 minute' FROM monitoring.tenant_activity)",
+            "format": "time_series",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short",
+            "color": {"mode": "value"},
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "purple"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 4,
+        "title": "Schema Switch Performance",
+        "type": "gauge",
+        "gridPos": {"x": 12, "y": 0, "w": 6, "h": 6},
+        "targets": [
+          {
+            "expr": "SELECT AVG(avg_response_time_ms) as avg_switch_time FROM monitoring.tenant_activity WHERE measured_at > NOW() - INTERVAL '5 minutes'",
+            "format": "time_series",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "ms",
+            "min": 0,
+            "max": 50,
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "green"},
+                {"value": 10, "color": "yellow"},
+                {"value": 30, "color": "red"}
+              ]
+            }
+          }
+        },
+        "options": {
+          "showThresholdLabels": true,
+          "showThresholdMarkers": true
+        }
+      },
+      {
+        "id": 5,
+        "title": "Tenant Isolation Score",
+        "type": "gauge",
+        "gridPos": {"x": 18, "y": 0, "w": 6, "h": 6},
+        "targets": [
+          {
+            "expr": "SELECT CASE WHEN COUNT(*) = 0 THEN 100 ELSE 0 END as isolation_score FROM monitoring.security_events WHERE event_type = 'cross_tenant_query' AND detected_at > NOW() - INTERVAL '1 hour'",
+            "format": "time_series",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent",
+            "min": 0,
+            "max": 100,
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "red"},
+                {"value": 99, "color": "yellow"},
+                {"value": 100, "color": "green"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 6,
+        "title": "Per-Tenant Request Volume",
+        "type": "timeseries",
+        "gridPos": {"x": 0, "y": 6, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "SELECT DATE_TRUNC('minute', measured_at) as time, tenant_subdomain, SUM(api_requests_count) as requests FROM monitoring.tenant_activity WHERE measured_at > NOW() - INTERVAL '6 hours' GROUP BY DATE_TRUNC('minute', measured_at), tenant_subdomain ORDER BY time",
+            "format": "time_series",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short",
+            "custom": {
+              "lineWidth": 1,
+              "fillOpacity": 10,
+              "showPoints": "never",
+              "stacking": {"mode": "normal"}
+            }
+          }
+        }
+      },
+      {
+        "id": 7,
+        "title": "Top 10 Most Active Tenants",
+        "type": "table",
+        "gridPos": {"x": 12, "y": 6, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "SELECT tenant_subdomain, SUM(api_requests_count) as total_requests, SUM(active_users_count) as total_users, ROUND(AVG(avg_response_time_ms), 2) as avg_response_ms, ROUND(AVG(error_rate_pct), 2) as avg_error_rate FROM monitoring.tenant_activity WHERE measured_at > NOW() - INTERVAL '1 hour' GROUP BY tenant_subdomain ORDER BY total_requests DESC LIMIT 10",
+            "format": "table",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "custom": {
+              "align": "auto",
+              "displayMode": "auto"
+            }
+          }
+        }
+      },
+      {
+        "id": 8,
+        "title": "Tenant Activity Heatmap (Last 6 Hours)",
+        "type": "heatmap",
+        "gridPos": {"x": 0, "y": 14, "w": 24, "h": 8},
+        "targets": [
+          {
+            "expr": "SELECT measured_at as time, tenant_subdomain, api_requests_count FROM monitoring.tenant_activity WHERE measured_at > NOW() - INTERVAL '6 hours' ORDER BY measured_at",
+            "format": "time_series",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "custom": {
+              "hideFrom": {
+                "tooltip": false,
+                "viz": false,
+                "legend": false
+              }
+            }
+          }
+        }
+      },
+      {
+        "id": 9,
+        "title": "Per-Tenant Cache Performance",
+        "type": "timeseries",
+        "gridPos": {"x": 0, "y": 22, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "SELECT DATE_TRUNC('minute', measured_at) as time, tenant_subdomain, AVG(cache_hit_rate_pct) as cache_hit_rate FROM monitoring.tenant_activity WHERE measured_at > NOW() - INTERVAL '1 hour' GROUP BY DATE_TRUNC('minute', measured_at), tenant_subdomain ORDER BY time",
+            "format": "time_series",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent",
+            "min": 0,
+            "max": 100,
+            "custom": {
+              "lineWidth": 2,
+              "fillOpacity": 0,
+              "showPoints": "never"
+            }
+          }
+        }
+      },
+      {
+        "id": 10,
+        "title": "Tenant Growth Trend (7 Days)",
+        "type": "timeseries",
+        "gridPos": {"x": 12, "y": 22, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "SELECT DATE_TRUNC('day', measured_at) as time, COUNT(DISTINCT tenant_id) as tenant_count FROM monitoring.tenant_activity WHERE measured_at > NOW() - INTERVAL '7 days' GROUP BY DATE_TRUNC('day', measured_at) ORDER BY time",
+            "format": "time_series",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short",
+            "custom": {
+              "lineWidth": 2,
+              "fillOpacity": 20,
+              "showPoints": "auto",
+              "drawStyle": "bars"
+            }
+          }
+        }
+      },
+      {
+        "id": 11,
+        "title": "Per-Tenant Error Rates",
+        "type": "table",
+        "gridPos": {"x": 0, "y": 30, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "SELECT tenant_subdomain, ROUND(AVG(error_rate_pct), 2) as avg_error_rate, SUM(error_count) as total_errors FROM monitoring.tenant_activity WHERE measured_at > NOW() - INTERVAL '1 hour' GROUP BY tenant_subdomain ORDER BY avg_error_rate DESC",
+            "format": "table",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "custom": {
+              "align": "auto",
+              "displayMode": "auto"
+            }
+          }
+        }
+      },
+      {
+        "id": 12,
+        "title": "Schema Storage Size by Tenant",
+        "type": "barchart",
+        "gridPos": {"x": 12, "y": 30, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "SELECT tenant_subdomain, MAX(schema_size_mb) as size_mb FROM monitoring.tenant_activity WHERE measured_at > (SELECT MAX(measured_at) - INTERVAL '5 minutes' FROM monitoring.tenant_activity) GROUP BY tenant_subdomain ORDER BY size_mb DESC LIMIT 20",
+            "format": "table",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "mbytes",
+            "custom": {
+              "orientation": "horizontal"
+            }
+          }
+        }
+      }
+    ],
+    "annotations": {
+      "list": [
+        {
+          "name": "Tenant Isolation Violations",
+          "datasource": "PostgreSQL",
+          "enable": true,
+          "iconColor": "red",
+          "query": "SELECT detected_at as time, tenant_subdomain as text, event_type as tags FROM monitoring.security_events WHERE event_type = 'cross_tenant_query' AND detected_at > NOW() - INTERVAL '24 hours'"
+        }
+      ]
+    }
+  },
+  "overwrite": true
+}

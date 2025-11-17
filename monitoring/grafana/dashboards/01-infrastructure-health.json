@@ -1,0 +1,306 @@
+{
+  "dashboard": {
+    "id": null,
+    "uid": "hrms-infrastructure",
+    "title": "HRMS Infrastructure Health - Fortune 50",
+    "tags": ["infrastructure", "database", "postgresql", "fortune50"],
+    "timezone": "browser",
+    "schemaVersion": 36,
+    "version": 1,
+    "refresh": "30s",
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "panels": [
+      {
+        "id": 1,
+        "title": "Database Cache Hit Rate",
+        "type": "gauge",
+        "gridPos": {"x": 0, "y": 0, "w": 6, "h": 8},
+        "targets": [
+          {
+            "expr": "SELECT cache_hit_rate FROM monitoring.performance_metrics ORDER BY captured_at DESC LIMIT 1",
+            "format": "time_series",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent",
+            "min": 0,
+            "max": 100,
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "red"},
+                {"value": 90, "color": "yellow"},
+                {"value": 95, "color": "green"}
+              ]
+            }
+          }
+        },
+        "options": {
+          "showThresholdLabels": true,
+          "showThresholdMarkers": true
+        }
+      },
+      {
+        "id": 2,
+        "title": "Active Database Connections",
+        "type": "timeseries",
+        "gridPos": {"x": 6, "y": 0, "w": 9, "h": 8},
+        "targets": [
+          {
+            "expr": "SELECT captured_at as time, active_connections FROM monitoring.performance_metrics WHERE captured_at > NOW() - INTERVAL '1 hour' ORDER BY captured_at",
+            "format": "time_series",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short",
+            "color": {"mode": "palette-classic"},
+            "custom": {
+              "lineWidth": 2,
+              "fillOpacity": 10,
+              "showPoints": "never"
+            }
+          }
+        }
+      },
+      {
+        "id": 3,
+        "title": "Connection Pool Utilization",
+        "type": "gauge",
+        "gridPos": {"x": 15, "y": 0, "w": 6, "h": 8},
+        "targets": [
+          {
+            "expr": "SELECT connection_utilization_pct FROM monitoring.performance_metrics ORDER BY captured_at DESC LIMIT 1",
+            "format": "time_series",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent",
+            "min": 0,
+            "max": 100,
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "green"},
+                {"value": 70, "color": "yellow"},
+                {"value": 85, "color": "red"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 4,
+        "title": "Query Performance (p95 & p99)",
+        "type": "timeseries",
+        "gridPos": {"x": 0, "y": 8, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "SELECT captured_at as time, p95_query_time_ms as p95, p99_query_time_ms as p99 FROM monitoring.performance_metrics WHERE captured_at > NOW() - INTERVAL '1 hour' ORDER BY captured_at",
+            "format": "time_series",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "ms",
+            "color": {"mode": "palette-classic"},
+            "custom": {
+              "lineWidth": 2,
+              "fillOpacity": 0,
+              "showPoints": "never"
+            }
+          },
+          "overrides": [
+            {
+              "matcher": {"id": "byName", "options": "p95"},
+              "properties": [{"id": "color", "value": {"fixedColor": "blue"}}]
+            },
+            {
+              "matcher": {"id": "byName", "options": "p99"},
+              "properties": [{"id": "color", "value": {"fixedColor": "orange"}}]
+            }
+          ]
+        }
+      },
+      {
+        "id": 5,
+        "title": "Slow Queries (>100ms)",
+        "type": "stat",
+        "gridPos": {"x": 12, "y": 8, "w": 6, "h": 8},
+        "targets": [
+          {
+            "expr": "SELECT slow_queries_count FROM monitoring.performance_metrics ORDER BY captured_at DESC LIMIT 1",
+            "format": "time_series",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short",
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "green"},
+                {"value": 5, "color": "yellow"},
+                {"value": 10, "color": "red"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 6,
+        "title": "Disk I/O vs Cache Performance",
+        "type": "timeseries",
+        "gridPos": {"x": 0, "y": 16, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "SELECT captured_at as time, blocks_read as disk_reads, blocks_hit as cache_hits FROM monitoring.performance_metrics WHERE captured_at > NOW() - INTERVAL '1 hour' ORDER BY captured_at",
+            "format": "time_series",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short",
+            "custom": {
+              "lineWidth": 2,
+              "fillOpacity": 10,
+              "showPoints": "never",
+              "drawStyle": "line"
+            }
+          }
+        }
+      },
+      {
+        "id": 7,
+        "title": "Top 10 Slowest Queries",
+        "type": "table",
+        "gridPos": {"x": 12, "y": 16, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "SELECT query, avg_time_ms, calls FROM monitoring.get_slow_queries(10)",
+            "format": "table",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "custom": {
+              "align": "auto",
+              "displayMode": "auto"
+            }
+          },
+          "overrides": [
+            {
+              "matcher": {"id": "byName", "options": "query"},
+              "properties": [{"id": "custom.width", "value": 400}]
+            }
+          ]
+        }
+      },
+      {
+        "id": 8,
+        "title": "Rollback Rate",
+        "type": "timeseries",
+        "gridPos": {"x": 0, "y": 24, "w": 8, "h": 6},
+        "targets": [
+          {
+            "expr": "SELECT captured_at as time, rollback_rate_pct FROM monitoring.performance_metrics WHERE captured_at > NOW() - INTERVAL '1 hour' ORDER BY captured_at",
+            "format": "time_series",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent",
+            "color": {"mode": "thresholds"},
+            "custom": {
+              "lineWidth": 2,
+              "fillOpacity": 20
+            },
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "green"},
+                {"value": 1, "color": "yellow"},
+                {"value": 5, "color": "red"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 9,
+        "title": "Active Tenant Count",
+        "type": "stat",
+        "gridPos": {"x": 8, "y": 24, "w": 4, "h": 6},
+        "targets": [
+          {
+            "expr": "SELECT active_tenant_count FROM monitoring.performance_metrics ORDER BY captured_at DESC LIMIT 1",
+            "format": "time_series",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short",
+            "color": {"mode": "value"},
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "blue"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 10,
+        "title": "Total Tenant Count",
+        "type": "stat",
+        "gridPos": {"x": 12, "y": 24, "w": 4, "h": 6},
+        "targets": [
+          {
+            "expr": "SELECT total_tenant_count FROM monitoring.performance_metrics ORDER BY captured_at DESC LIMIT 1",
+            "format": "time_series",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short",
+            "color": {"mode": "value"},
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "purple"}
+              ]
+            }
+          }
+        }
+      }
+    ],
+    "annotations": {
+      "list": [
+        {
+          "name": "Alerts",
+          "datasource": "PostgreSQL",
+          "enable": true,
+          "iconColor": "red",
+          "query": "SELECT triggered_at as time, alert_name as text, severity as tags FROM monitoring.alert_history WHERE triggered_at > NOW() - INTERVAL '24 hours'"
+        }
+      ]
+    }
+  },
+  "overwrite": true
+}

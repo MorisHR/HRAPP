@@ -1,27 +1,18 @@
 import { Component, OnInit, signal, inject } from '@angular/core';
-
+import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { MatCardModule } from '@angular/material/card';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { MatDividerModule } from '@angular/material/divider';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatTableModule } from '@angular/material/table';
 import { PayrollService } from '../../../core/services/payroll.service';
 import { Payslip, formatCurrency } from '../../../core/models/payroll.model';
+import { UiModule } from '../../../shared/ui/ui.module';
 
 @Component({
   selector: 'app-payslip-detail',
   standalone: true,
   imports: [
     RouterModule,
-    MatCardModule,
-    MatButtonModule,
-    MatIconModule,
-    MatDividerModule,
-    MatProgressSpinnerModule,
-    MatTableModule
-],
+    CommonModule,
+    UiModule
+  ],
   templateUrl: './payslip-detail.component.html',
   styleUrl: './payslip-detail.component.scss'
 })

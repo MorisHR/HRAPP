@@ -1,9 +1,6 @@
 import { Component, signal, inject, OnInit } from '@angular/core';
-
 import { Router, ActivatedRoute, RouterModule } from '@angular/router';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
-import { MatCardModule } from '@angular/material/card';
-import { MatIconModule } from '@angular/material/icon';
 import { EmployeeService } from '../../../core/services/employee.service';
 import { CreateEmployeeRequest } from '../../../core/models/employee.model';
 import { UiModule } from '../../../shared/ui/ui.module';
@@ -14,23 +11,23 @@ import { UiModule } from '../../../shared/ui/ui.module';
   imports: [
     ReactiveFormsModule,
     RouterModule,
-    MatCardModule,
-    MatIconModule,
     UiModule
-],
+  ],
   template: `
     <div class="employee-form-container">
-      <mat-card>
-        <mat-card-header>
-          <button mat-icon-button routerLink="/tenant/employees" class="back-button">
-            <mat-icon>arrow_back</mat-icon>
-          </button>
-          <mat-card-title>
-            <h1>{{ isEditMode() ? 'Edit Employee' : 'Add New Employee' }}</h1>
-          </mat-card-title>
-        </mat-card-header>
+      <app-card>
+        <div class="card-header">
+          <app-button
+            variant="ghost"
+            size="small"
+            routerLink="/tenant/employees"
+            class="back-button">
+            <app-icon name="arrow_back"></app-icon>
+          </app-button>
+          <h1>{{ isEditMode() ? 'Edit Employee' : 'Add New Employee' }}</h1>
+        </div>
 
-        <mat-card-content>
+        <div class="card-content">
           <form [formGroup]="employeeForm" (ngSubmit)="onSubmit()">
             <div class="form-grid">
               <!-- Basic Information -->
@@ -100,7 +97,7 @@ import { UiModule } from '../../../shared/ui/ui.module';
 
               @if (error()) {
                 <div class="error-message full-width">
-                  <mat-icon>error</mat-icon>
+                  <app-icon name="error"></app-icon>
                   <span>{{ error() }}</span>
                 </div>
               }
@@ -122,8 +119,8 @@ import { UiModule } from '../../../shared/ui/ui.module';
               </div>
             </div>
           </form>
-        </mat-card-content>
-      </mat-card>
+        </div>
+      </app-card>
     </div>
     `,
   styles: [`
@@ -133,15 +130,27 @@ import { UiModule } from '../../../shared/ui/ui.module';
       margin: 0 auto;
     }
 
-    mat-card-header {
+    .card-header {
       display: flex;
       align-items: center;
       gap: 16px;
       margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    .card-header h1 {
+      margin: 0;
+      font-size: 24px;
+      font-weight: 500;
     }
 
     .back-button {
       margin-right: 8px;
+    }
+
+    .card-content {
+      padding-top: 24px;
     }
 
     .form-grid {
@@ -177,11 +186,6 @@ import { UiModule } from '../../../shared/ui/ui.module';
       color: #c62828;
       border-radius: 4px;
 
-      mat-icon {
-        font-size: 20px;
-        width: 20px;
-        height: 20px;
-      }
     }
 
     .form-actions {
@@ -191,11 +195,6 @@ import { UiModule } from '../../../shared/ui/ui.module';
       margin-top: 24px;
       padding-top: 24px;
       border-top: 1px solid #e0e0e0;
-    }
-
-    mat-spinner {
-      display: inline-block;
-      margin-right: 8px;
     }
   `]
 })

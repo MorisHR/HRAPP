@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("HRMS.BackgroundJobs")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+4d778df52f6be618023e38947610c0834f4e949e")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+5ac2a1e9f5705b7f0bf83a14065206a857846b39")]
 [assembly: System.Reflection.AssemblyProductAttribute("HRMS.BackgroundJobs")]
 [assembly: System.Reflection.AssemblyTitleAttribute("HRMS.BackgroundJobs")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

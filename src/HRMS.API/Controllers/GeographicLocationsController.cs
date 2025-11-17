@@ -11,7 +11,7 @@ namespace HRMS.API.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/[controller]")]
-[AllowAnonymous] // Geographic reference data is public
+[Authorize] // Secure by default - geographic reference data requires authentication
 public class GeographicLocationsController : ControllerBase
 {
     private readonly IGeographicLocationService _service;

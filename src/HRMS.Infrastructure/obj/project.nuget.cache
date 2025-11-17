@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "3aIctBvcdLs=",
+  "dgSpecHash": "Lj+QITupLw0=",
   "success": true,
   "projectFilePath": "/workspaces/HRAPP/src/HRMS.Infrastructure/HRMS.Infrastructure.csproj",
   "expectedPackageFiles": [
@@ -92,10 +92,12 @@
     "/home/codespace/.nuget/packages/npgsql/9.0.3/npgsql.9.0.3.nupkg.sha512",
     "/home/codespace/.nuget/packages/npgsql.entityframeworkcore.postgresql/9.0.4/npgsql.entityframeworkcore.postgresql.9.0.4.nupkg.sha512",
     "/home/codespace/.nuget/packages/otp.net/1.4.0/otp.net.1.4.0.nupkg.sha512",
+    "/home/codespace/.nuget/packages/pipelines.sockets.unofficial/2.2.8/pipelines.sockets.unofficial.2.2.8.nupkg.sha512",
     "/home/codespace/.nuget/packages/qrcoder/1.7.0/qrcoder.1.7.0.nupkg.sha512",
     "/home/codespace/.nuget/packages/questpdf/2025.7.3/questpdf.2025.7.3.nupkg.sha512",
     "/home/codespace/.nuget/packages/rbush.signed/4.0.0/rbush.signed.4.0.0.nupkg.sha512",
     "/home/codespace/.nuget/packages/sixlabors.fonts/1.0.0/sixlabors.fonts.1.0.0.nupkg.sha512",
+    "/home/codespace/.nuget/packages/stackexchange.redis/2.7.10/stackexchange.redis.2.7.10.nupkg.sha512",
     "/home/codespace/.nuget/packages/system.buffers/4.5.0/system.buffers.4.5.0.nupkg.sha512",
     "/home/codespace/.nuget/packages/system.codedom/7.0.0/system.codedom.7.0.0.nupkg.sha512",
     "/home/codespace/.nuget/packages/system.collections.immutable/7.0.0/system.collections.immutable.7.0.0.nupkg.sha512",

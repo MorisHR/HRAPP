@@ -579,6 +579,114 @@ namespace HRMS.Infrastructure.Data.Migrations.Master
                     b.ToTable("Districts", "master");
                 });
 
+            modelBuilder.Entity("HRMS.Core.Entities.Master.FeatureFlag", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DeletedBy")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasComment("Feature description for documentation");
+
+                    b.Property<DateTime?>("EmergencyDisabledAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasComment("Emergency rollback timestamp");
+
+                    b.Property<string>("EmergencyDisabledBy")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasComment("SuperAdmin who triggered emergency rollback");
+
+                    b.Property<string>("EmergencyDisabledReason")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)")
+                        .HasComment("Reason for emergency rollback (audit trail)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsEmergencyDisabled")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasComment("Emergency rollback flag for quick disable");
+
+                    b.Property<bool>("IsEnabled")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasComment("Whether feature is enabled (default FALSE for safety)");
+
+                    b.Property<string>("MinimumTier")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasComment("Minimum tier required (NULL = all tiers)");
+
+                    b.Property<string>("Module")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasComment("Module name (auth, dashboard, employees, payroll, etc.)");
+
+                    b.Property<int>("RolloutPercentage")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasComment("Rollout percentage 0-100 (0=disabled, 100=fully enabled)");
+
+                    b.Property<string>("Tags")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasComment("Tags for categorization (comma-separated)");
+
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasComment("Tenant ID (NULL = global default, NON-NULL = tenant override)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("IsEmergencyDisabled")
+                        .HasDatabaseName("IX_FeatureFlags_IsEmergencyDisabled");
+
+                    b.HasIndex("IsEnabled")
+                        .HasDatabaseName("IX_FeatureFlags_IsEnabled");
+
+                    b.HasIndex("Module")
+                        .HasDatabaseName("IX_FeatureFlags_Module");
+
+                    b.HasIndex("TenantId")
+                        .HasDatabaseName("IX_FeatureFlags_TenantId");
+
+                    b.HasIndex("TenantId", "Module")
+                        .IsUnique()
+                        .HasDatabaseName("IX_FeatureFlags_TenantId_Module");
+
+                    b.ToTable("FeatureFlags", "master", t =>
+                        {
+                            t.HasComment("Fortune 500 feature flag system for per-tenant control. Enables canary deployment, gradual rollout, emergency rollback, A/B testing. NULL TenantId = global default, NON-NULL = tenant override.");
+                        });
+                });
+
             modelBuilder.Entity("HRMS.Core.Entities.Master.IndustrySector", b =>
                 {
                     b.Property<int>("Id")
@@ -1736,6 +1844,16 @@ namespace HRMS.Infrastructure.Data.Migrations.Master
                         .IsUnique();
 
                     b.ToTable("Villages", "master");
+                });
+
+            modelBuilder.Entity("HRMS.Core.Entities.Master.FeatureFlag", b =>
+                {
+                    b.HasOne("HRMS.Core.Entities.Master.Tenant", "Tenant")
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.Navigation("Tenant");
                 });
 
             modelBuilder.Entity("HRMS.Core.Entities.Master.IndustrySector", b =>

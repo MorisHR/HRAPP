@@ -27,6 +27,11 @@ export interface Tenant {
   daysUntilHardDelete?: number;
   adminUserName: string;
   adminEmail: string;
+  // FORTUNE 500 PATTERN: Industry sector
+  sectorId?: number;
+  sectorCode?: string;
+  sectorName?: string;
+  sectorSelectedAt?: string;
 }
 
 export enum IndustrySector {

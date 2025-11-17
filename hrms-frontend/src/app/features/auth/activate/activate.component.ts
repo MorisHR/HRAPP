@@ -1,13 +1,13 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../environments/environment';
+import { ButtonComponent } from '../../../shared/ui/components/button/button';
 
 @Component({
   selector: 'app-activate',
   standalone: true,
-  imports: [],
+  imports: [ButtonComponent],
   templateUrl: './activate.component.html',
   styleUrls: ['./activate.component.scss']
 })
@@ -59,6 +59,10 @@ export class ActivateComponent implements OnInit {
 
   goToLogin() {
     this.router.navigate(['/auth/subdomain']);
+  }
+
+  goToResendActivation() {
+    this.router.navigate(['/auth/resend-activation']);
   }
 
   contactSupport() {

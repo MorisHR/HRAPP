@@ -23,16 +23,19 @@ public class AuditLogService : IAuditLogService
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly ILogger<AuditLogService> _logger;
     private readonly ISecurityAlertingService? _securityAlertingService;
+    private readonly AuditLogQueueService _queueService;
 
     public AuditLogService(
         MasterDbContext context,
         IHttpContextAccessor httpContextAccessor,
         ILogger<AuditLogService> logger,
+        AuditLogQueueService queueService,
         ISecurityAlertingService? securityAlertingService = null)
     {
         _context = context;
         _httpContextAccessor = httpContextAccessor;
         _logger = logger;
+        _queueService = queueService;
         _securityAlertingService = securityAlertingService;
     }
 
@@ -56,44 +59,58 @@ public class AuditLogService : IAuditLogService
                 log.PerformedAt = DateTime.UtcNow;
             }
 
-            // Add to database
-            _context.AuditLogs.Add(log);
-            await _context.SaveChangesAsync();
+            // FORTUNE 500 PATTERN: Queue audit log for async processing
+            // This is fast (microseconds) and doesn't block the request
+            var queued = await _queueService.QueueAuditLogAsync(log);
 
-            _logger.LogInformation(
-                "Audit log created: {ActionType} by {UserEmail} on {EntityType} {EntityId}",
-                log.ActionType, log.UserEmail, log.EntityType, log.EntityId);
+            if (!queued)
+            {
+                _logger.LogError("Failed to queue audit log: {ActionType}", log.ActionType);
+                // Fallback: Log to DB synchronously (should rarely happen)
+                _context.AuditLogs.Add(log);
+                await _context.SaveChangesAsync();
+            }
+            else
+            {
+                _logger.LogDebug(
+                    "Audit log queued: {ActionType} by {UserEmail} on {EntityType} {EntityId}",
+                    log.ActionType, log.UserEmail, log.EntityType, log.EntityId);
+            }
 
-            // PHASE 2: Check if security alert should be triggered
+            // PHASE 2: Security alerting (fire-and-forget, runs in background)
+            // This doesn't block the request either
             if (_securityAlertingService != null)
             {
-                try
+                _ = Task.Run(async () =>
                 {
-                    var (shouldAlert, alertType, riskScore) = await _securityAlertingService.ShouldTriggerAlertAsync(log);
-
-                    if (shouldAlert && alertType.HasValue)
+                    try
                     {
-                        _logger.LogWarning(
-                            "Security alert triggered: {AlertType} for audit log {AuditLogId} (Risk Score: {RiskScore})",
-                            alertType.Value, log.Id, riskScore);
+                        var (shouldAlert, alertType, riskScore) = await _securityAlertingService.ShouldTriggerAlertAsync(log);
 
-                        // Create security alert based on type
-                        await _securityAlertingService.CreateAlertFromAuditLogAsync(
-                            log,
-                            alertType.Value,
-                            $"Security Alert: {alertType.Value}",
-                            $"Suspicious activity detected: {log.ActionType} by {log.UserEmail ?? "Unknown User"}",
-                            riskScore,
-                            $"Review audit log {log.Id} for details. Investigate user activity and take appropriate action.",
-                            sendNotifications: true
-                        );
+                        if (shouldAlert && alertType.HasValue)
+                        {
+                            _logger.LogWarning(
+                                "Security alert triggered: {AlertType} for audit log {AuditLogId} (Risk Score: {RiskScore})",
+                                alertType.Value, log.Id, riskScore);
+
+                            // Create security alert based on type
+                            await _securityAlertingService.CreateAlertFromAuditLogAsync(
+                                log,
+                                alertType.Value,
+                                $"Security Alert: {alertType.Value}",
+                                $"Suspicious activity detected: {log.ActionType} by {log.UserEmail ?? "Unknown User"}",
+                                riskScore,
+                                $"Review audit log {log.Id} for details. Investigate user activity and take appropriate action.",
+                                sendNotifications: true
+                            );
+                        }
                     }
-                }
-                catch (Exception ex)
-                {
-                    // Don't fail audit logging if alerting fails
-                    _logger.LogError(ex, "Failed to trigger security alert for audit log {AuditLogId}", log.Id);
-                }
+                    catch (Exception ex)
+                    {
+                        // Don't fail audit logging if alerting fails
+                        _logger.LogError(ex, "Failed to trigger security alert for audit log {AuditLogId}", log.Id);
+                    }
+                });
             }
 
             return log;

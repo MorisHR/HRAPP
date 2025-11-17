@@ -27,6 +27,7 @@ public class TenantsController : ControllerBase
     private readonly IEmailService _emailService;
     private readonly IConfiguration _configuration;
     private readonly IAuditLogService _auditLogService;
+    private readonly IRateLimitService _rateLimitService;
 
     public TenantsController(
         TenantManagementService tenantManagementService,
@@ -34,7 +35,8 @@ public class TenantsController : ControllerBase
         ILogger<TenantsController> logger,
         IEmailService emailService,
         IConfiguration configuration,
-        IAuditLogService auditLogService)
+        IAuditLogService auditLogService,
+        IRateLimitService rateLimitService)
     {
         _tenantManagementService = tenantManagementService;
         _context = context;
@@ -42,6 +44,7 @@ public class TenantsController : ControllerBase
         _emailService = emailService;
         _configuration = configuration;
         _auditLogService = auditLogService;
+        _rateLimitService = rateLimitService;
     }
 
     /// <summary>
@@ -328,6 +331,271 @@ public class TenantsController : ControllerBase
             _logger.LogError(ex, "Error activating tenant");
             return StatusCode(500, new { success = false, message = "Activation failed. Please try again." });
         }
+    }
+
+    /// <summary>
+    /// Resend activation email for a pending tenant
+    /// FORTUNE 500 PATTERN: Rate-limited (3 per hour), audit-logged, multi-tenant secure
+    /// PUBLIC ENDPOINT: No authentication required (allows users to request resend)
+    /// SECURITY: IP-based + tenant-based rate limiting, comprehensive audit trail
+    /// </summary>
+    [HttpPost("resend-activation")]
+    [AllowAnonymous]
+    public async Task<IActionResult> ResendActivationEmail([FromBody] ResendActivationRequest request)
+    {
+        var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+        var userAgent = Request.Headers["User-Agent"].ToString();
+
+        try
+        {
+            // STEP 1: VALIDATION - Input validation
+            if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Subdomain))
+            {
+                _logger.LogWarning("Resend activation attempt with missing email or subdomain. IP: {IpAddress}", ipAddress);
+                return BadRequest(new { success = false, message = "Email and subdomain are required" });
+            }
+
+            // STEP 2: TENANT LOOKUP - Find tenant by subdomain
+            var tenant = await _context.Tenants
+                .FirstOrDefaultAsync(t => t.Subdomain == request.Subdomain.ToLower().Trim() && !t.IsDeleted);
+
+            if (tenant == null)
+            {
+                // SECURITY: Generic error message (don't reveal tenant existence)
+                _logger.LogWarning("Resend activation attempt for non-existent subdomain: {Subdomain}. IP: {IpAddress}",
+                    request.Subdomain, ipAddress);
+
+                // Log failed attempt to ActivationResendLogs
+                await LogActivationResendAttemptAsync(Guid.Empty, request.Email, ipAddress, userAgent,
+                    success: false, failureReason: "Tenant not found");
+
+                return NotFound(new { success = false, message = "No pending activation found for this email and company" });
+            }
+
+            // STEP 3: EMAIL VERIFICATION - Must match tenant contact email
+            if (!string.Equals(tenant.ContactEmail, request.Email, StringComparison.OrdinalIgnoreCase))
+            {
+                _logger.LogWarning("Resend activation attempt with mismatched email. Subdomain: {Subdomain}, ProvidedEmail: {Email}, ActualEmail: {ContactEmail}. IP: {IpAddress}",
+                    request.Subdomain, request.Email, tenant.ContactEmail, ipAddress);
+
+                await LogActivationResendAttemptAsync(tenant.Id, request.Email, ipAddress, userAgent,
+                    success: false, failureReason: "Email mismatch");
+
+                return BadRequest(new { success = false, message = "Email does not match company registration" });
+            }
+
+            // STEP 4: STATUS CHECK - Tenant must be in Pending status
+            if (tenant.Status != TenantStatus.Pending)
+            {
+                _logger.LogInformation("Resend activation attempt for non-pending tenant: {Subdomain}, Status: {Status}. IP: {IpAddress}",
+                    tenant.Subdomain, tenant.Status, ipAddress);
+
+                await LogActivationResendAttemptAsync(tenant.Id, request.Email, ipAddress, userAgent,
+                    success: false, failureReason: $"Tenant already {tenant.Status}");
+
+                return BadRequest(new {
+                    success = false,
+                    message = tenant.Status == TenantStatus.Active
+                        ? "This company is already activated. Please proceed to login."
+                        : "This company cannot receive activation emails in its current status."
+                });
+            }
+
+            // STEP 5: RATE LIMITING - Check tenant-based rate limit (3 per hour per tenant)
+            var tenantRateLimitKey = $"activation_resend:tenant:{tenant.Id}";
+            var tenantRateLimit = await _rateLimitService.CheckRateLimitAsync(
+                tenantRateLimitKey,
+                limit: 3,
+                window: TimeSpan.FromHours(1)
+            );
+
+            if (!tenantRateLimit.IsAllowed)
+            {
+                _logger.LogWarning("Resend activation rate limit exceeded for tenant: {Subdomain}. Count: {Count}/{Limit}. IP: {IpAddress}",
+                    tenant.Subdomain, tenantRateLimit.CurrentCount, tenantRateLimit.Limit, ipAddress);
+
+                await LogActivationResendAttemptAsync(tenant.Id, request.Email, ipAddress, userAgent,
+                    success: false, failureReason: $"Rate limit exceeded ({tenantRateLimit.CurrentCount}/{tenantRateLimit.Limit} in last hour)",
+                    wasRateLimited: true, resendCountLastHour: tenantRateLimit.CurrentCount);
+
+                return StatusCode(429, new {
+                    success = false,
+                    message = $"Too many resend requests. Please wait {tenantRateLimit.RetryAfterSeconds / 60} minutes before trying again.",
+                    retryAfterSeconds = tenantRateLimit.RetryAfterSeconds,
+                    currentCount = tenantRateLimit.CurrentCount,
+                    limit = tenantRateLimit.Limit
+                });
+            }
+
+            // STEP 6: IP-BASED RATE LIMITING - Prevent IP-based abuse (10 per hour per IP)
+            var ipRateLimitKey = $"activation_resend:ip:{ipAddress}";
+            var ipRateLimit = await _rateLimitService.CheckRateLimitAsync(
+                ipRateLimitKey,
+                limit: 10,
+                window: TimeSpan.FromHours(1)
+            );
+
+            if (!ipRateLimit.IsAllowed)
+            {
+                _logger.LogWarning("Resend activation IP rate limit exceeded. IP: {IpAddress}. Count: {Count}/{Limit}",
+                    ipAddress, ipRateLimit.CurrentCount, ipRateLimit.Limit);
+
+                await LogActivationResendAttemptAsync(tenant.Id, request.Email, ipAddress, userAgent,
+                    success: false, failureReason: $"IP rate limit exceeded ({ipRateLimit.CurrentCount}/{ipRateLimit.Limit} in last hour)",
+                    wasRateLimited: true, resendCountLastHour: ipRateLimit.CurrentCount);
+
+                // Auto-blacklist if excessive attempts
+                if (ipRateLimit.CurrentCount > 20)
+                {
+                    await _rateLimitService.BlacklistIpAsync(ipAddress, TimeSpan.FromHours(24), "Excessive activation resend attempts");
+                    _logger.LogWarning("IP blacklisted for 24 hours due to excessive resend attempts: {IpAddress}", ipAddress);
+                }
+
+                return StatusCode(429, new {
+                    success = false,
+                    message = "Too many requests from your IP address. Please try again later."
+                });
+            }
+
+            // STEP 7: TOKEN GENERATION - Generate new activation token
+            var newToken = Guid.NewGuid().ToString("N"); // 32-char hex string
+            var tokenExpiry = DateTime.UtcNow.AddHours(24);
+
+            tenant.ActivationToken = newToken;
+            tenant.ActivationTokenExpiry = tokenExpiry;
+            tenant.UpdatedAt = DateTime.UtcNow;
+            tenant.UpdatedBy = $"system_resend_{ipAddress}";
+
+            await _context.SaveChangesAsync();
+
+            _logger.LogInformation("New activation token generated for tenant: {Subdomain}. Expires: {Expiry}",
+                tenant.Subdomain, tokenExpiry);
+
+            // STEP 8: SEND ACTIVATION EMAIL
+            var emailSent = await _emailService.SendTenantActivationEmailAsync(
+                tenant.ContactEmail,
+                tenant.CompanyName,
+                newToken,
+                tenant.AdminFirstName
+            );
+
+            if (!emailSent)
+            {
+                _logger.LogError("Failed to send activation email to: {Email}. Subdomain: {Subdomain}",
+                    tenant.ContactEmail, tenant.Subdomain);
+
+                await LogActivationResendAttemptAsync(tenant.Id, request.Email, ipAddress, userAgent,
+                    success: false, failureReason: "Email send failed",
+                    tokenGenerated: newToken.Substring(0, 8), tokenExpiry: tokenExpiry,
+                    emailDelivered: false, emailSendError: "SMTP delivery failure");
+
+                return StatusCode(500, new { success = false, message = "Failed to send activation email. Please try again or contact support." });
+            }
+
+            // STEP 9: LOG SUCCESS TO ACTIVATION RESEND LOGS
+            await LogActivationResendAttemptAsync(tenant.Id, request.Email, ipAddress, userAgent,
+                success: true, tokenGenerated: newToken.Substring(0, 8), tokenExpiry: tokenExpiry,
+                emailDelivered: true, resendCountLastHour: tenantRateLimit.CurrentCount + 1);
+
+            _logger.LogInformation("Activation email resent successfully. Subdomain: {Subdomain}, Email: {Email}, IP: {IpAddress}",
+                tenant.Subdomain, tenant.ContactEmail, ipAddress);
+
+            return Ok(new {
+                success = true,
+                message = "Activation email sent successfully! Please check your inbox and spam folder.",
+                expiresIn = "24 hours",
+                remainingAttempts = tenantRateLimit.Limit - (tenantRateLimit.CurrentCount + 1)
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error processing resend activation request. Subdomain: {Subdomain}, IP: {IpAddress}",
+                request.Subdomain, ipAddress);
+
+            return StatusCode(500, new { success = false, message = "An error occurred. Please try again later." });
+        }
+    }
+
+    /// <summary>
+    /// FORTUNE 500 PATTERN: Audit logging helper for activation resend attempts
+    /// Logs all attempts (success + failure) to ActivationResendLogs table
+    /// Enables rate limit enforcement, security monitoring, GDPR compliance
+    /// </summary>
+    private async Task LogActivationResendAttemptAsync(
+        Guid tenantId,
+        string requestedByEmail,
+        string ipAddress,
+        string userAgent,
+        bool success,
+        string? failureReason = null,
+        string? tokenGenerated = null,
+        DateTime? tokenExpiry = null,
+        bool emailDelivered = false,
+        string? emailSendError = null,
+        bool wasRateLimited = false,
+        int resendCountLastHour = 0)
+    {
+        try
+        {
+            var log = new HRMS.Core.Entities.Master.ActivationResendLog
+            {
+                Id = Guid.NewGuid(),
+                TenantId = tenantId == Guid.Empty ? Guid.NewGuid() : tenantId, // Temp ID for non-existent tenants
+                RequestedAt = DateTime.UtcNow,
+                RequestedFromIp = ipAddress,
+                RequestedByEmail = requestedByEmail,
+                TokenGenerated = tokenGenerated,
+                TokenExpiry = tokenExpiry ?? DateTime.UtcNow.AddHours(24),
+                Success = success,
+                FailureReason = failureReason,
+                UserAgent = userAgent,
+                DeviceInfo = ParseDeviceInfo(userAgent),
+                Geolocation = "Unknown", // Can integrate with geolocation service later
+                EmailDelivered = emailDelivered,
+                EmailSendError = emailSendError,
+                ResendCountLastHour = resendCountLastHour,
+                WasRateLimited = wasRateLimited,
+                CreatedAt = DateTime.UtcNow,
+                CreatedBy = $"system_resend_{ipAddress}",
+                IsDeleted = false
+            };
+
+            _context.ActivationResendLogs.Add(log);
+            await _context.SaveChangesAsync();
+        }
+        catch (Exception ex)
+        {
+            // Log error but don't fail the request
+            _logger.LogError(ex, "Failed to log activation resend attempt to database. TenantId: {TenantId}", tenantId);
+        }
+    }
+
+    /// <summary>
+    /// Parse device information from user agent string
+    /// Fortune 500 pattern: Device fingerprinting for fraud detection
+    /// </summary>
+    private string ParseDeviceInfo(string userAgent)
+    {
+        if (string.IsNullOrWhiteSpace(userAgent))
+            return "Unknown";
+
+        userAgent = userAgent.ToLower();
+
+        // Mobile detection
+        if (userAgent.Contains("mobile") || userAgent.Contains("android") || userAgent.Contains("iphone"))
+        {
+            if (userAgent.Contains("android")) return "Mobile - Android";
+            if (userAgent.Contains("iphone") || userAgent.Contains("ipad")) return "Mobile - iOS";
+            return "Mobile - Unknown";
+        }
+
+        // Desktop detection
+        if (userAgent.Contains("chrome")) return "Desktop - Chrome";
+        if (userAgent.Contains("firefox")) return "Desktop - Firefox";
+        if (userAgent.Contains("safari")) return "Desktop - Safari";
+        if (userAgent.Contains("edge")) return "Desktop - Edge";
+
+        return "Unknown";
     }
 
     /// <summary>

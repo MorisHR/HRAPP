@@ -67,7 +67,7 @@ public class SuperAdminPermissionService : ISuperAdminPermissionService
                     superAdminId, adminUser.Email, permission);
 
                 // Audit log: Permission denied
-                _ = _auditLogService.LogSecurityEventAsync(
+                await _auditLogService.LogSecurityEventAsync(
                     AuditActionType.ACCESS_DENIED,
                     AuditSeverity.WARNING,
                     superAdminId,

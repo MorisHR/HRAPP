@@ -36,8 +36,35 @@ public class RateLimitService : IRateLimitService
     // In-memory cache for blacklist (performance optimization)
     private readonly ConcurrentDictionary<string, DateTime> _blacklistCache = new();
 
-    // In-memory cache for violation tracking
-    private readonly ConcurrentDictionary<string, List<DateTime>> _violationTracker = new();
+    // CONCURRENCY FIX: Use thread-safe data structure for violation tracking
+    // Each IP has its own lock object and violation list
+    private readonly ConcurrentDictionary<string, ViolationTracker> _violationTracker = new();
+
+    // Thread-safe violation tracker wrapper
+    private class ViolationTracker
+    {
+        private readonly SemaphoreSlim _lock = new SemaphoreSlim(1, 1);
+        private readonly List<DateTime> _violations = new();
+
+        public async Task<int> RecordViolationAsync(DateTime timestamp, TimeSpan window, int threshold)
+        {
+            await _lock.WaitAsync();
+            try
+            {
+                // Remove old violations outside the window
+                _violations.RemoveAll(v => v < timestamp.Subtract(window));
+
+                // Add new violation
+                _violations.Add(timestamp);
+
+                return _violations.Count;
+            }
+            finally
+            {
+                _lock.Release();
+            }
+        }
+    }
 
     public RateLimitService(
         IOptions<RateLimitSettings> settings,
@@ -173,7 +200,7 @@ public class RateLimitService : IRateLimitService
                 ipAddress, duration.TotalMinutes, reason);
 
             // FORTUNE 500: Audit logging
-            _ = _auditLogService.LogSecurityEventAsync(
+            await _auditLogService.LogSecurityEventAsync(
                 AuditActionType.UNAUTHORIZED_ACCESS_ATTEMPT,
                 AuditSeverity.CRITICAL,
                 null,
@@ -274,7 +301,7 @@ public class RateLimitService : IRateLimitService
             _logger.LogInformation("IP address {IpAddress} removed from blacklist", ipAddress);
 
             // Audit logging
-            _ = _auditLogService.LogSecurityEventAsync(
+            await _auditLogService.LogSecurityEventAsync(
                 AuditActionType.SECURITY_SETTING_CHANGED,
                 AuditSeverity.WARNING,
                 null,
@@ -291,42 +318,33 @@ public class RateLimitService : IRateLimitService
         }
     }
 
-    public Task<bool> RecordViolationAsync(string ipAddress, string endpoint)
+    public async Task<bool> RecordViolationAsync(string ipAddress, string endpoint)
     {
         try
         {
             var now = DateTime.UtcNow;
             var violationWindow = TimeSpan.FromMinutes(5); // 5-minute rolling window
 
-            // Get or create violation list for this IP
-            var violations = _violationTracker.GetOrAdd(ipAddress, _ => new List<DateTime>());
+            // CONCURRENCY FIX: Get or create thread-safe violation tracker
+            var tracker = _violationTracker.GetOrAdd(ipAddress, _ => new ViolationTracker());
 
-            lock (violations)
+            // Record violation in thread-safe manner
+            var violationCount = await tracker.RecordViolationAsync(now, violationWindow, _settings.BlacklistThreshold);
+
+            // Check if threshold exceeded
+            if (violationCount >= _settings.BlacklistThreshold)
             {
-                // Remove old violations outside the window
-                violations.RemoveAll(v => v < now.Subtract(violationWindow));
+                // AUTO-BLACKLIST
+                var duration = TimeSpan.FromMinutes(_settings.BlacklistDurationMinutes);
+                var reason = $"Exceeded rate limit {violationCount} times in {violationWindow.TotalMinutes} minutes on endpoint: {endpoint}";
 
-                // Add new violation
-                violations.Add(now);
+                _logger.LogWarning(
+                    "AUTO-BLACKLIST: IP {IpAddress} exceeded violation threshold ({Count}/{Threshold})",
+                    ipAddress, violationCount, _settings.BlacklistThreshold);
 
-                // Check if threshold exceeded
-                if (violations.Count >= _settings.BlacklistThreshold)
-                {
-                    // AUTO-BLACKLIST
-                    var duration = TimeSpan.FromMinutes(_settings.BlacklistDurationMinutes);
-                    var reason = $"Exceeded rate limit {violations.Count} times in {violationWindow.TotalMinutes} minutes on endpoint: {endpoint}";
+                _ = BlacklistIpAsync(ipAddress, duration, reason);
 
-                    _logger.LogWarning(
-                        "AUTO-BLACKLIST: IP {IpAddress} exceeded violation threshold ({Count}/{Threshold})",
-                        ipAddress, violations.Count, _settings.BlacklistThreshold);
-
-                    _ = BlacklistIpAsync(ipAddress, duration, reason);
-
-                    // Clear violations after blacklisting
-                    violations.Clear();
-
-                    return Task.FromResult(true);
-                }
+                return true;
             }
 
             // Log violation (but not auto-blacklisted yet)
@@ -334,9 +352,9 @@ public class RateLimitService : IRateLimitService
             {
                 _logger.LogWarning(
                     "Rate limit violation: IP {IpAddress} on endpoint {Endpoint} (Violation {Count}/{Threshold})",
-                    ipAddress, endpoint, violations.Count, _settings.BlacklistThreshold);
+                    ipAddress, endpoint, violationCount, _settings.BlacklistThreshold);
 
-                _ = _auditLogService.LogSecurityEventAsync(
+                await _auditLogService.LogSecurityEventAsync(
                     AuditActionType.UNAUTHORIZED_ACCESS_ATTEMPT,
                     AuditSeverity.WARNING,
                     null,
@@ -345,18 +363,18 @@ public class RateLimitService : IRateLimitService
                     {
                         ipAddress,
                         endpoint,
-                        violationCount = violations.Count,
+                        violationCount,
                         threshold = _settings.BlacklistThreshold
                     })
                 );
             }
 
-            return Task.FromResult(false);
+            return false;
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error recording violation for IP {IpAddress}", ipAddress);
-            return Task.FromResult(false);
+            return false;
         }
     }
 

@@ -40,12 +40,20 @@ export const routes: Routes = [
         loadComponent: () => import('./features/auth/activate/activate.component').then(m => m.ActivateComponent)
       },
       {
+        path: 'resend-activation',
+        loadComponent: () => import('./features/auth/resend-activation/resend-activation.component').then(m => m.ResendActivationComponent)
+      },
+      {
         path: 'forgot-password',
         loadComponent: () => import('./features/auth/forgot-password/forgot-password.component').then(m => m.ForgotPasswordComponent)
       },
       {
         path: 'reset-password',
         loadComponent: () => import('./features/auth/reset-password/reset-password.component').then(m => m.ResetPasswordComponent)
+      },
+      {
+        path: 'set-password',
+        loadComponent: () => import('./features/auth/set-password/set-password.component').then(m => m.SetPasswordComponent)
       }
     ]
   },
@@ -158,6 +166,47 @@ export const routes: Routes = [
         path: 'locations/:id/edit',
         loadComponent: () => import('./features/admin/locations/location-form.component').then(m => m.LocationFormComponent),
         data: { title: 'Edit Location' }
+      },
+      // Monitoring Routes - Real-time observability and system health
+      {
+        path: 'monitoring',
+        children: [
+          {
+            path: '',
+            redirectTo: 'dashboard',
+            pathMatch: 'full'
+          },
+          {
+            path: 'dashboard',
+            loadComponent: () => import('./features/admin/monitoring/dashboard/monitoring-dashboard.component').then(m => m.MonitoringDashboardComponent),
+            data: { title: 'Monitoring Dashboard' }
+          },
+          {
+            path: 'infrastructure',
+            loadComponent: () => import('./features/admin/monitoring/infrastructure/infrastructure-health.component').then(m => m.InfrastructureHealthComponent),
+            data: { title: 'Infrastructure Health' }
+          },
+          {
+            path: 'api-performance',
+            loadComponent: () => import('./features/admin/monitoring/api-performance/api-performance.component').then(m => m.ApiPerformanceComponent),
+            data: { title: 'API Performance' }
+          },
+          {
+            path: 'tenants',
+            loadComponent: () => import('./features/admin/monitoring/tenants/tenant-activity.component').then(m => m.TenantActivityComponent),
+            data: { title: 'Tenant Activity' }
+          },
+          {
+            path: 'security',
+            loadComponent: () => import('./features/admin/monitoring/security/security-events.component').then(m => m.SecurityEventsComponent),
+            data: { title: 'Security Events' }
+          },
+          {
+            path: 'alerts',
+            loadComponent: () => import('./features/admin/monitoring/alerts/alerts.component').then(m => m.AlertsComponent),
+            data: { title: 'System Alerts' }
+          }
+        ]
       }
     ]
   },

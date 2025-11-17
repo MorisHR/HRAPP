@@ -1,0 +1,98 @@
+[
+  {
+    "name": "timestamp",
+    "type": "TIMESTAMP",
+    "mode": "REQUIRED",
+    "description": "When the API request occurred"
+  },
+  {
+    "name": "tenant_id",
+    "type": "STRING",
+    "mode": "REQUIRED",
+    "description": "Unique identifier for the tenant making the request"
+  },
+  {
+    "name": "endpoint",
+    "type": "STRING",
+    "mode": "REQUIRED",
+    "description": "API endpoint path (e.g., /api/employees)"
+  },
+  {
+    "name": "http_method",
+    "type": "STRING",
+    "mode": "REQUIRED",
+    "description": "HTTP method (GET, POST, PUT, DELETE, etc.)"
+  },
+  {
+    "name": "status_code",
+    "type": "INTEGER",
+    "mode": "REQUIRED",
+    "description": "HTTP response status code"
+  },
+  {
+    "name": "response_time_ms",
+    "type": "FLOAT",
+    "mode": "REQUIRED",
+    "description": "Response time in milliseconds"
+  },
+  {
+    "name": "user_id",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "ID of the user making the request (if authenticated)"
+  },
+  {
+    "name": "ip_address",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "IP address of the requesting client"
+  },
+  {
+    "name": "user_agent",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "User agent string from the request"
+  },
+  {
+    "name": "request_size_bytes",
+    "type": "INTEGER",
+    "mode": "NULLABLE",
+    "description": "Size of the request payload in bytes"
+  },
+  {
+    "name": "response_size_bytes",
+    "type": "INTEGER",
+    "mode": "NULLABLE",
+    "description": "Size of the response payload in bytes"
+  },
+  {
+    "name": "database_query_time_ms",
+    "type": "FLOAT",
+    "mode": "NULLABLE",
+    "description": "Time spent on database queries in milliseconds"
+  },
+  {
+    "name": "cache_hit",
+    "type": "BOOLEAN",
+    "mode": "NULLABLE",
+    "description": "Whether the request was served from cache"
+  },
+  {
+    "name": "error_message",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Error message if the request failed"
+  },
+  {
+    "name": "request_id",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Unique identifier for request tracing"
+  },
+  {
+    "name": "region",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Geographic region where the request was processed"
+  }
+]

@@ -28,7 +28,10 @@ public enum AuditCategory
     SYSTEM_EVENT = 7,
 
     /// <summary>Compliance-specific events (data export, audit log access, retention actions)</summary>
-    COMPLIANCE = 8
+    COMPLIANCE = 8,
+
+    /// <summary>Feature flag management (enable/disable features, rollout, emergency rollback)</summary>
+    FEATURE_FLAGS = 9
 }
 
 /// <summary>
@@ -527,7 +530,29 @@ public enum AuditActionType
     NOTIFICATION_SENT = 119,
 
     /// <summary>Scheduled job executed</summary>
-    SCHEDULED_JOB_EXECUTED = 120
+    SCHEDULED_JOB_EXECUTED = 120,
+
+    // ============================================
+    // FEATURE FLAG ACTIONS (140-149) - FORTUNE 500 FEATURE CONTROL
+    // ============================================
+
+    /// <summary>Feature flag created (new feature control)</summary>
+    FEATURE_FLAG_CREATED = 140,
+
+    /// <summary>Feature flag updated (toggle, rollout percentage, etc.)</summary>
+    FEATURE_FLAG_UPDATED = 141,
+
+    /// <summary>Feature flag deleted</summary>
+    FEATURE_FLAG_DELETED = 142,
+
+    /// <summary>Feature flag emergency rollback triggered</summary>
+    FEATURE_FLAG_EMERGENCY_ROLLBACK = 143,
+
+    /// <summary>Feature flag re-enabled after emergency rollback</summary>
+    FEATURE_FLAG_RE_ENABLED = 144,
+
+    /// <summary>Feature flag rollout percentage changed</summary>
+    FEATURE_FLAG_ROLLOUT_CHANGED = 145
 }
 
 /// <summary>

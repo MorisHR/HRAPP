@@ -1,0 +1,268 @@
+<div class="alerts">
+  <div class="page-header">
+    <h1>System Alerts</h1>
+    <div class="header-actions">
+      <app-button variant="secondary" (clicked)="loadData()">
+        Refresh
+      </app-button>
+    </div>
+  </div>
+
+  @if (error()) {
+    <div class="error-message">
+      <p>{{ error() }}</p>
+      <app-button variant="primary" (clicked)="loadData()">
+        Retry
+      </app-button>
+    </div>
+  }
+
+  <!-- Active Critical/High Alerts Section -->
+  @if (activeAlerts().length > 0) {
+    <app-card [padding]="'large'" class="active-alerts-card">
+      <div class="alert-header">
+        <h2>Active Critical & High Alerts</h2>
+        <app-badge [content]="activeAlerts().length" [color]="'error'"></app-badge>
+      </div>
+
+      <div class="active-alerts-list">
+        @for (alert of activeAlerts(); track alert.alertId) {
+          <div class="active-alert-item" (click)="onRowClick(alert)">
+            <div class="alert-icon">
+              <span class="severity-icon" [class]="'severity-' + alert.severity">!</span>
+            </div>
+            <div class="alert-info">
+              <div class="alert-title">
+                {{ alert.title }}
+              </div>
+              <div class="alert-meta">
+                <app-badge [content]="alert.alertType" [color]="getTypeColor(alert.alertType)"></app-badge>
+                <span class="alert-source">{{ alert.source }}</span>
+                <span class="alert-time">{{ formatTimestamp(alert.triggeredAt) }}</span>
+                <span class="alert-duration">Duration: {{ formatDuration(alert.durationSeconds! / 60) }}</span>
+              </div>
+            </div>
+            <div class="alert-actions-preview">
+              <app-badge [content]="alert.severity" [color]="getSeverityColor(alert.severity)"></app-badge>
+            </div>
+          </div>
+        }
+      </div>
+    </app-card>
+  }
+
+  <!-- Alerts Table -->
+  <app-card [padding]="'large'" class="alerts-card">
+    <div class="card-header">
+      <h2>All Alerts</h2>
+      <div class="header-filters">
+        <app-select
+          [label]="'Status'"
+          [options]="statusOptions"
+          [value]="selectedStatus()"
+          (valueChange)="onStatusChange($event)">
+        </app-select>
+        <app-select
+          [label]="'Severity'"
+          [options]="severityOptions"
+          [value]="selectedSeverity()"
+          (valueChange)="onSeverityChange($event)">
+        </app-select>
+        <app-select
+          [label]="'Type'"
+          [options]="typeOptions"
+          [value]="selectedType()"
+          (valueChange)="onTypeChange($event)">
+        </app-select>
+        <app-select
+          [label]="'Tenant'"
+          [options]="tenantOptions"
+          [value]="selectedTenant()"
+          (valueChange)="onTenantChange($event)">
+        </app-select>
+        <app-button variant="secondary" (clicked)="exportToCSV()">
+          Export CSV
+        </app-button>
+      </div>
+    </div>
+
+    @if (loading()) {
+      <div class="loading-state">
+        <p>Loading alerts...</p>
+      </div>
+    } @else if (filteredAlerts().length === 0) {
+      <div class="empty-state">
+        <p>No alerts found matching the current filters</p>
+      </div>
+    } @else {
+      <div class="table-container">
+        <table class="alerts-table">
+          <thead>
+            <tr>
+              <th class="text-center">Severity</th>
+              <th class="text-center">Type</th>
+              <th>Title</th>
+              <th>Source</th>
+              <th>Triggered At</th>
+              <th class="text-center">Status</th>
+              <th class="text-right">Duration</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (alert of paginatedAlerts(); track alert.alertId) {
+              <tr (click)="onRowClick(alert)" class="clickable-row"
+                  [class.critical-row]="alert.severity === 'Critical' && alert.status === 'Active'">
+                <td class="text-center">
+                  <app-badge
+                    [content]="alert.severity"
+                    [color]="getSeverityColor(alert.severity)">
+                  </app-badge>
+                </td>
+                <td class="text-center">
+                  <app-badge
+                    [content]="alert.alertType"
+                    [color]="getTypeColor(alert.alertType)">
+                  </app-badge>
+                </td>
+                <td class="title-cell">{{ alert.title }}</td>
+                <td class="source-cell">{{ alert.source }}</td>
+                <td class="timestamp-cell">{{ formatTimestamp(alert.triggeredAt) }}</td>
+                <td class="text-center">
+                  <app-badge
+                    [content]="alert.status"
+                    [color]="getStatusColor(alert.status)">
+                  </app-badge>
+                </td>
+                <td class="text-right duration-cell">{{ formatDuration(alert.durationSeconds! / 60) }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <div class="table-footer">
+        <div class="results-info">
+          Showing {{ paginatedAlerts().length }} of {{ totalAlerts() }} alerts
+        </div>
+        <app-paginator
+          [length]="totalAlerts()"
+          [pageSize]="pageSize()"
+          [pageIndex]="pageIndex()"
+          [pageSizeOptions]="[5, 10, 25, 50]"
+          (page)="onPageChange($event)">
+        </app-paginator>
+      </div>
+    }
+  </app-card>
+</div>
+
+<!-- Alert Details Dialog -->
+@if (showAlertDialog() && selectedAlert(); as alert) {
+  <div class="dialog-overlay" (click)="closeDialog()">
+    <div class="dialog-content" (click)="$event.stopPropagation()">
+      <div class="dialog-header">
+        <h2>Alert Details</h2>
+        <button class="close-btn" (click)="closeDialog()">×</button>
+      </div>
+
+      <div class="dialog-body">
+        <div class="alert-detail-grid">
+          <div class="detail-item">
+            <label>Severity</label>
+            <div>
+              <app-badge [content]="alert.severity"
+                         [color]="getSeverityColor(alert.severity)">
+              </app-badge>
+            </div>
+          </div>
+
+          <div class="detail-item">
+            <label>Type</label>
+            <div>
+              <app-badge [content]="alert.alertType"
+                         [color]="getTypeColor(alert.alertType)">
+              </app-badge>
+            </div>
+          </div>
+
+          <div class="detail-item">
+            <label>Status</label>
+            <div>
+              <app-badge [content]="alert.status"
+                         [color]="getStatusColor(alert.status)">
+              </app-badge>
+            </div>
+          </div>
+
+          <div class="detail-item">
+            <label>Duration</label>
+            <div>{{ formatDuration(alert.durationSeconds! / 60) }}</div>
+          </div>
+
+          <div class="detail-item full-width">
+            <label>Title</label>
+            <div class="title-text">{{ alert.title }}</div>
+          </div>
+
+          <div class="detail-item full-width">
+            <label>Source</label>
+            <div>{{ alert.source }}</div>
+          </div>
+
+          <div class="detail-item">
+            <label>Triggered At</label>
+            <div>{{ formatTimestamp(alert.triggeredAt) }}</div>
+          </div>
+
+          @if (alert.tenantSubdomain) {
+            <div class="detail-item">
+              <label>Affected Tenant</label>
+              <div>{{ alert.tenantSubdomain }}</div>
+            </div>
+          }
+
+          <div class="detail-item full-width">
+            <label>Message</label>
+            <div class="description-text">{{ alert.message }}</div>
+          </div>
+        </div>
+
+        @if (alert.status !== 'Resolved') {
+          <div class="resolution-section">
+            <h3>Resolution Notes</h3>
+            <textarea
+              [(ngModel)]="resolutionNotes"
+              placeholder="Add resolution notes (required for resolving)..."
+              rows="4"
+              class="resolution-textarea">
+            </textarea>
+          </div>
+        }
+      </div>
+
+      <div class="dialog-footer">
+        <app-button variant="secondary" (clicked)="closeDialog()">
+          Close
+        </app-button>
+        @if (alert.status === 'Active') {
+          <app-button variant="warning" (clicked)="acknowledgeAlert()">
+            Acknowledge
+          </app-button>
+          <app-button
+            variant="primary"
+            (clicked)="resolveAlert()"
+            [disabled]="!resolutionNotes().trim()">
+            Resolve
+          </app-button>
+        } @else if (alert.status === 'Acknowledged') {
+          <app-button
+            variant="primary"
+            (clicked)="resolveAlert()"
+            [disabled]="!resolutionNotes().trim()">
+            Resolve
+          </app-button>
+        }
+      </div>
+    </div>
+  </div>
+}

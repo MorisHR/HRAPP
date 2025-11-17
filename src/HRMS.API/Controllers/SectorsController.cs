@@ -7,9 +7,11 @@ namespace HRMS.API.Controllers;
 
 /// <summary>
 /// Controller for managing industry sectors and compliance rules
+/// SECURITY: Authentication required for sector reference data access
 /// </summary>
 [ApiController]
 [Route("api/[controller]")]
+[Authorize] // HIGH PRIORITY FIX: Secure sector reference data endpoint
 public class SectorsController : ControllerBase
 {
     private readonly ISectorService _sectorService;

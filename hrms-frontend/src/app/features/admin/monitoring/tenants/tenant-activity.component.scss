@@ -1,0 +1,353 @@
+.tenant-activity {
+  padding: 24px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+
+  h1 {
+    margin: 0;
+    font-size: 28px;
+    font-weight: 600;
+    color: #1a1a1a;
+  }
+}
+
+.error-message {
+  padding: 24px;
+  background: #fee;
+  border: 1px solid #fcc;
+  border-radius: 8px;
+  text-align: center;
+  margin-bottom: 24px;
+
+  p {
+    margin: 0 0 16px;
+    color: #c00;
+  }
+}
+
+// ============================================================================
+// AT-RISK TENANTS CARD
+// ============================================================================
+
+.at-risk-card {
+  margin-bottom: 32px;
+  border-left: 4px solid #ef4444;
+
+  .alert-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+
+    h2 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 600;
+      color: #ef4444;
+    }
+  }
+}
+
+.at-risk-list {
+  display: grid;
+  gap: 12px;
+}
+
+.at-risk-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: #fee2e2;
+    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.1);
+  }
+
+  .tenant-info {
+    .tenant-name {
+      font-size: 16px;
+      font-weight: 600;
+      color: #1f2937;
+      margin-bottom: 4px;
+    }
+
+    .tenant-subdomain {
+      font-size: 14px;
+      color: #6b7280;
+      font-family: 'Monaco', 'Courier New', monospace;
+    }
+  }
+
+  .tenant-metrics {
+    display: flex;
+    gap: 24px;
+
+    .metric {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 4px;
+
+      .metric-label {
+        font-size: 12px;
+        color: #6b7280;
+        font-weight: 500;
+      }
+
+      span {
+        font-size: 16px;
+        font-weight: 600;
+        font-variant-numeric: tabular-nums;
+      }
+    }
+  }
+}
+
+// ============================================================================
+// TENANTS CARD
+// ============================================================================
+
+.tenants-card {
+  .card-header {
+    margin-bottom: 24px;
+
+    h2 {
+      margin: 0 0 16px;
+      font-size: 20px;
+      font-weight: 600;
+      color: #1a1a1a;
+    }
+
+    .header-filters {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: flex-end;
+    }
+  }
+}
+
+.loading-state,
+.empty-state {
+  text-align: center;
+  padding: 48px;
+  color: #666;
+}
+
+// ============================================================================
+// TABLE
+// ============================================================================
+
+.table-container {
+  overflow-x: auto;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+
+.tenants-table {
+  width: 100%;
+  border-collapse: collapse;
+
+  thead {
+    background: #f9fafb;
+    border-bottom: 2px solid #e5e7eb;
+
+    th {
+      padding: 12px 16px;
+      text-align: left;
+      font-size: 13px;
+      font-weight: 600;
+      color: #374151;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      white-space: nowrap;
+
+      &.text-right {
+        text-align: right;
+      }
+
+      &.text-center {
+        text-align: center;
+      }
+    }
+  }
+
+  tbody {
+    tr {
+      border-bottom: 1px solid #e5e7eb;
+      transition: background-color 0.15s ease;
+
+      &:hover {
+        background-color: #f9fafb;
+      }
+
+      &:last-child {
+        border-bottom: none;
+      }
+
+      &.at-risk-row {
+        background-color: #fef2f2;
+
+        &:hover {
+          background-color: #fee2e2;
+        }
+      }
+    }
+
+    td {
+      padding: 16px;
+      font-size: 14px;
+      color: #1f2937;
+
+      &.subdomain-cell {
+        code {
+          padding: 4px 8px;
+          background: #f3f4f6;
+          border-radius: 4px;
+          font-family: 'Monaco', 'Courier New', monospace;
+          font-size: 13px;
+          color: #1f2937;
+        }
+      }
+
+      &.text-right {
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+      }
+
+      &.text-center {
+        text-align: center;
+      }
+
+      &.text-error {
+        color: #ef4444;
+        font-weight: 600;
+      }
+    }
+  }
+}
+
+// ============================================================================
+// HEALTH SCORE
+// ============================================================================
+
+.health-score {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+
+  &.health-good {
+    background: #d1fae5;
+    color: #065f46;
+  }
+
+  &.health-warning {
+    background: #fef3c7;
+    color: #92400e;
+  }
+
+  &.health-critical {
+    background: #fee2e2;
+    color: #991b1b;
+  }
+}
+
+.health-critical {
+  color: #ef4444;
+  font-weight: 600;
+}
+
+.health-warning {
+  color: #f59e0b;
+  font-weight: 600;
+}
+
+.health-good {
+  color: #10b981;
+  font-weight: 600;
+}
+
+// ============================================================================
+// TABLE FOOTER
+// ============================================================================
+
+.table-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 16px;
+  flex-wrap: wrap;
+  gap: 16px;
+
+  .results-info {
+    font-size: 14px;
+    color: #6b7280;
+  }
+}
+
+// ============================================================================
+// RESPONSIVE
+// ============================================================================
+
+@media (max-width: 768px) {
+  .tenant-activity {
+    padding: 16px;
+  }
+
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .at-risk-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+
+    .tenant-metrics {
+      width: 100%;
+      justify-content: space-between;
+    }
+  }
+
+  .card-header {
+    .header-filters {
+      flex-direction: column;
+      width: 100%;
+
+      app-select {
+        width: 100%;
+      }
+    }
+  }
+
+  .tenants-table {
+    font-size: 12px;
+
+    thead th,
+    tbody td {
+      padding: 8px 12px;
+    }
+  }
+
+  .table-footer {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

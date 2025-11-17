@@ -1,0 +1,129 @@
+# ============================================================================
+# Fortune 50 Prometheus Configuration
+# Purpose: Enterprise-grade metrics collection for HRMS multi-tenant SaaS
+# Pattern: AWS CloudWatch + DataDog + Grafana best practices
+# ============================================================================
+
+global:
+  scrape_interval: 30s      # Scrape targets every 30 seconds (Fortune 50 standard)
+  evaluation_interval: 30s  # Evaluate alerting rules every 30 seconds
+  scrape_timeout: 10s       # Timeout after 10 seconds
+
+  external_labels:
+    environment: 'production'
+    application: 'hrms'
+    tier: 'fortune50'
+    cluster: 'primary'
+
+# Alertmanager configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+            - 'localhost:9093'  # Alertmanager endpoint
+      timeout: 10s
+
+# Load alerting rules
+rule_files:
+  - 'alerts/*.yml'
+
+# Scrape configurations
+scrape_configs:
+  # ============================================================================
+  # PostgreSQL Database Metrics (via postgres_exporter)
+  # ============================================================================
+  - job_name: 'postgresql'
+    static_configs:
+      - targets:
+          - 'localhost:9187'  # postgres_exporter default port
+
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: 'hrms-database'
+
+    metric_relabel_configs:
+      # Keep only relevant PostgreSQL metrics
+      - source_labels: [__name__]
+        regex: 'pg_(stat_database|stat_bgwriter|stat_activity|locks|replication).*'
+        action: keep
+
+  # ============================================================================
+  # HRMS API Application Metrics (custom exporter)
+  # ============================================================================
+  - job_name: 'hrms-api'
+    static_configs:
+      - targets:
+          - 'localhost:5090/metrics'  # HRMS API metrics endpoint
+
+    scrape_interval: 15s  # More frequent scraping for API metrics
+
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: 'hrms-api-server'
+
+  # ============================================================================
+  # Custom Monitoring Schema Metrics (via custom exporter)
+  # ============================================================================
+  - job_name: 'hrms-monitoring'
+    static_configs:
+      - targets:
+          - 'localhost:9188'  # Custom monitoring schema exporter
+
+    scrape_interval: 60s  # Less frequent for aggregated metrics
+
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: 'hrms-monitoring-db'
+
+  # ============================================================================
+  # .NET Runtime Metrics (dotnet-monitor)
+  # ============================================================================
+  - job_name: 'dotnet-runtime'
+    static_configs:
+      - targets:
+          - 'localhost:52323/metrics'  # dotnet-monitor default port
+
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: 'hrms-dotnet-runtime'
+
+  # ============================================================================
+  # Node Exporter (System Metrics)
+  # ============================================================================
+  - job_name: 'node'
+    static_configs:
+      - targets:
+          - 'localhost:9100'  # node_exporter default port
+
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: 'hrms-server'
+
+  # ============================================================================
+  # Prometheus Self-Monitoring
+  # ============================================================================
+  - job_name: 'prometheus'
+    static_configs:
+      - targets:
+          - 'localhost:9090'
+
+# ============================================================================
+# Remote Write (Optional - for long-term storage)
+# ============================================================================
+# remote_write:
+#   - url: 'https://prometheus-remote-storage.example.com/api/v1/write'
+#     write_relabel_configs:
+#       - source_labels: [__name__]
+#         regex: '(pg_|hrms_|dotnet_).*'
+#         action: keep
+
+# ============================================================================
+# Remote Read (Optional - for querying long-term storage)
+# ============================================================================
+# remote_read:
+#   - url: 'https://prometheus-remote-storage.example.com/api/v1/read'

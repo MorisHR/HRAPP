@@ -11,7 +11,6 @@ import { CardComponent } from './components/card/card';
 import { CheckboxComponent } from './components/checkbox/checkbox';
 import { InputComponent } from './components/input/input';
 import { SelectComponent } from './components/select/select';
-import { DatepickerComponent } from './components/datepicker/datepicker';
 import { DialogContainerComponent } from './components/dialog-container/dialog-container';
 import { Tabs } from './components/tabs/tabs';
 import { ProgressBar } from './components/progress-bar/progress-bar';
@@ -33,6 +32,11 @@ import { Chip } from './components/chip/chip';
 import { Paginator } from './components/paginator/paginator';
 import { Toolbar } from './components/toolbar/toolbar';
 import { Sidenav } from './components/sidenav/sidenav';
+import { Divider } from './components/divider/divider';
+import { ExpansionPanel, ExpansionPanelGroup } from './components/expansion-panel/expansion-panel';
+import { List, ListItem } from './components/list/list';
+import { Pagination } from './components/pagination/pagination';
+import { Datepicker } from './components/datepicker/datepicker';
 
 @NgModule({
   imports: [
@@ -42,7 +46,6 @@ import { Sidenav } from './components/sidenav/sidenav';
     CheckboxComponent,
     InputComponent,
     SelectComponent,
-    DatepickerComponent,
     DialogContainerComponent,
     ToastContainerComponent,
     Radio,
@@ -61,7 +64,14 @@ import { Sidenav } from './components/sidenav/sidenav';
     Chip,
     Paginator,
     Toolbar,
-    Sidenav
+    Sidenav,
+    Divider,
+    ExpansionPanel,
+    ExpansionPanelGroup,
+    List,
+    ListItem,
+    Pagination,
+    Datepicker
   ],
   exports: [
     ButtonComponent,
@@ -69,7 +79,6 @@ import { Sidenav } from './components/sidenav/sidenav';
     CheckboxComponent,
     InputComponent,
     SelectComponent,
-    DatepickerComponent,
     Radio,
     RadioGroup,
     DialogContainerComponent,
@@ -88,7 +97,14 @@ import { Sidenav } from './components/sidenav/sidenav';
     Chip,
     Paginator,
     Toolbar,
-    Sidenav
+    Sidenav,
+    Divider,
+    ExpansionPanel,
+    ExpansionPanelGroup,
+    List,
+    ListItem,
+    Pagination,
+    Datepicker
   ],
   providers: [
     DialogService,
@@ -126,8 +142,6 @@ export { Radio } from './components/radio/radio';
 export { RadioGroup } from './components/radio-group/radio-group';
 export type { RadioOption } from './components/radio-group/radio-group';
 
-// Export datepicker component
-export { DatepickerComponent } from './components/datepicker/datepicker';
 
 // Export tooltip directive and types
 export { TooltipDirective } from './directives/tooltip.directive';
@@ -166,3 +180,18 @@ export { Toolbar } from './components/toolbar/toolbar';
 
 // Export sidenav component
 export { Sidenav } from './components/sidenav/sidenav';
+
+// Export divider component
+export { Divider } from './components/divider/divider';
+
+// Export expansion panel components
+export { ExpansionPanel, ExpansionPanelGroup } from './components/expansion-panel/expansion-panel';
+
+// Export list components
+export { List, ListItem } from './components/list/list';
+
+// Export pagination component
+export { Pagination } from './components/pagination/pagination';
+
+// Export new datepicker component (custom implementation)
+export { Datepicker } from './components/datepicker/datepicker';

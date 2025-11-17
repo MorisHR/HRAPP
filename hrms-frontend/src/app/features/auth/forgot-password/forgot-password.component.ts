@@ -2,12 +2,19 @@ import { Component, inject, signal, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { AuthService } from '../../../core/services/auth.service';
 import { Router, RouterLink, ActivatedRoute } from '@angular/router';
+import { InputComponent } from '../../../shared/ui/components/input/input';
+import { ButtonComponent } from '../../../shared/ui/components/button/button';
 
 
 @Component({
   selector: 'app-forgot-password',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [
+    ReactiveFormsModule,
+    RouterLink,
+    InputComponent,
+    ButtonComponent
+  ],
   templateUrl: './forgot-password.component.html',
   styleUrls: ['./forgot-password.component.scss']
 })
@@ -46,6 +53,17 @@ export class ForgotPasswordComponent implements OnInit {
 
   get isValidForm(): boolean {
     return this.form.valid;
+  }
+
+  getErrorMessage(field: string): string {
+    const control = this.form.get(field);
+    if (control?.hasError('required')) {
+      return `${field.charAt(0).toUpperCase() + field.slice(1)} is required`;
+    }
+    if (control?.hasError('email')) {
+      return 'Please enter a valid email address';
+    }
+    return '';
   }
 
   onSubmit(): void {

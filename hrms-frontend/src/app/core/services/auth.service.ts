@@ -369,7 +369,7 @@ export class AuthService {
     const secretPath = environment.superAdminSecretPath;
 
     return this.http.post<any>(
-      `${this.apiUrl}/auth/${secretPath}`,
+      `${this.apiUrl}/auth/system-${secretPath}`,
       credentials,
       { withCredentials: true }
     ).pipe(
@@ -584,5 +584,26 @@ export class AuthService {
    */
   resetPassword(data: { token: string; newPassword: string; confirmPassword: string }): Observable<any> {
     return this.http.post(`${this.apiUrl}/auth/reset-password`, data);
+  }
+
+  /**
+   * FORTRESS-GRADE: Employee password setup for newly activated accounts
+   * Public endpoint - no authentication required
+   * Uses activation token from welcome email
+   *
+   * SECURITY FEATURES:
+   * - Rate limited (5 attempts/hour)
+   * - 12+ character requirement
+   * - Password complexity validation
+   * - Password history check (backend)
+   * - Subdomain validation (anti-spoofing)
+   */
+  setEmployeePassword(data: {
+    token: string;
+    newPassword: string;
+    confirmPassword: string;
+    subdomain: string;
+  }): Observable<any> {
+    return this.http.post(`${this.apiUrl}/auth/employee/set-password`, data);
   }
 }

@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Configuration;
 using HRMS.Application.DTOs;
 using HRMS.Application.Interfaces;
 using HRMS.Core.Entities.Master;
@@ -18,16 +19,25 @@ public class TenantManagementService
     private readonly ISchemaProvisioningService _schemaProvisioningService;
     private readonly ISubscriptionManagementService? _subscriptionService;
     private readonly ILogger<TenantManagementService> _logger;
+    private readonly IEmailService _emailService;
+    private readonly IConfiguration _configuration;
+    private readonly IEncryptionService _encryptionService;
 
     public TenantManagementService(
         MasterDbContext masterDbContext,
         ISchemaProvisioningService schemaProvisioningService,
         ILogger<TenantManagementService> logger,
+        IEmailService emailService,
+        IConfiguration configuration,
+        IEncryptionService encryptionService,
         ISubscriptionManagementService? subscriptionService = null)
     {
         _masterDbContext = masterDbContext;
         _schemaProvisioningService = schemaProvisioningService;
         _logger = logger;
+        _emailService = emailService;
+        _configuration = configuration;
+        _encryptionService = encryptionService;
         _subscriptionService = subscriptionService; // Optional to avoid circular dependency during startup
     }
 
@@ -42,14 +52,16 @@ public class TenantManagementService
 
         return await strategy.ExecuteAsync(async () =>
         {
-            // Start database transaction for atomicity
-            await using var transaction = await _masterDbContext.Database.BeginTransactionAsync();
+            // CONCURRENCY FIX: Use Serializable isolation to prevent phantom reads
+            // This ensures subdomain uniqueness check is atomic
+            await using var transaction = await _masterDbContext.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable);
 
             try
             {
             _logger.LogInformation("✓ Step 1/5: Starting tenant creation for subdomain: {Subdomain}", request.Subdomain);
 
             // Validate subdomain uniqueness
+            // With Serializable isolation, this check is atomic and prevents race conditions
             if (await _masterDbContext.Tenants.AnyAsync(t => t.Subdomain == request.Subdomain.ToLower()))
             {
                 _logger.LogWarning("Tenant creation failed: Subdomain '{Subdomain}' already exists", request.Subdomain);
@@ -103,6 +115,9 @@ public class TenantManagementService
                 AdminFirstName = request.AdminFirstName,
                 AdminLastName = request.AdminLastName,
                 IsGovernmentEntity = request.IsGovernmentEntity,
+                // FORTUNE 500: Industry sector for compliance
+                SectorId = request.SectorId,
+                SectorSelectedAt = request.SectorId.HasValue ? DateTime.UtcNow : null,
                 TrialEndDate = request.TrialEndDate,
                 SubscriptionEndDate = request.SubscriptionEndDate,
                 // Activation fields
@@ -209,10 +224,12 @@ public class TenantManagementService
 
     /// <summary>
     /// Get all tenants
+    /// FORTUNE 500 OPTIMIZATION: Include Sector with single query (LEFT JOIN)
     /// </summary>
     public async Task<List<TenantDto>> GetAllTenantsAsync()
     {
         var tenants = await _masterDbContext.Tenants
+            .Include(t => t.Sector) // FORTUNE 500: Single query with LEFT JOIN
             .OrderByDescending(t => t.CreatedAt)
             .ToListAsync();
 
@@ -221,10 +238,12 @@ public class TenantManagementService
 
     /// <summary>
     /// Get tenant by ID
+    /// FORTUNE 500 OPTIMIZATION: Include Sector with single query (LEFT JOIN)
     /// </summary>
     public async Task<TenantDto?> GetTenantByIdAsync(Guid tenantId)
     {
         var tenant = await _masterDbContext.Tenants
+            .Include(t => t.Sector) // FORTUNE 500: Single query with LEFT JOIN
             .FirstOrDefaultAsync(t => t.Id == tenantId);
 
         return tenant != null ? MapToDto(tenant) : null;
@@ -447,7 +466,12 @@ public class TenantManagementService
             DeletionReason = tenant.DeletionReason,
             DaysUntilHardDelete = tenant.DaysUntilHardDelete(),
             AdminUserName = tenant.AdminUserName,
-            AdminEmail = tenant.AdminEmail
+            AdminEmail = tenant.AdminEmail,
+            // FORTUNE 500: Industry sector data (denormalized for performance)
+            SectorId = tenant.SectorId,
+            SectorCode = tenant.Sector?.SectorCode,
+            SectorName = tenant.Sector?.SectorName,
+            SectorSelectedAt = tenant.SectorSelectedAt
         };
     }
 
@@ -470,7 +494,8 @@ public class TenantManagementService
 
         return await strategy.ExecuteAsync(async () =>
         {
-            await using var transaction = await _masterDbContext.Database.BeginTransactionAsync();
+            // CONCURRENCY FIX: Use Serializable isolation for tenant activation
+            await using var transaction = await _masterDbContext.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable);
 
             try
             {
@@ -513,6 +538,99 @@ public class TenantManagementService
                     }
                 }
 
+                // ==============================================
+                // FORTUNE 500: Create admin employee with secure password setup
+                // ==============================================
+                _logger.LogInformation("Creating admin employee for tenant {Subdomain}", tenant.Subdomain);
+
+                // Connect to tenant schema to create admin employee
+                var connectionString = _configuration.GetConnectionString("DefaultConnection");
+                var optionsBuilder = new DbContextOptionsBuilder<TenantDbContext>();
+                optionsBuilder.UseNpgsql(connectionString);
+                var tenantDbContext = new TenantDbContext(optionsBuilder.Options, tenant.SchemaName, _encryptionService);
+
+                // Check if admin employee already exists (idempotency)
+                var existingAdmin = await tenantDbContext.Employees
+                    .FirstOrDefaultAsync(e => e.Email == tenant.AdminEmail && e.IsAdmin);
+
+                string? passwordResetToken = null;
+
+                if (existingAdmin == null)
+                {
+                    // Generate secure password reset token (32-char hex)
+                    passwordResetToken = PasswordValidationService.GenerateSecureToken();
+
+                    // Extract admin name from email or use tenant name
+                    var adminFirstName = tenant.AdminFirstName ?? tenant.CompanyName;
+                    var adminLastName = tenant.AdminLastName ?? "Administrator";
+
+                    // Create admin employee
+                    var adminEmployee = new Core.Entities.Tenant.Employee
+                    {
+                        Id = Guid.NewGuid(),
+                        EmployeeCode = "ADMIN001", // Standard admin code
+                        FirstName = adminFirstName,
+                        LastName = adminLastName,
+                        Email = tenant.AdminEmail,
+                        PhoneNumber = tenant.ContactPhone ?? string.Empty,
+                        DateOfBirth = DateTime.UtcNow.AddYears(-30), // Default DOB
+                        Gender = Core.Enums.Gender.PreferNotToSay,
+                        MaritalStatus = Core.Enums.MaritalStatus.Single,
+                        Nationality = "Mauritius",
+                        EmployeeType = Core.Enums.EmployeeType.Local,
+                        JobTitle = "System Administrator",
+                        JoiningDate = DateTime.UtcNow,
+                        IsActive = true,
+
+                        // Security fields
+                        IsAdmin = true,
+                        MustChangePassword = true, // Force password change on first login
+                        PasswordResetToken = passwordResetToken,
+                        PasswordResetTokenExpiry = DateTime.UtcNow.AddHours(24),
+                        LockoutEnabled = true,
+                        AccessFailedCount = 0,
+
+                        // Address (required fields)
+                        AddressLine1 = "To be updated",
+                        Country = "Mauritius",
+
+                        // Salary (default)
+                        BasicSalary = 0, // To be set by admin later
+                        SalaryCurrency = "MUR",
+                        PaymentFrequency = "Monthly",
+
+                        // Leave balances (default entitlements)
+                        AnnualLeaveDays = 20,
+                        SickLeaveDays = 15,
+                        CasualLeaveDays = 5,
+                        AnnualLeaveBalance = 20,
+                        SickLeaveBalance = 15,
+                        CasualLeaveBalance = 5,
+                        CarryForwardAllowed = true,
+
+                        // Audit fields
+                        CreatedAt = DateTime.UtcNow,
+                        CreatedBy = "system_tenant_activation",
+                        IsDeleted = false
+                    };
+
+                    tenantDbContext.Employees.Add(adminEmployee);
+                    await tenantDbContext.SaveChangesAsync();
+
+                    _logger.LogInformation("✓ Admin employee created: {Email} with password reset token", tenant.AdminEmail);
+                }
+                else
+                {
+                    _logger.LogInformation("Admin employee already exists for {Email}, skipping creation", tenant.AdminEmail);
+
+                    // Generate new password reset token for existing admin
+                    passwordResetToken = PasswordValidationService.GenerateSecureToken();
+                    existingAdmin.PasswordResetToken = passwordResetToken;
+                    existingAdmin.PasswordResetTokenExpiry = DateTime.UtcNow.AddHours(24);
+                    existingAdmin.MustChangePassword = true;
+                    await tenantDbContext.SaveChangesAsync();
+                }
+
                 // Update tenant status
                 tenant.Status = TenantStatus.Active;
                 tenant.ActivatedAt = DateTime.UtcNow;
@@ -523,7 +641,17 @@ public class TenantManagementService
                 await _masterDbContext.SaveChangesAsync();
                 await transaction.CommitAsync();
 
-                _logger.LogInformation("✓ Tenant {Subdomain} activated successfully", tenant.Subdomain);
+                _logger.LogInformation("✓ Tenant {Subdomain} activated successfully with admin employee", tenant.Subdomain);
+
+                // Send welcome email with password reset link
+                if (!string.IsNullOrEmpty(passwordResetToken))
+                {
+                    await _emailService.SendTenantWelcomeEmailAsync(
+                        tenant.AdminEmail,
+                        tenant.AdminFirstName ?? tenant.CompanyName,
+                        tenant.Subdomain,
+                        passwordResetToken);
+                }
 
                 return (true, "Tenant activated successfully", tenant.Subdomain);
             }

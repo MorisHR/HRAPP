@@ -8,7 +8,7 @@ namespace HRMS.API.Controllers;
 
 [ApiController]
 [Route("api/address-lookup")]
-[AllowAnonymous]
+[Authorize]
 public class AddressLookupController : ControllerBase
 {
     private readonly MasterDbContext _masterDbContext;

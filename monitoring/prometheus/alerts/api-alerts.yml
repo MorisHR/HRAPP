@@ -1,0 +1,187 @@
+# ============================================================================
+# Fortune 50 API Performance Alerting Rules
+# Purpose: SLA-based alerts for API response time, throughput, and availability
+# SLA Targets: 99.9% uptime, <200ms p95 response time, <0.1% error rate
+# ============================================================================
+
+groups:
+  - name: api_performance
+    interval: 30s
+    rules:
+      # ========================================================================
+      # CRITICAL ALERTS (P0/P1) - SLA Breach
+      # ========================================================================
+
+      - alert: APIErrorRateCritical
+        expr: |
+          (
+            SELECT ROUND(100.0 * COUNT(*) FILTER (WHERE status_code >= 400) / NULLIF(COUNT(*), 0), 2)
+            FROM monitoring.api_performance
+            WHERE recorded_at > NOW() - INTERVAL '5 minutes'
+          ) > 1.0
+        for: 2m
+        labels:
+          severity: P1
+          priority: critical
+          component: api
+          sla_breach: "true"
+        annotations:
+          summary: "API error rate exceeds SLA threshold"
+          description: "Error rate is {{ $value }}% (SLA: <0.1%, threshold: >1%)"
+          impact: "SLA BREACH - Multiple users experiencing failures"
+          action: "1. Check application logs\n2. Verify database connectivity\n3. Review recent deployments\n4. Investigate error patterns by endpoint"
+          runbook: "https://docs.hrms.com/runbooks/api-error-rate-high"
+
+      - alert: APIResponseTimeCritical
+        expr: |
+          (
+            SELECT PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY response_time_ms)
+            FROM monitoring.api_performance
+            WHERE recorded_at > NOW() - INTERVAL '5 minutes'
+          ) > 500
+        for: 5m
+        labels:
+          severity: P1
+          priority: critical
+          component: api
+          sla_breach: "true"
+        annotations:
+          summary: "API p95 response time critically high"
+          description: "p95 response time is {{ $value }}ms (SLA: <200ms, threshold: >500ms)"
+          impact: "SLA BREACH - Severe user experience degradation"
+          action: "1. Query monitoring.get_slow_queries()\n2. Check database performance\n3. Review slow endpoints\n4. Verify external dependencies\n5. Consider horizontal scaling"
+          runbook: "https://docs.hrms.com/runbooks/slow-api-response"
+
+      - alert: APIThroughputDrop
+        expr: |
+          (
+            SELECT COUNT(*) * 12
+            FROM monitoring.api_performance
+            WHERE recorded_at > NOW() - INTERVAL '5 minutes'
+          ) < (
+            SELECT AVG(request_count) * 0.5
+            FROM (
+              SELECT COUNT(*) as request_count
+              FROM monitoring.api_performance
+              WHERE recorded_at > NOW() - INTERVAL '1 hour'
+              GROUP BY DATE_TRUNC('5 minutes', recorded_at)
+            ) sub
+          )
+        for: 5m
+        labels:
+          severity: P1
+          priority: critical
+          component: api
+        annotations:
+          summary: "API request throughput dropped by >50%"
+          description: "Current requests/min: {{ $value }} (50% below baseline)"
+          impact: "Potential service degradation or partial outage"
+          action: "1. Check API server health\n2. Verify load balancer\n3. Review rate limiting\n4. Analyze traffic patterns"
+
+      # ========================================================================
+      # WARNING ALERTS (P2) - Performance Degradation
+      # ========================================================================
+
+      - alert: APIResponseTimeDegraded
+        expr: |
+          (
+            SELECT PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY response_time_ms)
+            FROM monitoring.api_performance
+            WHERE recorded_at > NOW() - INTERVAL '5 minutes'
+          ) > 200 AND < 500
+        for: 10m
+        labels:
+          severity: P2
+          priority: warning
+          component: api
+        annotations:
+          summary: "API p95 response time above target"
+          description: "p95 response time is {{ $value }}ms (target: <200ms)"
+          impact: "User experience degradation - responses slower than optimal"
+          action: "1. Monitor trend\n2. Review slow endpoints\n3. Check database query performance\n4. Analyze caching effectiveness"
+
+      - alert: APIErrorRateElevated
+        expr: |
+          (
+            SELECT ROUND(100.0 * COUNT(*) FILTER (WHERE status_code >= 400) / NULLIF(COUNT(*), 0), 2)
+            FROM monitoring.api_performance
+            WHERE recorded_at > NOW() - INTERVAL '5 minutes'
+          ) > 0.1 AND < 1.0
+        for: 10m
+        labels:
+          severity: P2
+          priority: warning
+          component: api
+        annotations:
+          summary: "API error rate elevated"
+          description: "Error rate is {{ $value }}% (target: <0.1%)"
+          impact: "Some users experiencing errors - approaching SLA threshold"
+          action: "1. Review error logs\n2. Identify failing endpoints\n3. Check for validation errors\n4. Verify tenant isolation"
+
+      - alert: SlowEndpointDetected
+        expr: |
+          (
+            SELECT COUNT(*)
+            FROM (
+              SELECT endpoint, AVG(response_time_ms) as avg_time
+              FROM monitoring.api_performance
+              WHERE recorded_at > NOW() - INTERVAL '5 minutes'
+              GROUP BY endpoint
+              HAVING AVG(response_time_ms) > 300
+            ) slow_endpoints
+          ) > 0
+        for: 10m
+        labels:
+          severity: P2
+          priority: warning
+          component: api
+        annotations:
+          summary: "Slow API endpoints detected"
+          description: "{{ $value }} endpoints with avg response time >300ms"
+          impact: "Specific endpoints causing performance issues"
+          action: "1. Query slow endpoint report\n2. Optimize problematic endpoints\n3. Add caching if applicable\n4. Review N+1 query issues"
+
+  - name: api_availability
+    interval: 30s
+    rules:
+      # ========================================================================
+      # AVAILABILITY ALERTS (99.9% SLA)
+      # ========================================================================
+
+      - alert: APIAvailabilityBreach
+        expr: |
+          (
+            SELECT ROUND(100.0 * COUNT(*) FILTER (WHERE status_code < 500) / NULLIF(COUNT(*), 0), 2)
+            FROM monitoring.api_performance
+            WHERE recorded_at > NOW() - INTERVAL '1 hour'
+          ) < 99.9
+        for: 5m
+        labels:
+          severity: P0
+          priority: critical
+          component: api
+          sla_breach: "true"
+        annotations:
+          summary: "API availability SLA breach"
+          description: "Availability is {{ $value }}% in last hour (SLA: 99.9%)"
+          impact: "CRITICAL SLA BREACH - Service reliability compromised"
+          action: "1. Initiate incident response\n2. Check API server health\n3. Review infrastructure status\n4. Prepare customer communication"
+          runbook: "https://docs.hrms.com/runbooks/availability-breach"
+
+      - alert: HighServerErrorRate
+        expr: |
+          (
+            SELECT COUNT(*) FILTER (WHERE status_code >= 500)
+            FROM monitoring.api_performance
+            WHERE recorded_at > NOW() - INTERVAL '5 minutes'
+          ) > 10
+        for: 2m
+        labels:
+          severity: P1
+          priority: critical
+          component: api
+        annotations:
+          summary: "High rate of 5xx server errors"
+          description: "{{ $value }} server errors in last 5 minutes"
+          impact: "Service reliability issues - internal server failures"
+          action: "1. Check application logs immediately\n2. Verify database connectivity\n3. Review exception tracking\n4. Check for recent deployments"

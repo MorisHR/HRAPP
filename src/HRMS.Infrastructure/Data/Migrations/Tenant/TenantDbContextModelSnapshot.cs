@@ -1112,6 +1112,9 @@ namespace HRMS.Infrastructure.Data.Migrations.Tenant
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
 
+                    b.Property<bool>("IsAdmin")
+                        .HasColumnType("boolean");
+
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
 
@@ -1122,6 +1125,9 @@ namespace HRMS.Infrastructure.Data.Migrations.Tenant
                         .HasColumnType("boolean");
 
                     b.Property<bool>("IsOffboarded")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsTwoFactorEnabled")
                         .HasColumnType("boolean");
 
                     b.Property<string>("JobTitle")
@@ -1139,6 +1145,9 @@ namespace HRMS.Infrastructure.Data.Migrations.Tenant
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
+
+                    b.Property<DateTime?>("LastPasswordChangeDate")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTime?>("LastWorkingDate")
                         .HasColumnType("timestamp with time zone");
@@ -1162,6 +1171,9 @@ namespace HRMS.Infrastructure.Data.Migrations.Tenant
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
+
+                    b.Property<bool>("MustChangePassword")
+                        .HasColumnType("boolean");
 
                     b.Property<string>("NPFNumber")
                         .HasMaxLength(50)
@@ -1210,6 +1222,15 @@ namespace HRMS.Infrastructure.Data.Migrations.Tenant
 
                     b.Property<string>("PasswordHash")
                         .HasColumnType("text");
+
+                    b.Property<string>("PasswordHistory")
+                        .HasColumnType("text");
+
+                    b.Property<string>("PasswordResetToken")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("PasswordResetTokenExpiry")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("PaymentFrequency")
                         .HasColumnType("text");
@@ -1268,6 +1289,9 @@ namespace HRMS.Infrastructure.Data.Migrations.Tenant
 
                     b.Property<decimal?>("TransportAllowance")
                         .HasColumnType("numeric");
+
+                    b.Property<string>("TwoFactorSecret")
+                        .HasColumnType("text");
 
                     b.Property<string>("University")
                         .HasColumnType("text");

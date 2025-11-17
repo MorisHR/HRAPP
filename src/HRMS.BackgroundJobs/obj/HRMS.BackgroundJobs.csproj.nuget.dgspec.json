@@ -350,6 +350,10 @@
               "target": "Package",
               "version": "[2025.7.3, )"
             },
+            "StackExchange.Redis": {
+              "target": "Package",
+              "version": "[2.7.10, )"
+            },
             "System.IdentityModel.Tokens.Jwt": {
               "target": "Package",
               "version": "[8.14.0, )"

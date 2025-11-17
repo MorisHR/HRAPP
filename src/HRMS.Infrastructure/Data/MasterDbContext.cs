@@ -44,6 +44,18 @@ public class MasterDbContext : DbContext
     /// </summary>
     public DbSet<SubscriptionNotificationLog> SubscriptionNotificationLogs { get; set; }
 
+    /// <summary>
+    /// FORTUNE 500: Feature flags for per-tenant control and gradual rollouts
+    /// PATTERN: Canary deployment, emergency rollback, A/B testing
+    /// </summary>
+    public DbSet<FeatureFlag> FeatureFlagsConfig { get; set; }
+
+    /// <summary>
+    /// FORTUNE 500: Activation resend audit log (rate limiting + security monitoring)
+    /// PATTERN: Netflix/Stripe audit logging for tenant activation emails
+    /// </summary>
+    public DbSet<ActivationResendLog> ActivationResendLogs { get; set; }
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
         base.OnConfiguring(optionsBuilder);
@@ -1062,6 +1074,217 @@ public class MasterDbContext : DbContext
 
             entity.HasIndex(e => new { e.Status, e.SubscriptionEndDate })
                 .HasDatabaseName("IX_Tenants_Status_SubscriptionEndDate");
+        });
+
+        // ============================================
+        // FORTUNE 500: Feature Flags Configuration
+        // ============================================
+        modelBuilder.Entity<FeatureFlag>(entity =>
+        {
+            entity.ToTable("FeatureFlags", schema: "master", tb =>
+            {
+                tb.HasComment("Fortune 500 feature flag system for per-tenant control. " +
+                             "Enables canary deployment, gradual rollout, emergency rollback, A/B testing. " +
+                             "NULL TenantId = global default, NON-NULL = tenant override.");
+            });
+
+            entity.HasKey(e => e.Id);
+
+            // Foreign key to Tenant (nullable for global defaults)
+            entity.Property(e => e.TenantId)
+                .HasComment("Tenant ID (NULL = global default, NON-NULL = tenant override)");
+
+            // Module identification
+            entity.Property(e => e.Module)
+                .IsRequired()
+                .HasMaxLength(100)
+                .HasComment("Module name (auth, dashboard, employees, payroll, etc.)");
+
+            // Feature state
+            entity.Property(e => e.IsEnabled)
+                .IsRequired()
+                .HasDefaultValue(false)
+                .HasComment("Whether feature is enabled (default FALSE for safety)");
+
+            // Rollout control
+            entity.Property(e => e.RolloutPercentage)
+                .IsRequired()
+                .HasDefaultValue(0)
+                .HasComment("Rollout percentage 0-100 (0=disabled, 100=fully enabled)");
+
+            // Documentation
+            entity.Property(e => e.Description)
+                .HasMaxLength(500)
+                .HasComment("Feature description for documentation");
+
+            entity.Property(e => e.Tags)
+                .HasMaxLength(200)
+                .HasComment("Tags for categorization (comma-separated)");
+
+            entity.Property(e => e.MinimumTier)
+                .HasMaxLength(50)
+                .HasComment("Minimum tier required (NULL = all tiers)");
+
+            // Emergency rollback
+            entity.Property(e => e.IsEmergencyDisabled)
+                .IsRequired()
+                .HasDefaultValue(false)
+                .HasComment("Emergency rollback flag for quick disable");
+
+            entity.Property(e => e.EmergencyDisabledReason)
+                .HasMaxLength(1000)
+                .HasComment("Reason for emergency rollback (audit trail)");
+
+            entity.Property(e => e.EmergencyDisabledAt)
+                .HasComment("Emergency rollback timestamp");
+
+            entity.Property(e => e.EmergencyDisabledBy)
+                .HasMaxLength(100)
+                .HasComment("SuperAdmin who triggered emergency rollback");
+
+            // Indexes for performance
+            entity.HasIndex(e => e.TenantId)
+                .HasDatabaseName("IX_FeatureFlags_TenantId");
+
+            entity.HasIndex(e => e.Module)
+                .HasDatabaseName("IX_FeatureFlags_Module");
+
+            entity.HasIndex(e => new { e.TenantId, e.Module })
+                .HasDatabaseName("IX_FeatureFlags_TenantId_Module")
+                .IsUnique();
+
+            entity.HasIndex(e => e.IsEnabled)
+                .HasDatabaseName("IX_FeatureFlags_IsEnabled");
+
+            entity.HasIndex(e => e.IsEmergencyDisabled)
+                .HasDatabaseName("IX_FeatureFlags_IsEmergencyDisabled");
+
+            // Relationship to Tenant
+            entity.HasOne(e => e.Tenant)
+                .WithMany()
+                .HasForeignKey(e => e.TenantId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Soft delete filter
+            entity.HasQueryFilter(e => !e.IsDeleted);
+        });
+
+        // ============================================
+        // FORTUNE 500: Activation Resend Logs
+        // ============================================
+        modelBuilder.Entity<ActivationResendLog>(entity =>
+        {
+            entity.ToTable("ActivationResendLogs", schema: "master", tb =>
+            {
+                tb.HasComment("Fortune 500 activation resend audit log for multi-tenant SaaS. " +
+                             "Enables rate limiting (max 3 per hour), security monitoring, and GDPR compliance. " +
+                             "IMMUTABLE logs with cascade delete on tenant deletion.");
+            });
+
+            entity.HasKey(e => e.Id);
+
+            // Foreign key to Tenant (required)
+            entity.Property(e => e.TenantId)
+                .IsRequired()
+                .HasComment("Tenant ID (enables per-tenant rate limiting)");
+
+            // Timestamp tracking
+            entity.Property(e => e.RequestedAt)
+                .IsRequired()
+                .HasComment("When resend was requested (UTC) - used for sliding window rate limits");
+
+            // Security tracking
+            entity.Property(e => e.RequestedFromIp)
+                .HasMaxLength(45) // IPv6 max length
+                .HasComment("IP address of requester (IPv4 or IPv6) for security monitoring");
+
+            entity.Property(e => e.RequestedByEmail)
+                .HasMaxLength(255)
+                .HasComment("Email address used in request (must match tenant email)");
+
+            // Token tracking (partial - first 8 chars only)
+            entity.Property(e => e.TokenGenerated)
+                .HasMaxLength(32)
+                .HasComment("New token generated (truncated for security - never full token!)");
+
+            entity.Property(e => e.TokenExpiry)
+                .IsRequired()
+                .HasComment("Token expiration timestamp (UTC) - typically 24 hours from RequestedAt");
+
+            // Success/failure tracking
+            entity.Property(e => e.Success)
+                .IsRequired()
+                .HasDefaultValue(true)
+                .HasComment("Was resend successful? (false if rate limited or email send failed)");
+
+            entity.Property(e => e.FailureReason)
+                .HasMaxLength(2000)
+                .HasComment("Failure reason if Success=false (rate limit, email error, validation failure, etc.)");
+
+            // Device and location tracking
+            entity.Property(e => e.UserAgent)
+                .HasMaxLength(500)
+                .HasComment("User agent string for fraud detection");
+
+            entity.Property(e => e.DeviceInfo)
+                .HasMaxLength(200)
+                .HasComment("Parsed device info (Mobile/Desktop, browser, OS)");
+
+            entity.Property(e => e.Geolocation)
+                .HasMaxLength(500)
+                .HasComment("City, country for fraud detection");
+
+            // Email delivery tracking
+            entity.Property(e => e.EmailDelivered)
+                .IsRequired()
+                .HasDefaultValue(false)
+                .HasComment("Was activation email delivered successfully?");
+
+            entity.Property(e => e.EmailSendError)
+                .HasMaxLength(2000)
+                .HasComment("SMTP error or bounce reason if delivery failed");
+
+            // Rate limiting tracking
+            entity.Property(e => e.ResendCountLastHour)
+                .IsRequired()
+                .HasDefaultValue(0)
+                .HasComment("Number of resend attempts in last hour (real-time rate limit tracking)");
+
+            entity.Property(e => e.WasRateLimited)
+                .IsRequired()
+                .HasDefaultValue(false)
+                .HasComment("Was this request blocked by rate limiting?");
+
+            // Indexes for performance
+            entity.HasIndex(e => e.TenantId)
+                .HasDatabaseName("IX_ActivationResendLogs_TenantId");
+
+            entity.HasIndex(e => e.RequestedAt)
+                .HasDatabaseName("IX_ActivationResendLogs_RequestedAt");
+
+            entity.HasIndex(e => e.RequestedFromIp)
+                .HasDatabaseName("IX_ActivationResendLogs_RequestedFromIp");
+
+            // Composite index for rate limit queries (sliding window)
+            entity.HasIndex(e => new { e.TenantId, e.RequestedAt })
+                .HasDatabaseName("IX_ActivationResendLogs_TenantId_RequestedAt");
+
+            // Index for IP-based rate limiting
+            entity.HasIndex(e => new { e.RequestedFromIp, e.RequestedAt })
+                .HasDatabaseName("IX_ActivationResendLogs_IP_RequestedAt");
+
+            // Index for success/failure analytics
+            entity.HasIndex(e => e.Success)
+                .HasDatabaseName("IX_ActivationResendLogs_Success");
+
+            // Relationship to Tenant (CASCADE delete for GDPR compliance)
+            entity.HasOne(e => e.Tenant)
+                .WithMany()
+                .HasForeignKey(e => e.TenantId)
+                .OnDelete(DeleteBehavior.Cascade); // Delete logs when tenant is deleted
+
+            // Soft delete filter (inherited from BaseEntity)
+            entity.HasQueryFilter(e => !e.IsDeleted);
         });
     }
 }

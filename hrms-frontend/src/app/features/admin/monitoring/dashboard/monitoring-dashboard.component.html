@@ -1,0 +1,287 @@
+<div class="monitoring-dashboard">
+  <!-- Header -->
+  <div class="dashboard-header">
+    <div class="header-content">
+      <h1 class="dashboard-title">
+        <app-icon name="monitor_heart" size="large"></app-icon>
+        Platform Monitoring
+      </h1>
+      <p class="dashboard-subtitle">Real-time system health and performance metrics</p>
+    </div>
+
+    <div class="header-actions">
+      @if (metrics()) {
+        <div class="last-updated">
+          <app-icon name="schedule" size="small"></app-icon>
+          <span>Updated {{ formatTimeAgo(metrics()!.lastUpdated.toString()) }}</span>
+        </div>
+      }
+
+      <app-button
+        variant="secondary"
+        size="medium"
+        [loading]="loading()"
+        (clicked)="refreshMetrics()">
+        <app-icon name="refresh"></app-icon>
+        Refresh
+      </app-button>
+
+      <app-button
+        [variant]="autoRefreshEnabled() ? 'primary' : 'ghost'"
+        size="medium"
+        (clicked)="toggleAutoRefresh()">
+        <app-icon [name]="autoRefreshEnabled() ? 'pause' : 'play_arrow'"></app-icon>
+        {{ autoRefreshEnabled() ? 'Auto-refresh ON' : 'Auto-refresh OFF' }}
+      </app-button>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  @if (loading() && !metrics()) {
+    <div class="loading-state">
+      <app-progress-spinner size="large" color="primary"></app-progress-spinner>
+      <p>Loading dashboard metrics...</p>
+    </div>
+  }
+
+  <!-- Error State -->
+  @if (error() && !metrics()) {
+    <app-card [elevation]="2" padding="large">
+      <div class="error-state">
+        <app-icon name="error_outline" size="large" color="#d32f2f"></app-icon>
+        <h2>Failed to Load Dashboard</h2>
+        <p>{{ error() }}</p>
+        <app-button variant="primary" (clicked)="refreshMetrics()">
+          Try Again
+        </app-button>
+      </div>
+    </app-card>
+  }
+
+  <!-- Dashboard Content -->
+  @if (metrics()) {
+    <div class="dashboard-content">
+      <!-- System Status Card -->
+      <app-card class="metric-card status-card" [elevation]="2" padding="medium">
+        <div class="card-header">
+          <h3 class="card-title">
+            <app-icon name="favorite"></app-icon>
+            System Status
+          </h3>
+        </div>
+        <div class="card-content">
+          <div class="status-indicator">
+            <app-badge
+              [content]="metrics()!.systemStatus"
+              [color]="getStatusBadgeColor(metrics()!.systemStatus)">
+            </app-badge>
+          </div>
+          <div class="status-label">{{ metrics()!.systemStatus }}</div>
+        </div>
+      </app-card>
+
+      <!-- Cache Hit Rate Card -->
+      <app-card class="metric-card" [elevation]="2" padding="medium">
+        <div class="card-header">
+          <h3 class="card-title">
+            <app-icon name="storage"></app-icon>
+            Cache Hit Rate
+          </h3>
+          <span class="card-badge">Target: &gt;95%</span>
+        </div>
+        <div class="card-content">
+          <div class="metric-value">{{ metrics()!.cacheHitRate.toFixed(2) }}%</div>
+          <app-progress-bar
+            [value]="metrics()!.cacheHitRate"
+            [color]="getCacheHitRateColor(metrics()!.cacheHitRate)"
+            height="medium"
+            [showLabel]="false">
+          </app-progress-bar>
+        </div>
+      </app-card>
+
+      <!-- Connection Pool Utilization Card -->
+      <app-card class="metric-card" [elevation]="2" padding="medium">
+        <div class="card-header">
+          <h3 class="card-title">
+            <app-icon name="cable"></app-icon>
+            Connection Pool
+          </h3>
+          <span class="card-badge">Alert: &gt;80%</span>
+        </div>
+        <div class="card-content">
+          <div class="metric-value">{{ metrics()!.connectionPoolUtilization.toFixed(1) }}%</div>
+          <app-progress-bar
+            [value]="metrics()!.connectionPoolUtilization"
+            [color]="getProgressBarColor(metrics()!.connectionPoolUtilization, 80)"
+            height="medium"
+            [showLabel]="false">
+          </app-progress-bar>
+          <div class="metric-detail">
+            {{ formatNumber(metrics()!.activeConnections) }} active connections
+          </div>
+        </div>
+      </app-card>
+
+      <!-- Active Tenants Card -->
+      <app-card class="metric-card" [elevation]="2" padding="medium">
+        <div class="card-header">
+          <h3 class="card-title">
+            <app-icon name="business"></app-icon>
+            Active Tenants
+          </h3>
+        </div>
+        <div class="card-content">
+          <div class="metric-value">{{ formatNumber(metrics()!.activeTenants) }}</div>
+          <div class="metric-detail">
+            of {{ formatNumber(metrics()!.totalTenants) }} total tenants
+          </div>
+          <app-progress-bar
+            [value]="(metrics()!.activeTenants / metrics()!.totalTenants) * 100"
+            color="primary"
+            height="small"
+            [showLabel]="false">
+          </app-progress-bar>
+        </div>
+      </app-card>
+
+      <!-- API Performance P95 Card -->
+      <app-card class="metric-card" [elevation]="2" padding="medium">
+        <div class="card-header">
+          <h3 class="card-title">
+            <app-icon name="speed"></app-icon>
+            API P95 Response Time
+          </h3>
+          <span class="card-badge">SLA: &lt;200ms</span>
+        </div>
+        <div class="card-content">
+          <div class="metric-value">{{ metrics()!.apiResponseTimeP95.toFixed(0) }}ms</div>
+          <div class="status-dot" [class]="getResponseTimeColor(metrics()!.apiResponseTimeP95, 200)"></div>
+        </div>
+      </app-card>
+
+      <!-- API Performance P99 Card -->
+      <app-card class="metric-card" [elevation]="2" padding="medium">
+        <div class="card-header">
+          <h3 class="card-title">
+            <app-icon name="trending_up"></app-icon>
+            API P99 Response Time
+          </h3>
+          <span class="card-badge">SLA: &lt;500ms</span>
+        </div>
+        <div class="card-content">
+          <div class="metric-value">{{ metrics()!.apiResponseTimeP99.toFixed(0) }}ms</div>
+          <div class="status-dot" [class]="getResponseTimeColor(metrics()!.apiResponseTimeP99, 500)"></div>
+        </div>
+      </app-card>
+
+      <!-- Error Rate Card -->
+      <app-card class="metric-card" [elevation]="2" padding="medium">
+        <div class="card-header">
+          <h3 class="card-title">
+            <app-icon name="error_outline"></app-icon>
+            API Error Rate
+          </h3>
+          <span class="card-badge">Target: &lt;0.1%</span>
+        </div>
+        <div class="card-content">
+          <div class="metric-value">{{ metrics()!.apiErrorRate.toFixed(2) }}%</div>
+          <div class="status-dot" [class]="getErrorRateColor(metrics()!.apiErrorRate)"></div>
+        </div>
+      </app-card>
+
+      <!-- Schema Switch Time Card -->
+      <app-card class="metric-card" [elevation]="2" padding="medium">
+        <div class="card-header">
+          <h3 class="card-title">
+            <app-icon name="swap_horiz"></app-icon>
+            Schema Switch Time
+          </h3>
+          <span class="card-badge">Target: &lt;10ms</span>
+        </div>
+        <div class="card-content">
+          <div class="metric-value">{{ metrics()!.avgSchemaSwitchTime.toFixed(1) }}ms</div>
+          <div class="status-dot" [class]="getResponseTimeColor(metrics()!.avgSchemaSwitchTime, 10)"></div>
+        </div>
+      </app-card>
+
+      <!-- Alerts Card -->
+      <app-card class="metric-card alerts-card" [elevation]="2" padding="medium">
+        <div class="card-header">
+          <h3 class="card-title">
+            <app-icon name="notifications_active"></app-icon>
+            Active Alerts
+          </h3>
+        </div>
+        <div class="card-content">
+          <div class="alerts-grid">
+            <div class="alert-item critical">
+              <div class="alert-count">{{ formatNumber(metrics()!.criticalAlerts) }}</div>
+              <div class="alert-label">Critical</div>
+            </div>
+            <div class="alert-item warning">
+              <div class="alert-count">{{ formatNumber(metrics()!.warningAlerts) }}</div>
+              <div class="alert-label">Warning</div>
+            </div>
+          </div>
+        </div>
+      </app-card>
+
+      <!-- Failed Auth Attempts Card -->
+      <app-card class="metric-card" [elevation]="2" padding="medium">
+        <div class="card-header">
+          <h3 class="card-title">
+            <app-icon name="lock"></app-icon>
+            Failed Auth (1h)
+          </h3>
+          <span class="card-badge">Threshold: 100</span>
+        </div>
+        <div class="card-content">
+          <div class="metric-value">{{ formatNumber(metrics()!.failedAuthAttemptsLastHour) }}</div>
+          <div class="status-dot" [class]="getProgressBarColor(metrics()!.failedAuthAttemptsLastHour / 100 * 100, 100)"></div>
+        </div>
+      </app-card>
+
+      <!-- IDOR Prevention Card -->
+      <app-card class="metric-card" [elevation]="2" padding="medium">
+        <div class="card-header">
+          <h3 class="card-title">
+            <app-icon name="shield"></app-icon>
+            IDOR Attempts (1h)
+          </h3>
+          <span class="card-badge">Target: 0</span>
+        </div>
+        <div class="card-content">
+          <div class="metric-value">{{ formatNumber(metrics()!.idorPreventionTriggersLastHour) }}</div>
+          <div class="status-dot" [class]="metrics()!.idorPreventionTriggersLastHour === 0 ? 'success' : 'error'"></div>
+        </div>
+      </app-card>
+
+      <!-- Quick Actions Card -->
+      <app-card class="metric-card actions-card" [elevation]="2" padding="medium">
+        <div class="card-header">
+          <h3 class="card-title">
+            <app-icon name="quick_reference"></app-icon>
+            Quick Actions
+          </h3>
+        </div>
+        <div class="card-content">
+          <div class="actions-list">
+            <app-button variant="ghost" [fullWidth]="true" size="small">
+              <app-icon name="analytics"></app-icon>
+              View Detailed Analytics
+            </app-button>
+            <app-button variant="ghost" [fullWidth]="true" size="small">
+              <app-icon name="security"></app-icon>
+              Security Events
+            </app-button>
+            <app-button variant="ghost" [fullWidth]="true" size="small">
+              <app-icon name="assessment"></app-icon>
+              Performance Reports
+            </app-button>
+          </div>
+        </div>
+      </app-card>
+    </div>
+  }
+</div>

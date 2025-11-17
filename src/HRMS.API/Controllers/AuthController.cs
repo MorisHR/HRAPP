@@ -4,12 +4,14 @@ using HRMS.Application.DTOs;
 using HRMS.Core.Interfaces;
 using HRMS.Infrastructure.Services;
 using System.Security.Claims;
+using HRMS.Application.Interfaces;
 
 namespace HRMS.API.Controllers;
 
 /// <summary>
 /// Authentication API for Super Admin and Tenant Employee login
 /// Implements production-grade JWT token refresh with HttpOnly cookies
+/// FORTRESS-GRADE SECURITY: Rate limiting, subdomain validation, password complexity
 /// </summary>
 [ApiController]
 [Route("api/[controller]")]
@@ -17,17 +19,20 @@ public class AuthController : ControllerBase
 {
     private readonly IAuthService _authService;
     private readonly TenantAuthService _tenantAuthService;
+    private readonly IRateLimitService _rateLimitService;
     private readonly ILogger<AuthController> _logger;
     private readonly string _secretPath;
 
     public AuthController(
         IAuthService authService,
         TenantAuthService tenantAuthService,
+        IRateLimitService rateLimitService,
         ILogger<AuthController> logger,
         IConfiguration configuration)
     {
         _authService = authService;
         _tenantAuthService = tenantAuthService;
+        _rateLimitService = rateLimitService;
         _logger = logger;
         _secretPath = configuration["Auth:SuperAdminSecretPath"]
             ?? throw new InvalidOperationException("Auth:SuperAdminSecretPath configuration not set");
@@ -1017,6 +1022,179 @@ public class AuthController : ControllerBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error in ResetPassword");
+            return StatusCode(500, new
+            {
+                success = false,
+                message = "An error occurred. Please try again later."
+            });
+        }
+    }
+
+    /// <summary>
+    /// Set employee password using token from welcome email
+    /// Public endpoint - no authentication required
+    /// FORTRESS-GRADE SECURITY FEATURES:
+    /// - Rate limiting (5 attempts per hour per IP)
+    /// - Token expiry validation (24 hours)
+    /// - Password complexity enforcement (12+ chars, all types required)
+    /// - Password history check (no reuse of last 5 passwords)
+    /// - Single-use token (revoked after use)
+    /// - Subdomain validation (anti-spoofing protection)
+    /// FORTUNE 500: Used for initial password setup after tenant activation
+    /// </summary>
+    [HttpPost("employee/set-password")]
+    [AllowAnonymous]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
+    public async Task<IActionResult> SetEmployeePassword([FromBody] SetEmployeePasswordRequest request)
+    {
+        var ipAddress = GetIpAddress();
+
+        try
+        {
+            // ==============================================
+            // FORTRESS-GRADE: RATE LIMITING
+            // ==============================================
+            // Prevent brute force attacks on password setup endpoint
+            // Fortune 50 standard: 5 attempts per hour per IP
+            var rateLimitKey = $"{ipAddress}:employee:set-password";
+            var rateLimitResult = await _rateLimitService.CheckRateLimitAsync(
+                rateLimitKey,
+                limit: 5,               // Max 5 password setup attempts
+                window: TimeSpan.FromHours(1) // Per hour
+            );
+
+            if (!rateLimitResult.IsAllowed)
+            {
+                _logger.LogWarning(
+                    "RATE_LIMIT_EXCEEDED: Password setup attempt blocked for IP {IpAddress}. " +
+                    "Attempts: {Current}/{Limit}, Resets at: {ResetsAt}",
+                    ipAddress,
+                    rateLimitResult.CurrentCount,
+                    rateLimitResult.Limit,
+                    rateLimitResult.ResetsAt);
+
+                return StatusCode(429, new // 429 Too Many Requests
+                {
+                    success = false,
+                    message = rateLimitResult.IsBlacklisted
+                        ? "Your IP address has been temporarily blocked due to too many failed attempts."
+                        : $"Too many password setup attempts. Please try again in {rateLimitResult.RetryAfterSeconds / 60} minutes.",
+                    retryAfterSeconds = rateLimitResult.RetryAfterSeconds,
+                    resetsAt = rateLimitResult.ResetsAt
+                });
+            }
+
+            _logger.LogInformation(
+                "RATE_LIMIT_CHECK: Password setup attempt {Current}/{Limit} from IP {IpAddress}",
+                rateLimitResult.CurrentCount,
+                rateLimitResult.Limit,
+                ipAddress);
+
+            // ==============================================
+            // BASIC VALIDATION
+            // ==============================================
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    message = "Invalid request"
+                });
+            }
+
+            if (request.NewPassword != request.ConfirmPassword)
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    message = "Passwords do not match"
+                });
+            }
+
+            if (string.IsNullOrWhiteSpace(request.Subdomain))
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    message = "Subdomain is required"
+                });
+            }
+
+            // ==============================================
+            // FORTRESS-GRADE: SUBDOMAIN VALIDATION
+            // ==============================================
+            // Prevent subdomain spoofing attacks
+            // Fortune 50 security: Validate subdomain format and sanitization
+            var sanitizedSubdomain = request.Subdomain.Trim().ToLowerInvariant();
+
+            // Basic subdomain format validation (alphanumeric + hyphens only)
+            if (!System.Text.RegularExpressions.Regex.IsMatch(sanitizedSubdomain, @"^[a-z0-9]([a-z0-9-]*[a-z0-9])?$"))
+            {
+                _logger.LogWarning(
+                    "SUBDOMAIN_VALIDATION_FAILED: Invalid subdomain format '{Subdomain}' from IP {IpAddress}",
+                    request.Subdomain,
+                    ipAddress);
+
+                return BadRequest(new
+                {
+                    success = false,
+                    message = "Invalid subdomain format. Only lowercase letters, numbers, and hyphens are allowed."
+                });
+            }
+
+            // Subdomain length validation (3-63 characters per DNS RFC 1035)
+            if (sanitizedSubdomain.Length < 3 || sanitizedSubdomain.Length > 63)
+            {
+                _logger.LogWarning(
+                    "SUBDOMAIN_VALIDATION_FAILED: Invalid subdomain length '{Subdomain}' ({Length} chars) from IP {IpAddress}",
+                    request.Subdomain,
+                    sanitizedSubdomain.Length,
+                    ipAddress);
+
+                return BadRequest(new
+                {
+                    success = false,
+                    message = "Subdomain must be between 3 and 63 characters."
+                });
+            }
+
+            _logger.LogInformation(
+                "SUBDOMAIN_VALIDATED: '{Subdomain}' passed validation checks",
+                sanitizedSubdomain);
+
+            // ==============================================
+            // PASSWORD SETUP (with fortress-grade validation)
+            // ==============================================
+            var (success, message) = await _tenantAuthService.SetEmployeePasswordAsync(
+                request.Token,
+                request.NewPassword,
+                sanitizedSubdomain);
+
+            if (success)
+            {
+                _logger.LogInformation(
+                    "PASSWORD_SETUP_SUCCESS: Employee password set for subdomain '{Subdomain}' from IP {IpAddress}",
+                    sanitizedSubdomain,
+                    ipAddress);
+
+                return Ok(new { success, message });
+            }
+            else
+            {
+                _logger.LogWarning(
+                    "PASSWORD_SETUP_FAILED: {Message} for subdomain '{Subdomain}' from IP {IpAddress}",
+                    message,
+                    sanitizedSubdomain,
+                    ipAddress);
+
+                return BadRequest(new { success, message });
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in SetEmployeePassword from IP {IpAddress}", ipAddress);
             return StatusCode(500, new
             {
                 success = false,

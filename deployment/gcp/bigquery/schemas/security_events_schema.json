@@ -1,0 +1,104 @@
+[
+  {
+    "name": "timestamp",
+    "type": "TIMESTAMP",
+    "mode": "REQUIRED",
+    "description": "When the security event occurred"
+  },
+  {
+    "name": "event_type",
+    "type": "STRING",
+    "mode": "REQUIRED",
+    "description": "Type of security event (login, logout, failed_auth, permission_denied, etc.)"
+  },
+  {
+    "name": "severity",
+    "type": "STRING",
+    "mode": "REQUIRED",
+    "description": "Severity level (low, medium, high, critical)"
+  },
+  {
+    "name": "tenant_id",
+    "type": "STRING",
+    "mode": "REQUIRED",
+    "description": "Tenant identifier where the event occurred"
+  },
+  {
+    "name": "user_id",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "User ID associated with the event"
+  },
+  {
+    "name": "user_email",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Email address of the user"
+  },
+  {
+    "name": "ip_address",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "IP address where the event originated"
+  },
+  {
+    "name": "user_agent",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "User agent string"
+  },
+  {
+    "name": "action",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Specific action attempted or performed"
+  },
+  {
+    "name": "resource_type",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Type of resource accessed (employee, payroll, report, etc.)"
+  },
+  {
+    "name": "resource_id",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Specific resource identifier"
+  },
+  {
+    "name": "status",
+    "type": "STRING",
+    "mode": "REQUIRED",
+    "description": "Event status (success, failure, blocked)"
+  },
+  {
+    "name": "failure_reason",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Reason for failure if status is failure or blocked"
+  },
+  {
+    "name": "session_id",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Session identifier for tracking user sessions"
+  },
+  {
+    "name": "request_id",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Request identifier for correlation with API logs"
+  },
+  {
+    "name": "geolocation",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "JSON string with geographic location data"
+  },
+  {
+    "name": "additional_data",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "JSON string with additional event-specific data"
+  }
+]

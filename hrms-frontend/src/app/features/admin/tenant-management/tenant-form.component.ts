@@ -1,5 +1,5 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
-
+import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router, RouterModule, ActivatedRoute } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
@@ -13,11 +13,14 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { TenantService } from '../../../core/services/tenant.service';
 import { PricingTierService, type TierType, type PricingTier } from '../../../core/services/pricing-tier.service';
+import { IndustrySectorService } from '../../../core/services/industry-sector.service';
+import { Observable } from 'rxjs';
 
 @Component({
   selector: 'app-tenant-form',
   standalone: true,
   imports: [
+    CommonModule,
     ReactiveFormsModule,
     RouterModule,
     MatCardModule,
@@ -29,7 +32,7 @@ import { PricingTierService, type TierType, type PricingTier } from '../../../co
     MatToolbarModule,
     MatProgressSpinnerModule,
     MatSnackBarModule
-],
+  ],
   templateUrl: './tenant-form.component.html',
   styleUrl: './tenant-form.component.scss'
 })
@@ -39,6 +42,7 @@ export class TenantFormComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private tenantService = inject(TenantService);
   pricingService = inject(PricingTierService); // Public for template access
+  sectorService = inject(IndustrySectorService); // Public for template access
   private snackBar = inject(MatSnackBar);
 
   loading = signal(false);
@@ -55,6 +59,9 @@ export class TenantFormComponent implements OnInit {
   pricingTiers = this.pricingService.getAllTiers();
   enterpriseFeatures = this.pricingService.getEnterpriseFeatures();
 
+  // FORTUNE 500: Load industry sectors with caching (1 request per session)
+  sectors$ = this.sectorService.getSectors();
+
   constructor() {
     this.tenantForm = this.fb.group({
       // Company Information
@@ -67,6 +74,9 @@ export class TenantFormComponent implements OnInit {
       ]],
       contactEmail: ['', [Validators.required, Validators.email]],
       contactPhone: ['', [Validators.required, Validators.pattern(/^\+?[1-9]\d{1,14}$/)]],
+
+      // Industry Sector (optional for backwards compatibility)
+      sectorId: [null], // Nullable = optional field
 
       // Employee Tier (replaces old subscription plan)
       employeeTier: ['', [Validators.required]],
@@ -126,6 +136,7 @@ export class TenantFormComponent implements OnInit {
           subdomain: tenant.subdomain,
           contactEmail: tenant.contactEmail || '',
           contactPhone: tenant.contactPhone || '',
+          sectorId: tenant.sectorId || null, // FORTUNE 500: Load sector
           employeeTier: tenant.employeeTier || 'Startup',
           maxUsers: tenant.maxUsers || 0,
           maxStorageGB: tenant.maxStorageGB || 0,
@@ -223,6 +234,7 @@ export class TenantFormComponent implements OnInit {
         companyName: formValue.companyName,
         contactEmail: formValue.contactEmail,
         contactPhone: formValue.contactPhone,
+        sectorId: formValue.sectorId, // FORTUNE 500: Include sector
         employeeTier: formValue.employeeTier,
         maxUsers: formValue.maxUsers,
         maxStorageGB: formValue.maxStorageGB,

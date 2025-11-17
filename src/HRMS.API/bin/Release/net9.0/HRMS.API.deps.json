@@ -2277,6 +2277,7 @@
           "Otp.NET": "1.4.0",
           "QRCoder": "1.7.0",
           "QuestPDF": "2025.7.3",
+          "StackExchange.Redis": "2.9.32",
           "System.IdentityModel.Tokens.Jwt": "8.14.0"
         },
         "runtime": {

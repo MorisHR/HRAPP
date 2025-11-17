@@ -1,0 +1,319 @@
+{
+  "dashboard": {
+    "id": null,
+    "uid": "hrms-security",
+    "title": "HRMS Security Events - Fortune 50",
+    "tags": ["security", "compliance", "audit", "idor", "fortune50"],
+    "timezone": "browser",
+    "schemaVersion": 36,
+    "version": 1,
+    "refresh": "1m",
+    "time": {
+      "from": "now-24h",
+      "to": "now"
+    },
+    "panels": [
+      {
+        "id": 1,
+        "title": "Failed Authentication Attempts (Last 1 Hour)",
+        "type": "stat",
+        "gridPos": {"x": 0, "y": 0, "w": 6, "h": 6},
+        "targets": [
+          {
+            "expr": "SELECT COUNT(*) as failed_auth FROM monitoring.security_events WHERE event_type = 'failed_login' AND detected_at > NOW() - INTERVAL '1 hour'",
+            "format": "time_series",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short",
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "green"},
+                {"value": 10, "color": "yellow"},
+                {"value": 50, "color": "red"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 2,
+        "title": "IDOR Prevention Triggers (Last 1 Hour)",
+        "type": "stat",
+        "gridPos": {"x": 6, "y": 0, "w": 6, "h": 6},
+        "targets": [
+          {
+            "expr": "SELECT COUNT(*) as idor_attempts FROM monitoring.security_events WHERE event_type = 'idor_attempt' AND detected_at > NOW() - INTERVAL '1 hour'",
+            "format": "time_series",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short",
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "green"},
+                {"value": 1, "color": "yellow"},
+                {"value": 5, "color": "red"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 3,
+        "title": "Cross-Tenant Queries (Last 1 Hour)",
+        "type": "stat",
+        "gridPos": {"x": 12, "y": 0, "w": 6, "h": 6},
+        "targets": [
+          {
+            "expr": "SELECT COUNT(*) as cross_tenant FROM monitoring.security_events WHERE event_type = 'cross_tenant_query' AND detected_at > NOW() - INTERVAL '1 hour'",
+            "format": "time_series",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short",
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "green"},
+                {"value": 1, "color": "red"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 4,
+        "title": "Critical Security Events (Last 1 Hour)",
+        "type": "stat",
+        "gridPos": {"x": 18, "y": 0, "w": 6, "h": 6},
+        "targets": [
+          {
+            "expr": "SELECT COUNT(*) as critical_events FROM monitoring.security_events WHERE severity = 'critical' AND detected_at > NOW() - INTERVAL '1 hour'",
+            "format": "time_series",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short",
+            "color": {"mode": "value"},
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "green"},
+                {"value": 1, "color": "orange"},
+                {"value": 5, "color": "red"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 5,
+        "title": "Security Events Timeline (Last 24 Hours)",
+        "type": "timeseries",
+        "gridPos": {"x": 0, "y": 6, "w": 24, "h": 8},
+        "targets": [
+          {
+            "expr": "SELECT DATE_TRUNC('hour', detected_at) as time, event_type, COUNT(*) as count FROM monitoring.security_events WHERE detected_at > NOW() - INTERVAL '24 hours' GROUP BY DATE_TRUNC('hour', detected_at), event_type ORDER BY time",
+            "format": "time_series",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short",
+            "custom": {
+              "lineWidth": 2,
+              "fillOpacity": 20,
+              "showPoints": "auto",
+              "stacking": {"mode": "normal"}
+            }
+          }
+        }
+      },
+      {
+        "id": 6,
+        "title": "Security Event Breakdown by Type",
+        "type": "piechart",
+        "gridPos": {"x": 0, "y": 14, "w": 8, "h": 8},
+        "targets": [
+          {
+            "expr": "SELECT event_type, COUNT(*) as count FROM monitoring.security_events WHERE detected_at > NOW() - INTERVAL '24 hours' GROUP BY event_type ORDER BY count DESC",
+            "format": "table",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short"
+          }
+        }
+      },
+      {
+        "id": 7,
+        "title": "Security Event Breakdown by Severity",
+        "type": "piechart",
+        "gridPos": {"x": 8, "y": 14, "w": 8, "h": 8},
+        "targets": [
+          {
+            "expr": "SELECT severity, COUNT(*) as count FROM monitoring.security_events WHERE detected_at > NOW() - INTERVAL '24 hours' GROUP BY severity ORDER BY count DESC",
+            "format": "table",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short",
+            "color": {
+              "mode": "palette-classic"
+            }
+          }
+        }
+      },
+      {
+        "id": 8,
+        "title": "Top 10 Suspicious IP Addresses",
+        "type": "table",
+        "gridPos": {"x": 16, "y": 14, "w": 8, "h": 8},
+        "targets": [
+          {
+            "expr": "SELECT ip_address, COUNT(*) as event_count, STRING_AGG(DISTINCT event_type, ', ') as event_types FROM monitoring.security_events WHERE detected_at > NOW() - INTERVAL '24 hours' AND ip_address IS NOT NULL GROUP BY ip_address ORDER BY event_count DESC LIMIT 10",
+            "format": "table",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "custom": {
+              "align": "auto",
+              "displayMode": "auto"
+            }
+          }
+        }
+      },
+      {
+        "id": 9,
+        "title": "Recent Critical Security Events",
+        "type": "table",
+        "gridPos": {"x": 0, "y": 22, "w": 24, "h": 10},
+        "targets": [
+          {
+            "expr": "SELECT detected_at, event_type, severity, user_id, ip_address, tenant_subdomain, endpoint, is_blocked FROM monitoring.security_events WHERE severity IN ('critical', 'warning') AND detected_at > NOW() - INTERVAL '24 hours' ORDER BY detected_at DESC LIMIT 50",
+            "format": "table",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "custom": {
+              "align": "auto",
+              "displayMode": "auto"
+            }
+          },
+          "overrides": [
+            {
+              "matcher": {"id": "byName", "options": "severity"},
+              "properties": [
+                {
+                  "id": "custom.displayMode",
+                  "value": "color-background"
+                },
+                {
+                  "id": "mappings",
+                  "value": [
+                    {"type": "value", "value": "critical", "text": "CRITICAL", "color": "red"},
+                    {"type": "value", "value": "warning", "text": "WARNING", "color": "orange"},
+                    {"type": "value", "value": "info", "text": "INFO", "color": "blue"}
+                  ]
+                }
+              ]
+            },
+            {
+              "matcher": {"id": "byName", "options": "is_blocked"},
+              "properties": [
+                {
+                  "id": "custom.displayMode",
+                  "value": "color-text"
+                },
+                {
+                  "id": "mappings",
+                  "value": [
+                    {"type": "value", "value": "true", "text": "✅ BLOCKED", "color": "green"},
+                    {"type": "value", "value": "false", "text": "⚠️ NOT BLOCKED", "color": "red"}
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "id": 10,
+        "title": "Failed Login Attempts by Tenant",
+        "type": "barchart",
+        "gridPos": {"x": 0, "y": 32, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "SELECT tenant_subdomain, COUNT(*) as failed_logins FROM monitoring.security_events WHERE event_type = 'failed_login' AND detected_at > NOW() - INTERVAL '24 hours' GROUP BY tenant_subdomain ORDER BY failed_logins DESC LIMIT 10",
+            "format": "table",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short",
+            "custom": {
+              "orientation": "horizontal"
+            }
+          }
+        }
+      },
+      {
+        "id": 11,
+        "title": "Audit Log Volume (Events/Hour)",
+        "type": "timeseries",
+        "gridPos": {"x": 12, "y": 32, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "SELECT DATE_TRUNC('hour', detected_at) as time, COUNT(*) as events FROM monitoring.security_events WHERE detected_at > NOW() - INTERVAL '24 hours' GROUP BY DATE_TRUNC('hour', detected_at) ORDER BY time",
+            "format": "time_series",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short",
+            "custom": {
+              "lineWidth": 2,
+              "fillOpacity": 30,
+              "showPoints": "auto",
+              "drawStyle": "bars"
+            }
+          }
+        }
+      }
+    ],
+    "annotations": {
+      "list": [
+        {
+          "name": "Critical Security Events",
+          "datasource": "PostgreSQL",
+          "enable": true,
+          "iconColor": "red",
+          "query": "SELECT detected_at as time, CONCAT(event_type, ' - ', COALESCE(ip_address::text, 'unknown')) as text, severity as tags FROM monitoring.security_events WHERE severity = 'critical' AND detected_at > NOW() - INTERVAL '7 days'"
+        }
+      ]
+    }
+  },
+  "overwrite": true
+}

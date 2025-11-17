@@ -1,0 +1,233 @@
+# ============================================================================
+# Fortune 50 Alertmanager Configuration
+# Purpose: Route alerts to appropriate notification channels
+# Channels: PagerDuty (P0/P1), Slack (P2), Email (P3)
+# ============================================================================
+
+global:
+  # Default settings
+  resolve_timeout: 5m
+
+  # Slack webhook (configure in production)
+  slack_api_url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'
+
+  # PagerDuty integration key (configure in production)
+  pagerduty_url: 'https://events.pagerduty.com/v2/enqueue'
+
+# Alert routing tree
+route:
+  # Default receiver for all alerts
+  receiver: 'default'
+
+  # Group alerts by severity and component
+  group_by: ['severity', 'component', 'alertname']
+
+  # Wait before sending first notification (allow for flapping)
+  group_wait: 30s
+
+  # Wait before sending batch of new alerts for same group
+  group_interval: 5m
+
+  # Wait before re-sending resolved alerts
+  repeat_interval: 4h
+
+  # Child routes (specific routing rules)
+  routes:
+    # ========================================================================
+    # P0: CRITICAL Security Incidents - PagerDuty + Slack + Email
+    # ========================================================================
+    - match:
+        severity: P0
+      receiver: 'pagerduty-critical'
+      continue: true  # Also send to other receivers
+
+    - match:
+        severity: P0
+      receiver: 'slack-security-incidents'
+      continue: true
+
+    - match:
+        severity: P0
+      receiver: 'email-security-team'
+
+    # ========================================================================
+    # P1: CRITICAL Performance Issues - PagerDuty + Slack
+    # ========================================================================
+    - match:
+        severity: P1
+      receiver: 'pagerduty-high'
+      continue: true
+
+    - match:
+        severity: P1
+      receiver: 'slack-engineering'
+
+    # ========================================================================
+    # P2: WARNING - Slack only
+    # ========================================================================
+    - match:
+        severity: P2
+      receiver: 'slack-engineering'
+
+    # ========================================================================
+    # P3: INFO - Email only
+    # ========================================================================
+    - match:
+        severity: P3
+      receiver: 'email-operations'
+
+    # ========================================================================
+    # Security-specific routing
+    # ========================================================================
+    - match:
+        security_incident: "true"
+      receiver: 'security-team-escalation'
+      continue: true
+
+    # ========================================================================
+    # SLA breach routing
+    # ========================================================================
+    - match:
+        sla_breach: "true"
+      receiver: 'sla-breach-team'
+      continue: true
+
+# Inhibition rules (suppress lower priority alerts)
+inhibit_rules:
+  # Suppress warning alerts if critical alert is firing
+  - source_match:
+      severity: P1
+    target_match:
+      severity: P2
+    equal: ['component', 'alertname']
+
+  # Suppress all alerts if database is down
+  - source_match:
+      alertname: DatabaseDown
+    target_match_re:
+      alertname: '(CacheHitRate|ConnectionPool|SlowQueries).*'
+    equal: ['instance']
+
+# Notification receivers
+receivers:
+  # ========================================================================
+  # Default receiver (catch-all)
+  # ========================================================================
+  - name: 'default'
+    email_configs:
+      - to: 'alerts@hrms.com'
+        send_resolved: true
+        headers:
+          Subject: 'HRMS Alert: {{ .GroupLabels.alertname }}'
+
+  # ========================================================================
+  # PagerDuty receivers (P0/P1)
+  # ========================================================================
+  - name: 'pagerduty-critical'
+    pagerduty_configs:
+      - service_key: 'YOUR_PAGERDUTY_P0_KEY'
+        severity: 'critical'
+        description: '{{ .GroupLabels.alertname }}: {{ .CommonAnnotations.summary }}'
+        details:
+          firing: '{{ .Alerts.Firing | len }}'
+          resolved: '{{ .Alerts.Resolved | len }}'
+          description: '{{ .CommonAnnotations.description }}'
+          impact: '{{ .CommonAnnotations.impact }}'
+          action: '{{ .CommonAnnotations.action }}'
+          runbook: '{{ .CommonAnnotations.runbook }}'
+
+  - name: 'pagerduty-high'
+    pagerduty_configs:
+      - service_key: 'YOUR_PAGERDUTY_P1_KEY'
+        severity: 'error'
+        description: '{{ .GroupLabels.alertname }}: {{ .CommonAnnotations.summary }}'
+
+  # ========================================================================
+  # Slack receivers
+  # ========================================================================
+  - name: 'slack-security-incidents'
+    slack_configs:
+      - channel: '#security-incidents'
+        title: '🚨 SECURITY INCIDENT: {{ .GroupLabels.alertname }}'
+        text: |-
+          *Summary:* {{ .CommonAnnotations.summary }}
+          *Impact:* {{ .CommonAnnotations.impact }}
+          *Action Required:* {{ .CommonAnnotations.action }}
+          *Runbook:* {{ .CommonAnnotations.runbook }}
+        color: 'danger'
+        send_resolved: true
+
+  - name: 'slack-engineering'
+    slack_configs:
+      - channel: '#engineering-alerts'
+        title: '{{ if eq .Status "firing" }}🔥{{ else }}✅{{ end }} {{ .GroupLabels.alertname }}'
+        text: |-
+          *Severity:* {{ .GroupLabels.severity }}
+          *Component:* {{ .GroupLabels.component }}
+          *Summary:* {{ .CommonAnnotations.summary }}
+          {{ if .CommonAnnotations.description }}*Details:* {{ .CommonAnnotations.description }}{{ end }}
+          {{ if .CommonAnnotations.action }}*Action:* {{ .CommonAnnotations.action }}{{ end }}
+        color: '{{ if eq .GroupLabels.severity "P1" }}danger{{ else if eq .GroupLabels.severity "P2" }}warning{{ else }}good{{ end }}'
+        send_resolved: true
+
+  # ========================================================================
+  # Email receivers
+  # ========================================================================
+  - name: 'email-security-team'
+    email_configs:
+      - to: 'security@hrms.com'
+        send_resolved: true
+        headers:
+          Subject: '🚨 SECURITY INCIDENT: {{ .GroupLabels.alertname }}'
+          Priority: 'urgent'
+        html: |-
+          <h2>Security Incident Detected</h2>
+          <p><strong>Alert:</strong> {{ .GroupLabels.alertname }}</p>
+          <p><strong>Severity:</strong> {{ .GroupLabels.severity }}</p>
+          <p><strong>Summary:</strong> {{ .CommonAnnotations.summary }}</p>
+          <p><strong>Impact:</strong> {{ .CommonAnnotations.impact }}</p>
+          <p><strong>Action Required:</strong> {{ .CommonAnnotations.action }}</p>
+          <p><strong>Runbook:</strong> <a href="{{ .CommonAnnotations.runbook }}">{{ .CommonAnnotations.runbook }}</a></p>
+          <p><strong>Compliance:</strong> {{ .CommonAnnotations.compliance }}</p>
+
+  - name: 'email-operations'
+    email_configs:
+      - to: 'operations@hrms.com'
+        send_resolved: true
+        headers:
+          Subject: 'HRMS Info: {{ .GroupLabels.alertname }}'
+
+  - name: 'security-team-escalation'
+    email_configs:
+      - to: 'security-escalation@hrms.com,ciso@hrms.com'
+        send_resolved: true
+        headers:
+          Subject: '🚨 SECURITY ESCALATION: {{ .GroupLabels.alertname }}'
+          Priority: 'urgent'
+    slack_configs:
+      - channel: '#security-incidents'
+        title: '🚨 ESCALATED SECURITY INCIDENT'
+        text: 'Security team has been notified via email and PagerDuty'
+        color: 'danger'
+
+  - name: 'sla-breach-team'
+    email_configs:
+      - to: 'sla-breach@hrms.com,management@hrms.com'
+        send_resolved: true
+        headers:
+          Subject: '⚠️ SLA BREACH: {{ .GroupLabels.alertname }}'
+          Priority: 'high'
+    slack_configs:
+      - channel: '#sla-alerts'
+        title: '⚠️ SLA BREACH DETECTED'
+        text: |-
+          *Alert:* {{ .GroupLabels.alertname }}
+          *Summary:* {{ .CommonAnnotations.summary }}
+          *Impact:* {{ .CommonAnnotations.impact }}
+        color: 'danger'
+
+# ============================================================================
+# Templates for notification formatting
+# ============================================================================
+templates:
+  - '/etc/alertmanager/templates/*.tmpl'

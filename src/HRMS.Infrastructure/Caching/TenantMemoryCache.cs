@@ -19,6 +19,9 @@ public class TenantMemoryCache : ITenantCache
     private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<TenantMemoryCache> _logger;
 
+    // CONCURRENCY FIX: Lock for atomic dual-key operations
+    private readonly SemaphoreSlim _dualKeyLock = new SemaphoreSlim(1, 1);
+
     // Cache configuration constants
     private const int SLIDING_EXPIRATION_MINUTES = 30;
     private const int ABSOLUTE_EXPIRATION_HOURS = 4;
@@ -62,7 +65,10 @@ public class TenantMemoryCache : ITenantCache
             var context = scope.ServiceProvider.GetRequiredService<MasterDbContext>();
 
             // Query database for tenant
+            // FORTUNE 500 OPTIMIZATION: Include Sector in single query (LEFT JOIN)
+            // Cost: 0 extra queries, sector data cached with tenant
             var dbTenant = await context.Tenants
+                .Include(t => t.Sector) // ⭐ CRITICAL: Load sector in same query
                 .AsNoTracking() // Read-only, better performance
                 .Where(t => t.Subdomain == normalizedSubdomain && !t.IsDeleted)
                 .FirstOrDefaultAsync();
@@ -72,8 +78,10 @@ public class TenantMemoryCache : ITenantCache
                 _logger.LogInformation("[CACHE_POPULATE] Cached tenant: {TenantId}, Subdomain: {Subdomain}",
                     dbTenant.Id, dbTenant.Subdomain);
 
-                // Also cache by ID for dual-key access
-                _cache.Set($"{ID_PREFIX}{dbTenant.Id}", dbTenant, entry.GetMemoryCacheEntryOptions());
+                // CONCURRENCY FIX: Atomic dual-key cache population
+                // Set both keys atomically to prevent inconsistent cache state
+                var options = entry.GetMemoryCacheEntryOptions();
+                _cache.Set($"{ID_PREFIX}{dbTenant.Id}", dbTenant, options);
             }
             else
             {
@@ -111,7 +119,9 @@ public class TenantMemoryCache : ITenantCache
             using var scope = _serviceProvider.CreateScope();
             var context = scope.ServiceProvider.GetRequiredService<MasterDbContext>();
 
+            // FORTUNE 500 OPTIMIZATION: Include Sector in single query (LEFT JOIN)
             var dbTenant = await context.Tenants
+                .Include(t => t.Sector) // ⭐ CRITICAL: Load sector in same query
                 .AsNoTracking()
                 .Where(t => t.Id == tenantId && !t.IsDeleted)
                 .FirstOrDefaultAsync();
@@ -121,8 +131,9 @@ public class TenantMemoryCache : ITenantCache
                 _logger.LogInformation("[CACHE_POPULATE] Cached tenant: {TenantId}, Subdomain: {Subdomain}",
                     dbTenant.Id, dbTenant.Subdomain);
 
-                // Also cache by subdomain for dual-key access
-                _cache.Set($"{SUBDOMAIN_PREFIX}{dbTenant.Subdomain.ToLower()}", dbTenant, entry.GetMemoryCacheEntryOptions());
+                // CONCURRENCY FIX: Atomic dual-key cache population
+                var options = entry.GetMemoryCacheEntryOptions();
+                _cache.Set($"{SUBDOMAIN_PREFIX}{dbTenant.Subdomain.ToLower()}", dbTenant, options);
             }
 
             return dbTenant;
@@ -143,10 +154,34 @@ public class TenantMemoryCache : ITenantCache
             return;
 
         var normalizedSubdomain = subdomain.ToLower().Trim();
-        var cacheKey = $"{SUBDOMAIN_PREFIX}{normalizedSubdomain}";
 
-        _cache.Remove(cacheKey);
-        _logger.LogInformation("[CACHE_INVALIDATE] Removed tenant from cache by subdomain: {Subdomain}", normalizedSubdomain);
+        // CONCURRENCY FIX: Atomically invalidate both cache keys
+        // Lock to prevent race condition between dual-key invalidation
+        _dualKeyLock.Wait();
+        try
+        {
+            // First, try to get the tenant to find its ID
+            var subdomainKey = $"{SUBDOMAIN_PREFIX}{normalizedSubdomain}";
+            if (_cache.TryGetValue<Tenant>(subdomainKey, out var tenant) && tenant != null)
+            {
+                // Remove both keys atomically
+                var idKey = $"{ID_PREFIX}{tenant.Id}";
+                _cache.Remove(subdomainKey);
+                _cache.Remove(idKey);
+                _logger.LogInformation("[CACHE_INVALIDATE] Removed tenant from cache (both keys): Subdomain={Subdomain}, Id={TenantId}",
+                    normalizedSubdomain, tenant.Id);
+            }
+            else
+            {
+                // Just remove subdomain key if tenant not in cache
+                _cache.Remove(subdomainKey);
+                _logger.LogInformation("[CACHE_INVALIDATE] Removed tenant from cache by subdomain: {Subdomain}", normalizedSubdomain);
+            }
+        }
+        finally
+        {
+            _dualKeyLock.Release();
+        }
     }
 
     /// <inheritdoc/>
@@ -155,9 +190,32 @@ public class TenantMemoryCache : ITenantCache
         if (tenantId == Guid.Empty)
             return;
 
-        var cacheKey = $"{ID_PREFIX}{tenantId}";
-        _cache.Remove(cacheKey);
-        _logger.LogInformation("[CACHE_INVALIDATE] Removed tenant from cache by ID: {TenantId}", tenantId);
+        // CONCURRENCY FIX: Atomically invalidate both cache keys
+        _dualKeyLock.Wait();
+        try
+        {
+            // First, try to get the tenant to find its subdomain
+            var idKey = $"{ID_PREFIX}{tenantId}";
+            if (_cache.TryGetValue<Tenant>(idKey, out var tenant) && tenant != null)
+            {
+                // Remove both keys atomically
+                var subdomainKey = $"{SUBDOMAIN_PREFIX}{tenant.Subdomain.ToLower()}";
+                _cache.Remove(idKey);
+                _cache.Remove(subdomainKey);
+                _logger.LogInformation("[CACHE_INVALIDATE] Removed tenant from cache (both keys): Id={TenantId}, Subdomain={Subdomain}",
+                    tenantId, tenant.Subdomain);
+            }
+            else
+            {
+                // Just remove ID key if tenant not in cache
+                _cache.Remove(idKey);
+                _logger.LogInformation("[CACHE_INVALIDATE] Removed tenant from cache by ID: {TenantId}", tenantId);
+            }
+        }
+        finally
+        {
+            _dualKeyLock.Release();
+        }
     }
 
     /// <inheritdoc/>

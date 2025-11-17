@@ -17,6 +17,7 @@ public class AuditLoggingMiddleware
 {
     private readonly RequestDelegate _next;
     private readonly ILogger<AuditLoggingMiddleware> _logger;
+    private readonly IServiceScopeFactory _scopeFactory;
     private static readonly HashSet<string> _excludedPaths = new(StringComparer.OrdinalIgnoreCase)
     {
         "/api/health",
@@ -25,10 +26,11 @@ public class AuditLoggingMiddleware
         "/hangfire"
     };
 
-    public AuditLoggingMiddleware(RequestDelegate next, ILogger<AuditLoggingMiddleware> logger)
+    public AuditLoggingMiddleware(RequestDelegate next, ILogger<AuditLoggingMiddleware> logger, IServiceScopeFactory scopeFactory)
     {
         _next = next;
         _logger = logger;
+        _scopeFactory = scopeFactory;
     }
 
     public async Task InvokeAsync(HttpContext context)
@@ -176,16 +178,14 @@ public class AuditLoggingMiddleware
             AdditionalMetadata = additionalMetadata
         };
 
-        // Create a reference to the service provider before the request context is disposed
-        var serviceProvider = context.RequestServices;
-
         // Fire and forget with new scope (prevents DbContext disposal issues)
+        // Use the application-level scope factory instead of request-scoped services
         _ = Task.Run(async () =>
         {
             try
             {
-                // Create a new scope with its own DbContext
-                using var scope = serviceProvider.CreateScope();
+                // Create a new scope with its own DbContext from the application-level factory
+                using var scope = _scopeFactory.CreateScope();
                 var scopedAuditLogService = scope.ServiceProvider.GetRequiredService<IAuditLogService>();
 
                 // Log the audit entry with the scoped service

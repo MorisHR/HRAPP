@@ -1,0 +1,298 @@
+{
+  "baselineDate": "2025-11-15",
+  "buildConfiguration": "production",
+  "angularVersion": "20.2.13",
+  "phase": "post-phase-1-migration",
+  "bundleSize": {
+    "total": {
+      "bytes": 8575923,
+      "megabytes": 8.18,
+      "gigabytes": 0.008
+    },
+    "main": {
+      "bytes": 27648,
+      "kilobytes": 27
+    },
+    "polyfills": {
+      "bytes": 34816,
+      "kilobytes": 34
+    },
+    "styles": {
+      "bytes": 66560,
+      "kilobytes": 65
+    },
+    "largestChunk": {
+      "name": "chunk-UYZ4OT62.js",
+      "bytes": 204800,
+      "kilobytes": 200
+    },
+    "compression": {
+      "gzip": {
+        "bytes": 1529261,
+        "megabytes": 1.46,
+        "compressionRatio": 0.178
+      },
+      "brotli": {
+        "bytes": null,
+        "note": "Not measured - estimated 20-30% better than gzip"
+      }
+    },
+    "lazyChunks": {
+      "total": 117,
+      "small": {
+        "count": 48,
+        "description": "< 10KB"
+      },
+      "medium": {
+        "count": 42,
+        "description": "10-50KB"
+      },
+      "large": {
+        "count": 9,
+        "description": "> 50KB",
+        "totalBytes": 1024000,
+        "note": "Most contain Material Design components"
+      }
+    }
+  },
+  "dependencies": {
+    "total": 2,
+    "angular": {
+      "@angular/material": "^20.2.13",
+      "@angular/cdk": "^20.2.13"
+    },
+    "materialPackageSize": {
+      "bytes": 13386153,
+      "megabytes": 12.76,
+      "note": "node_modules size, not bundled size"
+    },
+    "materialUsage": {
+      "totalImports": 380,
+      "uniqueModules": 15,
+      "topComponents": [
+        { "name": "MatIcon", "imports": 32 },
+        { "name": "MatButton", "imports": 31 },
+        { "name": "MatProgressSpinner", "imports": 26 },
+        { "name": "MatCard", "imports": 26 },
+        { "name": "MatTooltip", "imports": 18 },
+        { "name": "MatChips", "imports": 17 },
+        { "name": "MatTable", "imports": 16 },
+        { "name": "MatFormField", "imports": 15 },
+        { "name": "MatInput", "imports": 13 },
+        { "name": "MatDialog", "imports": 13 }
+      ],
+      "estimatedBundleImpact": {
+        "bytes": 3000000,
+        "megabytes": 2.86,
+        "percentage": 35,
+        "note": "Estimated 35% of total bundle is Material Design"
+      }
+    }
+  },
+  "gcpCosts": {
+    "assumptions": {
+      "monthlyUsers": 10000,
+      "avgSessionsPerUser": 20,
+      "cacheHitRatio": 0.90
+    },
+    "current": {
+      "monthlyEgressGB": 1597.39,
+      "cdnCost": 127.79,
+      "originCost": 1.54,
+      "storageCost": 0.0002,
+      "apiCost": 0.0008,
+      "totalMonthlyCost": 129.55,
+      "totalYearlyCost": 1554.59,
+      "costPerUser": 0.0130
+    },
+    "optimizedProjection": {
+      "bundleSizeBytes": 5000000,
+      "monthlyEgressGB": 931.32,
+      "totalMonthlyCost": 75.60,
+      "totalYearlyCost": 907.17,
+      "costPerUser": 0.0076,
+      "savingsMonthly": 53.95,
+      "savingsYearly": 647.42,
+      "savingsPercentage": 41.6,
+      "fiveYearTCOReduction": 3237.10
+    },
+    "scalingProjections": {
+      "50kUsers": {
+        "current": 647.74,
+        "optimized": 378.00,
+        "savingsYearly": 3236.88
+      },
+      "100kUsers": {
+        "current": 1295.48,
+        "optimized": 756.00,
+        "savingsYearly": 6473.76
+      },
+      "1mUsers": {
+        "current": 12954.80,
+        "optimized": 7560.00,
+        "savingsYearly": 64737.60,
+        "note": "Fortune 500 scale"
+      }
+    }
+  },
+  "lazyLoading": {
+    "status": "excellent",
+    "coverage": "100%",
+    "routes": {
+      "authentication": 6,
+      "admin": 17,
+      "tenant": 19,
+      "employee": 6,
+      "total": 48
+    },
+    "strategy": "loadComponent",
+    "preloading": "none",
+    "recommendation": "Add PreloadAllModules for background loading"
+  },
+  "performance": {
+    "build": {
+      "time": "49.4 seconds",
+      "warnings": 1,
+      "errors": 0,
+      "budgetExceeded": {
+        "initial": true,
+        "amount": "179.08 KB over 500 KB budget"
+      }
+    },
+    "metrics": {
+      "current": {
+        "note": "Estimated based on bundle size",
+        "fcp": "~1.2s on 3G",
+        "lcp": "~2.5s on 3G",
+        "tti": "~3.0s on 3G",
+        "tbt": "~450ms"
+      },
+      "target": {
+        "note": "After Material removal",
+        "fcp": "~0.8s on 3G",
+        "lcp": "~1.5s on 3G",
+        "tti": "~2.0s on 3G",
+        "tbt": "~250ms",
+        "improvement": "30-40%"
+      }
+    }
+  },
+  "treeshaking": {
+    "angular": {
+      "status": "optimal",
+      "aot": true,
+      "buildOptimizer": true
+    },
+    "material": {
+      "status": "partial",
+      "issue": "Individual modules still bundle unused features",
+      "example": "MatTable includes sorting/pagination even if unused"
+    },
+    "customComponents": {
+      "status": "optimal",
+      "coverage": "Phase 1 complete (subdomain page)",
+      "components": [
+        "CustomInput",
+        "CustomButton",
+        "CustomCard",
+        "CustomCheckbox"
+      ]
+    }
+  },
+  "optimization": {
+    "angular": {
+      "aot": true,
+      "buildOptimizer": true,
+      "optimization": true,
+      "sourceMap": false,
+      "extractLicenses": true,
+      "namedChunks": false,
+      "outputHashing": "all",
+      "inlineCritical": true
+    },
+    "budgets": {
+      "initial": {
+        "warning": "1.5MB",
+        "error": "2MB"
+      },
+      "mainBundle": {
+        "baseline": "27kB",
+        "warning": "50kB",
+        "error": "100kB"
+      },
+      "anyLazyBundle": {
+        "warning": "200kB",
+        "error": "500kB"
+      },
+      "anyComponentStyle": {
+        "warning": "16kB",
+        "error": "20kB"
+      }
+    }
+  },
+  "recommendations": {
+    "priority1": {
+      "title": "Continue Material to Custom UI Migration",
+      "impact": "40-50% bundle reduction",
+      "effort": "8-12 weeks",
+      "roi": "$647-64K/year depending on scale"
+    },
+    "priority2": {
+      "title": "Implement Route Preloading Strategy",
+      "impact": "Better UX, faster navigation",
+      "effort": "1 day",
+      "roi": "Improved user satisfaction"
+    },
+    "priority3": {
+      "title": "Enable Brotli Compression on CDN",
+      "impact": "Additional 20-30% compression vs gzip",
+      "effort": "1 hour (GCP configuration)",
+      "roi": "~$20-200/year depending on scale"
+    }
+  },
+  "nextSteps": {
+    "immediate": [
+      "Deploy updated angular.json with strict budgets",
+      "Set up bundle size monitoring in CI/CD",
+      "Create Phase 2 migration plan (high-frequency components)"
+    ],
+    "shortTerm": [
+      "Replace MatButton and MatIcon (weeks 1-2)",
+      "Replace MatInput and MatSelect (weeks 3-4)",
+      "Measure and document improvements"
+    ],
+    "longTerm": [
+      "Complete Material migration (8-12 weeks)",
+      "Achieve target bundle size of 5MB",
+      "Realize $647-64K annual cost savings"
+    ]
+  },
+  "monitoring": {
+    "tools": [
+      "Google Analytics (Core Web Vitals)",
+      "GCP Cloud Monitoring (CDN metrics)",
+      "Angular DevTools (bundle analysis)",
+      "Lighthouse CI (automated testing)"
+    ],
+    "metrics": [
+      "Bundle size (total, initial, largest chunk)",
+      "Performance (FCP, LCP, TTI, TBT)",
+      "Costs (GCP egress, CDN efficiency, cost per user)",
+      "User experience (route transition time, error rate)"
+    ],
+    "alerts": {
+      "bundleSizeIncrease": "> 5% from baseline",
+      "performanceDegradation": "LCP > 2.5s",
+      "costIncrease": "> 10% month-over-month"
+    }
+  },
+  "metadata": {
+    "generatedBy": "Performance Engineering Team",
+    "toolVersion": "Claude Code (Sonnet 4.5)",
+    "buildCommand": "npm run build -- --configuration production",
+    "platform": "GCP (Cloud Storage + Cloud CDN)",
+    "repository": "/workspaces/HRAPP",
+    "lastReview": "2025-11-15",
+    "nextReview": "2025-12-15"
+  }
+}

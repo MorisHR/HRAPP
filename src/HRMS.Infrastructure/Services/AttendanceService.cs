@@ -171,9 +171,13 @@ public class AttendanceService : IAttendanceService
         }
 
         // Validate employee exists and is active
-        var employee = await _tenantContext.Employees.FindAsync(employeeId);
+        var employee = await _tenantContext.Employees
+            .AsNoTracking()
+            .FirstOrDefaultAsync(e => e.Id == employeeId && !e.IsDeleted);
+
         if (employee == null)
         {
+            _logger.LogWarning("SECURITY: Employee {EmployeeId} not found in current tenant context", employeeId);
             throw new NotFoundException(
                 ErrorCodes.EMP_NOT_FOUND,
                 "Employee information could not be found.",
@@ -404,9 +408,13 @@ public class AttendanceService : IAttendanceService
         }
 
         // Validate employee exists
-        var employee = await _tenantContext.Employees.FindAsync(dto.EmployeeId);
+        var employee = await _tenantContext.Employees
+            .AsNoTracking()
+            .FirstOrDefaultAsync(e => e.Id == dto.EmployeeId && !e.IsDeleted);
+
         if (employee == null)
         {
+            _logger.LogWarning("SECURITY: Employee {EmployeeId} not found in current tenant context", dto.EmployeeId);
             throw new NotFoundException(
                 ErrorCodes.EMP_NOT_FOUND,
                 "Employee information could not be found.",
@@ -618,10 +626,13 @@ public class AttendanceService : IAttendanceService
 
     public async Task<decimal> CalculateWorkingHoursAsync(Guid attendanceId)
     {
-        var attendance = await _tenantContext.Attendances.FindAsync(attendanceId);
+        var attendance = await _tenantContext.Attendances
+            .FirstOrDefaultAsync(a => a.Id == attendanceId && !a.IsDeleted);
+
         if (attendance == null)
         {
-            throw new Exception($"Attendance not found: {attendanceId}");
+            _logger.LogWarning("SECURITY: Attendance {AttendanceId} not found in current tenant context", attendanceId);
+            throw new KeyNotFoundException($"Attendance with ID {attendanceId} not found or access denied");
         }
 
         if (!attendance.CheckInTime.HasValue || !attendance.CheckOutTime.HasValue)
@@ -657,10 +668,14 @@ public class AttendanceService : IAttendanceService
             employeeId, weekStartDate);
 
         // Get employee
-        var employee = await _tenantContext.Employees.FindAsync(employeeId);
+        var employee = await _tenantContext.Employees
+            .AsNoTracking()
+            .FirstOrDefaultAsync(e => e.Id == employeeId && !e.IsDeleted);
+
         if (employee == null)
         {
-            throw new Exception($"Employee not found: {employeeId}");
+            _logger.LogWarning("SECURITY: Employee {EmployeeId} not found in current tenant context", employeeId);
+            throw new KeyNotFoundException($"Employee with ID {employeeId} not found or access denied");
         }
 
         // Get week end date
@@ -879,10 +894,14 @@ public class AttendanceService : IAttendanceService
     public async Task<List<AttendanceListDto>> GetTeamAttendanceAsync(Guid managerId, DateTime date)
     {
         // Get manager's department
-        var manager = await _tenantContext.Employees.FindAsync(managerId);
+        var manager = await _tenantContext.Employees
+            .AsNoTracking()
+            .FirstOrDefaultAsync(e => e.Id == managerId && !e.IsDeleted);
+
         if (manager == null)
         {
-            return new List<AttendanceListDto>();
+            _logger.LogWarning("SECURITY: Manager {ManagerId} not found in current tenant context", managerId);
+            throw new KeyNotFoundException($"Manager with ID {managerId} not found or access denied");
         }
 
         // Get all employees in manager's department

@@ -24,6 +24,7 @@ using FluentValidation;
 using AspNetCoreRateLimit;
 using Microsoft.AspNetCore.ResponseCompression;
 using System.IO.Compression;
+using Microsoft.Extensions.Caching.Memory;
 
 /// <summary>
 /// PRODUCTION-GRADE HRMS API Program.cs
@@ -115,7 +116,7 @@ if (string.IsNullOrEmpty(connectionString))
     throw new InvalidOperationException("Database connection string not configured. Check appsettings.json or Google Secret Manager.");
 }
 
-// Master DbContext (system-wide data)
+// Master DbContext (system-wide data) - PRIMARY DATABASE
 builder.Services.AddDbContext<MasterDbContext>((serviceProvider, options) =>
 {
     options.UseNpgsql(connectionString, npgsqlOptions =>
@@ -138,6 +139,43 @@ builder.Services.AddDbContext<MasterDbContext>((serviceProvider, options) =>
         options.EnableDetailedErrors();
     }
 });
+
+// Master DbContext - READ REPLICA (FORTUNE 50)
+// Keyed service for read replica support - offloads SELECT queries from primary database
+// Falls back to primary connection if read replica is not configured
+builder.Services.AddKeyedScoped<MasterDbContext>("ReadReplica", (serviceProvider, key) =>
+{
+    var readReplicaConnectionString = builder.Configuration.GetConnectionString("ReadReplica")
+        ?? connectionString; // Fallback to primary if read replica not configured
+
+    var optionsBuilder = new DbContextOptionsBuilder<MasterDbContext>();
+    optionsBuilder.UseNpgsql(readReplicaConnectionString!, npgsqlOptions =>
+    {
+        npgsqlOptions.EnableRetryOnFailure(
+            maxRetryCount: 3,
+            maxRetryDelay: TimeSpan.FromSeconds(5),
+            errorCodesToAdd: null);
+        npgsqlOptions.CommandTimeout(30);
+    });
+
+    // Enable sensitive data logging only in development
+    if (builder.Environment.IsDevelopment())
+    {
+        optionsBuilder.EnableSensitiveDataLogging();
+        optionsBuilder.EnableDetailedErrors();
+    }
+
+    return new MasterDbContext(optionsBuilder.Options);
+});
+
+if (builder.Configuration.GetConnectionString("ReadReplica") != null)
+{
+    Log.Information("Read replica configured: SELECT queries offloaded from primary database");
+}
+else
+{
+    Log.Information("Read replica not configured: using primary database for all queries");
+}
 
 // ======================
 // HTTP CONTEXT ACCESSOR
@@ -191,6 +229,14 @@ builder.Services.AddScoped<TenantDbContext>(serviceProvider =>
 
     return new TenantDbContext(optionsBuilder.Options, tenantSchema, encryptionService);
 });
+
+// ======================
+// REDIS CACHE SERVICE (FORTUNE 50)
+// ======================
+// Distributed caching for multi-instance deployments
+// Falls back gracefully to in-memory cache if Redis is unavailable
+builder.Services.AddSingleton<IRedisCacheService, RedisCacheService>();
+Log.Information("Redis cache service registered: distributed caching for multi-instance deployments");
 
 // ======================
 // MULTI-TENANCY SERVICES
@@ -266,6 +312,7 @@ builder.Services.AddScoped<IPasswordHasher, Argon2PasswordHasher>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IMfaService, MfaService>();  // MFA (TOTP + Backup Codes)
 builder.Services.AddScoped<TenantAuthService>();  // Tenant employee authentication
+builder.Services.AddScoped<PasswordValidationService>();  // FORTRESS-GRADE password validation (Fortune 500)
 builder.Services.AddScoped<IEmployeeService, EmployeeService>();
 builder.Services.AddScoped<IEmployeeDraftService, EmployeeDraftService>();  // Employee draft management
 builder.Services.AddScoped<ILeaveService, LeaveService>();
@@ -312,6 +359,24 @@ Log.Information("SuperAdmin permission service registered for granular RBAC");
 // Fortune 500 Rate Limiting Service - DDoS protection with auto-blacklisting
 builder.Services.AddScoped<IRateLimitService, RateLimitService>();
 Log.Information("Fortune 500 rate limiting service registered with Redis support and auto-blacklisting");
+
+// Fortune 500 Feature Flag Service - Per-tenant feature control with gradual rollout
+builder.Services.AddScoped<IFeatureFlagService, FeatureFlagService>();
+Log.Information("Fortune 500 feature flag service registered: per-tenant control, gradual rollout, emergency rollback");
+
+// FORTUNE 50: Monitoring and Observability Service - SuperAdmin platform oversight
+// Manually register with read replica and Redis cache support
+builder.Services.AddScoped<IMonitoringService>(sp =>
+{
+    var writeContext = sp.GetRequiredService<MasterDbContext>();
+    var readContext = sp.GetRequiredKeyedService<MasterDbContext>("ReadReplica");
+    var memoryCache = sp.GetRequiredService<IMemoryCache>();
+    var redisCache = sp.GetRequiredService<IRedisCacheService>();
+    var logger = sp.GetRequiredService<ILogger<MonitoringService>>();
+
+    return new MonitoringService(writeContext, readContext, memoryCache, redisCache, logger);
+});
+Log.Information("Fortune 50 monitoring service registered: Redis cache + read replica support for horizontal scaling");
 
 // Timesheet Management Services
 builder.Services.AddScoped<ITimesheetGenerationService, TimesheetGenerationService>();
@@ -397,6 +462,11 @@ builder.Services.AddScoped<DeleteExpiredDraftsJob>();
 builder.Services.AddScoped<AuditLogArchivalJob>();
 builder.Services.AddScoped<AuditLogChecksumVerificationJob>();
 Log.Information("Audit log compliance jobs registered: archival, checksum verification");
+
+// FORTUNE 500: Tenant activation optimization jobs
+builder.Services.AddScoped<AbandonedTenantCleanupJob>();
+builder.Services.AddScoped<ActivationReminderJob>();
+Log.Information("Fortune 500 tenant activation jobs registered: abandoned cleanup, activation reminders");
 
 // DATABASE MAINTENANCE: Automated database optimization jobs
 // Provides automated materialized view refresh, token cleanup, vacuum maintenance, partition management, and health checks
@@ -1031,7 +1101,80 @@ recurringJobManager.AddOrUpdate<SubscriptionNotificationJob>(
         TimeZone = mauritiusTimeZone
     });
 
-Log.Information("Recurring jobs configured: document-expiry-alerts, absent-marking, leave-accrual, delete-expired-drafts, audit-log-archival, audit-log-checksum-verification, subscription-notifications");
+// FORTUNE 500: Abandoned tenant cleanup job (deletes pending tenants >30 days old)
+recurringJobManager.AddOrUpdate<AbandonedTenantCleanupJob>(
+    "abandoned-tenant-cleanup",
+    job => job.ExecuteAsync(),
+    "0 5 * * *",  // 5:00 AM daily
+    new RecurringJobOptions
+    {
+        TimeZone = mauritiusTimeZone
+    });
+
+// FORTUNE 500: Activation reminder job (sends nudge emails at day 3, 7, 14, 21)
+recurringJobManager.AddOrUpdate<ActivationReminderJob>(
+    "activation-reminders",
+    job => job.ExecuteAsync(),
+    "0 8 * * *",  // 8:00 AM daily
+    new RecurringJobOptions
+    {
+        TimeZone = mauritiusTimeZone
+    });
+
+// ======================
+// FORTUNE 50: MONITORING AND OBSERVABILITY JOBS
+// ======================
+// Capture performance snapshot every 5 minutes
+recurringJobManager.AddOrUpdate<MonitoringJobs>(
+    "monitoring-performance-snapshot",
+    job => job.CapturePerformanceSnapshotAsync(),
+    "*/5 * * * *",  // Every 5 minutes
+    new RecurringJobOptions
+    {
+        TimeZone = TimeZoneInfo.Utc  // Use UTC for monitoring consistency
+    });
+
+// Refresh dashboard summary every 5 minutes
+recurringJobManager.AddOrUpdate<MonitoringJobs>(
+    "monitoring-dashboard-refresh",
+    job => job.RefreshDashboardSummaryAsync(),
+    "*/5 * * * *",  // Every 5 minutes
+    new RecurringJobOptions
+    {
+        TimeZone = TimeZoneInfo.Utc
+    });
+
+// Check alert thresholds every 5 minutes
+recurringJobManager.AddOrUpdate<MonitoringJobs>(
+    "monitoring-alert-checks",
+    job => job.CheckAlertThresholdsAsync(),
+    "*/5 * * * *",  // Every 5 minutes
+    new RecurringJobOptions
+    {
+        TimeZone = TimeZoneInfo.Utc
+    });
+
+// Cleanup old monitoring data daily at 2:00 AM
+recurringJobManager.AddOrUpdate<MonitoringJobs>(
+    "monitoring-data-cleanup",
+    job => job.CleanupOldMonitoringDataAsync(),
+    "0 2 * * *",  // 2:00 AM daily
+    new RecurringJobOptions
+    {
+        TimeZone = mauritiusTimeZone
+    });
+
+// Analyze slow queries daily at 3:00 AM
+recurringJobManager.AddOrUpdate<MonitoringJobs>(
+    "monitoring-slow-query-analysis",
+    job => job.AnalyzeSlowQueriesAsync(),
+    "0 3 * * *",  // 3:00 AM daily
+    new RecurringJobOptions
+    {
+        TimeZone = mauritiusTimeZone
+    });
+
+Log.Information("Recurring jobs configured: document-expiry-alerts, absent-marking, leave-accrual, delete-expired-drafts, audit-log-archival, audit-log-checksum-verification, subscription-notifications, abandoned-tenant-cleanup, activation-reminders, monitoring-performance-snapshot, monitoring-dashboard-refresh, monitoring-alert-checks, monitoring-data-cleanup, monitoring-slow-query-analysis");
 
 // ======================
 // HEALTH CHECK ENDPOINTS (Production-Grade)

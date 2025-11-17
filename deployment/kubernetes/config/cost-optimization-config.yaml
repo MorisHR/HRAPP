@@ -1,0 +1,111 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cost-optimization-config
+  namespace: hrms-production
+  labels:
+    app: hrms
+    component: configuration
+    cost-optimization: "true"
+data:
+  # Database Read Replica Configuration
+  ENABLE_READ_REPLICA: "true"
+  READ_REPLICA_ENDPOINT: "cloudsql-proxy.hrms-production.svc.cluster.local:5433"
+  MASTER_DB_ENDPOINT: "cloudsql-proxy.hrms-production.svc.cluster.local:5432"
+
+  # Redis Caching Configuration
+  REDIS_ENABLED: "true"
+  REDIS_ENDPOINT: "redis-master.hrms-production.svc.cluster.local:6379"
+  REDIS_CACHE_TTL_SECONDS: "3600"
+  REDIS_TENANT_CACHE_TTL_SECONDS: "7200"
+
+  # BigQuery Archival Configuration
+  BIGQUERY_ARCHIVAL_ENABLED: "true"
+  BIGQUERY_PROJECT_ID: "PROJECT_ID"
+  BIGQUERY_DATASET: "hrms_archive"
+  BIGQUERY_ARCHIVAL_DAYS: "90"
+
+  # Pub/Sub Async Metrics Configuration
+  PUBSUB_ASYNC_METRICS: "true"
+  PUBSUB_PROJECT_ID: "PROJECT_ID"
+  PUBSUB_METRICS_TOPIC: "hrms-metrics"
+  PUBSUB_AUDIT_TOPIC: "hrms-audit-logs"
+
+  # Cloud Storage Configuration
+  GCS_BUCKET_NAME: "hrms-storage-bucket"
+  GCS_BACKUP_BUCKET: "hrms-backup-bucket"
+
+  # Cost Optimization Features
+  ENABLE_QUERY_CACHING: "true"
+  ENABLE_RESPONSE_COMPRESSION: "true"
+  ENABLE_CONNECTION_POOLING: "true"
+  MAX_POOL_SIZE: "100"
+  MIN_POOL_SIZE: "10"
+
+  # Monitoring and Metrics
+  ENABLE_PROMETHEUS_METRICS: "true"
+  PROMETHEUS_PORT: "9090"
+  ENABLE_DISTRIBUTED_TRACING: "true"
+  JAEGER_ENDPOINT: "jaeger-collector.monitoring.svc.cluster.local:14250"
+
+  # Performance Settings
+  ENABLE_HTTP_CACHING: "true"
+  HTTP_CACHE_MAX_AGE: "300"
+  ENABLE_GZIP_COMPRESSION: "true"
+  GZIP_COMPRESSION_LEVEL: "6"
+
+  # Background Job Settings
+  HANGFIRE_WORKER_COUNT: "5"
+  HANGFIRE_POLL_INTERVAL: "15"
+  HANGFIRE_JOB_EXPIRATION_HOURS: "48"
+
+  # Feature Flags for Cost Control
+  ENABLE_CDN: "true"
+  CDN_ENDPOINT: "https://cdn.hrms.example.com"
+  ENABLE_LAZY_LOADING: "true"
+  ENABLE_INCREMENTAL_SYNC: "true"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: database-connection-config
+  namespace: hrms-production
+  labels:
+    app: hrms
+    component: database
+data:
+  # Connection String Templates (secrets referenced separately)
+  DB_MASTER_HOST: "cloudsql-proxy.hrms-production.svc.cluster.local"
+  DB_MASTER_PORT: "5432"
+  DB_REPLICA_HOST: "cloudsql-proxy.hrms-production.svc.cluster.local"
+  DB_REPLICA_PORT: "5433"
+  DB_MAX_POOL_SIZE: "100"
+  DB_MIN_POOL_SIZE: "10"
+  DB_CONNECTION_TIMEOUT: "30"
+  DB_COMMAND_TIMEOUT: "60"
+  DB_RETRY_COUNT: "3"
+  DB_RETRY_DELAY_SECONDS: "2"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: monitoring-config
+  namespace: hrms-production
+  labels:
+    app: hrms
+    component: monitoring
+data:
+  # Prometheus Configuration
+  PROMETHEUS_SCRAPE_INTERVAL: "15s"
+  PROMETHEUS_SCRAPE_TIMEOUT: "10s"
+
+  # Grafana Configuration
+  GRAFANA_URL: "http://grafana.monitoring.svc.cluster.local:3000"
+
+  # Alert Manager Configuration
+  ALERTMANAGER_URL: "http://alertmanager.monitoring.svc.cluster.local:9093"
+
+  # Log Aggregation
+  LOKI_URL: "http://loki.monitoring.svc.cluster.local:3100"
+  LOG_LEVEL: "Information"
+  LOG_RETENTION_DAYS: "30"

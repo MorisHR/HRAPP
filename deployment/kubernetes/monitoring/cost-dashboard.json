@@ -1,0 +1,210 @@
+{
+  "dashboard": {
+    "title": "HRMS Cost Optimization Dashboard",
+    "tags": ["cost", "optimization", "kubernetes"],
+    "timezone": "browser",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Monthly Cost Savings",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "720",
+            "legendFormat": "Total Savings"
+          }
+        ],
+        "options": {
+          "unit": "currencyUSD",
+          "colorMode": "value",
+          "graphMode": "area",
+          "textMode": "value_and_name"
+        }
+      },
+      {
+        "id": 2,
+        "title": "HPA Scaling Events (Last 24h)",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "rate(kube_hpa_status_current_replicas{namespace=\"hrms-production\"}[5m])",
+            "legendFormat": "{{horizontalpodautoscaler}}"
+          }
+        ]
+      },
+      {
+        "id": 3,
+        "title": "Preemptible Node Count",
+        "type": "gauge",
+        "targets": [
+          {
+            "expr": "count(kube_node_labels{label_workload_type=\"background-jobs\"})",
+            "legendFormat": "Preemptible Nodes"
+          }
+        ],
+        "options": {
+          "min": 1,
+          "max": 5,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {"value": 0, "color": "red"},
+              {"value": 1, "color": "yellow"},
+              {"value": 2, "color": "green"}
+            ]
+          }
+        }
+      },
+      {
+        "id": 4,
+        "title": "Cloud SQL Proxy Connections",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "cloudsql_proxy_connections_count{namespace=\"hrms-production\"}",
+            "legendFormat": "Active Connections"
+          }
+        ]
+      },
+      {
+        "id": 5,
+        "title": "Pod CPU Usage by Workload",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=\"hrms-production\"}[5m])) by (pod)",
+            "legendFormat": "{{pod}}"
+          }
+        ]
+      },
+      {
+        "id": 6,
+        "title": "Pod Memory Usage by Workload",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "sum(container_memory_working_set_bytes{namespace=\"hrms-production\"}) by (pod)",
+            "legendFormat": "{{pod}}"
+          }
+        ],
+        "options": {
+          "unit": "bytes"
+        }
+      },
+      {
+        "id": 7,
+        "title": "HPA Target vs Current Replicas",
+        "type": "table",
+        "targets": [
+          {
+            "expr": "kube_hpa_status_desired_replicas{namespace=\"hrms-production\"}",
+            "format": "table",
+            "instant": true
+          },
+          {
+            "expr": "kube_hpa_status_current_replicas{namespace=\"hrms-production\"}",
+            "format": "table",
+            "instant": true
+          }
+        ]
+      },
+      {
+        "id": 8,
+        "title": "Preemptible Node Evictions (Last 7 days)",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "count_over_time(kube_pod_container_status_terminated_reason{namespace=\"hrms-production\", reason=\"Preempted\"}[7d])",
+            "legendFormat": "Evictions"
+          }
+        ]
+      },
+      {
+        "id": 9,
+        "title": "Cost Savings Breakdown",
+        "type": "piechart",
+        "targets": [
+          {
+            "expr": "400",
+            "legendFormat": "HPA"
+          },
+          {
+            "expr": "240",
+            "legendFormat": "Preemptible VMs"
+          },
+          {
+            "expr": "80",
+            "legendFormat": "Cloud SQL Proxy"
+          }
+        ],
+        "options": {
+          "unit": "currencyUSD"
+        }
+      },
+      {
+        "id": 10,
+        "title": "Resource Quota Usage",
+        "type": "bargauge",
+        "targets": [
+          {
+            "expr": "100 * kube_resourcequota{namespace=\"hrms-production\", type=\"used\"} / kube_resourcequota{namespace=\"hrms-production\", type=\"hard\"}",
+            "legendFormat": "{{resource}}"
+          }
+        ],
+        "options": {
+          "unit": "percent",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {"value": 0, "color": "green"},
+              {"value": 70, "color": "yellow"},
+              {"value": 90, "color": "red"}
+            ]
+          }
+        }
+      },
+      {
+        "id": 11,
+        "title": "Database Connection Pool Efficiency",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "cloudsql_proxy_connection_pool_active{namespace=\"hrms-production\"}",
+            "legendFormat": "Active Connections"
+          },
+          {
+            "expr": "cloudsql_proxy_connection_pool_idle{namespace=\"hrms-production\"}",
+            "legendFormat": "Idle Connections"
+          }
+        ]
+      },
+      {
+        "id": 12,
+        "title": "Pod Restarts (Cost Impact Indicator)",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "sum(rate(kube_pod_container_status_restarts_total{namespace=\"hrms-production\"}[1h]))",
+            "legendFormat": "Restarts/hour"
+          }
+        ],
+        "options": {
+          "colorMode": "background",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {"value": 0, "color": "green"},
+              {"value": 1, "color": "yellow"},
+              {"value": 5, "color": "red"}
+            ]
+          }
+        }
+      }
+    ],
+    "refresh": "30s",
+    "time": {
+      "from": "now-6h",
+      "to": "now"
+    }
+  }
+}

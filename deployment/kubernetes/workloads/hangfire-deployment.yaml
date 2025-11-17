@@ -1,0 +1,116 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hangfire-jobs
+  namespace: hrms-production
+  labels:
+    app: hangfire-jobs
+    component: background-jobs
+    cost-optimization: "true"
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: hangfire-jobs
+  template:
+    metadata:
+      labels:
+        app: hangfire-jobs
+        component: background-jobs
+        version: v1
+    spec:
+      # Use preemptible nodes for cost savings
+      nodeSelector:
+        workload-type: background-jobs
+
+      # Tolerate the taint on preemptible nodes
+      tolerations:
+      - key: workload-type
+        operator: Equal
+        value: background-jobs
+        effect: NoSchedule
+
+      # Handle preemptible node evictions gracefully
+      terminationGracePeriodSeconds: 60
+
+      containers:
+      - name: hangfire
+        image: gcr.io/PROJECT_ID/hrms-api:latest
+        imagePullPolicy: IfNotPresent
+
+        command: ["dotnet", "HRMS.API.dll"]
+        args: ["--job-server"]
+
+        env:
+        - name: ASPNETCORE_ENVIRONMENT
+          value: "Production"
+        - name: ConnectionStrings__MasterConnection
+          valueFrom:
+            secretKeyRef:
+              name: cloudsql-credentials
+              key: master-connection-string
+        - name: Hangfire__Enabled
+          value: "true"
+        - name: Hangfire__WorkerCount
+          value: "5"
+
+        envFrom:
+        - configMapRef:
+            name: cost-optimization-config
+
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+
+        readinessProbe:
+          httpGet:
+            path: /health/ready
+            port: 8080
+          initialDelaySeconds: 15
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+
+      # Spread pods across availability zones
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - hangfire-jobs
+              topologyKey: topology.kubernetes.io/zone
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: hangfire-jobs
+  namespace: hrms-production
+  labels:
+    app: hangfire-jobs
+spec:
+  type: ClusterIP
+  selector:
+    app: hangfire-jobs
+  ports:
+  - name: http
+    port: 8080
+    targetPort: 8080
+    protocol: TCP

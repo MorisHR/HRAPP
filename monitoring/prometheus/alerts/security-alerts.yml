@@ -1,0 +1,192 @@
+# ============================================================================
+# Fortune 50 Security & Compliance Alerting Rules
+# Purpose: Real-time threat detection and compliance monitoring
+# Severity: P0 for security incidents, immediate response required
+# ============================================================================
+
+groups:
+  - name: security_threats
+    interval: 30s
+    rules:
+      # ========================================================================
+      # CRITICAL SECURITY ALERTS (P0) - Immediate Response Required
+      # ========================================================================
+
+      - alert: TenantIsolationBreach
+        expr: |
+          (
+            SELECT COUNT(*)
+            FROM monitoring.security_events
+            WHERE event_type = 'cross_tenant_query'
+            AND detected_at > NOW() - INTERVAL '5 minutes'
+          ) > 0
+        for: 0m  # Immediate alert - zero tolerance
+        labels:
+          severity: P0
+          priority: critical
+          component: security
+          security_incident: "true"
+          compliance_impact: "high"
+        annotations:
+          summary: "SECURITY INCIDENT: Tenant isolation breach detected"
+          description: "{{ $value }} cross-tenant query attempts detected"
+          impact: "CRITICAL SECURITY BREACH - Data isolation compromised"
+          action: "1. IMMEDIATELY notify security team\n2. Block offending requests\n3. Audit affected tenants\n4. Review access logs\n5. Initiate incident response protocol\n6. Prepare breach notification if data accessed"
+          runbook: "https://docs.hrms.com/security/tenant-isolation-breach"
+          compliance: "SOC2, GDPR, HIPAA violation potential"
+
+      - alert: IDORAttackDetected
+        expr: |
+          (
+            SELECT COUNT(*)
+            FROM monitoring.security_events
+            WHERE event_type = 'idor_attempt'
+            AND detected_at > NOW() - INTERVAL '5 minutes'
+          ) > 5
+        for: 1m
+        labels:
+          severity: P0
+          priority: critical
+          component: security
+          security_incident: "true"
+        annotations:
+          summary: "SECURITY INCIDENT: IDOR attack pattern detected"
+          description: "{{ $value }} IDOR attempts in 5 minutes (threshold: >5)"
+          impact: "Active attack attempting unauthorized data access"
+          action: "1. Identify source IP address\n2. Block attacker IP immediately\n3. Review successful vs blocked attempts\n4. Audit potentially accessed resources\n5. Notify security team"
+          runbook: "https://docs.hrms.com/security/idor-attack-response"
+
+      - alert: BruteForceAttackDetected
+        expr: |
+          (
+            SELECT COUNT(*)
+            FROM monitoring.security_events
+            WHERE event_type = 'failed_login'
+            AND detected_at > NOW() - INTERVAL '5 minutes'
+          ) > 50
+        for: 2m
+        labels:
+          severity: P1
+          priority: critical
+          component: security
+          security_incident: "true"
+        annotations:
+          summary: "SECURITY ALERT: Brute force attack detected"
+          description: "{{ $value }} failed login attempts in 5 minutes (threshold: >50)"
+          impact: "Active credential stuffing or brute force attack"
+          action: "1. Identify source IPs\n2. Enable rate limiting\n3. Block attacking IPs\n4. Force MFA for affected accounts\n5. Monitor for account takeover attempts"
+          runbook: "https://docs.hrms.com/security/brute-force-response"
+
+      - alert: UnauthorizedAccessAttempt
+        expr: |
+          (
+            SELECT COUNT(*)
+            FROM monitoring.security_events
+            WHERE event_type IN ('unauthorized_access', 'privilege_escalation')
+            AND detected_at > NOW() - INTERVAL '10 minutes'
+          ) > 10
+        for: 2m
+        labels:
+          severity: P1
+          priority: critical
+          component: security
+          security_incident: "true"
+        annotations:
+          summary: "Multiple unauthorized access attempts detected"
+          description: "{{ $value }} unauthorized access attempts in 10 minutes"
+          impact: "Potential insider threat or compromised credentials"
+          action: "1. Review user activity logs\n2. Identify affected accounts\n3. Verify authorization logic\n4. Consider account suspension if anomalous\n5. Audit role assignments"
+
+      # ========================================================================
+      # WARNING SECURITY ALERTS (P2) - Monitor Closely
+      # ========================================================================
+
+      - alert: ElevatedFailedLoginRate
+        expr: |
+          (
+            SELECT ROUND(100.0 * COUNT(*) FILTER (WHERE event_type = 'failed_login') / NULLIF(COUNT(*), 0), 2)
+            FROM monitoring.security_events
+            WHERE detected_at > NOW() - INTERVAL '1 hour'
+          ) > 5
+        for: 10m
+        labels:
+          severity: P2
+          priority: warning
+          component: security
+        annotations:
+          summary: "Failed login rate elevated"
+          description: "Failed login rate is {{ $value }}% (threshold: >5%)"
+          impact: "Increased authentication failures - potential credential issues or attack"
+          action: "1. Monitor authentication patterns\n2. Review common failure reasons\n3. Check for password reset requests\n4. Verify login UI changes"
+
+      - alert: SuspiciousIPActivity
+        expr: |
+          (
+            SELECT COUNT(DISTINCT ip_address)
+            FROM monitoring.security_events
+            WHERE detected_at > NOW() - INTERVAL '10 minutes'
+            AND severity IN ('critical', 'warning')
+          ) > 10
+        for: 5m
+        labels:
+          severity: P2
+          priority: warning
+          component: security
+        annotations:
+          summary: "Multiple suspicious IP addresses detected"
+          description: "{{ $value }} different IPs triggering security events"
+          impact: "Distributed attack or compromised network"
+          action: "1. Analyze IP geolocation patterns\n2. Check for VPN/proxy usage\n3. Review IP reputation\n4. Consider geo-blocking if needed"
+
+  - name: compliance_monitoring
+    interval: 5m
+    rules:
+      # ========================================================================
+      # COMPLIANCE ALERTS
+      # ========================================================================
+
+      - alert: AuditLogVolumeAnomaly
+        expr: |
+          (
+            SELECT COUNT(*)
+            FROM monitoring.security_events
+            WHERE detected_at > NOW() - INTERVAL '1 hour'
+          ) > (
+            SELECT AVG(event_count) * 3
+            FROM (
+              SELECT COUNT(*) as event_count
+              FROM monitoring.security_events
+              WHERE detected_at > NOW() - INTERVAL '24 hours'
+              GROUP BY DATE_TRUNC('hour', detected_at)
+            ) sub
+          )
+        for: 10m
+        labels:
+          severity: P2
+          priority: warning
+          component: compliance
+        annotations:
+          summary: "Audit log volume 3x above baseline"
+          description: "Unusual spike in security events ({{ $value }} events/hour)"
+          impact: "Potential security incident or system anomaly"
+          action: "1. Review event types\n2. Identify source of spike\n3. Verify logging system health\n4. Check for bulk operations"
+
+      - alert: CriticalSecurityEventsUnresolved
+        expr: |
+          (
+            SELECT COUNT(*)
+            FROM monitoring.alert_history
+            WHERE severity = 'critical'
+            AND resolved_at IS NULL
+            AND triggered_at < NOW() - INTERVAL '1 hour'
+          ) > 0
+        for: 5m
+        labels:
+          severity: P2
+          priority: warning
+          component: compliance
+        annotations:
+          summary: "Critical security alerts remain unresolved"
+          description: "{{ $value }} critical alerts unresolved for >1 hour"
+          impact: "Compliance violation - security incidents must be resolved promptly"
+          action: "1. Review open security incidents\n2. Escalate to security team\n3. Document resolution steps\n4. Update alert status"
