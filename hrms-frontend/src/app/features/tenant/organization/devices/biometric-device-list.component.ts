@@ -1,14 +1,11 @@
-import { Component, OnInit, signal, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, signal, ChangeDetectorRef, inject } from '@angular/core';
 
 import { Router } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
-import { MatTableModule } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatChipsModule } from '@angular/material/chips';
-import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { UiModule } from '../../../../shared/ui/ui.module';
+import { ToastService, TableComponent, TableColumn, TableColumnDirective, TooltipDirective } from '../../../../shared/ui';
 import { AttendanceMachinesService, AttendanceMachineDto } from '../../../../core/services/attendance-machines.service';
 import { BiometricDeviceService, BiometricDeviceDto, DeviceSyncStatusDto, ManualSyncResult } from './biometric-device.service';
 
@@ -17,13 +14,12 @@ import { BiometricDeviceService, BiometricDeviceDto, DeviceSyncStatusDto, Manual
   standalone: true,
   imports: [
     MatCardModule,
-    MatTableModule,
+    TableComponent,
+    TableColumnDirective,
     MatButtonModule,
     MatIconModule,
-    MatProgressSpinnerModule,
-    MatTooltipModule,
-    MatChipsModule,
-    MatSnackBarModule
+    TooltipDirective,
+    UiModule
 ],
   templateUrl: './biometric-device-list.component.html',
   styleUrls: ['./biometric-device-list.component.scss']
@@ -33,15 +29,25 @@ export class BiometricDeviceListComponent implements OnInit {
   machines = signal<AttendanceMachineDto[]>([]);
   loading = signal<boolean>(false);
   error = signal<string | null>(null);
-  displayedColumns: string[] = ['code', 'name', 'location', 'ipAddress', 'status', 'lastSync', 'actions'];
+
+  columns: TableColumn[] = [
+    { key: 'code', label: 'Device Code' },
+    { key: 'name', label: 'Device Name', sortable: true },
+    { key: 'location', label: 'Location' },
+    { key: 'ipAddress', label: 'IP Address:Port' },
+    { key: 'status', label: 'Status' },
+    { key: 'lastSync', label: 'Last Sync', sortable: true },
+    { key: 'actions', label: 'Actions' }
+  ];
 
   // Connection testing state
   testingConnection: Set<string> = new Set();
   syncingDevice: Set<string> = new Set();
 
+  private toastService = inject(ToastService);
+
   constructor(
     private router: Router,
-    private snackBar: MatSnackBar,
     private attendanceMachinesService: AttendanceMachinesService,
     private deviceService: BiometricDeviceService,
     private cdr: ChangeDetectorRef
@@ -83,7 +89,7 @@ export class BiometricDeviceListComponent implements OnInit {
         });
         this.error.set('Failed to load attendance machines');
         this.loading.set(false);
-        this.snackBar.open('Failed to load attendance machines', 'Close', { duration: 3000 });
+        this.toastService.error('Failed to load attendance machines', 3000);
       },
       complete: () => {
         console.log('🏁 Observable completed');
@@ -119,12 +125,12 @@ export class BiometricDeviceListComponent implements OnInit {
     if (confirm(`Are you sure you want to delete the device "${deviceName}"? This action cannot be undone.`)) {
       this.attendanceMachinesService.deleteMachine(id).subscribe({
         next: () => {
-          this.snackBar.open('Device deleted successfully', 'Close', { duration: 3000 });
+          this.toastService.success('Device deleted successfully', 3000);
           this.loadDevices();
         },
         error: (error) => {
           console.error('Delete error:', error);
-          this.snackBar.open('Failed to delete device', 'Close', { duration: 3000 });
+          this.toastService.error('Failed to delete device', 3000);
         }
       });
     }
@@ -135,11 +141,7 @@ export class BiometricDeviceListComponent implements OnInit {
    */
   onTestConnection(device: AttendanceMachineDto): void {
     if (!device.ipAddress) {
-      this.snackBar.open(
-        'Device has no IP address configured',
-        'Close',
-        { duration: 3000 }
-      );
+      this.toastService.warning('Device has no IP address configured', 3000);
       return;
     }
 
@@ -161,16 +163,14 @@ export class BiometricDeviceListComponent implements OnInit {
         });
 
         if (result.success) {
-          this.snackBar.open(
-            `✓ Connected to ${device.machineName} in ${result.responseTimeMs}ms`,
-            'Close',
-            { duration: 5000, panelClass: ['success-snackbar'] }
+          this.toastService.success(
+            `Connected to ${device.machineName} in ${result.responseTimeMs}ms`,
+            5000
           );
         } else {
-          this.snackBar.open(
-            `✗ Failed to connect to ${device.machineName}: ${result.message}`,
-            'Close',
-            { duration: 6000, panelClass: ['error-snackbar'] }
+          this.toastService.error(
+            `Failed to connect to ${device.machineName}: ${result.message}`,
+            6000
           );
         }
       },
@@ -182,10 +182,9 @@ export class BiometricDeviceListComponent implements OnInit {
         });
 
         console.error('Connection test error:', error);
-        this.snackBar.open(
+        this.toastService.error(
           `Failed to test connection to ${device.machineName}`,
-          'Close',
-          { duration: 3000 }
+          3000
         );
       }
     });
@@ -206,18 +205,16 @@ export class BiometricDeviceListComponent implements OnInit {
         });
 
         if (result.success) {
-          this.snackBar.open(
-            `✓ Sync queued for ${device.machineName}`,
-            'Close',
-            { duration: 4000, panelClass: ['success-snackbar'] }
+          this.toastService.success(
+            `Sync queued for ${device.machineName}`,
+            4000
           );
           // Refresh device list to show updated sync status
           this.loadDevices();
         } else {
-          this.snackBar.open(
-            `✗ Failed to sync ${device.machineName}: ${result.message}`,
-            'Close',
-            { duration: 6000, panelClass: ['error-snackbar'] }
+          this.toastService.error(
+            `Failed to sync ${device.machineName}: ${result.message}`,
+            6000
           );
         }
       },
@@ -230,10 +227,9 @@ export class BiometricDeviceListComponent implements OnInit {
 
         console.error('Sync trigger error:', error);
         const errorMsg = error.error?.error || error.error?.message || 'Failed to trigger sync';
-        this.snackBar.open(
+        this.toastService.error(
           `Failed to sync ${device.machineName}: ${errorMsg}`,
-          'Close',
-          { duration: 4000 }
+          4000
         );
       }
     });
@@ -334,7 +330,7 @@ export class BiometricDeviceListComponent implements OnInit {
    */
   onRefresh(): void {
     this.loadDevices();
-    this.snackBar.open('Device list refreshed', 'Close', { duration: 2000 });
+    this.toastService.info('Device list refreshed', 2000);
   }
 
   /**

@@ -3,10 +3,10 @@ import { Component, signal, inject, OnInit, computed } from '@angular/core';
 import { RouterModule, Router } from '@angular/router';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatToolbarModule } from '@angular/material/toolbar';
-import { MatListModule } from '@angular/material/list';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { List, ListItem } from '@app/shared/ui';
 import { AuthService } from '../../core/services/auth.service';
 import { ThemeService } from '../../core/services/theme.service';
 
@@ -24,7 +24,8 @@ interface NavItem {
     RouterModule,
     MatSidenavModule,
     MatToolbarModule,
-    MatListModule,
+    List,
+    ListItem,
     MatIconModule,
     MatButtonModule,
     MatTooltipModule
@@ -48,21 +49,22 @@ interface NavItem {
         </div>
 
         <!-- Navigation Items -->
-        <mat-nav-list>
+        <app-list>
           @for (item of navItems; track item.route) {
-            <a
-              mat-list-item
-              [routerLink]="item.route"
-              routerLinkActive="active-link"
-              [matTooltip]="sidenavCollapsed() ? item.label : ''"
-              matTooltipPosition="right">
-              <mat-icon matListItemIcon>{{ item.icon }}</mat-icon>
-              @if (!sidenavCollapsed()) {
-                <span matListItemTitle>{{ item.label }}</span>
-              }
-            </a>
+            <app-list-item [clickable]="true">
+              <a
+                [routerLink]="item.route"
+                routerLinkActive="active-link"
+                [matTooltip]="sidenavCollapsed() ? item.label : ''"
+                matTooltipPosition="right">
+                <mat-icon class="item-icon">{{ item.icon }}</mat-icon>
+                @if (!sidenavCollapsed()) {
+                  <span class="item-label">{{ item.label }}</span>
+                }
+              </a>
+            </app-list-item>
           }
-        </mat-nav-list>
+        </app-list>
 
         <!-- Collapse/Expand Toggle -->
         <div class="sidenav-footer">
@@ -155,14 +157,37 @@ interface NavItem {
       border-top: 1px solid rgba(0, 0, 0, 0.12);
     }
 
-    mat-nav-list {
+    app-list {
       padding-top: 8px;
       padding-bottom: 64px;
-    }
 
-    .active-link {
-      background-color: rgba(63, 81, 181, 0.1);
-      color: #3f51b5;
+      a {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        text-decoration: none;
+        color: inherit;
+        transition: background-color 0.2s;
+
+        .item-icon {
+          font-size: 20px;
+          width: 20px;
+          height: 20px;
+        }
+
+        .item-label {
+          flex: 1;
+        }
+      }
+
+      .active-link {
+        background-color: rgba(63, 81, 181, 0.1);
+        color: #3f51b5;
+
+        .item-icon {
+          color: #3f51b5;
+        }
+      }
     }
 
     .admin-toolbar {

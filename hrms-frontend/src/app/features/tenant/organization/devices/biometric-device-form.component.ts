@@ -1,4 +1,4 @@
-import { Component, OnInit, AfterViewInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, AfterViewInit, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
@@ -6,14 +6,10 @@ import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
-import { MatCheckboxModule } from '@angular/material/checkbox';
-import { MatRadioModule } from '@angular/material/radio';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatDividerModule } from '@angular/material/divider';
-import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
-import { MatTooltipModule } from '@angular/material/tooltip';
+import { UiModule } from '../../../../shared/ui/ui.module';
+import { ToastService, Divider, Radio, RadioGroup } from '../../../../shared/ui';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { LocationService, LocationDropdownDto } from '../locations/location.service';
 import { AttendanceMachinesService, CreateAttendanceMachineDto, UpdateAttendanceMachineDto } from '../../../../core/services/attendance-machines.service';
@@ -47,14 +43,12 @@ export const CONNECTION_METHODS = [
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
-    MatCheckboxModule,
-    MatRadioModule,
+    Radio,
+    RadioGroup,
     MatButtonModule,
     MatIconModule,
-    MatProgressSpinnerModule,
-    MatDividerModule,
-    MatSnackBarModule,
-    MatTooltipModule,
+    Divider,
+    UiModule,
     MatSlideToggleModule,
     DeviceApiKeysComponent
 ],
@@ -80,6 +74,8 @@ export class BiometricDeviceFormComponent implements OnInit, AfterViewInit {
   private ipAddressPattern = /^(\d{1,3}\.){3}\d{1,3}$/;
   private macAddressPattern = /^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/;
 
+  private toastService = inject(ToastService);
+
   constructor(
     private fb: FormBuilder,
     private router: Router,
@@ -87,7 +83,6 @@ export class BiometricDeviceFormComponent implements OnInit, AfterViewInit {
     private locationService: LocationService,
     private attendanceMachinesService: AttendanceMachinesService,
     private deviceService: BiometricDeviceService,
-    private snackBar: MatSnackBar,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -188,7 +183,7 @@ export class BiometricDeviceFormComponent implements OnInit, AfterViewInit {
       },
       error: (error) => {
         console.error('Error loading locations:', error);
-        this.snackBar.open('Failed to load locations', 'Close', { duration: 3000 });
+        this.toastService.error('Failed to load locations', 3000);
         this.loadingLocations = false;
       }
     });
@@ -227,7 +222,7 @@ export class BiometricDeviceFormComponent implements OnInit, AfterViewInit {
       },
       error: (error) => {
         console.error('Error loading machine:', error);
-        this.snackBar.open('Failed to load machine data', 'Close', { duration: 3000 });
+        this.toastService.error('Failed to load machine data', 3000);
         this.loading = false;
       }
     });
@@ -243,17 +238,13 @@ export class BiometricDeviceFormComponent implements OnInit, AfterViewInit {
     const port = this.deviceForm.get('port')?.value;
 
     if (!ipAddress || !port) {
-      this.snackBar.open('Please enter IP Address and Port to test connection', 'Close', {
-        duration: 3000
-      });
+      this.toastService.warning('Please enter IP Address and Port to test connection', 3000);
       return;
     }
 
     // Validate IP format
     if (this.deviceForm.get('ipAddress')?.invalid) {
-      this.snackBar.open('Please enter a valid IP Address', 'Close', {
-        duration: 3000
-      });
+      this.toastService.warning('Please enter a valid IP Address', 3000);
       return;
     }
 
@@ -275,22 +266,14 @@ export class BiometricDeviceFormComponent implements OnInit, AfterViewInit {
         });
 
         if (result.success) {
-          this.snackBar.open(
+          this.toastService.success(
             `Successfully connected to device at ${ipAddress}:${port}`,
-            'Close',
-            {
-              duration: 5000,
-              panelClass: ['success-snackbar']
-            }
+            5000
           );
         } else {
-          this.snackBar.open(
+          this.toastService.error(
             `Failed to connect to device at ${ipAddress}:${port}. ${result.message}`,
-            'Close',
-            {
-              duration: 6000,
-              panelClass: ['error-snackbar']
-            }
+            6000
           );
         }
       },
@@ -302,13 +285,9 @@ export class BiometricDeviceFormComponent implements OnInit, AfterViewInit {
         });
 
         console.error('Connection test error:', error);
-        this.snackBar.open(
+        this.toastService.error(
           `Failed to connect to device at ${ipAddress}:${port}. Please check IP, port, and network settings.`,
-          'Close',
-          {
-            duration: 6000,
-            panelClass: ['error-snackbar']
-          }
+          6000
         );
       }
     });
@@ -324,9 +303,7 @@ export class BiometricDeviceFormComponent implements OnInit, AfterViewInit {
         this.deviceForm.get(key)?.markAsTouched();
       });
 
-      this.snackBar.open('Please fix all validation errors before submitting', 'Close', {
-        duration: 4000
-      });
+      this.toastService.warning('Please fix all validation errors before submitting', 4000);
       return;
     }
 
@@ -368,13 +345,9 @@ export class BiometricDeviceFormComponent implements OnInit, AfterViewInit {
         });
 
         const action = this.isEditMode ? 'updated' : 'created';
-        this.snackBar.open(
+        this.toastService.success(
           `Attendance machine ${action} successfully`,
-          'Close',
-          {
-            duration: 3000,
-            panelClass: ['success-snackbar']
-          }
+          3000
         );
         this.router.navigate(['/tenant/organization/devices']);
       },
@@ -389,14 +362,7 @@ export class BiometricDeviceFormComponent implements OnInit, AfterViewInit {
         console.error('Error details:', error?.error);
         console.error('Validation errors:', JSON.stringify(error?.error?.errors, null, 2));
         const errorMessage = error?.error?.message || error?.error?.title || `Failed to ${this.isEditMode ? 'update' : 'create'} machine`;
-        this.snackBar.open(
-          errorMessage,
-          'Close',
-          {
-            duration: 4000,
-            panelClass: ['error-snackbar']
-          }
-        );
+        this.toastService.error(errorMessage, 4000);
       }
     });
   }

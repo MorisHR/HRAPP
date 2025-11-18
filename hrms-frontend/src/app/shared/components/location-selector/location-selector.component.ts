@@ -5,7 +5,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatInputModule } from '@angular/material/input';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { UiModule } from '../../../shared/ui/ui.module';
 import { MatIconModule } from '@angular/material/icon';
 import { debounceTime, distinctUntilChanged, switchMap, catchError, of } from 'rxjs';
 import { LocationService } from '../../../core/services/location.service';
@@ -45,7 +45,7 @@ import { MAURITIUS_DISTRICTS } from '../../../core/constants/mauritius.constants
     MatSelectModule,
     MatAutocompleteModule,
     MatInputModule,
-    MatProgressSpinnerModule,
+    UiModule,
     MatIconModule
 ],
   providers: [
@@ -89,7 +89,7 @@ import { MAURITIUS_DISTRICTS } from '../../../core/constants/mauritius.constants
           />
           <mat-icon matPrefix>search</mat-icon>
           @if (loading()) {
-            <mat-spinner matSuffix diameter="20"></mat-spinner>
+            <app-progress-spinner matSuffix size="small" color="primary"></app-progress-spinner>
           }
           <mat-autocomplete
             #auto="matAutocomplete"
@@ -167,7 +167,7 @@ import { MAURITIUS_DISTRICTS } from '../../../core/constants/mauritius.constants
       height: 20px;
     }
 
-    mat-spinner {
+    app-progress-spinner {
       margin-right: 8px;
     }
   `]

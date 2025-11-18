@@ -50,10 +50,15 @@ public class TenantContextValidationMiddleware
 
             if (!tenantId.HasValue || string.IsNullOrEmpty(tenantSchema))
             {
+#if DEBUG
                 // ============================================
-                // DEVELOPMENT FIX: Allow SuperAdmin to bypass tenant context
-                // This enables SuperAdmin to access tenant endpoints during development
-                // when subdomain routing is not available (localhost/Codespaces)
+                // SECURITY: DEVELOPMENT-ONLY SuperAdmin Bypass
+                // This code is ONLY compiled in DEBUG builds and physically removed from Release/Production.
+                // Allows SuperAdmin to access tenant endpoints during development when subdomain routing
+                // is not available (localhost/Codespaces).
+                //
+                // CRITICAL: This bypass is DISABLED in production via conditional compilation.
+                // In Release builds, ALL requests must have valid tenant context - NO EXCEPTIONS.
                 // ============================================
                 var user = context.User;
                 var isSuperAdmin = user?.Identity?.IsAuthenticated == true &&
@@ -61,14 +66,17 @@ public class TenantContextValidationMiddleware
 
                 if (isSuperAdmin)
                 {
-                    _logger.LogDebug(
-                        "SuperAdmin accessing without tenant context: {Path} (Development Mode)",
+                    _logger.LogWarning(
+                        "⚠️ DEVELOPMENT MODE: SuperAdmin bypassing tenant context: {Path}. " +
+                        "This bypass is DISABLED in production builds.",
                         path);
                     await _next(context);
                     return;
                 }
+#endif
 
-                // Block non-SuperAdmin users without tenant context
+                // PRODUCTION: Block ALL users (including SuperAdmin) without valid tenant context
+                // This ensures strict tenant isolation in production environments
                 _logger.LogWarning(
                     "SECURITY: Request blocked - No tenant context for path: {Path}, IP: {IP}",
                     path,

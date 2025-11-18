@@ -1,5 +1,6 @@
 import { Component, Input, Output, EventEmitter, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 
 export interface Tab {
   label: string;
@@ -22,6 +23,8 @@ export class Tabs {
   @Output() tabChange = new EventEmitter<string>();
 
   private focusedTabIndex: number = 0;
+
+  constructor(private sanitizer: DomSanitizer) {}
 
   ngOnInit(): void {
     // Set initial focused tab to active tab
@@ -137,5 +140,23 @@ export class Tabs {
 
   trackByValue(index: number, tab: Tab): string {
     return tab.value;
+  }
+
+  /**
+   * SECURITY FIX: XSS Prevention
+   * Sanitizes tab icon HTML to prevent XSS attacks
+   * Complies with OWASP A03:2021 - Injection
+   *
+   * @param icon - Raw HTML string for the icon
+   * @returns Sanitized HTML safe for rendering
+   */
+  getSafeIcon(icon: string | undefined): SafeHtml {
+    if (!icon) {
+      return '';
+    }
+
+    // Sanitize the HTML to prevent XSS attacks
+    // Only allows safe HTML tags (svg, path, etc.) and removes dangerous scripts
+    return this.sanitizer.sanitize(1, icon) || '';
   }
 }

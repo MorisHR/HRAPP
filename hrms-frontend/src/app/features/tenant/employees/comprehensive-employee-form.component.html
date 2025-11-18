@@ -40,19 +40,14 @@
 
     <mat-card-content>
       <form [formGroup]="employeeForm" (ngSubmit)="onSubmit()">
-        <mat-accordion multi>
+        <app-expansion-panel-group [multi]="true">
 
           <!-- ========== SECTION 1: PERSONAL INFORMATION ========== -->
-          <mat-expansion-panel [expanded]="personalInfoExpanded">
-            <mat-expansion-panel-header>
-              <mat-panel-title>
-                <app-icon name="person"></app-icon>
-                Personal Information
-              </mat-panel-title>
-              <mat-panel-description>
-                Basic employee details
-              </mat-panel-description>
-            </mat-expansion-panel-header>
+          <app-expansion-panel [expanded]="personalInfoExpanded">
+            <div panel-title>
+              <app-icon name="person"></app-icon>
+              Personal Information - Basic employee details
+            </div>
 
             <div class="form-grid">
               <app-input
@@ -267,19 +262,14 @@
                 </div>
               }
             </div>
-          </mat-expansion-panel>
+          </app-expansion-panel>
 
           <!-- ========== SECTION 2: EMPLOYMENT DETAILS ========== -->
-          <mat-expansion-panel>
-            <mat-expansion-panel-header>
-              <mat-panel-title>
-                <app-icon name="work"></app-icon>
-                Employment Details
-              </mat-panel-title>
-              <mat-panel-description>
-                Position and department information
-              </mat-panel-description>
-            </mat-expansion-panel-header>
+          <app-expansion-panel>
+            <div panel-title>
+              <app-icon name="work"></app-icon>
+              Employment Details - Position and department information
+            </div>
 
             <div class="form-grid">
               <app-input
@@ -370,19 +360,14 @@
                 [error]="getFieldError('employmentStatus')">
               </app-select>
             </div>
-          </mat-expansion-panel>
+          </app-expansion-panel>
 
           <!-- ========== SECTION 3: COMPENSATION & BANKING ========== -->
-          <mat-expansion-panel>
-            <mat-expansion-panel-header>
-              <mat-panel-title>
-                <app-icon name="payments"></app-icon>
-                Compensation & Banking
-              </mat-panel-title>
-              <mat-panel-description>
-                Salary and allowances
-              </mat-panel-description>
-            </mat-expansion-panel-header>
+          <app-expansion-panel>
+            <div panel-title>
+              <app-icon name="payments"></app-icon>
+              Compensation & Banking - Salary and allowances
+            </div>
 
             <div class="form-grid">
               <app-input
@@ -441,19 +426,14 @@
                 formControlName="bankBranchCode">
               </app-input>
             </div>
-          </mat-expansion-panel>
+          </app-expansion-panel>
 
           <!-- ========== SECTION 4: STATUTORY COMPLIANCE ========== -->
-          <mat-expansion-panel>
-            <mat-expansion-panel-header>
-              <mat-panel-title>
-                <app-icon name="verified_user"></app-icon>
-                Statutory Compliance (Mauritius)
-              </mat-panel-title>
-              <mat-panel-description>
-                CSG, NSF, Tax, PRGF
-              </mat-panel-description>
-            </mat-expansion-panel-header>
+          <app-expansion-panel>
+            <div panel-title>
+              <app-icon name="verified_user"></app-icon>
+              Statutory Compliance (Mauritius) - CSG, NSF, Tax, PRGF
+            </div>
 
             <div class="form-grid">
               <app-input
@@ -482,19 +462,14 @@
                 hint="Portable Retirement Gratuity Fund">
               </app-input>
             </div>
-          </mat-expansion-panel>
+          </app-expansion-panel>
 
           <!-- ========== SECTION 5: LEAVE ENTITLEMENTS ========== -->
-          <mat-expansion-panel>
-            <mat-expansion-panel-header>
-              <mat-panel-title>
-                <app-icon name="event_available"></app-icon>
-                Leave Entitlements
-              </mat-panel-title>
-              <mat-panel-description>
-                Annual, sick, casual leave
-              </mat-panel-description>
-            </mat-expansion-panel-header>
+          <app-expansion-panel>
+            <div panel-title>
+              <app-icon name="event_available"></app-icon>
+              Leave Entitlements - Annual, sick, casual leave
+            </div>
 
             <div class="form-grid">
               <app-input
@@ -530,19 +505,14 @@
                 formControlName="carryForwardAllowed">
               </app-checkbox>
             </div>
-          </mat-expansion-panel>
+          </app-expansion-panel>
 
           <!-- ========== SECTION 6: EMERGENCY CONTACT ========== -->
-          <mat-expansion-panel>
-            <mat-expansion-panel-header>
-              <mat-panel-title>
-                <app-icon name="contact_phone"></app-icon>
-                Emergency Contact
-              </mat-panel-title>
-              <mat-panel-description>
-                Person to contact in emergency
-              </mat-panel-description>
-            </mat-expansion-panel-header>
+          <app-expansion-panel>
+            <div panel-title>
+              <app-icon name="contact_phone"></app-icon>
+              Emergency Contact - Person to contact in emergency
+            </div>
 
             <div class="form-grid">
               <app-input
@@ -575,19 +545,14 @@
                 formControlName="emergencyContactAddress">
               </app-input>
             </div>
-          </mat-expansion-panel>
+          </app-expansion-panel>
 
           <!-- ========== SECTION 7: QUALIFICATIONS & DOCUMENTS ========== -->
-          <mat-expansion-panel>
-            <mat-expansion-panel-header>
-              <mat-panel-title>
-                <app-icon name="school"></app-icon>
-                Qualifications & Documents
-              </mat-panel-title>
-              <mat-panel-description>
-                Education and file uploads
-              </mat-panel-description>
-            </mat-expansion-panel-header>
+          <app-expansion-panel>
+            <div panel-title>
+              <app-icon name="school"></app-icon>
+              Qualifications & Documents - Education and file uploads
+            </div>
 
             <div class="form-grid">
               <app-select
@@ -624,25 +589,22 @@
                 </p>
               </div>
             </div>
-          </mat-expansion-panel>
+          </app-expansion-panel>
 
           <!-- ========== SECTION 8: SALARY COMPONENTS ========== -->
           @if (isEditMode() && employeeId) {
-            <mat-expansion-panel>
-              <mat-expansion-panel-header>
-                <mat-panel-title>
-                  <app-icon name="account_balance_wallet"></app-icon>
-                  Salary Components
-                </mat-panel-title>
-                <mat-panel-description>
-                  Manage allowances and deductions
-                </mat-panel-description>
-              </mat-expansion-panel-header>
+            <app-expansion-panel>
+              <div panel-title>
+                <app-icon name="account_balance_wallet"></app-icon>
+                Salary Components - Manage allowances and deductions
+              </div>
+
+
               <div class="salary-components-section">
                 <!-- Loading State -->
                 @if (loadingSalaryComponents()) {
                   <div class="loading-state">
-                    <mat-spinner diameter="30"></mat-spinner>
+                    <app-progress-spinner size="medium" color="primary"></app-progress-spinner>
                     <p>Loading salary components...</p>
                   </div>
                 }
@@ -674,9 +636,11 @@
                             <div class="component-header">
                               <div class="component-info">
                                 <h4>{{ component.componentName }}</h4>
-                                <mat-chip [class]="component.componentType === 'Allowance' ? 'chip-allowance' : 'chip-deduction'">
-                                  {{ component.componentType }}
-                                </mat-chip>
+                                <app-chip
+                                  [label]="component.componentType"
+                                  [color]="component.componentType === 'Allowance' ? 'success' : 'error'"
+                                  [variant]="'filled'">
+                                </app-chip>
                               </div>
                               <div class="component-amount">
                                 {{ formatCurrency(component.amount) }}
@@ -740,20 +704,15 @@
                   </div>
                 }
               </div>
-            </mat-expansion-panel>
+            </app-expansion-panel>
           }
 
           <!-- ========== SECTION 9: ADDITIONAL INFORMATION ========== -->
-          <mat-expansion-panel>
-            <mat-expansion-panel-header>
-              <mat-panel-title>
-                <app-icon name="notes"></app-icon>
-                Additional Information
-              </mat-panel-title>
-              <mat-panel-description>
-                Optional notes and remarks
-              </mat-panel-description>
-            </mat-expansion-panel-header>
+          <app-expansion-panel>
+            <div panel-title>
+              <app-icon name="notes"></app-icon>
+              Additional Information - Optional notes and remarks
+            </div>
 
             <div class="form-grid">
               <app-input
@@ -763,9 +722,9 @@
                 formControlName="notes">
               </app-input>
             </div>
-          </mat-expansion-panel>
+          </app-expansion-panel>
 
-        </mat-accordion>
+        </app-expansion-panel-group>
 
         <!-- Form Actions -->
         <div class="form-actions">

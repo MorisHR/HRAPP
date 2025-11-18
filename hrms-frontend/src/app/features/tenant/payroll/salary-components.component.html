@@ -132,8 +132,8 @@
               <mat-datepicker #bulkEnd></mat-datepicker>
             </mat-form-field>
             <div class="checkbox-group">
-              <mat-checkbox formControlName="isRecurring">Recurring</mat-checkbox>
-              <mat-checkbox formControlName="requiresApproval">Requires Approval</mat-checkbox>
+              <app-checkbox formControlName="isRecurring" label="Recurring"></app-checkbox>
+              <app-checkbox formControlName="requiresApproval" label="Requires Approval"></app-checkbox>
             </div>
           </div>
           <mat-form-field appearance="outline" class="full-width">
@@ -144,7 +144,7 @@
             <button type="button" mat-button (click)="toggleBulkMode()">Cancel</button>
             <button type="submit" mat-raised-button color="primary" [disabled]="bulkForm.invalid || saving()">
               @if (saving()) {
-                <mat-spinner diameter="20"></mat-spinner>
+                <app-progress-spinner size="small" color="primary"></app-progress-spinner>
               }
               @if (!saving()) {
                 <span>Create for Selected Employees</span>
@@ -213,8 +213,8 @@
               <mat-datepicker #end></mat-datepicker>
             </mat-form-field>
             <div class="checkbox-group">
-              <mat-checkbox formControlName="isRecurring">Recurring</mat-checkbox>
-              <mat-checkbox formControlName="requiresApproval">Requires Approval</mat-checkbox>
+              <app-checkbox formControlName="isRecurring" label="Recurring"></app-checkbox>
+              <app-checkbox formControlName="requiresApproval" label="Requires Approval"></app-checkbox>
             </div>
           </div>
           <mat-form-field appearance="outline" class="full-width">
@@ -225,7 +225,7 @@
             <button type="button" mat-button (click)="cancelForm()">Cancel</button>
             <button type="submit" mat-raised-button color="primary" [disabled]="componentForm.invalid || saving()">
               @if (saving()) {
-                <mat-spinner diameter="20"></mat-spinner>
+                <app-progress-spinner size="small" color="primary"></app-progress-spinner>
               }
               @if (!saving()) {
                 <span>{{ editingComponent() ? 'Update' : 'Create' }}</span>
@@ -253,48 +253,30 @@
           </mat-select>
         </mat-form-field>
 
-        <mat-chip-listbox aria-label="Type filter">
-          <mat-chip-option [selected]="filterType() === 'all'" (click)="setFilterType('all')">
-            All Types
-          </mat-chip-option>
-          <mat-chip-option [selected]="filterType() === 'Allowance'" (click)="setFilterType('Allowance')">
-            Allowances
-          </mat-chip-option>
-          <mat-chip-option [selected]="filterType() === 'Deduction'" (click)="setFilterType('Deduction')">
-            Deductions
-          </mat-chip-option>
-        </mat-chip-listbox>
+        <div class="chip-container">
+          <app-chip [label]="'All Types'" [color]="filterType() === 'all' ? 'primary' : 'neutral'" (click)="setFilterType('all')" />
+          <app-chip [label]="'Allowances'" [color]="filterType() === 'Allowance' ? 'primary' : 'neutral'" (click)="setFilterType('Allowance')" />
+          <app-chip [label]="'Deductions'" [color]="filterType() === 'Deduction' ? 'primary' : 'neutral'" (click)="setFilterType('Deduction')" />
+        </div>
 
-        <mat-chip-listbox aria-label="Status filter">
-          <mat-chip-option [selected]="filterActive() === 'all'" (click)="setFilterActive('all')">
-            All Status
-          </mat-chip-option>
-          <mat-chip-option [selected]="filterActive() === 'active'" (click)="setFilterActive('active')">
-            Active
-          </mat-chip-option>
-          <mat-chip-option [selected]="filterActive() === 'inactive'" (click)="setFilterActive('inactive')">
-            Inactive
-          </mat-chip-option>
-        </mat-chip-listbox>
+        <div class="chip-container">
+          <app-chip [label]="'All Status'" [color]="filterActive() === 'all' ? 'primary' : 'neutral'" (click)="setFilterActive('all')" />
+          <app-chip [label]="'Active'" [color]="filterActive() === 'active' ? 'success' : 'neutral'" (click)="setFilterActive('active')" />
+          <app-chip [label]="'Inactive'" [color]="filterActive() === 'inactive' ? 'error' : 'neutral'" (click)="setFilterActive('inactive')" />
+        </div>
 
-        <mat-chip-listbox aria-label="Approval filter">
-          <mat-chip-option [selected]="filterApproval() === 'all'" (click)="setFilterApproval('all')">
-            All
-          </mat-chip-option>
-          <mat-chip-option [selected]="filterApproval() === 'approved'" (click)="setFilterApproval('approved')">
-            Approved
-          </mat-chip-option>
-          <mat-chip-option [selected]="filterApproval() === 'pending'" (click)="setFilterApproval('pending')">
-            Pending
-          </mat-chip-option>
-        </mat-chip-listbox>
+        <div class="chip-container">
+          <app-chip [label]="'All'" [color]="filterApproval() === 'all' ? 'primary' : 'neutral'" (click)="setFilterApproval('all')" />
+          <app-chip [label]="'Approved'" [color]="filterApproval() === 'approved' ? 'success' : 'neutral'" (click)="setFilterApproval('approved')" />
+          <app-chip [label]="'Pending'" [color]="filterApproval() === 'pending' ? 'warning' : 'neutral'" (click)="setFilterApproval('pending')" />
+        </div>
 
         <button
           mat-raised-button
           color="accent"
           (click)="calculateTotals(getCurrentMonth(), getCurrentYear(), selectedEmployee())"
           [disabled]="!selectedEmployee()"
-          matTooltip="Calculate total allowances and deductions for current month">
+          appTooltip="Calculate total allowances and deductions for current month">
           <app-icon name="calculate"></app-icon>
           Calculate Totals
         </button>
@@ -307,7 +289,7 @@
     <mat-card-content>
       @if (loading()) {
         <div class="loading-container">
-          <mat-spinner></mat-spinner>
+          <app-progress-spinner size="medium" color="primary"></app-progress-spinner>
           <p>Loading salary components...</p>
         </div>
       }
@@ -321,129 +303,86 @@
       }
 
       @if (!loading() && filteredComponents().length > 0) {
-        <table mat-table [dataSource]="filteredComponents()">
-          <!-- Employee Column -->
-          <ng-container matColumnDef="componentName">
-            <th mat-header-cell *matHeaderCellDef>Component</th>
-            <td mat-cell *matCellDef="let component">
-              <div class="component-cell">
-                <strong>{{ component.componentName }}</strong>
-                <small>{{ getEmployeeName(component.employeeId) }}</small>
-              </div>
-            </td>
-          </ng-container>
-          <!-- Type Column -->
-          <ng-container matColumnDef="componentType">
-            <th mat-header-cell *matHeaderCellDef>Type</th>
-            <td mat-cell *matCellDef="let component">
-              <mat-chip [class]="getComponentTypeBadgeClass(component.componentType)">
-                {{ component.componentType }}
-              </mat-chip>
-            </td>
-          </ng-container>
-          <!-- Amount Column -->
-          <ng-container matColumnDef="amount">
-            <th mat-header-cell *matHeaderCellDef>Amount</th>
-            <td mat-cell *matCellDef="let component">
-              <strong>{{ formatCurrency(component.amount) }}</strong>
-            </td>
-          </ng-container>
-          <!-- Recurring Column -->
-          <ng-container matColumnDef="isRecurring">
-            <th mat-header-cell *matHeaderCellDef>Frequency</th>
-            <td mat-cell *matCellDef="let component">
-              {{ component.isRecurring ? 'Recurring' : 'One-time' }}
-            </td>
-          </ng-container>
-          <!-- Effective Date Column -->
-          <ng-container matColumnDef="effectiveDate">
-            <th mat-header-cell *matHeaderCellDef>Effective Date</th>
-            <td mat-cell *matCellDef="let component">
-              {{ formatDate(component.effectiveDate) }}
-            </td>
-          </ng-container>
-          <!-- End Date Column -->
-          <ng-container matColumnDef="endDate">
-            <th mat-header-cell *matHeaderCellDef>End Date</th>
-            <td mat-cell *matCellDef="let component">
-              {{ component.endDate ? formatDate(component.endDate) : 'N/A' }}
-            </td>
-          </ng-container>
-          <!-- Active Column -->
-          <ng-container matColumnDef="isActive">
-            <th mat-header-cell *matHeaderCellDef>Status</th>
-            <td mat-cell *matCellDef="let component">
-              <mat-chip [class]="getStatusBadgeClass(component.isActive)">
-                {{ component.isActive ? 'Active' : 'Inactive' }}
-              </mat-chip>
-            </td>
-          </ng-container>
-          <!-- Requires Approval Column -->
-          <ng-container matColumnDef="requiresApproval">
-            <th mat-header-cell *matHeaderCellDef>Approval</th>
-            <td mat-cell *matCellDef="let component">
-              @if (!component.requiresApproval) {
-                <span>N/A</span>
-              }
-              @if (component.requiresApproval) {
-                <span>Required</span>
-              }
-            </td>
-          </ng-container>
-          <!-- Is Approved Column -->
-          <ng-container matColumnDef="isApproved">
-            <th mat-header-cell *matHeaderCellDef>Approved</th>
-            <td mat-cell *matCellDef="let component">
-              <mat-chip [class]="getApprovalBadgeClass(component)">
-                @if (!component.requiresApproval) {
-                  <span>N/A</span>
-                }
-                @if (component.requiresApproval && component.isApproved) {
-                  <span>Yes</span>
-                }
-                @if (component.requiresApproval && !component.isApproved) {
-                  <span>Pending</span>
-                }
-              </mat-chip>
-            </td>
-          </ng-container>
-          <!-- Actions Column -->
-          <ng-container matColumnDef="actions">
-            <th mat-header-cell *matHeaderCellDef>Actions</th>
-            <td mat-cell *matCellDef="let component">
-              <button mat-icon-button [matMenuTriggerFor]="menu" aria-label="Actions">
-                <app-icon name="more_vert"></app-icon>
-              </button>
-              <mat-menu #menu="matMenu">
-                <button mat-menu-item (click)="editComponent(component)">
-                  <app-icon name="edit"></app-icon>
-                  <span>Edit</span>
-                </button>
-                <button
-                  mat-menu-item
-                  (click)="approveComponent(component)"
-                  [disabled]="!component.requiresApproval || component.isApproved">
-                  <app-icon name="check_circle"></app-icon>
-                  <span>Approve</span>
-                </button>
-                <button
-                  mat-menu-item
-                  (click)="deactivateComponent(component)"
-                  [disabled]="!component.isActive">
-                  <app-icon name="block"></app-icon>
-                  <span>Deactivate</span>
-                </button>
-                <mat-divider></mat-divider>
-                <button mat-menu-item (click)="deleteComponent(component)" class="danger-action">
-                  <mat-icon color="warn">delete</mat-icon>
-                  <span>Delete</span>
-                </button>
-              </mat-menu>
-            </td>
-          </ng-container>
-          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-          <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
-        </table>
+        <app-table
+          [columns]="columns"
+          [data]="filteredComponents()"
+          [loading]="loading()"
+          [hoverable]="true">
+
+          <!-- Custom template for component name column -->
+          <ng-template appTableColumn="componentName" let-row>
+            <div class="component-cell">
+              <strong>{{ row.componentName }}</strong>
+              <small>{{ getEmployeeName(row.employeeId) }}</small>
+            </div>
+          </ng-template>
+
+          <!-- Custom template for type column -->
+          <ng-template appTableColumn="componentType" let-row>
+            <app-chip [label]="row.componentType" [color]="row.componentType === 'Allowance' ? 'success' : 'warning'" />
+          </ng-template>
+
+          <!-- Custom template for amount column -->
+          <ng-template appTableColumn="amount" let-row>
+            <strong>{{ formatCurrency(row.amount) }}</strong>
+          </ng-template>
+
+          <!-- Custom template for recurring column -->
+          <ng-template appTableColumn="isRecurring" let-row>
+            {{ row.isRecurring ? 'Recurring' : 'One-time' }}
+          </ng-template>
+
+          <!-- Custom template for effective date column -->
+          <ng-template appTableColumn="effectiveDate" let-row>
+            {{ formatDate(row.effectiveDate) }}
+          </ng-template>
+
+          <!-- Custom template for end date column -->
+          <ng-template appTableColumn="endDate" let-row>
+            {{ row.endDate ? formatDate(row.endDate) : 'N/A' }}
+          </ng-template>
+
+          <!-- Custom template for active column -->
+          <ng-template appTableColumn="isActive" let-row>
+            <app-chip [label]="row.isActive ? 'Active' : 'Inactive'" [color]="row.isActive ? 'success' : 'error'" />
+          </ng-template>
+
+          <!-- Custom template for requires approval column -->
+          <ng-template appTableColumn="requiresApproval" let-row>
+            @if (!row.requiresApproval) {
+              <span>N/A</span>
+            }
+            @if (row.requiresApproval) {
+              <span>Required</span>
+            }
+          </ng-template>
+
+          <!-- Custom template for is approved column -->
+          <ng-template appTableColumn="isApproved" let-row>
+            @if (!row.requiresApproval) {
+              <app-chip [label]="'N/A'" [color]="'neutral'" />
+            }
+            @if (row.requiresApproval && row.isApproved) {
+              <app-chip [label]="'Yes'" [color]="'success'" />
+            }
+            @if (row.requiresApproval && !row.isApproved) {
+              <app-chip [label]="'Pending'" [color]="'warning'" />
+            }
+          </ng-template>
+
+          <!-- Custom template for actions column -->
+          <ng-template appTableColumn="actions" let-row>
+            <button mat-icon-button #actionMenuTrigger aria-label="Actions">
+              <app-icon name="more_vert"></app-icon>
+            </button>
+            <app-menu
+              [trigger]="actionMenuTrigger"
+              [items]="getActionMenuItems(row)"
+              [position]="'bottom-left'"
+              (itemClick)="handleActionMenuClick($event, row)">
+            </app-menu>
+          </ng-template>
+        </app-table>
       }
     </mat-card-content>
   </mat-card>

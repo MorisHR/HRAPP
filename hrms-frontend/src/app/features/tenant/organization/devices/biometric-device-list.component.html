@@ -17,7 +17,7 @@
     <!-- Loading Spinner -->
     @if (loading()) {
       <div class="loading-container">
-        <mat-spinner></mat-spinner>
+        <app-progress-spinner size="medium" color="primary"></app-progress-spinner>
         <p>Loading attendance machines...</p>
       </div>
     }
@@ -32,155 +32,136 @@
 
     <!-- Devices Table -->
     @if (!loading() && !error()) {
-      <div class="table-container">
-        <table mat-table [dataSource]="machines()" class="devices-table">
-          <!-- Device Code Column -->
-          <ng-container matColumnDef="code">
-            <th mat-header-cell *matHeaderCellDef>Device Code</th>
-            <td mat-cell *matCellDef="let device">
-              <div class="device-code">
-                <mat-icon class="device-icon">fingerprint</mat-icon>
-                <span>{{ device.machineId }}</span>
-              </div>
-            </td>
-          </ng-container>
-          <!-- Device Name Column -->
-          <ng-container matColumnDef="name">
-            <th mat-header-cell *matHeaderCellDef>Device Name</th>
-            <td mat-cell *matCellDef="let device">
-              <div class="device-name">
-                <strong>{{ device.machineName }}</strong>
-                <span class="device-type">{{ device.model || 'Biometric Device' }}</span>
-              </div>
-            </td>
-          </ng-container>
-          <!-- Location Column -->
-          <ng-container matColumnDef="location">
-            <th mat-header-cell *matHeaderCellDef>Location</th>
-            <td mat-cell *matCellDef="let device">
-              <div class="location-info">
-                <mat-icon class="location-icon">location_on</mat-icon>
-                <span>{{ device.location || device.departmentName || 'Unassigned' }}</span>
-              </div>
-            </td>
-          </ng-container>
-          <!-- IP Address Column -->
-          <ng-container matColumnDef="ipAddress">
-            <th mat-header-cell *matHeaderCellDef>IP Address:Port</th>
-            <td mat-cell *matCellDef="let device">
-              <div class="ip-address">
-                <mat-icon class="network-icon">router</mat-icon>
-                <span class="ip-text">{{ device.ipAddress || 'N/A' }}</span>
-                @if (device.ipAddress) {
-                  <span class="port-text">:{{ device.port }}</span>
-                }
-              </div>
-            </td>
-          </ng-container>
-          <!-- Status Column -->
-          <ng-container matColumnDef="status">
-            <th mat-header-cell *matHeaderCellDef>Status</th>
-            <td mat-cell *matCellDef="let device">
-              <div class="status-badge-wrapper">
-                <span
-                  class="device-status-badge"
-                  [class.online]="getDeviceStatusClass(device) === 'online'"
-                  [class.warning]="getDeviceStatusClass(device) === 'warning'"
-                  [class.offline]="getDeviceStatusClass(device) === 'offline'"
-                  >
-                  <span class="status-dot"></span>
-                  {{ getDeviceStatusText(device) }}
-                </span>
-              </div>
-            </td>
-          </ng-container>
-          <!-- Last Sync Column -->
-          <ng-container matColumnDef="lastSync">
-            <th mat-header-cell *matHeaderCellDef>Last Sync</th>
-            <td mat-cell *matCellDef="let device">
-              <div class="last-sync-info">
-                <mat-icon class="sync-icon">schedule</mat-icon>
-                <div class="sync-details">
-                  <span class="sync-time">{{ getLastSyncDisplay(device.lastSyncAt) }}</span>
-                </div>
-              </div>
-            </td>
-          </ng-container>
-          <!-- Actions Column -->
-          <ng-container matColumnDef="actions">
-            <th mat-header-cell *matHeaderCellDef>Actions</th>
-            <td mat-cell *matCellDef="let device">
-              <div class="action-buttons">
-                <!-- Test Connection Button -->
-                <button
-                  mat-icon-button
-                  (click)="onTestConnection(device)"
-                  [disabled]="isTestingConnection(device.id)"
-                  matTooltip="Test Connection"
-                  class="test-button"
-                  color="accent"
-                  >
-                  @if (isTestingConnection(device.id)) {
-                    <app-icon name="sync"></app-icon>
-                  } @else {
-                    <app-icon name="wifi_tethering"></app-icon>
-                  }
-                </button>
-                <!-- Sync Now Button -->
-                <button
-                  mat-icon-button
-                  (click)="onSyncNow(device)"
-                  [disabled]="isSyncing(device.id) || !device.isActive"
-                  matTooltip="Sync Now"
-                  class="sync-button"
-                  color="primary"
-                  >
-                  @if (isSyncing(device.id)) {
-                    <app-icon name="sync"></app-icon>
-                  } @else {
-                    <app-icon name="cloud_sync"></app-icon>
-                  }
-                </button>
-                <!-- Edit Button -->
-                <button
-                  mat-icon-button
-                  (click)="onEdit(device.id)"
-                  matTooltip="Edit Device"
-                  class="edit-button"
-                  >
-                  <app-icon name="edit"></app-icon>
-                </button>
-                <!-- Delete Button -->
-                <button
-                  mat-icon-button
-                  color="warn"
-                  (click)="onDelete(device.id, device.machineName)"
-                  matTooltip="Delete Device"
-                  class="delete-button"
-                  >
-                  <app-icon name="delete"></app-icon>
-                </button>
-              </div>
-            </td>
-          </ng-container>
-          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-          <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
-          <!-- No Data Row -->
-          <tr class="mat-row" *matNoDataRow>
-            <td class="mat-cell no-data" [attr.colspan]="displayedColumns.length">
-              <div class="empty-state">
-                <mat-icon class="empty-icon">devices</mat-icon>
-                <h3>No Biometric Devices Registered</h3>
-                <p>Click "Add Device" to register your first biometric attendance device.</p>
-                <button mat-raised-button color="primary" (click)="onAdd()">
-                  <app-icon name="add"></app-icon>
-                  Add Your First Device
-                </button>
-              </div>
-            </td>
-          </tr>
-        </table>
-      </div>
+      <app-table
+        [columns]="columns"
+        [data]="machines()"
+        [loading]="loading()"
+        [hoverable]="true"
+        class="devices-table">
+
+        <!-- Custom template for device code column -->
+        <ng-template appTableColumn="code" let-row>
+          <div class="device-code">
+            <mat-icon class="device-icon">fingerprint</mat-icon>
+            <span>{{ row.machineId }}</span>
+          </div>
+        </ng-template>
+
+        <!-- Custom template for device name column -->
+        <ng-template appTableColumn="name" let-row>
+          <div class="device-name">
+            <strong>{{ row.machineName }}</strong>
+            <span class="device-type">{{ row.model || 'Biometric Device' }}</span>
+          </div>
+        </ng-template>
+
+        <!-- Custom template for location column -->
+        <ng-template appTableColumn="location" let-row>
+          <div class="location-info">
+            <mat-icon class="location-icon">location_on</mat-icon>
+            <span>{{ row.location || row.departmentName || 'Unassigned' }}</span>
+          </div>
+        </ng-template>
+
+        <!-- Custom template for IP address column -->
+        <ng-template appTableColumn="ipAddress" let-row>
+          <div class="ip-address">
+            <mat-icon class="network-icon">router</mat-icon>
+            <span class="ip-text">{{ row.ipAddress || 'N/A' }}</span>
+            @if (row.ipAddress) {
+              <span class="port-text">:{{ row.port }}</span>
+            }
+          </div>
+        </ng-template>
+
+        <!-- Custom template for status column -->
+        <ng-template appTableColumn="status" let-row>
+          <div class="status-badge-wrapper">
+            <span
+              class="device-status-badge"
+              [class.online]="getDeviceStatusClass(row) === 'online'"
+              [class.warning]="getDeviceStatusClass(row) === 'warning'"
+              [class.offline]="getDeviceStatusClass(row) === 'offline'">
+              <span class="status-dot"></span>
+              {{ getDeviceStatusText(row) }}
+            </span>
+          </div>
+        </ng-template>
+
+        <!-- Custom template for last sync column -->
+        <ng-template appTableColumn="lastSync" let-row>
+          <div class="last-sync-info">
+            <mat-icon class="sync-icon">schedule</mat-icon>
+            <div class="sync-details">
+              <span class="sync-time">{{ getLastSyncDisplay(row.lastSyncAt) }}</span>
+            </div>
+          </div>
+        </ng-template>
+
+        <!-- Custom template for actions column -->
+        <ng-template appTableColumn="actions" let-row>
+          <div class="action-buttons">
+            <!-- Test Connection Button -->
+            <button
+              mat-icon-button
+              (click)="onTestConnection(row)"
+              [disabled]="isTestingConnection(row.id)"
+              appTooltip="Test Connection"
+              class="test-button"
+              color="accent">
+              @if (isTestingConnection(row.id)) {
+                <app-icon name="sync"></app-icon>
+              } @else {
+                <app-icon name="wifi_tethering"></app-icon>
+              }
+            </button>
+            <!-- Sync Now Button -->
+            <button
+              mat-icon-button
+              (click)="onSyncNow(row)"
+              [disabled]="isSyncing(row.id) || !row.isActive"
+              appTooltip="Sync Now"
+              class="sync-button"
+              color="primary">
+              @if (isSyncing(row.id)) {
+                <app-icon name="sync"></app-icon>
+              } @else {
+                <app-icon name="cloud_sync"></app-icon>
+              }
+            </button>
+            <!-- Edit Button -->
+            <button
+              mat-icon-button
+              (click)="onEdit(row.id)"
+              appTooltip="Edit Device"
+              class="edit-button">
+              <app-icon name="edit"></app-icon>
+            </button>
+            <!-- Delete Button -->
+            <button
+              mat-icon-button
+              color="warn"
+              (click)="onDelete(row.id, row.machineName)"
+              appTooltip="Delete Device"
+              class="delete-button">
+              <app-icon name="delete"></app-icon>
+            </button>
+          </div>
+        </ng-template>
+      </app-table>
+
+      <!-- Empty State -->
+      @if (machines().length === 0) {
+        <div class="empty-state">
+          <mat-icon class="empty-icon">devices</mat-icon>
+          <h3>No Biometric Devices Registered</h3>
+          <p>Click "Add Device" to register your first biometric attendance device.</p>
+          <button mat-raised-button color="primary" (click)="onAdd()">
+            <app-icon name="add"></app-icon>
+            Add Your First Device
+          </button>
+        </div>
+      }
     }
 
     <!-- Device Statistics Summary -->

@@ -4,7 +4,7 @@ import { RouterModule } from '@angular/router';
 import { AttendanceService } from '../../../core/services/attendance.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { Attendance, AttendanceStatus } from '../../../core/models/attendance.model';
-import { UiModule, ToastService, DialogService } from '../../../shared/ui/ui.module';
+import { UiModule, ToastService, DialogService, ChipColor } from '../../../shared/ui/ui.module';
 
 interface AttendanceRecord {
   id: string;
@@ -239,8 +239,8 @@ export class EmployeeAttendanceComponent implements OnInit {
     });
   }
 
-  getStatusColor(status: string): 'primary' | 'success' | 'warning' | 'error' | 'neutral' {
-    const colors: Record<string, 'primary' | 'success' | 'warning' | 'error' | 'neutral'> = {
+  getStatusColor(status: string): ChipColor {
+    const colors: Record<string, ChipColor> = {
       'present': 'success',
       'late': 'warning',
       'absent': 'error',

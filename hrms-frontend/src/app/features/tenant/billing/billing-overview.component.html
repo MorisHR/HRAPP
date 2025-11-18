@@ -16,7 +16,7 @@
   <!-- Loading State -->
   @if (loading()) {
     <div class="loading-container">
-      <mat-spinner></mat-spinner>
+      <app-progress-spinner size="medium" color="primary"></app-progress-spinner>
       <p>Loading subscription details...</p>
     </div>
   }
@@ -75,9 +75,10 @@
             </div>
             <div class="detail-row">
               <span class="label">Subscription Tier:</span>
-              <mat-chip [class]="'tier-' + subscription()!.tier.toLowerCase()">
-                {{ subscription()!.tier }}
-              </mat-chip>
+              <app-chip
+                [label]="subscription()!.tier"
+                [color]="'primary'">
+              </app-chip>
             </div>
             <div class="detail-row">
               <span class="label">Employee Limit:</span>
@@ -87,12 +88,13 @@
               <span class="label">Yearly Price:</span>
               <span class="value price">{{ formatCurrency(subscription()!.yearlyPriceMUR) }}</span>
             </div>
-            <mat-divider></mat-divider>
+            <app-divider />
             <div class="detail-row">
               <span class="label">Status:</span>
-              <mat-chip [class]="statusBadgeClass()">
-                {{ subscription()!.status }}
-              </mat-chip>
+              <app-chip
+                [label]="subscription()!.status"
+                [color]="getSubscriptionStatusColor(subscription()!.status)">
+              </app-chip>
             </div>
             <div class="detail-row">
               <span class="label">Start Date:</span>
@@ -136,7 +138,7 @@
             </div>
 
             @if (nextPaymentDue()) {
-              <mat-divider></mat-divider>
+              <app-divider />
               <div class="next-payment">
                 <div class="payment-info">
                   <span class="label">Next Payment Due:</span>
@@ -148,9 +150,10 @@
                 </div>
                 <div class="payment-info">
                   <span class="label">Status:</span>
-                  <mat-chip [color]="getStatusColor(nextPaymentDue()!.status)">
-                    {{ nextPaymentDue()!.status }}
-                  </mat-chip>
+                  <app-chip
+                    [label]="nextPaymentDue()!.status"
+                    [color]="getStatusColor(nextPaymentDue()!.status)">
+                  </app-chip>
                 </div>
               </div>
 
@@ -199,72 +202,58 @@
           </div>
         } @else {
           <div class="table-container">
-            <table mat-table [dataSource]="payments()" class="payment-table">
+            <app-table
+              [columns]="columns"
+              [data]="payments()"
+              [loading]="loading()"
+              [hoverable]="true"
+              class="payment-table">
+
               <!-- Period Column -->
-              <ng-container matColumnDef="period">
-                <th mat-header-cell *matHeaderCellDef>Period</th>
-                <td mat-cell *matCellDef="let payment">
-                  {{ getPeriodLabel(payment) }}
-                </td>
-              </ng-container>
+              <ng-template appTableColumn="period" let-payment>
+                {{ getPeriodLabel(payment) }}
+              </ng-template>
 
               <!-- Due Date Column -->
-              <ng-container matColumnDef="dueDate">
-                <th mat-header-cell *matHeaderCellDef>Due Date</th>
-                <td mat-cell *matCellDef="let payment">
-                  {{ formatDate(payment.dueDate) }}
-                </td>
-              </ng-container>
+              <ng-template appTableColumn="dueDate" let-payment>
+                {{ formatDate(payment.dueDate) }}
+              </ng-template>
 
               <!-- Amount Column -->
-              <ng-container matColumnDef="amount">
-                <th mat-header-cell *matHeaderCellDef>Amount</th>
-                <td mat-cell *matCellDef="let payment">
-                  <span class="amount">{{ formatCurrency(payment.amountMUR) }}</span>
-                </td>
-              </ng-container>
+              <ng-template appTableColumn="amount" let-payment>
+                <span class="amount">{{ formatCurrency(payment.amountMUR) }}</span>
+              </ng-template>
 
               <!-- Status Column -->
-              <ng-container matColumnDef="status">
-                <th mat-header-cell *matHeaderCellDef>Status</th>
-                <td mat-cell *matCellDef="let payment">
-                  <mat-chip [color]="getStatusColor(payment.status)">
-                    {{ payment.status }}
-                  </mat-chip>
-                </td>
-              </ng-container>
+              <ng-template appTableColumn="status" let-payment>
+                <app-chip
+                  [label]="payment.status"
+                  [color]="getStatusColor(payment.status)">
+                </app-chip>
+              </ng-template>
 
               <!-- Paid Date Column -->
-              <ng-container matColumnDef="paidDate">
-                <th mat-header-cell *matHeaderCellDef>Paid Date</th>
-                <td mat-cell *matCellDef="let payment">
-                  {{ formatDate(payment.paidDate) }}
-                </td>
-              </ng-container>
+              <ng-template appTableColumn="paidDate" let-payment>
+                {{ formatDate(payment.paidDate) }}
+              </ng-template>
 
               <!-- Actions Column -->
-              <ng-container matColumnDef="actions">
-                <th mat-header-cell *matHeaderCellDef>Actions</th>
-                <td mat-cell *matCellDef="let payment">
-                  <button
-                    mat-icon-button
-                    (click)="viewPaymentDetails(payment)"
-                    matTooltip="View Payment Details">
-                    <app-icon name="visibility"></app-icon>
-                  </button>
-                  <button
-                    mat-icon-button
-                    [disabled]="!payment.invoiceNumber"
-                    (click)="downloadInvoice(payment)"
-                    matTooltip="Download Invoice">
-                    <app-icon name="download"></app-icon>
-                  </button>
-                </td>
-              </ng-container>
-
-              <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-              <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
-            </table>
+              <ng-template appTableColumn="actions" let-payment>
+                <button
+                  mat-icon-button
+                  (click)="viewPaymentDetails(payment)"
+                  appTooltip="View Payment Details">
+                  <app-icon name="visibility"></app-icon>
+                </button>
+                <button
+                  mat-icon-button
+                  [disabled]="!payment.invoiceNumber"
+                  (click)="downloadInvoice(payment)"
+                  appTooltip="Download Invoice">
+                  <app-icon name="download"></app-icon>
+                </button>
+              </ng-template>
+            </app-table>
           </div>
         }
       </mat-card-content>

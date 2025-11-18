@@ -8,10 +8,9 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { UiModule } from '../../../shared/ui/ui.module';
+import { ToastService, TooltipDirective } from '../../../shared/ui';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
-import { MatTooltipModule } from '@angular/material/tooltip';
 import { LocationService } from '../../../core/services/location.service';
 import {
   Location,
@@ -46,10 +45,9 @@ import { MAURITIUS_DISTRICTS, LOCATION_TYPES } from '../../../core/constants/mau
     MatSelectModule,
     MatButtonModule,
     MatIconModule,
-    MatProgressSpinnerModule,
-    MatSnackBarModule,
+    UiModule,
     MatSlideToggleModule,
-    MatTooltipModule
+    TooltipDirective
 ],
   template: `
     <div class="location-form-container">
@@ -69,7 +67,7 @@ import { MAURITIUS_DISTRICTS, LOCATION_TYPES } from '../../../core/constants/mau
       <!-- Loading State -->
       @if (loading()) {
         <div class="loading-container">
-          <mat-spinner diameter="50"></mat-spinner>
+          <app-progress-spinner size="large" color="primary"></app-progress-spinner>
           <p>{{ isEditMode() ? 'Loading location...' : 'Creating location...' }}</p>
         </div>
       }
@@ -167,7 +165,7 @@ import { MAURITIUS_DISTRICTS, LOCATION_TYPES } from '../../../core/constants/mau
                     <h2>
                       Coordinates (Optional)
                       <mat-icon
-                        matTooltip="Use Google Maps to find precise coordinates"
+                        appTooltip="Use Google Maps to find precise coordinates"
                         class="info-icon"
                         >
                         info
@@ -244,7 +242,7 @@ import { MAURITIUS_DISTRICTS, LOCATION_TYPES } from '../../../core/constants/mau
                           [disabled]="locationForm.invalid || submitting()"
                           >
                           @if (submitting()) {
-                            <mat-spinner diameter="20"></mat-spinner>
+                            <app-progress-spinner size="small" color="primary"></app-progress-spinner>
                           }
                           @if (!submitting()) {
                             <mat-icon>{{ isEditMode() ? 'save' : 'add' }}</mat-icon>
@@ -401,7 +399,7 @@ export class LocationFormComponent implements OnInit {
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private fb = inject(FormBuilder);
-  private snackBar = inject(MatSnackBar);
+  private toastService = inject(ToastService);
 
   // Constants
   districts = MAURITIUS_DISTRICTS;
@@ -460,10 +458,9 @@ export class LocationFormComponent implements OnInit {
         this.loading.set(false);
       },
       error: (error) => {
-        this.snackBar.open(
+        this.toastService.error(
           error.message || 'Failed to load location',
-          'Close',
-          { duration: 5000, panelClass: ['error-snackbar'] }
+          5000
         );
         this.loading.set(false);
         this.goBack();
@@ -509,18 +506,14 @@ export class LocationFormComponent implements OnInit {
   private createLocation(data: CreateLocationRequest): void {
     this.locationService.createLocation(data).subscribe({
       next: (location) => {
-        this.snackBar.open('Location created successfully', 'Close', {
-          duration: 3000,
-          panelClass: ['success-snackbar']
-        });
+        this.toastService.success('Location created successfully', 3000);
         this.submitting.set(false);
         this.router.navigate(['/admin/locations']);
       },
       error: (error) => {
-        this.snackBar.open(
+        this.toastService.error(
           error.message || 'Failed to create location',
-          'Close',
-          { duration: 5000, panelClass: ['error-snackbar'] }
+          5000
         );
         this.submitting.set(false);
       }
@@ -533,18 +526,14 @@ export class LocationFormComponent implements OnInit {
   private updateLocation(id: string, data: UpdateLocationRequest): void {
     this.locationService.updateLocation(id, data).subscribe({
       next: (location) => {
-        this.snackBar.open('Location updated successfully', 'Close', {
-          duration: 3000,
-          panelClass: ['success-snackbar']
-        });
+        this.toastService.success('Location updated successfully', 3000);
         this.submitting.set(false);
         this.router.navigate(['/admin/locations']);
       },
       error: (error) => {
-        this.snackBar.open(
+        this.toastService.error(
           error.message || 'Failed to update location',
-          'Close',
-          { duration: 5000, panelClass: ['error-snackbar'] }
+          5000
         );
         this.submitting.set(false);
       }

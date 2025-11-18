@@ -4,7 +4,7 @@ import { Router, RouterModule } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { UiModule } from '../../../shared/ui/ui.module';
 import { PayrollService } from '../../../core/services/payroll.service';
 import { EmployeeService } from '../../../core/services/employee.service';
 import { SalaryComponentsService } from '../../../core/services/salary-components.service';
@@ -12,7 +12,7 @@ import { SalaryComponentsService } from '../../../core/services/salary-component
 @Component({
   selector: 'app-payroll-dashboard',
   standalone: true,
-  imports: [RouterModule, MatCardModule, MatButtonModule, MatIconModule, MatProgressSpinnerModule],
+  imports: [RouterModule, MatCardModule, MatButtonModule, MatIconModule, UiModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="payroll-dashboard">
@@ -23,7 +23,7 @@ import { SalaryComponentsService } from '../../../core/services/salary-component
 
       @if (loading()) {
         <div class="loading-container">
-          <mat-spinner diameter="50"></mat-spinner>
+          <app-progress-spinner size="large" color="primary"></app-progress-spinner>
           <p>Loading payroll data...</p>
         </div>
       }

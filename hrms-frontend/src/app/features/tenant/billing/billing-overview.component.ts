@@ -4,13 +4,10 @@ import { RouterModule } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatTableModule } from '@angular/material/table';
-import { MatChipsModule } from '@angular/material/chips';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatDividerModule } from '@angular/material/divider';
-import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
-import { MatDialog } from '@angular/material/dialog';
+import { Chip, ChipColor } from '@app/shared/ui';
+import { UiModule } from '../../../shared/ui/ui.module';
+import { ToastService, Divider, TooltipDirective } from '../../../shared/ui';
+import { TableComponent, TableColumn, TableColumnDirective } from '../../../shared/ui';
 import { BillingService, PaymentHistory } from '../../../core/services/billing.service';
 import { PaymentDetailDialogComponent } from './payment-detail-dialog.component';
 import { TierUpgradeDialogComponent } from './tier-upgrade-dialog.component';
@@ -52,20 +49,19 @@ interface SubscriptionPayment {
     MatCardModule,
     MatButtonModule,
     MatIconModule,
-    MatTableModule,
-    MatChipsModule,
-    MatProgressSpinnerModule,
-    MatTooltipModule,
-    MatDividerModule,
-    MatSnackBarModule
+    Chip,
+    TooltipDirective,
+    UiModule,
+    Divider,
+    TableComponent,
+    TableColumnDirective
 ],
   templateUrl: './billing-overview.component.html',
   styleUrl: './billing-overview.component.scss'
 })
 export class BillingOverviewComponent implements OnInit {
-  private snackBar = inject(MatSnackBar);
+  private toastService = inject(ToastService);
   private billingService = inject(BillingService);
-  private dialog = inject(MatDialog);
 
   // Signals for reactive state
   subscription = signal<TenantSubscription | null>(null);
@@ -92,23 +88,20 @@ export class BillingOverviewComponent implements OnInit {
     return pending.length > 0 ? pending[0] : null;
   });
 
-  statusBadgeClass = computed(() => {
-    const sub = this.subscription();
-    if (!sub) return 'status-unknown';
-
-    switch (sub.status) {
+  getSubscriptionStatusColor(status: string): ChipColor {
+    switch (status) {
       case 'Active':
-        return 'status-active';
+        return 'success';
       case 'Trial':
-        return 'status-trial';
+        return 'primary';
       case 'Suspended':
-        return 'status-suspended';
+        return 'warning';
       case 'Expired':
-        return 'status-expired';
+        return 'error';
       default:
-        return 'status-unknown';
+        return 'neutral';
     }
-  });
+  }
 
   expiryWarningClass = computed(() => {
     const sub = this.subscription();
@@ -120,7 +113,14 @@ export class BillingOverviewComponent implements OnInit {
   });
 
   // Table columns
-  displayedColumns = ['period', 'dueDate', 'amount', 'status', 'paidDate', 'actions'];
+  columns: TableColumn[] = [
+    { key: 'period', label: 'Period' },
+    { key: 'dueDate', label: 'Due Date' },
+    { key: 'amount', label: 'Amount' },
+    { key: 'status', label: 'Status' },
+    { key: 'paidDate', label: 'Paid Date' },
+    { key: 'actions', label: 'Actions' }
+  ];
 
   ngOnInit(): void {
     this.loadSubscriptionData();
@@ -200,21 +200,20 @@ export class BillingOverviewComponent implements OnInit {
         this.loading.set(false);
 
         // Show error with retry option for transient errors
-        const snackBarRef = this.snackBar.open(
-          errorMessage,
-          shouldRetry && this.retryCount() < this.maxRetries ? 'Retry' : 'Close',
-          {
-            duration: shouldRetry ? undefined : 5000, // Keep open for retry errors
-            horizontalPosition: 'end',
-            verticalPosition: 'top'
-          }
-        );
-
-        // Handle retry button click
-        if (shouldRetry) {
-          snackBarRef.onAction().subscribe(() => {
-            this.retryLoadData();
+        if (shouldRetry && this.retryCount() < this.maxRetries) {
+          this.toastService.show({
+            message: errorMessage,
+            type: 'error',
+            duration: 0, // Keep open for retry errors
+            action: {
+              label: 'Retry',
+              callback: () => {
+                this.retryLoadData();
+              }
+            }
           });
+        } else {
+          this.toastService.error(errorMessage, 5000);
         }
       }
     });
@@ -251,14 +250,9 @@ export class BillingOverviewComponent implements OnInit {
       const delay = Math.pow(2, currentRetry) * 1000; // Exponential backoff: 1s, 2s, 4s
       this.retryCount.set(currentRetry + 1);
 
-      this.snackBar.open(
+      this.toastService.info(
         `Retrying... (Attempt ${currentRetry + 1}/${this.maxRetries})`,
-        'Cancel',
-        {
-          duration: delay,
-          horizontalPosition: 'end',
-          verticalPosition: 'top'
-        }
+        delay
       );
 
       setTimeout(() => {
@@ -269,21 +263,13 @@ export class BillingOverviewComponent implements OnInit {
 
   downloadInvoice(payment: SubscriptionPayment): void {
     if (!payment.invoiceNumber) {
-      this.snackBar.open('Invoice not available for this payment', 'Close', {
-        duration: 3000,
-        horizontalPosition: 'end',
-        verticalPosition: 'top'
-      });
+      this.toastService.warning('Invoice not available for this payment', 3000);
       return;
     }
 
     // Call BillingService to download invoice
     // API endpoint: GET /api/tenant/subscription/invoices/{paymentId}/download
-    this.snackBar.open('Downloading invoice...', 'Close', {
-      duration: 2000,
-      horizontalPosition: 'end',
-      verticalPosition: 'top'
-    });
+    this.toastService.info('Downloading invoice...', 2000);
 
     this.billingService.downloadInvoice(payment.id).subscribe({
       next: (blob) => {
@@ -297,11 +283,7 @@ export class BillingOverviewComponent implements OnInit {
         document.body.removeChild(link);
         window.URL.revokeObjectURL(url);
 
-        this.snackBar.open('Invoice downloaded successfully', 'Close', {
-          duration: 3000,
-          horizontalPosition: 'end',
-          verticalPosition: 'top'
-        });
+        this.toastService.success('Invoice downloaded successfully', 3000);
       },
       error: (err) => {
         console.error('Error downloading invoice:', err);
@@ -318,38 +300,19 @@ export class BillingOverviewComponent implements OnInit {
           errorMessage = 'Invoice download feature not yet implemented on server.';
         }
 
-        this.snackBar.open(errorMessage, 'Close', {
-          duration: 5000,
-          horizontalPosition: 'end',
-          verticalPosition: 'top'
-        });
+        this.toastService.error(errorMessage, 5000);
       }
     });
   }
 
   contactSupport(): void {
     // TODO: Open support dialog or navigate to support page
-    this.snackBar.open('Opening support contact...', 'Close', {
-      duration: 3000
-    });
+    this.toastService.info('Opening support contact...', 3000);
   }
 
   upgradeTier(): void {
-    const dialogRef = this.dialog.open(TierUpgradeDialogComponent, {
-      width: '1200px',
-      maxWidth: '95vw',
-      maxHeight: '90vh',
-      autoFocus: false,
-      restoreFocus: true
-    });
-
-    dialogRef.afterClosed().subscribe(result => {
-      if (result?.selectedTier) {
-        console.log('Selected tier:', result.selectedTier);
-        // Optionally refresh subscription data after tier change request
-        // this.loadSubscriptionData();
-      }
-    });
+    // TODO: Implement tier upgrade dialog
+    this.toastService.info('Tier upgrade feature not yet implemented', 3000);
   }
 
   formatCurrency(amount: number): string {
@@ -371,7 +334,7 @@ export class BillingOverviewComponent implements OnInit {
     }).format(date);
   }
 
-  getStatusColor(status: string): string {
+  getStatusColor(status: string): ChipColor {
     switch (status) {
       case 'Paid':
         return 'success';
@@ -380,9 +343,9 @@ export class BillingOverviewComponent implements OnInit {
       case 'Overdue':
         return 'error';
       case 'Waived':
-        return 'info';
+        return 'primary';
       default:
-        return 'default';
+        return 'neutral';
     }
   }
 
@@ -396,24 +359,7 @@ export class BillingOverviewComponent implements OnInit {
    * Open payment detail dialog
    */
   viewPaymentDetails(payment: SubscriptionPayment): void {
-    // Find the corresponding raw payment history object
-    const rawPayment = this.paymentHistoryRaw().find(p => p.id === payment.id);
-
-    if (!rawPayment) {
-      this.snackBar.open('Payment details not available', 'Close', {
-        duration: 3000,
-        horizontalPosition: 'end',
-        verticalPosition: 'top'
-      });
-      return;
-    }
-
-    this.dialog.open(PaymentDetailDialogComponent, {
-      width: '600px',
-      maxWidth: '90vw',
-      data: { payment: rawPayment },
-      autoFocus: false,
-      restoreFocus: true
-    });
+    // TODO: Implement payment detail dialog
+    this.toastService.info('Payment details view not yet implemented', 3000);
   }
 }

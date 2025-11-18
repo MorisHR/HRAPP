@@ -4,7 +4,7 @@ import { Router, RouterModule } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatCardModule } from '@angular/material/card';
-import { MatDividerModule } from '@angular/material/divider';
+import { Divider } from '../../shared/ui';
 
 @Component({
   selector: 'app-landing-page',
@@ -14,7 +14,7 @@ import { MatDividerModule } from '@angular/material/divider';
     MatButtonModule,
     MatIconModule,
     MatCardModule,
-    MatDividerModule
+    Divider
 ],
   template: `
     <div class="landing-page">
@@ -199,7 +199,7 @@ import { MatDividerModule } from '@angular/material/divider';
                 </div>
                 <p class="billing">Per month</p>
               </div>
-              <mat-divider></mat-divider>
+              <app-divider />
               <ul class="features-list">
                 <li><mat-icon>check</mat-icon>Up to 50 employees</li>
                 <li><mat-icon>check</mat-icon>Payroll & CSG/NSF/PAYE</li>
@@ -223,7 +223,7 @@ import { MatDividerModule } from '@angular/material/divider';
                 </div>
                 <p class="billing">Per month</p>
               </div>
-              <mat-divider></mat-divider>
+              <app-divider />
               <ul class="features-list">
                 <li><mat-icon>check</mat-icon>Up to 200 employees</li>
                 <li><mat-icon>check</mat-icon>Everything in Starter</li>
@@ -247,7 +247,7 @@ import { MatDividerModule } from '@angular/material/divider';
                 </div>
                 <p class="billing">Contact us for pricing</p>
               </div>
-              <mat-divider></mat-divider>
+              <app-divider />
               <ul class="features-list">
                 <li><mat-icon>check</mat-icon>Unlimited employees</li>
                 <li><mat-icon>check</mat-icon>Everything in Professional</li>
@@ -315,7 +315,7 @@ import { MatDividerModule } from '@angular/material/divider';
             </div>
           </div>
 
-          <mat-divider></mat-divider>
+          <app-divider />
 
           <div class="footer-bottom">
             <p>&copy; 2025 MorisHR. All rights reserved. Made in Mauritius.</p>

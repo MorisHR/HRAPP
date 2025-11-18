@@ -5,14 +5,11 @@ import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } 
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatTableModule } from '@angular/material/table';
-import { MatChipsModule } from '@angular/material/chips';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatDialogModule, MatDialog } from '@angular/material/dialog';
+import { Chip, ChipColor, TooltipDirective } from '@app/shared/ui';
+import { UiModule } from '../../../shared/ui/ui.module';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { MatDividerModule } from '@angular/material/divider';
+import { TableComponent, TableColumn, TableColumnDirective } from '../../../shared/ui';
 import { TimesheetService } from '../../../core/services/timesheet.service';
 import {
   Timesheet,
@@ -35,14 +32,13 @@ import {
     MatCardModule,
     MatButtonModule,
     MatIconModule,
-    MatTableModule,
-    MatChipsModule,
-    MatProgressSpinnerModule,
-    MatTooltipModule,
-    MatDialogModule,
+    Chip,
+    TooltipDirective,
+    UiModule,
     MatFormFieldModule,
     MatInputModule,
-    MatDividerModule
+    TableComponent,
+    TableColumnDirective
 ],
   templateUrl: './timesheet-detail.component.html',
   styleUrl: './timesheet-detail.component.scss'
@@ -51,12 +47,20 @@ export class TimesheetDetailComponent implements OnInit {
   private timesheetService = inject(TimesheetService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
-  private dialog = inject(MatDialog);
 
   timesheet = this.timesheetService.currentTimesheet;
   loading = this.timesheetService.loading;
 
-  displayedColumns = ['date', 'dayType', 'clockIn', 'clockOut', 'regular', 'overtime', 'total', 'notes'];
+  columns: TableColumn[] = [
+    { key: 'date', label: 'Date' },
+    { key: 'dayType', label: 'Type' },
+    { key: 'clockIn', label: 'Clock In' },
+    { key: 'clockOut', label: 'Clock Out' },
+    { key: 'regular', label: 'Regular' },
+    { key: 'overtime', label: 'Overtime' },
+    { key: 'total', label: 'Total' },
+    { key: 'notes', label: 'Notes' }
+  ];
 
   // Computed values
   canEdit = computed(() => {
@@ -92,8 +96,19 @@ export class TimesheetDetailComponent implements OnInit {
     return getStatusLabel(status);
   }
 
-  getStatusColor(status: number): string {
-    return getStatusColor(status);
+  getStatusColor(status: number): ChipColor {
+    const originalColor = getStatusColor(status);
+    // Map Material colors to custom Chip colors
+    switch (originalColor) {
+      case 'primary':
+        return 'primary';
+      case 'accent':
+        return 'success';
+      case 'warn':
+        return 'error';
+      default:
+        return 'neutral';
+    }
   }
 
   getDayTypeLabel(dayType: number): string {

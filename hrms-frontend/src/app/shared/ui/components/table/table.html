@@ -99,7 +99,13 @@
               <!-- Data Columns -->
               @for (column of columns; track column.key) {
                 <td class="table__cell">
-                  {{ getCellValue(row, column) }}
+                  @if (hasCustomTemplate(column)) {
+                    <!-- Custom template -->
+                    <ng-container *ngTemplateOutlet="getColumnTemplate(column)!; context: { $implicit: row, value: getCellValue(row, column), row: row }"></ng-container>
+                  } @else {
+                    <!-- Simple text value -->
+                    {{ getCellValue(row, column) }}
+                  }
                 </td>
               }
             </tr>

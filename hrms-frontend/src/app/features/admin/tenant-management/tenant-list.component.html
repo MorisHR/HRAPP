@@ -21,88 +21,31 @@
 
     <!-- Table -->
     <div class="table-container">
-      <table mat-table [dataSource]="dataSource" matSort class="tenants-table">
-        <!-- Name Column -->
-        <ng-container matColumnDef="name">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Name</th>
-          <td mat-cell *matCellDef="let tenant">{{ tenant.companyName }}</td>
-        </ng-container>
+      <app-table
+        [columns]="tableColumns"
+        [data]="filteredTenants()"
+        [loading]="loading()"
+        [hoverable]="true"
+        [striped]="true">
 
-        <!-- Domain Column -->
-        <ng-container matColumnDef="domain">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Domain</th>
-          <td mat-cell *matCellDef="let tenant">{{ tenant.subdomain }}</td>
-        </ng-container>
+        <!-- Status Column Template -->
+        <ng-template appTableColumn="status" let-row>
+          <app-chip [label]="row.status" [color]="getStatusColor(row.status)" />
+        </ng-template>
 
-        <!-- Tier Column -->
-        <ng-container matColumnDef="industry">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Tier</th>
-          <td mat-cell *matCellDef="let tenant">{{ tenant.employeeTierDisplay || tenant.employeeTier }}</td>
-        </ng-container>
-
-        <!-- Employee Count Column -->
-        <ng-container matColumnDef="employeeCount">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Employees</th>
-          <td mat-cell *matCellDef="let tenant">{{ tenant.employeeCount }}</td>
-        </ng-container>
-
-        <!-- Status Column -->
-        <ng-container matColumnDef="status">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
-          <td mat-cell *matCellDef="let tenant">
-            <mat-chip [color]="getStatusColor(tenant.status)">
-              {{ tenant.status }}
-            </mat-chip>
-          </td>
-        </ng-container>
-
-        <!-- Actions Column -->
-        <ng-container matColumnDef="actions">
-          <th mat-header-cell *matHeaderCellDef>Actions</th>
-          <td mat-cell *matCellDef="let tenant">
-            <button mat-icon-button [matMenuTriggerFor]="menu">
-              <app-icon name="more_vert"></app-icon>
-            </button>
-            <mat-menu #menu="matMenu">
-              <button mat-menu-item [routerLink]="['/admin/tenants', tenant.id]">
-                <app-icon name="visibility"></app-icon>
-                <span>View Details</span>
-              </button>
-              <button mat-menu-item [routerLink]="['/admin/tenants', tenant.id, 'edit']">
-                <app-icon name="edit"></app-icon>
-                <span>Edit</span>
-              </button>
-              <button mat-menu-item (click)="suspendTenant(tenant.id)">
-                <app-icon name="block"></app-icon>
-                <span>Suspend</span>
-              </button>
-              <button mat-menu-item (click)="deleteTenant(tenant.id)" class="delete-action">
-                <app-icon name="delete"></app-icon>
-                <span>Delete</span>
-              </button>
-            </mat-menu>
-          </td>
-        </ng-container>
-
-        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
-
-        <!-- No data row -->
-        <tr class="mat-row" *matNoDataRow>
-          <td class="mat-cell" colspan="6">
-            @if (loading()) {
-              <div class="no-data">Loading tenants...</div>
-            } @else {
-              <div class="no-data">No tenants found matching the filter.</div>
-            }
-          </td>
-        </tr>
-      </table>
-
-      <mat-paginator
-        [pageSizeOptions]="[10, 25, 50, 100]"
-        showFirstLastButtons
-      ></mat-paginator>
+        <!-- Actions Column Template -->
+        <ng-template appTableColumn="actions" let-row>
+          <button mat-icon-button #tenantMenuTrigger>
+            <mat-icon>more_vert</mat-icon>
+          </button>
+          <app-menu
+            [trigger]="tenantMenuTrigger"
+            [items]="getTenantMenuItems(row)"
+            [position]="'bottom-left'"
+            (itemClick)="handleTenantMenuClick($event, row)">
+          </app-menu>
+        </ng-template>
+      </app-table>
     </div>
   </div>
 </div>

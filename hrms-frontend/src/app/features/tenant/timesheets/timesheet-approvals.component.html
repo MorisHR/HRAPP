@@ -88,7 +88,7 @@
     <mat-card-content>
       @if (loading()) {
         <div class="loading-container">
-          <mat-spinner></mat-spinner>
+          <app-progress-spinner size="medium" color="primary"></app-progress-spinner>
           <p>Loading pending approvals...</p>
         </div>
       } @else if (pendingTimesheets().length === 0) {
@@ -99,113 +99,88 @@
         </div>
       } @else {
         <div class="table-container">
-          <table mat-table [dataSource]="pendingTimesheets()" class="approvals-table">
+          <app-table
+            [columns]="columns"
+            [data]="pendingTimesheets()"
+            [loading]="loading()"
+            [hoverable]="true"
+            class="approvals-table">
 
             <!-- Checkbox Column -->
-            <ng-container matColumnDef="select">
-              <th mat-header-cell *matHeaderCellDef>
-                <mat-checkbox
-                  (change)="$event ? masterToggle() : null"
-                  [checked]="selection.hasValue() && isAllSelected()"
-                  [indeterminate]="selection.hasValue() && !isAllSelected()">
-                </mat-checkbox>
-              </th>
-              <td mat-cell *matCellDef="let row">
-                <mat-checkbox
-                  (click)="$event.stopPropagation()"
-                  (change)="$event ? selection.toggle(row) : null"
-                  [checked]="selection.isSelected(row)">
-                </mat-checkbox>
-              </td>
-            </ng-container>
+            <ng-template appTableColumn="select" let-row>
+              <app-checkbox
+                (click)="$event.stopPropagation()"
+                (checkedChange)="selection.toggle(row)"
+                [checked]="selection.isSelected(row)">
+              </app-checkbox>
+            </ng-template>
 
             <!-- Employee Column -->
-            <ng-container matColumnDef="employee">
-              <th mat-header-cell *matHeaderCellDef>Employee</th>
-              <td mat-cell *matCellDef="let timesheet">
-                <div class="employee-cell">
-                  <mat-icon class="employee-icon">person</mat-icon>
-                  <span>{{ timesheet.employeeName }}</span>
-                </div>
-              </td>
-            </ng-container>
+            <ng-template appTableColumn="employee" let-timesheet>
+              <div class="employee-cell">
+                <mat-icon class="employee-icon">person</mat-icon>
+                <span>{{ timesheet.employeeName }}</span>
+              </div>
+            </ng-template>
 
             <!-- Period Column -->
-            <ng-container matColumnDef="period">
-              <th mat-header-cell *matHeaderCellDef>Period</th>
-              <td mat-cell *matCellDef="let timesheet">
-                <div class="period-cell">
-                  <mat-icon class="period-icon">calendar_today</mat-icon>
-                  <span>{{ formatPeriod(timesheet) }}</span>
-                </div>
-              </td>
-            </ng-container>
+            <ng-template appTableColumn="period" let-timesheet>
+              <div class="period-cell">
+                <mat-icon class="period-icon">calendar_today</mat-icon>
+                <span>{{ formatPeriod(timesheet) }}</span>
+              </div>
+            </ng-template>
 
             <!-- Total Hours Column -->
-            <ng-container matColumnDef="totalHours">
-              <th mat-header-cell *matHeaderCellDef>Total Hours</th>
-              <td mat-cell *matCellDef="let timesheet">
-                <div class="hours-cell">
-                  <app-icon name="access_time"></app-icon>
-                  <span>{{ formatHours(getTotalHours(timesheet)) }}</span>
-                </div>
-              </td>
-            </ng-container>
+            <ng-template appTableColumn="totalHours" let-timesheet>
+              <div class="hours-cell">
+                <app-icon name="access_time"></app-icon>
+                <span>{{ formatHours(getTotalHours(timesheet)) }}</span>
+              </div>
+            </ng-template>
 
             <!-- Overtime Column -->
-            <ng-container matColumnDef="overtime">
-              <th mat-header-cell *matHeaderCellDef>Overtime</th>
-              <td mat-cell *matCellDef="let timesheet">
-                @if (timesheet.totalOvertimeHours > 0) {
-                  <span class="overtime-badge">{{ formatHours(timesheet.totalOvertimeHours) }}</span>
-                } @else {
-                  <span class="no-overtime">-</span>
-                }
-              </td>
-            </ng-container>
+            <ng-template appTableColumn="overtime" let-timesheet>
+              @if (timesheet.totalOvertimeHours > 0) {
+                <span class="overtime-badge">{{ formatHours(timesheet.totalOvertimeHours) }}</span>
+              } @else {
+                <span class="no-overtime">-</span>
+              }
+            </ng-template>
 
             <!-- Submitted At Column -->
-            <ng-container matColumnDef="submittedAt">
-              <th mat-header-cell *matHeaderCellDef>Submitted</th>
-              <td mat-cell *matCellDef="let timesheet">
-                {{ formatDate(timesheet.submittedAt!) }}
-              </td>
-            </ng-container>
+            <ng-template appTableColumn="submittedAt" let-timesheet>
+              {{ formatDate(timesheet.submittedAt!) }}
+            </ng-template>
 
             <!-- Actions Column -->
-            <ng-container matColumnDef="actions">
-              <th mat-header-cell *matHeaderCellDef>Actions</th>
-              <td mat-cell *matCellDef="let timesheet">
-                <div class="action-buttons">
-                  <button
-                    mat-icon-button
-                    (click)="viewDetails(timesheet)"
-                    matTooltip="View Details">
-                    <app-icon name="visibility"></app-icon>
-                  </button>
+            <ng-template appTableColumn="actions" let-timesheet>
+              <div class="action-buttons">
+                <button
+                  mat-icon-button
+                  (click)="viewDetails(timesheet)"
+                  appTooltip="View Details">
+                  <app-icon name="visibility"></app-icon>
+                </button>
 
-                  <button
-                    mat-icon-button
-                    color="primary"
-                    (click)="approveSingle(timesheet)"
-                    matTooltip="Approve">
-                    <app-icon name="check_circle"></app-icon>
-                  </button>
+                <button
+                  mat-icon-button
+                  color="primary"
+                  (click)="approveSingle(timesheet)"
+                  appTooltip="Approve">
+                  <app-icon name="check_circle"></app-icon>
+                </button>
 
-                  <button
-                    mat-icon-button
-                    color="warn"
-                    (click)="rejectSingle(timesheet)"
-                    matTooltip="Reject">
-                    <app-icon name="cancel"></app-icon>
-                  </button>
-                </div>
-              </td>
-            </ng-container>
-
-            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-            <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="approval-row"></tr>
-          </table>
+                <button
+                  mat-icon-button
+                  color="warn"
+                  (click)="rejectSingle(timesheet)"
+                  appTooltip="Reject">
+                  <app-icon name="cancel"></app-icon>
+                </button>
+              </div>
+            </ng-template>
+          </app-table>
         </div>
       }
     </mat-card-content>

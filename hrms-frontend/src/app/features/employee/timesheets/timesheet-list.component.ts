@@ -4,13 +4,12 @@ import { RouterModule } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatTableModule } from '@angular/material/table';
-import { MatChipsModule } from '@angular/material/chips';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatTooltipModule } from '@angular/material/tooltip';
+import { UiModule } from '../../../shared/ui/ui.module';
+import { Chip, ChipColor, TooltipDirective } from '../../../shared/ui';
 import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { FormsModule } from '@angular/forms';
+import { TableComponent, TableColumn, TableColumnDirective } from '../../../shared/ui';
 import { TimesheetService } from '../../../core/services/timesheet.service';
 import {
   Timesheet,
@@ -29,12 +28,13 @@ import {
     MatCardModule,
     MatButtonModule,
     MatIconModule,
-    MatTableModule,
-    MatChipsModule,
-    MatProgressSpinnerModule,
-    MatTooltipModule,
+    Chip,
+    UiModule,
     MatSelectModule,
-    MatFormFieldModule
+    MatFormFieldModule,
+    TableComponent,
+    TableColumnDirective,
+    TooltipDirective
 ],
   templateUrl: './timesheet-list.component.html',
   styleUrl: './timesheet-list.component.scss'
@@ -46,7 +46,15 @@ export class TimesheetListComponent implements OnInit {
   loading = this.timesheetService.loading;
 
   selectedStatus = signal<number | null>(null);
-  displayedColumns = ['period', 'status', 'totalHours', 'overtime', 'submittedAt', 'actions'];
+
+  columns: TableColumn[] = [
+    { key: 'period', label: 'Period' },
+    { key: 'status', label: 'Status' },
+    { key: 'totalHours', label: 'Total Hours' },
+    { key: 'overtime', label: 'Overtime' },
+    { key: 'submittedAt', label: 'Submitted' },
+    { key: 'actions', label: 'Actions' }
+  ];
 
   // Computed filtered timesheets
   filteredTimesheets = computed(() => {
@@ -96,8 +104,18 @@ export class TimesheetListComponent implements OnInit {
     return getStatusLabel(status);
   }
 
-  getStatusColor(status: TimesheetStatus): string {
-    return getStatusColor(status);
+  getStatusColor(status: TimesheetStatus): ChipColor {
+    const statusColorString = getStatusColor(status);
+    // Map Material color names to custom chip colors
+    const colorMap: Record<string, ChipColor> = {
+      'primary': 'primary',
+      'accent': 'warning',
+      'warn': 'error',
+      'success': 'success',
+      'draft': 'neutral',
+      '': 'neutral'
+    };
+    return colorMap[statusColorString] || 'neutral';
   }
 
   canSubmit(timesheet: Timesheet): boolean {

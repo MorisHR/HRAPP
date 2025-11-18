@@ -4,16 +4,24 @@
 // Production-ready checkbox with full accessibility support
 // ═══════════════════════════════════════════════════════════
 
-import { Component, Input, Output, EventEmitter, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
+import { Component, Input, Output, EventEmitter, ViewChild, ElementRef, AfterViewInit, forwardRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 
 @Component({
   selector: 'app-checkbox',
   imports: [CommonModule],
   templateUrl: './checkbox.html',
   styleUrl: './checkbox.scss',
+  providers: [
+    {
+      provide: NG_VALUE_ACCESSOR,
+      useExisting: forwardRef(() => CheckboxComponent),
+      multi: true
+    }
+  ]
 })
-export class CheckboxComponent implements AfterViewInit {
+export class CheckboxComponent implements AfterViewInit, ControlValueAccessor {
   @Input() label: string = '';
   @Input() checked: boolean = false;
   @Input() indeterminate: boolean = false;
@@ -26,6 +34,10 @@ export class CheckboxComponent implements AfterViewInit {
 
   // Unique ID for accessibility
   checkboxId = `checkbox-${Math.random().toString(36).substr(2, 9)}`;
+
+  // ControlValueAccessor implementation
+  private onChange: (value: boolean) => void = () => {};
+  private onTouched: () => void = () => {};
 
   ngAfterViewInit(): void {
     // Set indeterminate state on the native element
@@ -58,6 +70,8 @@ export class CheckboxComponent implements AfterViewInit {
     }
 
     this.checkedChange.emit(this.checked);
+    this.onChange(this.checked);
+    this.onTouched();
   }
 
   get checkboxClasses(): string[] {
@@ -67,5 +81,22 @@ export class CheckboxComponent implements AfterViewInit {
       this.indeterminate ? 'checkbox--indeterminate' : '',
       this.disabled ? 'checkbox--disabled' : '',
     ].filter(Boolean);
+  }
+
+  // ControlValueAccessor methods
+  writeValue(value: boolean): void {
+    this.checked = value;
+  }
+
+  registerOnChange(fn: (value: boolean) => void): void {
+    this.onChange = fn;
+  }
+
+  registerOnTouched(fn: () => void): void {
+    this.onTouched = fn;
+  }
+
+  setDisabledState(isDisabled: boolean): void {
+    this.disabled = isDisabled;
   }
 }

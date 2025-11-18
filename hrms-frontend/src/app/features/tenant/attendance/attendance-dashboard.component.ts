@@ -4,20 +4,15 @@ import { FormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatTableModule, MatTableDataSource } from '@angular/material/table';
-import { MatSortModule, MatSort } from '@angular/material/sort';
-import { MatPaginatorModule, MatPaginator } from '@angular/material/paginator';
 import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
-import { MatChipsModule } from '@angular/material/chips';
-import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { Chip, TooltipDirective } from '@app/shared/ui';
+import { UiModule } from '../../../shared/ui/ui.module';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { MatBadgeModule } from '@angular/material/badge';
-import { MatDividerModule } from '@angular/material/divider';
-import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { ToastService, Divider } from '../../../shared/ui';
 import { Subject, takeUntil } from 'rxjs';
+import { TableComponent, TableColumn } from '../../../shared/ui/components/table/table';
 
 import { AttendanceRealtimeService } from '../../../core/services/attendance-realtime.service';
 import { DeviceStatusService } from '../../../core/services/device-status.service';
@@ -63,19 +58,15 @@ interface StatCard {
     MatCardModule,
     MatButtonModule,
     MatIconModule,
-    MatTableModule,
-    MatSortModule,
-    MatPaginatorModule,
+    TableComponent,
     MatInputModule,
     MatFormFieldModule,
     MatSelectModule,
-    MatChipsModule,
-    MatTooltipModule,
-    MatProgressSpinnerModule,
+    Chip,
+    TooltipDirective,
     MatProgressBarModule,
-    MatBadgeModule,
-    MatDividerModule,
-    MatSnackBarModule
+    UiModule,
+    Divider,
   ],
   templateUrl: './attendance-dashboard.component.html',
   styleUrls: ['./attendance-dashboard.component.scss'],
@@ -87,12 +78,8 @@ export class AttendanceDashboardComponent implements OnInit, OnDestroy {
   private punchCaptureService = inject(DevicePunchCaptureService);
   private attendanceMachinesService = inject(AttendanceMachinesService);
   private themeService = inject(ThemeService);
-  private snackBar = inject(MatSnackBar);
+  private toastService = inject(ToastService);
   private destroy$ = new Subject<void>();
-
-  // View children
-  @ViewChild(MatSort) sort!: MatSort;
-  @ViewChild(MatPaginator) paginator!: MatPaginator;
 
   // Theme
   isDark = this.themeService.isDark;
@@ -126,17 +113,19 @@ export class AttendanceDashboardComponent implements OnInit, OnDestroy {
   punchHistory = signal<PunchHistoryDto[]>([]);
   punchHistoryLoading = signal<boolean>(false);
 
-  // Table data source
-  dataSource = new MatTableDataSource<PunchRecord>([]);
-  displayedColumns: string[] = [
-    'timestamp',
-    'employeeName',
-    'deviceName',
-    'punchType',
-    'verificationMethod',
-    'verificationQuality',
-    'status'
+  // Table columns
+  tableColumns: TableColumn[] = [
+    { key: 'timestamp', label: 'Time', sortable: true },
+    { key: 'employeeName', label: 'Employee', sortable: true },
+    { key: 'deviceName', label: 'Device', sortable: true },
+    { key: 'punchType', label: 'Type', sortable: true },
+    { key: 'verificationMethod', label: 'Method', sortable: true },
+    { key: 'verificationQuality', label: 'Quality', sortable: true },
+    { key: 'status', label: 'Status', sortable: true }
   ];
+
+  // Filtered punches for table
+  filteredPunches = signal<PunchRecord[]>([]);
 
   // Enums for template
   PunchType = PunchType;
@@ -404,17 +393,7 @@ export class AttendanceDashboardComponent implements OnInit, OnDestroy {
       punches = punches.filter(p => p.punchType === typeFilter);
     }
 
-    this.dataSource.data = punches;
-
-    // Configure sorting
-    if (this.sort) {
-      this.dataSource.sort = this.sort;
-    }
-
-    // Configure pagination
-    if (this.paginator) {
-      this.dataSource.paginator = this.paginator;
-    }
+    this.filteredPunches.set(punches);
   }
 
   /**
@@ -579,38 +558,38 @@ export class AttendanceDashboardComponent implements OnInit, OnDestroy {
   /**
    * Get punch type color
    */
-  getPunchTypeColor(punchType: PunchType): string {
+  getPunchTypeColor(punchType: PunchType): 'primary' | 'success' | 'warning' | 'error' | 'neutral' {
     switch (punchType) {
       case PunchType.CheckIn:
         return 'success';
       case PunchType.CheckOut:
-        return 'warn';
+        return 'error';
       case PunchType.Break:
-        return 'accent';
+        return 'warning';
       case PunchType.BreakReturn:
         return 'primary';
       default:
-        return 'default';
+        return 'neutral';
     }
   }
 
   /**
    * Get punch status color
    */
-  getPunchStatusColor(status: PunchStatus): string {
+  getPunchStatusColor(status: PunchStatus): 'primary' | 'success' | 'warning' | 'error' | 'neutral' {
     switch (status) {
       case PunchStatus.Valid:
         return 'success';
       case PunchStatus.Late:
         return 'warning';
       case PunchStatus.Early:
-        return 'info';
+        return 'primary';
       case PunchStatus.Invalid:
         return 'error';
       case PunchStatus.Duplicate:
-        return 'warn';
+        return 'error';
       default:
-        return 'default';
+        return 'neutral';
     }
   }
 
@@ -694,12 +673,20 @@ export class AttendanceDashboardComponent implements OnInit, OnDestroy {
    * Show notification
    */
   private showNotification(message: string, type: 'success' | 'error' | 'warning' | 'info'): void {
-    this.snackBar.open(message, 'Close', {
-      duration: 3000,
-      horizontalPosition: 'end',
-      verticalPosition: 'top',
-      panelClass: [`snackbar-${type}`]
-    });
+    switch (type) {
+      case 'success':
+        this.toastService.success(message, 3000);
+        break;
+      case 'error':
+        this.toastService.error(message, 3000);
+        break;
+      case 'warning':
+        this.toastService.warning(message, 3000);
+        break;
+      case 'info':
+        this.toastService.info(message, 3000);
+        break;
+    }
   }
 
   /**
@@ -715,14 +702,14 @@ export class AttendanceDashboardComponent implements OnInit, OnDestroy {
    * Export punches to CSV
    */
   exportToCSV(): void {
-    const punches = this.dataSource.data;
+    const punches = this.filteredPunches();
     if (punches.length === 0) {
       this.showNotification('No data to export', 'warning');
       return;
     }
 
     const headers = ['Timestamp', 'Employee', 'Device', 'Type', 'Method', 'Quality', 'Status'];
-    const rows = punches.map(p => [
+    const rows = punches.map((p: PunchRecord) => [
       p.timestamp,
       p.employeeName,
       p.deviceName,
@@ -734,7 +721,7 @@ export class AttendanceDashboardComponent implements OnInit, OnDestroy {
 
     const csv = [
       headers.join(','),
-      ...rows.map(row => row.join(','))
+      ...rows.map((row: any[]) => row.join(','))
     ].join('\n');
 
     const blob = new Blob([csv], { type: 'text/csv' });

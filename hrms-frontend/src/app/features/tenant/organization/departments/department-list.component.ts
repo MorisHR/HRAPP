@@ -3,15 +3,13 @@ import { Component, OnInit, signal, inject, ChangeDetectionStrategy } from '@ang
 import { RouterModule, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
-import { MatTableModule } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { UiModule } from '../../../../shared/ui/ui.module';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { MatChipsModule } from '@angular/material/chips';
-import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatDialogModule, MatDialog } from '@angular/material/dialog';
+import { Chip, TooltipDirective } from '@app/shared/ui';
+import { TableComponent, TableColumn, TableColumnDirective } from '../../../../shared/ui';
 import { DepartmentService, DepartmentDto } from './services/department.service';
 
 @Component({
@@ -21,15 +19,15 @@ import { DepartmentService, DepartmentDto } from './services/department.service'
     RouterModule,
     FormsModule,
     MatCardModule,
-    MatTableModule,
+    TableComponent,
+    TableColumnDirective,
     MatButtonModule,
     MatIconModule,
-    MatProgressSpinnerModule,
     MatFormFieldModule,
+    UiModule,
     MatInputModule,
-    MatChipsModule,
-    MatTooltipModule,
-    MatDialogModule
+    Chip,
+    TooltipDirective
 ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -65,7 +63,7 @@ import { DepartmentService, DepartmentDto } from './services/department.service'
       @if (loading()) {
         <mat-card>
           <mat-card-content class="loading-container">
-            <mat-spinner diameter="50"></mat-spinner>
+            <app-progress-spinner size="large" color="primary"></app-progress-spinner>
             <p>Loading departments...</p>
           </mat-card-content>
         </mat-card>
@@ -94,77 +92,56 @@ import { DepartmentService, DepartmentDto } from './services/department.service'
       @if (!loading() && !error() && filteredDepartments().length > 0) {
         <mat-card>
           <mat-card-content>
-            <table mat-table [dataSource]="filteredDepartments()" class="departments-table">
+            <app-table
+              [columns]="columns"
+              [data]="filteredDepartments()"
+              [loading]="loading()"
+              [hoverable]="true"
+              class="departments-table">
 
-              <!-- Code Column -->
-              <ng-container matColumnDef="code">
-                <th mat-header-cell *matHeaderCellDef>Code</th>
-                <td mat-cell *matCellDef="let dept">
-                  <strong>{{ dept.code }}</strong>
-                </td>
-              </ng-container>
+              <!-- Custom template for code column -->
+              <ng-template appTableColumn="code" let-row>
+                <strong>{{ row.code }}</strong>
+              </ng-template>
 
-              <!-- Name Column -->
-              <ng-container matColumnDef="name">
-                <th mat-header-cell *matHeaderCellDef>Department Name</th>
-                <td mat-cell *matCellDef="let dept">{{ dept.name }}</td>
-              </ng-container>
+              <!-- Custom template for parent column -->
+              <ng-template appTableColumn="parent" let-row>
+                {{ row.parentDepartmentName || '—' }}
+              </ng-template>
 
-              <!-- Parent Column -->
-              <ng-container matColumnDef="parent">
-                <th mat-header-cell *matHeaderCellDef>Parent Department</th>
-                <td mat-cell *matCellDef="let dept">
-                  {{ dept.parentDepartmentName || '—' }}
-                </td>
-              </ng-container>
+              <!-- Custom template for head column -->
+              <ng-template appTableColumn="head" let-row>
+                {{ row.departmentHeadName || '—' }}
+              </ng-template>
 
-              <!-- Head Column -->
-              <ng-container matColumnDef="head">
-                <th mat-header-cell *matHeaderCellDef>Department Head</th>
-                <td mat-cell *matCellDef="let dept">
-                  {{ dept.departmentHeadName || '—' }}
-                </td>
-              </ng-container>
+              <!-- Custom template for employee count column -->
+              <ng-template appTableColumn="employeeCount" let-row>
+                <app-chip [label]="row.employeeCount.toString()" [color]="'neutral'"></app-chip>
+              </ng-template>
 
-              <!-- Employee Count Column -->
-              <ng-container matColumnDef="employeeCount">
-                <th mat-header-cell *matHeaderCellDef>Employees</th>
-                <td mat-cell *matCellDef="let dept">
-                  <mat-chip>{{ dept.employeeCount }}</mat-chip>
-                </td>
-              </ng-container>
+              <!-- Custom template for status column -->
+              <ng-template appTableColumn="status" let-row>
+                <app-chip
+                  [label]="row.isActive ? 'Active' : 'Inactive'"
+                  [color]="row.isActive ? 'success' : 'error'">
+                </app-chip>
+              </ng-template>
 
-              <!-- Status Column -->
-              <ng-container matColumnDef="status">
-                <th mat-header-cell *matHeaderCellDef>Status</th>
-                <td mat-cell *matCellDef="let dept">
-                  <mat-chip [class.active-chip]="dept.isActive" [class.inactive-chip]="!dept.isActive">
-                    {{ dept.isActive ? 'Active' : 'Inactive' }}
-                  </mat-chip>
-                </td>
-              </ng-container>
-
-              <!-- Actions Column -->
-              <ng-container matColumnDef="actions">
-                <th mat-header-cell *matHeaderCellDef>Actions</th>
-                <td mat-cell *matCellDef="let dept">
-                  <button mat-icon-button
-                          [routerLink]="['edit', dept.id]"
-                          matTooltip="Edit department">
-                    <mat-icon>edit</mat-icon>
-                  </button>
-                  <button mat-icon-button
-                          color="warn"
-                          (click)="deleteDepartment(dept)"
-                          matTooltip="Delete department">
-                    <mat-icon>delete</mat-icon>
-                  </button>
-                </td>
-              </ng-container>
-
-              <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-              <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
-            </table>
+              <!-- Custom template for actions column -->
+              <ng-template appTableColumn="actions" let-row>
+                <button mat-icon-button
+                        [routerLink]="['edit', row.id]"
+                        appTooltip="Edit department">
+                  <mat-icon>edit</mat-icon>
+                </button>
+                <button mat-icon-button
+                        color="warn"
+                        (click)="deleteDepartment(row)"
+                        appTooltip="Delete department">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </ng-template>
+            </app-table>
           </mat-card-content>
         </mat-card>
       }
@@ -251,21 +228,6 @@ import { DepartmentService, DepartmentDto } from './services/department.service'
       }
     }
 
-    mat-chip {
-      font-size: 12px;
-      min-height: 24px;
-      padding: 4px 12px;
-    }
-
-    .active-chip {
-      background-color: #4caf50 !important;
-      color: white !important;
-    }
-
-    .inactive-chip {
-      background-color: #f44336 !important;
-      color: white !important;
-    }
 
     .loading-container,
     .error-content,
@@ -315,7 +277,6 @@ import { DepartmentService, DepartmentDto } from './services/department.service'
 export class DepartmentListComponent implements OnInit {
   private departmentService = inject(DepartmentService);
   private router = inject(Router);
-  private dialog = inject(MatDialog);
 
   departments = signal<DepartmentDto[]>([]);
   filteredDepartments = signal<DepartmentDto[]>([]);
@@ -323,7 +284,15 @@ export class DepartmentListComponent implements OnInit {
   error = signal<string | null>(null);
   searchTerm = '';
 
-  displayedColumns = ['code', 'name', 'parent', 'head', 'employeeCount', 'status', 'actions'];
+  columns: TableColumn[] = [
+    { key: 'code', label: 'Code', sortable: true },
+    { key: 'name', label: 'Department Name', sortable: true },
+    { key: 'parent', label: 'Parent Department' },
+    { key: 'head', label: 'Department Head' },
+    { key: 'employeeCount', label: 'Employees', sortable: true },
+    { key: 'status', label: 'Status' },
+    { key: 'actions', label: 'Actions' }
+  ];
 
   ngOnInit(): void {
     this.loadDepartments();

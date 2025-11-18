@@ -4,14 +4,32 @@
 // Production-ready table component to replace mat-table
 // ═══════════════════════════════════════════════════════════
 
-import { Component, Input, Output, EventEmitter, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnChanges, SimpleChanges, TemplateRef, ContentChildren, QueryList, Directive, AfterContentInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+
+/**
+ * Directive to define custom column templates
+ * Usage: <ng-template appTableColumn="columnKey" let-row let-value="value">...</ng-template>
+ */
+@Directive({
+  selector: '[appTableColumn]',
+  standalone: true
+})
+export class TableColumnDirective {
+  @Input('appTableColumn') columnKey!: string;
+
+  constructor(public template: TemplateRef<any>) {}
+}
 
 export interface TableColumn {
   key: string;
   label: string;
   sortable?: boolean;
   width?: string;
+  /** Optional custom cell template reference */
+  cellTemplate?: TemplateRef<any>;
+  /** Optional custom formatter function */
+  formatter?: (value: any, row: any) => string;
 }
 
 export interface SortEvent {
@@ -25,7 +43,8 @@ export interface SortEvent {
   templateUrl: './table.html',
   styleUrl: './table.scss',
 })
-export class TableComponent implements OnChanges {
+export class TableComponent implements OnChanges, AfterContentInit {
+  @ContentChildren(TableColumnDirective) columnTemplates!: QueryList<TableColumnDirective>;
   @Input() columns: TableColumn[] = [];
   @Input() data: any[] = [];
   @Input() loading: boolean = false;
@@ -44,10 +63,36 @@ export class TableComponent implements OnChanges {
   allSelected: boolean = false;
   indeterminate: boolean = false;
 
+  /** Map of column keys to their templates */
+  private columnTemplateMap = new Map<string, TemplateRef<any>>();
+
+  ngAfterContentInit(): void {
+    // Build template map from content children
+    this.columnTemplates.forEach(directive => {
+      this.columnTemplateMap.set(directive.columnKey, directive.template);
+    });
+
+    // Also add templates from column definitions
+    this.columns.forEach(column => {
+      if (column.cellTemplate) {
+        this.columnTemplateMap.set(column.key, column.cellTemplate);
+      }
+    });
+  }
+
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['data']) {
       // Reset selection when data changes
       this.updateSelectionState();
+    }
+
+    if (changes['columns']) {
+      // Rebuild template map if columns change
+      this.columns.forEach(column => {
+        if (column.cellTemplate) {
+          this.columnTemplateMap.set(column.key, column.cellTemplate);
+        }
+      });
     }
   }
 
@@ -153,6 +198,27 @@ export class TableComponent implements OnChanges {
   }
 
   getCellValue(row: any, column: TableColumn): any {
-    return row[column.key];
+    const value = row[column.key];
+
+    // Use custom formatter if provided
+    if (column.formatter) {
+      return column.formatter(value, row);
+    }
+
+    return value;
+  }
+
+  /**
+   * Gets the custom template for a column if available
+   */
+  getColumnTemplate(column: TableColumn): TemplateRef<any> | null {
+    return this.columnTemplateMap.get(column.key) || null;
+  }
+
+  /**
+   * Checks if a column has a custom template
+   */
+  hasCustomTemplate(column: TableColumn): boolean {
+    return this.columnTemplateMap.has(column.key);
   }
 }

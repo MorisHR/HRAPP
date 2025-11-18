@@ -4,14 +4,11 @@ import { FormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { UiModule } from '../../../shared/ui/ui.module';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { MatInputModule } from '@angular/material/input';
-import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
-import { MatExpansionModule } from '@angular/material/expansion';
-import { MatDividerModule } from '@angular/material/divider';
-import { MatTooltipModule } from '@angular/material/tooltip';
+import { ToastService, Divider, TooltipDirective, ExpansionPanel, ExpansionPanelGroup } from '../../../shared/ui';
 import { ReportsService, DashboardSummaryDto } from '../../../core/services/reports.service';
 
 @Component({
@@ -23,14 +20,14 @@ import { ReportsService, DashboardSummaryDto } from '../../../core/services/repo
     MatCardModule,
     MatButtonModule,
     MatIconModule,
-    MatProgressSpinnerModule,
     MatFormFieldModule,
+    UiModule,
     MatSelectModule,
     MatInputModule,
-    MatSnackBarModule,
-    MatExpansionModule,
-    MatDividerModule,
-    MatTooltipModule
+    ExpansionPanel,
+    ExpansionPanelGroup,
+    Divider,
+    TooltipDirective
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -108,30 +105,25 @@ import { ReportsService, DashboardSummaryDto } from '../../../core/services/repo
       @if (isLoadingDashboard() && !dashboardData()) {
         <mat-card class="loading-card">
           <mat-card-content>
-            <mat-spinner diameter="40"></mat-spinner>
+            <app-progress-spinner size="medium" color="primary"></app-progress-spinner>
             <p>Loading dashboard data...</p>
           </mat-card-content>
         </mat-card>
       }
     
-      <mat-divider class="section-divider"></mat-divider>
+      <app-divider class="section-divider" />
     
       <!-- Report Generation Section -->
       <h2 class="section-title">Generate Reports</h2>
-    
-      <mat-accordion class="reports-accordion">
-    
+
+      <app-expansion-panel-group class="reports-accordion">
+
         <!-- Payroll Reports -->
-        <mat-expansion-panel>
-          <mat-expansion-panel-header>
-            <mat-panel-title>
-              <mat-icon class="panel-icon payroll">payments</mat-icon>
-              Payroll Reports
-            </mat-panel-title>
-            <mat-panel-description>
-              Salary summaries, deductions, and bank transfers
-            </mat-panel-description>
-          </mat-expansion-panel-header>
+        <app-expansion-panel>
+          <div panel-title>
+            <mat-icon class="panel-icon payroll">payments</mat-icon>
+            Payroll Reports - Salary summaries, deductions, and bank transfers
+          </div>
     
           <div class="report-controls">
             <mat-form-field appearance="outline">
@@ -161,20 +153,20 @@ import { ReportsService, DashboardSummaryDto } from '../../../core/services/repo
             <button mat-raised-button color="primary"
               (click)="generatePayrollReport('excel')"
               [disabled]="isLoadingPayroll()"
-              matTooltip="Export monthly payroll summary to Excel">
+              appTooltip="Export monthly payroll summary to Excel">
               <mat-icon>table_chart</mat-icon>
               @if (!isLoadingPayroll()) {
                 <span>Monthly Payroll Summary (Excel)</span>
               }
               @if (isLoadingPayroll()) {
-                <mat-spinner diameter="20"></mat-spinner>
+                <app-progress-spinner size="small" color="primary"></app-progress-spinner>
               }
             </button>
     
             <button mat-raised-button color="accent"
               (click)="generateStatutoryDeductions()"
               [disabled]="isLoadingPayroll()"
-              matTooltip="Export statutory deductions report">
+              appTooltip="Export statutory deductions report">
               <mat-icon>account_balance</mat-icon>
               Statutory Deductions (Excel)
             </button>
@@ -182,24 +174,19 @@ import { ReportsService, DashboardSummaryDto } from '../../../core/services/repo
             <button mat-raised-button
               (click)="generateBankTransferList()"
               [disabled]="isLoadingPayroll()"
-              matTooltip="Export bank transfer list for payroll">
+              appTooltip="Export bank transfer list for payroll">
               <mat-icon>account_balance_wallet</mat-icon>
               Bank Transfer List (Excel)
             </button>
           </div>
-        </mat-expansion-panel>
-    
+        </app-expansion-panel>
+
         <!-- Attendance Reports -->
-        <mat-expansion-panel>
-          <mat-expansion-panel-header>
-            <mat-panel-title>
-              <mat-icon class="panel-icon attendance">event_available</mat-icon>
-              Attendance Reports
-            </mat-panel-title>
-            <mat-panel-description>
-              Monthly registers, overtime, and attendance analysis
-            </mat-panel-description>
-          </mat-expansion-panel-header>
+        <app-expansion-panel>
+          <div panel-title>
+            <mat-icon class="panel-icon attendance">event_available</mat-icon>
+            Attendance Reports - Monthly registers, overtime, and attendance analysis
+          </div>
     
           <div class="report-controls">
             <mat-form-field appearance="outline">
@@ -229,37 +216,32 @@ import { ReportsService, DashboardSummaryDto } from '../../../core/services/repo
             <button mat-raised-button color="primary"
               (click)="generateAttendanceReport('excel')"
               [disabled]="isLoadingAttendance()"
-              matTooltip="Export monthly attendance register">
+              appTooltip="Export monthly attendance register">
               <mat-icon>table_chart</mat-icon>
               @if (!isLoadingAttendance()) {
                 <span>Monthly Attendance Register (Excel)</span>
               }
               @if (isLoadingAttendance()) {
-                <mat-spinner diameter="20"></mat-spinner>
+                <app-progress-spinner size="small" color="primary"></app-progress-spinner>
               }
             </button>
     
             <button mat-raised-button color="accent"
               (click)="generateOvertimeReport()"
               [disabled]="isLoadingAttendance()"
-              matTooltip="Export overtime report">
+              appTooltip="Export overtime report">
               <mat-icon>schedule</mat-icon>
               Overtime Report (Excel)
             </button>
           </div>
-        </mat-expansion-panel>
-    
+        </app-expansion-panel>
+
         <!-- Leave Reports -->
-        <mat-expansion-panel>
-          <mat-expansion-panel-header>
-            <mat-panel-title>
-              <mat-icon class="panel-icon leave">beach_access</mat-icon>
-              Leave Reports
-            </mat-panel-title>
-            <mat-panel-description>
-              Leave balances and utilization reports
-            </mat-panel-description>
-          </mat-expansion-panel-header>
+        <app-expansion-panel>
+          <div panel-title>
+            <mat-icon class="panel-icon leave">beach_access</mat-icon>
+            Leave Reports - Leave balances and utilization reports
+          </div>
     
           <div class="report-controls">
             <mat-form-field appearance="outline">
@@ -278,55 +260,50 @@ import { ReportsService, DashboardSummaryDto } from '../../../core/services/repo
             <button mat-raised-button color="primary"
               (click)="generateLeaveReport('excel')"
               [disabled]="isLoadingLeave()"
-              matTooltip="Export leave balance report">
+              appTooltip="Export leave balance report">
               <mat-icon>table_chart</mat-icon>
               @if (!isLoadingLeave()) {
                 <span>Leave Balance Report (Excel)</span>
               }
               @if (isLoadingLeave()) {
-                <mat-spinner diameter="20"></mat-spinner>
+                <app-progress-spinner size="small" color="primary"></app-progress-spinner>
               }
             </button>
           </div>
-        </mat-expansion-panel>
-    
+        </app-expansion-panel>
+
         <!-- Employee Reports -->
-        <mat-expansion-panel>
-          <mat-expansion-panel-header>
-            <mat-panel-title>
-              <mat-icon class="panel-icon employee">people</mat-icon>
-              Employee Reports
-            </mat-panel-title>
-            <mat-panel-description>
-              Headcount, demographics, and expatriate tracking
-            </mat-panel-description>
-          </mat-expansion-panel-header>
+        <app-expansion-panel>
+          <div panel-title>
+            <mat-icon class="panel-icon employee">people</mat-icon>
+            Employee Reports - Headcount, demographics, and expatriate tracking
+          </div>
     
           <div class="report-actions">
             <button mat-raised-button color="primary"
               (click)="generateEmployeeReport('headcount')"
               [disabled]="isLoadingEmployee()"
-              matTooltip="Export headcount and demographics report">
+              appTooltip="Export headcount and demographics report">
               <mat-icon>table_chart</mat-icon>
               @if (!isLoadingEmployee()) {
                 <span>Headcount Report (Excel)</span>
               }
               @if (isLoadingEmployee()) {
-                <mat-spinner diameter="20"></mat-spinner>
+                <app-progress-spinner size="small" color="primary"></app-progress-spinner>
               }
             </button>
     
             <button mat-raised-button color="accent"
               (click)="generateEmployeeReport('expatriates')"
               [disabled]="isLoadingEmployee()"
-              matTooltip="Export expatriate tracking report">
+              appTooltip="Export expatriate tracking report">
               <mat-icon>flight_takeoff</mat-icon>
               Expatriate Report (Excel)
             </button>
           </div>
-        </mat-expansion-panel>
-    
-      </mat-accordion>
+        </app-expansion-panel>
+
+      </app-expansion-panel-group>
     </div>
     `,
   styles: [`
@@ -449,7 +426,7 @@ import { ReportsService, DashboardSummaryDto } from '../../../core/services/repo
       margin-bottom: 32px;
     }
 
-    .loading-card mat-spinner {
+    .loading-card app-progress-spinner {
       margin: 0 auto 16px;
     }
 
@@ -512,7 +489,7 @@ import { ReportsService, DashboardSummaryDto } from '../../../core/services/repo
       margin-right: 8px;
     }
 
-    .report-actions button mat-spinner {
+    .report-actions button app-progress-spinner {
       display: inline-block;
       margin-right: 8px;
     }
@@ -582,7 +559,7 @@ export class ReportsDashboardComponent implements OnInit {
 
   constructor(
     private reportsService: ReportsService,
-    private snackBar: MatSnackBar
+    private toastService: ToastService
   ) {
     // Generate year options (current year and previous 5 years)
     const currentYear = this.currentDate.getFullYear();
@@ -800,23 +777,13 @@ export class ReportsDashboardComponent implements OnInit {
    * Show success message
    */
   private showSuccess(message: string): void {
-    this.snackBar.open(message, 'Close', {
-      duration: 3000,
-      horizontalPosition: 'end',
-      verticalPosition: 'top',
-      panelClass: ['success-snackbar']
-    });
+    this.toastService.success(message, 3000);
   }
 
   /**
    * Show error message
    */
   private showError(message: string): void {
-    this.snackBar.open(message, 'Close', {
-      duration: 5000,
-      horizontalPosition: 'end',
-      verticalPosition: 'top',
-      panelClass: ['error-snackbar']
-    });
+    this.toastService.error(message, 5000);
   }
 }

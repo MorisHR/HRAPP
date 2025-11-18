@@ -1,16 +1,12 @@
 import { Component, OnInit, signal, inject, computed } from '@angular/core';
-
+import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatTableModule } from '@angular/material/table';
-import { MatChipsModule } from '@angular/material/chips';
-import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatTabsModule } from '@angular/material/tabs';
-import { MatBadgeModule } from '@angular/material/badge';
-import { MatDialog } from '@angular/material/dialog';
+import { UiModule } from '../../../shared/ui/ui.module';
+import { TableComponent, TableColumn, TableColumnDirective, Tabs, Tab, Chip, ChipColor, TooltipDirective } from '../../../shared/ui';
+import { DialogService } from '../../../shared/ui';
 import { BaseChartDirective } from 'ng2-charts';
 import { ChartConfiguration, ChartType } from 'chart.js';
 
@@ -29,24 +25,25 @@ import { PaymentDetailDialogComponent } from './payment-detail-dialog.component'
   selector: 'app-subscription-dashboard',
   standalone: true,
   imports: [
+    CommonModule,
     RouterModule,
     MatCardModule,
     MatButtonModule,
     MatIconModule,
-    MatTableModule,
-    MatChipsModule,
-    MatTooltipModule,
-    MatProgressSpinnerModule,
-    MatTabsModule,
-    MatBadgeModule,
-    BaseChartDirective
+    UiModule,
+    BaseChartDirective,
+    Tabs,
+    TableComponent,
+    TableColumnDirective,
+    Chip,
+    TooltipDirective
 ],
   templateUrl: './subscription-dashboard.component.html',
   styleUrl: './subscription-dashboard.component.scss'
 })
 export class SubscriptionDashboardComponent implements OnInit {
   private subscriptionService = inject(SubscriptionService);
-  private dialog = inject(MatDialog);
+  private dialogService = inject(DialogService);
 
   // Signals for reactive state
   loading = signal(true);
@@ -61,9 +58,48 @@ export class SubscriptionDashboardComponent implements OnInit {
   PaymentStatus = PaymentStatus;
   SubscriptionTier = SubscriptionTier;
 
+  // Tabs configuration
+  tabs = computed<Tab[]>(() => [
+    {
+      label: `Overdue Payments${this.overduePayments().length > 0 ? ' (' + this.overduePayments().length + ')' : ''}`,
+      value: 'overdue',
+      icon: 'warning'
+    },
+    {
+      label: `Pending Payments${this.pendingPayments().length > 0 ? ' (' + this.pendingPayments().length + ')' : ''}`,
+      value: 'pending',
+      icon: 'hourglass_empty'
+    },
+    {
+      label: `Upcoming Renewals${this.upcomingRenewals().length > 0 ? ' (' + this.upcomingRenewals().length + ')' : ''}`,
+      value: 'renewals',
+      icon: 'event'
+    },
+    {
+      label: `Recently Suspended${this.overview()?.recentlySuspendedTenants?.length || 0 > 0 ? ' (' + (this.overview()?.recentlySuspendedTenants?.length || 0) + ')' : ''}`,
+      value: 'suspended',
+      icon: 'block'
+    }
+  ]);
+  activeTab = 'overdue';
+
   // Table columns
-  paymentColumns = ['tenant', 'amount', 'dueDate', 'tier', 'status', 'actions'];
-  renewalColumns = ['tenant', 'renewalDate', 'amount', 'tier', 'daysUntil'];
+  paymentColumns: TableColumn[] = [
+    { key: 'tenant', label: 'Tenant' },
+    { key: 'amount', label: 'Amount' },
+    { key: 'dueDate', label: 'Due Date' },
+    { key: 'tier', label: 'Tier' },
+    { key: 'status', label: 'Status' },
+    { key: 'actions', label: 'Actions' }
+  ];
+
+  renewalColumns: TableColumn[] = [
+    { key: 'tenant', label: 'Tenant' },
+    { key: 'renewalDate', label: 'Renewal Date' },
+    { key: 'amount', label: 'Amount' },
+    { key: 'tier', label: 'Tier' },
+    { key: 'daysUntil', label: 'Days Until' }
+  ];
 
   // Chart configurations
   revenueChartData = signal<ChartConfiguration<'line'>['data'] | null>(null);
@@ -214,7 +250,7 @@ export class SubscriptionDashboardComponent implements OnInit {
   }
 
   viewPaymentDetails(payment: SubscriptionPayment): void {
-    this.dialog.open(PaymentDetailDialogComponent, {
+    this.dialogService.open(PaymentDetailDialogComponent, {
       width: '600px',
       maxWidth: '90vw',
       data: {
@@ -236,12 +272,36 @@ export class SubscriptionDashboardComponent implements OnInit {
     return this.subscriptionService.formatRelativeDate(date);
   }
 
-  getStatusColor(status: PaymentStatus): string {
-    return this.subscriptionService.getStatusColor(status);
+  getStatusColor(status: PaymentStatus): ChipColor {
+    const color = this.subscriptionService.getStatusColor(status);
+    // Map to ChipColor values
+    const colorMap: Record<string, ChipColor> = {
+      'primary': 'primary',
+      'success': 'success',
+      'warning': 'warning',
+      'error': 'error',
+      'danger': 'error',
+      'info': 'primary',
+      'accent': 'primary',
+      'warn': 'error'
+    };
+    return colorMap[color] || 'neutral';
   }
 
-  getTierColor(tier: SubscriptionTier): string {
-    return this.subscriptionService.getTierColor(tier);
+  getTierColor(tier: SubscriptionTier): ChipColor {
+    const color = this.subscriptionService.getTierColor(tier);
+    // Map to ChipColor values
+    const colorMap: Record<string, ChipColor> = {
+      'primary': 'primary',
+      'success': 'success',
+      'warning': 'warning',
+      'error': 'error',
+      'danger': 'error',
+      'info': 'primary',
+      'accent': 'primary',
+      'warn': 'error'
+    };
+    return colorMap[color] || 'neutral';
   }
 
   getDaysOverdue(dueDate: string): number {
@@ -250,5 +310,9 @@ export class SubscriptionDashboardComponent implements OnInit {
 
   refresh(): void {
     this.loadDashboardData();
+  }
+
+  onTabChange(value: string): void {
+    this.activeTab = value;
   }
 }

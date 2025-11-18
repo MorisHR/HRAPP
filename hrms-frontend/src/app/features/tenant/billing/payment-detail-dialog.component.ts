@@ -1,13 +1,11 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
 
-import { MAT_DIALOG_DATA, MatDialogRef, MatDialogModule } from '@angular/material/dialog';
+import { DialogRef } from '../../../shared/ui';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatChipsModule } from '@angular/material/chips';
-import { MatDividerModule } from '@angular/material/divider';
-import { MatListModule } from '@angular/material/list';
-import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { UiModule } from '../../../shared/ui/ui.module';
+import { Chip, ChipColor } from '@app/shared/ui';
+import { ToastService, Divider, List, ListItem } from '../../../shared/ui';
 import { BillingService, PaymentHistory } from '../../../core/services/billing.service';
 
 export interface PaymentDetailDialogData {
@@ -22,31 +20,30 @@ export interface PaymentDetailDialogData {
   selector: 'app-payment-detail-dialog',
   standalone: true,
   imports: [
-    MatDialogModule,
     MatButtonModule,
     MatIconModule,
-    MatProgressSpinnerModule,
-    MatChipsModule,
-    MatDividerModule,
-    MatListModule,
-    MatSnackBarModule
+    Chip,
+    UiModule,
+    Divider,
+    List,
+    ListItem,
 ],
   template: `
     <div class="payment-detail-dialog">
-      <div mat-dialog-title>
+      <div class="dialog-title">
         <div class="title-content">
           <mat-icon>receipt</mat-icon>
           <h2>Payment Details</h2>
         </div>
-        <button mat-icon-button mat-dialog-close>
+        <button mat-icon-button (click)="dialogRef.close()">
           <mat-icon>close</mat-icon>
         </button>
       </div>
 
-      <mat-dialog-content>
+      <div class="dialog-content">
         @if (loading()) {
           <div class="loading-state">
-            <mat-spinner diameter="40"></mat-spinner>
+            <app-progress-spinner size="medium" color="primary"></app-progress-spinner>
             <p>Loading payment details...</p>
           </div>
         }
@@ -63,83 +60,104 @@ export interface PaymentDetailDialogData {
             <!-- Payment Overview -->
             <section class="detail-section">
               <h3>Payment Information</h3>
-              <mat-list>
-                <mat-list-item>
-                  <span matListItemTitle>Payment ID</span>
-                  <span matListItemLine>{{ payment()!.id }}</span>
-                </mat-list-item>
-                <mat-list-item>
-                  <span matListItemTitle>Invoice Number</span>
-                  <span matListItemLine>{{ payment()!.invoiceNumber || 'Not generated' }}</span>
-                </mat-list-item>
-                <mat-list-item>
-                  <span matListItemTitle>Amount</span>
-                  <span matListItemLine class="amount-value">{{ formatCurrency(payment()!.amount) }}</span>
-                </mat-list-item>
-                <mat-list-item>
-                  <span matListItemTitle>Status</span>
-                  <span matListItemLine>
-                    <mat-chip [color]="getStatusColor(payment()!.status)">
-                      {{ payment()!.status }}
-                    </mat-chip>
-                  </span>
-                </mat-list-item>
-              </mat-list>
+              <app-list>
+                <app-list-item>
+                  <div class="list-item-content">
+                    <span class="item-title">Payment ID</span>
+                    <span class="item-line">{{ payment()!.id }}</span>
+                  </div>
+                </app-list-item>
+                <app-list-item>
+                  <div class="list-item-content">
+                    <span class="item-title">Invoice Number</span>
+                    <span class="item-line">{{ payment()!.invoiceNumber || 'Not generated' }}</span>
+                  </div>
+                </app-list-item>
+                <app-list-item>
+                  <div class="list-item-content">
+                    <span class="item-title">Amount</span>
+                    <span class="item-line amount-value">{{ formatCurrency(payment()!.amount) }}</span>
+                  </div>
+                </app-list-item>
+                <app-list-item>
+                  <div class="list-item-content">
+                    <span class="item-title">Status</span>
+                    <span class="item-line">
+                      <app-chip
+                        [label]="payment()!.status"
+                        [color]="getStatusColor(payment()!.status)">
+                      </app-chip>
+                    </span>
+                  </div>
+                </app-list-item>
+              </app-list>
             </section>
 
-            <mat-divider></mat-divider>
+            <app-divider />
 
             <!-- Billing Period -->
             <section class="detail-section">
               <h3>Billing Period</h3>
-              <mat-list>
-                <mat-list-item>
-                  <span matListItemTitle>Period Start</span>
-                  <span matListItemLine>{{ formatDate(payment()!.periodStartDate) }}</span>
-                </mat-list-item>
-                <mat-list-item>
-                  <span matListItemTitle>Period End</span>
-                  <span matListItemLine>{{ formatDate(payment()!.periodEndDate) }}</span>
-                </mat-list-item>
-                <mat-list-item>
-                  <span matListItemTitle>Due Date</span>
-                  <span matListItemLine>{{ formatDate(payment()!.dueDate) }}</span>
-                </mat-list-item>
+              <app-list>
+                <app-list-item>
+                  <div class="list-item-content">
+                    <span class="item-title">Period Start</span>
+                    <span class="item-line">{{ formatDate(payment()!.periodStartDate) }}</span>
+                  </div>
+                </app-list-item>
+                <app-list-item>
+                  <div class="list-item-content">
+                    <span class="item-title">Period End</span>
+                    <span class="item-line">{{ formatDate(payment()!.periodEndDate) }}</span>
+                  </div>
+                </app-list-item>
+                <app-list-item>
+                  <div class="list-item-content">
+                    <span class="item-title">Due Date</span>
+                    <span class="item-line">{{ formatDate(payment()!.dueDate) }}</span>
+                  </div>
+                </app-list-item>
                 @if (payment()!.paidDate) {
-                  <mat-list-item>
-                    <span matListItemTitle>Paid Date</span>
-                    <span matListItemLine class="paid-date">{{ formatDate(payment()!.paidDate) }}</span>
-                  </mat-list-item>
+                  <app-list-item>
+                    <div class="list-item-content">
+                      <span class="item-title">Paid Date</span>
+                      <span class="item-line paid-date">{{ formatDate(payment()!.paidDate) }}</span>
+                    </div>
+                  </app-list-item>
                 }
-              </mat-list>
+              </app-list>
             </section>
 
-            <mat-divider></mat-divider>
+            <app-divider />
 
             <!-- Payment Status Details -->
             <section class="detail-section">
               <h3>Status Details</h3>
-              <mat-list>
-                <mat-list-item>
-                  <span matListItemTitle>Payment Method</span>
-                  <span matListItemLine>{{ payment()!.paymentMethod || 'Not specified' }}</span>
-                </mat-list-item>
+              <app-list>
+                <app-list-item>
+                  <div class="list-item-content">
+                    <span class="item-title">Payment Method</span>
+                    <span class="item-line">{{ payment()!.paymentMethod || 'Not specified' }}</span>
+                  </div>
+                </app-list-item>
                 @if (payment()!.isOverdue) {
-                  <mat-list-item class="overdue-warning">
-                    <span matListItemTitle>
-                      <mat-icon>warning</mat-icon>
-                      Overdue Status
-                    </span>
-                    <span matListItemLine class="overdue-text">
-                      This payment is overdue. Please contact support to arrange payment.
-                    </span>
-                  </mat-list-item>
+                  <app-list-item class="overdue-warning">
+                    <div class="list-item-content">
+                      <span class="item-title">
+                        <mat-icon>warning</mat-icon>
+                        Overdue Status
+                      </span>
+                      <span class="item-line overdue-text">
+                        This payment is overdue. Please contact support to arrange payment.
+                      </span>
+                    </div>
+                  </app-list-item>
                 }
-              </mat-list>
+              </app-list>
             </section>
 
             @if (payment()!.invoiceNumber) {
-              <mat-divider></mat-divider>
+              <app-divider />
               <section class="detail-section invoice-section">
                 <h3>Invoice</h3>
                 <div class="invoice-actions">
@@ -149,7 +167,7 @@ export interface PaymentDetailDialogData {
                     (click)="downloadInvoice()"
                     [disabled]="downloading()">
                     @if (downloading()) {
-                      <mat-spinner diameter="20"></mat-spinner>
+                      <app-progress-spinner size="small" color="primary"></app-progress-spinner>
                     } @else {
                       <mat-icon>download</mat-icon>
                     }
@@ -163,17 +181,17 @@ export interface PaymentDetailDialogData {
             }
           </div>
         }
-      </mat-dialog-content>
+      </div>
 
-      <mat-dialog-actions align="end">
-        <button mat-button mat-dialog-close>Close</button>
+      <div class="dialog-actions">
+        <button mat-button (click)="dialogRef.close()">Close</button>
         @if (payment()!.status !== 'Paid' && payment()!.status !== 'Waived') {
           <button mat-raised-button color="accent" (click)="contactSupport()">
             <mat-icon>support_agent</mat-icon>
             Contact Support
           </button>
         }
-      </mat-dialog-actions>
+      </div>
     </div>
   `,
   styles: [`
@@ -181,7 +199,7 @@ export interface PaymentDetailDialogData {
       min-width: 500px;
       max-width: 600px;
 
-      [mat-dialog-title] {
+      .dialog-title {
         display: flex;
         justify-content: space-between;
         align-items: center;
@@ -209,7 +227,7 @@ export interface PaymentDetailDialogData {
         }
       }
 
-      mat-dialog-content {
+      .dialog-content {
         padding: 0;
         max-height: 70vh;
         overflow-y: auto;
@@ -247,59 +265,59 @@ export interface PaymentDetailDialogData {
               color: rgba(0, 0, 0, 0.87);
             }
 
-            mat-list {
+            app-list {
               padding: 0;
+            }
 
-              mat-list-item {
-                height: auto;
-                min-height: 56px;
-                padding: 12px 0;
+            .list-item-content {
+              display: flex;
+              flex-direction: column;
+              width: 100%;
 
-                [matListItemTitle] {
-                  font-weight: 500;
-                  color: rgba(0, 0, 0, 0.6);
-                  font-size: 0.875rem;
-                  display: flex;
-                  align-items: center;
-                  gap: 8px;
+              .item-title {
+                font-weight: 500;
+                color: rgba(0, 0, 0, 0.6);
+                font-size: 0.875rem;
+                display: flex;
+                align-items: center;
+                gap: 8px;
 
-                  mat-icon {
-                    font-size: 18px;
-                    width: 18px;
-                    height: 18px;
-                    color: #ff9800;
-                  }
-                }
-
-                [matListItemLine] {
-                  font-size: 1rem;
-                  margin-top: 4px;
-                  color: rgba(0, 0, 0, 0.87);
-
-                  &.amount-value {
-                    font-weight: 600;
-                    font-size: 1.25rem;
-                    color: #1976d2;
-                  }
-
-                  &.paid-date {
-                    color: #4caf50;
-                    font-weight: 500;
-                  }
-
-                  &.overdue-text {
-                    color: #d32f2f;
-                    font-weight: 500;
-                  }
-                }
-
-                &.overdue-warning {
-                  background-color: #ffebee;
-                  border-left: 4px solid #d32f2f;
-                  padding-left: 12px;
-                  margin: 8px 0;
+                mat-icon {
+                  font-size: 18px;
+                  width: 18px;
+                  height: 18px;
+                  color: #ff9800;
                 }
               }
+
+              .item-line {
+                font-size: 1rem;
+                margin-top: 4px;
+                color: rgba(0, 0, 0, 0.87);
+
+                &.amount-value {
+                  font-weight: 600;
+                  font-size: 1.25rem;
+                  color: #1976d2;
+                }
+
+                &.paid-date {
+                  color: #4caf50;
+                  font-weight: 500;
+                }
+
+                &.overdue-text {
+                  color: #d32f2f;
+                  font-weight: 500;
+                }
+              }
+            }
+
+            app-list-item.overdue-warning {
+              background-color: #ffebee;
+              border-left: 4px solid #d32f2f;
+              padding-left: 12px;
+              margin: 8px 0;
             }
 
             &.invoice-section {
@@ -311,7 +329,7 @@ export interface PaymentDetailDialogData {
 
                 button {
                   mat-icon,
-                  mat-spinner {
+                  app-progress-spinner {
                     margin-right: 8px;
                   }
                 }
@@ -327,10 +345,12 @@ export interface PaymentDetailDialogData {
         }
       }
 
-      mat-dialog-actions {
+      .dialog-actions {
         padding: 16px 24px;
         border-top: 1px solid rgba(0, 0, 0, 0.12);
         gap: 8px;
+        display: flex;
+        justify-content: flex-end;
 
         button {
           mat-icon {
@@ -351,11 +371,11 @@ export interface PaymentDetailDialogData {
     // Dark mode support
     :host-context(.dark-theme) {
       .payment-detail-dialog {
-        [mat-dialog-title] {
+        .dialog-title {
           border-bottom-color: rgba(255, 255, 255, 0.12);
         }
 
-        mat-dialog-content {
+        .dialog-content {
           .error-state p,
           .loading-state p {
             color: rgba(255, 255, 255, 0.7);
@@ -367,24 +387,24 @@ export interface PaymentDetailDialogData {
                 color: rgba(255, 255, 255, 0.87);
               }
 
-              mat-list-item {
-                [matListItemTitle] {
+              .list-item-content {
+                .item-title {
                   color: rgba(255, 255, 255, 0.7);
                 }
 
-                [matListItemLine] {
+                .item-line {
                   color: rgba(255, 255, 255, 0.87);
                 }
+              }
 
-                &.overdue-warning {
-                  background-color: rgba(211, 47, 47, 0.1);
-                }
+              app-list-item.overdue-warning {
+                background-color: rgba(211, 47, 47, 0.1);
               }
             }
           }
         }
 
-        mat-dialog-actions {
+        .dialog-actions {
           border-top-color: rgba(255, 255, 255, 0.12);
         }
       }
@@ -393,9 +413,16 @@ export interface PaymentDetailDialogData {
 })
 export class PaymentDetailDialogComponent implements OnInit {
   private billingService = inject(BillingService);
-  private snackBar = inject(MatSnackBar);
-  private dialogRef = inject(MatDialogRef<PaymentDetailDialogComponent>);
-  data = inject<PaymentDetailDialogData>(MAT_DIALOG_DATA);
+  private toastService = inject(ToastService);
+  public dialogRef = inject(DialogRef<PaymentDetailDialogComponent, { action?: string }>);
+
+  get dialogData(): PaymentDetailDialogData {
+    return this.dialogRef.data;
+  }
+
+  get data(): PaymentDetailDialogData {
+    return this.dialogData;
+  }
 
   loading = signal(false);
   downloading = signal(false);
@@ -432,7 +459,7 @@ export class PaymentDetailDialogComponent implements OnInit {
     }).format(date);
   }
 
-  getStatusColor(status: string): string {
+  getStatusColor(status: string): ChipColor {
     switch (status) {
       case 'Paid':
         return 'success';
@@ -441,16 +468,16 @@ export class PaymentDetailDialogComponent implements OnInit {
       case 'Overdue':
         return 'error';
       case 'Waived':
-        return 'info';
+        return 'primary';
       default:
-        return 'default';
+        return 'neutral';
     }
   }
 
   downloadInvoice(): void {
     const paymentId = this.payment()?.id;
     if (!paymentId) {
-      this.snackBar.open('Payment ID not available', 'Close', { duration: 3000 });
+      this.toastService.warning('Payment ID not available', 3000);
       return;
     }
 
@@ -467,10 +494,7 @@ export class PaymentDetailDialogComponent implements OnInit {
         window.URL.revokeObjectURL(url);
 
         this.downloading.set(false);
-        this.snackBar.open('Invoice downloaded successfully', 'Close', {
-          duration: 3000,
-          panelClass: ['success-snackbar']
-        });
+        this.toastService.success('Invoice downloaded successfully', 3000);
       },
       error: (err) => {
         console.error('Error downloading invoice:', err);
@@ -483,16 +507,13 @@ export class PaymentDetailDialogComponent implements OnInit {
           errorMessage = 'Access denied to download invoice';
         }
 
-        this.snackBar.open(errorMessage, 'Close', {
-          duration: 5000,
-          panelClass: ['error-snackbar']
-        });
+        this.toastService.error(errorMessage, 5000);
       }
     });
   }
 
   contactSupport(): void {
-    this.snackBar.open('Opening support contact...', 'Close', { duration: 3000 });
+    this.toastService.info('Opening support contact...', 3000);
     // TODO: Implement support contact dialog or navigation
     this.dialogRef.close({ action: 'contact_support' });
   }

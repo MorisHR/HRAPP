@@ -10,7 +10,7 @@
         class="test-connection-button"
         >
         @if (testingConnection) {
-          <mat-spinner diameter="20"></mat-spinner>
+          <app-progress-spinner size="small" color="primary"></app-progress-spinner>
         }
         @if (!testingConnection) {
           <app-icon name="wifi_tethering"></app-icon>
@@ -24,7 +24,7 @@
     <!-- Loading State -->
     @if (loading) {
       <div class="loading-container">
-        <mat-spinner></mat-spinner>
+        <app-progress-spinner size="medium" color="primary"></app-progress-spinner>
         <p>Loading device information...</p>
       </div>
     }
@@ -115,7 +115,7 @@
             </mat-form-field>
           </div>
         </div>
-        <mat-divider></mat-divider>
+        <app-divider />
         <!-- ============================================ -->
         <!-- SECTION 2: NETWORK CONFIGURATION (HIGHLIGHT) -->
         <!-- ============================================ -->
@@ -129,13 +129,13 @@
             <!-- Connection Method -->
             <div class="full-width radio-group-container">
               <label class="radio-group-label">Connection Method <span class="required">*</span></label>
-              <mat-radio-group formControlName="connectionMethod" class="radio-group">
+              <app-radio-group formControlName="connectionMethod" class="radio-group">
                 @for (method of connectionMethods; track method) {
-                  <mat-radio-button [value]="method.value">
+                  <app-radio [value]="method.value">
                     {{ method.label }}
-                  </mat-radio-button>
+                  </app-radio>
                 }
-              </mat-radio-group>
+              </app-radio-group>
             </div>
             <!-- IP Address -->
             @if (isNetworkConfigRequired()) {
@@ -207,7 +207,7 @@
             </div>
           </div>
         </div>
-        <mat-divider></mat-divider>
+        <app-divider />
         <!-- ============================================ -->
         <!-- SECTION 3: DEVICE CREDENTIALS (OPTIONAL) -->
         <!-- ============================================ -->
@@ -249,7 +249,7 @@
               </mat-form-field>
             </div>
           </div>
-          <mat-divider></mat-divider>
+          <app-divider />
           <!-- ============================================ -->
           <!-- SECTION 4: SYNC SETTINGS -->
           <!-- ============================================ -->
@@ -299,7 +299,7 @@
               </mat-form-field>
             </div>
           </div>
-          <mat-divider></mat-divider>
+          <app-divider />
           <!-- ============================================ -->
           <!-- SECTION 5: DEVICE IDENTIFICATION (OPTIONAL) -->
           <!-- ============================================ -->
@@ -326,7 +326,7 @@
               </mat-form-field>
             </div>
           </div>
-          <mat-divider></mat-divider>
+          <app-divider />
           <!-- ============================================ -->
           <!-- ACTION BUTTONS -->
           <!-- ============================================ -->
@@ -353,7 +353,7 @@
                 class="test-button"
                 >
                 @if (testingConnection) {
-                  <mat-spinner diameter="20"></mat-spinner>
+                  <app-progress-spinner size="small" color="primary"></app-progress-spinner>
                 }
                 @if (!testingConnection) {
                   <app-icon name="wifi_tethering"></app-icon>
@@ -368,7 +368,7 @@
                 class="submit-button"
                 >
                 @if (savingDevice) {
-                  <mat-spinner diameter="20"></mat-spinner>
+                  <app-progress-spinner size="small" color="primary"></app-progress-spinner>
                 }
                 @if (!savingDevice) {
                   <app-icon name="save"></app-icon>

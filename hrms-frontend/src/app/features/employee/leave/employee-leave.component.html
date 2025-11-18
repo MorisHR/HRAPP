@@ -26,9 +26,11 @@
           <mat-card-content>
             <div class="balance-header">
               <h3>{{ getLeaveTypeLabel(balance.type) }}</h3>
-              <mat-chip [color]="getBalanceColor(getBalancePercentage(balance))">
-                {{ balance.remaining }} left
-              </mat-chip>
+              <app-chip
+                [label]="balance.remaining + ' left'"
+                [color]="getBalanceColor(getBalancePercentage(balance))"
+                [variant]="'filled'">
+              </app-chip>
             </div>
             <div class="balance-details">
               <div class="balance-bar">
@@ -120,7 +122,7 @@
               color="primary"
               [disabled]="submitting() || leaveForm.invalid">
               @if (submitting()) {
-                <mat-spinner diameter="20" class="inline-spinner"></mat-spinner>
+                <app-progress-spinner size="small" color="primary" class="inline-spinner"></app-progress-spinner>
                 Submitting...
               } @else {
                 <app-icon name="send"></app-icon>
@@ -197,7 +199,7 @@
     <mat-card-content>
       @if (loading()) {
         <div class="loading-state">
-          <mat-spinner diameter="50"></mat-spinner>
+          <app-progress-spinner size="large" color="primary"></app-progress-spinner>
           <p>Loading leave requests...</p>
         </div>
       } @else if (leaveRequests().length === 0) {
@@ -210,66 +212,57 @@
         </div>
       } @else {
         <div class="table-container">
-          <table mat-table [dataSource]="leaveRequests()" class="leave-table">
+          <app-table
+            [columns]="columns"
+            [data]="leaveRequests()"
+            [loading]="loading()"
+            [hoverable]="true"
+            class="leave-table">
+
             <!-- Leave Type Column -->
-            <ng-container matColumnDef="leaveType">
-              <th mat-header-cell *matHeaderCellDef>Leave Type</th>
-              <td mat-cell *matCellDef="let request">{{ request.leaveType }}</td>
-            </ng-container>
+            <ng-template appTableColumn="leaveType" let-request>
+              {{ request.leaveType }}
+            </ng-template>
 
             <!-- Dates Column -->
-            <ng-container matColumnDef="dates">
-              <th mat-header-cell *matHeaderCellDef>Period</th>
-              <td mat-cell *matCellDef="let request">
-                {{ formatDateRange(request.startDate, request.endDate) }}
-              </td>
-            </ng-container>
+            <ng-template appTableColumn="dates" let-request>
+              {{ formatDateRange(request.startDate, request.endDate) }}
+            </ng-template>
 
             <!-- Days Column -->
-            <ng-container matColumnDef="days">
-              <th mat-header-cell *matHeaderCellDef>Days</th>
-              <td mat-cell *matCellDef="let request">
-                <strong>{{ request.days }}</strong> day{{ request.days > 1 ? 's' : '' }}
-              </td>
-            </ng-container>
+            <ng-template appTableColumn="days" let-request>
+              <strong>{{ request.days }}</strong> day{{ request.days > 1 ? 's' : '' }}
+            </ng-template>
 
             <!-- Status Column -->
-            <ng-container matColumnDef="status">
-              <th mat-header-cell *matHeaderCellDef>Status</th>
-              <td mat-cell *matCellDef="let request">
-                <mat-chip [color]="getStatusColor(request.status)">
-                  {{ getStatusLabel(request.status) }}
-                </mat-chip>
-              </td>
-            </ng-container>
+            <ng-template appTableColumn="status" let-request>
+              <app-chip
+                [label]="getStatusLabel(request.status)"
+                [color]="getStatusColor(request.status)"
+                [variant]="'filled'">
+              </app-chip>
+            </ng-template>
 
             <!-- Applied Date Column -->
-            <ng-container matColumnDef="appliedDate">
-              <th mat-header-cell *matHeaderCellDef>Applied</th>
-              <td mat-cell *matCellDef="let request">{{ formatDate(request.appliedDate) }}</td>
-            </ng-container>
+            <ng-template appTableColumn="appliedDate" let-request>
+              {{ formatDate(request.appliedDate) }}
+            </ng-template>
 
             <!-- Actions Column -->
-            <ng-container matColumnDef="actions">
-              <th mat-header-cell *matHeaderCellDef>Actions</th>
-              <td mat-cell *matCellDef="let request">
-                @if (request.status === 'pending') {
-                  <button
-                    mat-icon-button
-                    color="warn"
-                    (click)="cancelRequest(request)"
-                    matTooltip="Cancel request">
-                    <app-icon name="cancel"></app-icon>
-                  </button>
-                } @else {
-                  <span class="text-muted">-</span>
-                }
-              </td>
-            </ng-container>
-
-            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-            <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
-          </table>
+            <ng-template appTableColumn="actions" let-request>
+              @if (request.status === 'pending') {
+                <button
+                  mat-icon-button
+                  color="warn"
+                  (click)="cancelRequest(request)"
+                  appTooltip="Cancel request">
+                  <app-icon name="cancel"></app-icon>
+                </button>
+              } @else {
+                <span class="text-muted">-</span>
+              }
+            </ng-template>
+          </app-table>
         </div>
       }
     </mat-card-content>

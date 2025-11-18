@@ -5,24 +5,22 @@ import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angula
 import { Subject, debounceTime, takeUntil } from 'rxjs';
 
 // Material imports (kept for layout)
-import { MatExpansionModule } from '@angular/material/expansion';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatChipsModule } from '@angular/material/chips';
 
 // Services
 import { EmployeeService } from '../../../core/services/employee.service';
 import { EmployeeDraftService, SaveDraftRequest } from '../../../core/services/employee-draft.service';
 import { DepartmentService, DepartmentDropdownDto } from '../organization/departments/services/department.service';
-import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { ToastService } from '../../../shared/ui';
 import { AddressService } from '../../../services/address.service';
 import { DistrictDto, VillageDto } from '../../../models/address.models';
 import { SalaryComponentsService, SalaryComponentDto } from '../../../core/services/salary-components.service';
 
 // Custom UI imports
 import { UiModule } from '../../../shared/ui/ui.module';
+import { Chip, ExpansionPanel, ExpansionPanelGroup } from '../../../shared/ui';
 
 @Component({
   selector: 'app-comprehensive-employee-form',
@@ -30,15 +28,14 @@ import { UiModule } from '../../../shared/ui/ui.module';
   imports: [
     ReactiveFormsModule,
     RouterModule,
-    MatExpansionModule,
+    ExpansionPanel,
+    ExpansionPanelGroup,
     MatCardModule,
     MatIconModule,
     MatProgressBarModule,
-    MatProgressSpinnerModule,
-    MatChipsModule,
-    MatSnackBarModule,
-    UiModule
-],
+    UiModule,
+    Chip
+  ],
   templateUrl: './comprehensive-employee-form.component.html',
   styleUrls: ['./comprehensive-employee-form.component.scss']
 })
@@ -51,7 +48,7 @@ export class ComprehensiveEmployeeFormComponent implements OnInit, OnDestroy {
   private departmentService = inject(DepartmentService);
   private addressService = inject(AddressService);
   private salaryComponentsService = inject(SalaryComponentsService);
-  private snackBar = inject(MatSnackBar);
+  private toastService = inject(ToastService);
   private destroy$ = new Subject<void>();
 
   // Form and state
@@ -292,7 +289,7 @@ export class ComprehensiveEmployeeFormComponent implements OnInit, OnDestroy {
       const data = this.draftService.loadFromLocalStorage(draftId);
       if (data) {
         this.employeeForm.patchValue(data, { emitEvent: false });
-        this.snackBar.open('Draft recovered from local storage', 'Close', { duration: 3000 });
+        this.toastService.info('Draft recovered from local storage', 3000);
       }
     }
   }
@@ -363,7 +360,7 @@ export class ComprehensiveEmployeeFormComponent implements OnInit, OnDestroy {
         this.employeeForm.patchValue(formData, { emitEvent: false });
         this.completionPercentage.set(draft.completionPercentage);
         this.loading.set(false);
-        this.snackBar.open(`Draft loaded: ${draft.draftName}`, 'Close', { duration: 3000 });
+        this.toastService.info(`Draft loaded: ${draft.draftName}`, 3000);
       },
       error: (error) => {
         console.error('Error loading draft:', error);
@@ -383,7 +380,7 @@ export class ComprehensiveEmployeeFormComponent implements OnInit, OnDestroy {
         error: (error) => {
           console.error('Error loading departments:', error);
           // Don't block form if departments fail to load
-          this.snackBar.open('Warning: Could not load departments', 'Close', { duration: 3000 });
+          this.toastService.warning('Warning: Could not load departments', 3000);
         }
       });
   }
@@ -397,7 +394,7 @@ export class ComprehensiveEmployeeFormComponent implements OnInit, OnDestroy {
         },
         error: (error) => {
           console.error('Error loading districts:', error);
-          this.snackBar.open('Warning: Could not load districts', 'Close', { duration: 3000 });
+          this.toastService.warning('Warning: Could not load districts', 3000);
         }
       });
   }
@@ -416,7 +413,7 @@ export class ComprehensiveEmployeeFormComponent implements OnInit, OnDestroy {
         },
         error: (error) => {
           console.error('Error loading villages:', error);
-          this.snackBar.open('Warning: Could not load villages', 'Close', { duration: 3000 });
+          this.toastService.warning('Warning: Could not load villages', 3000);
         }
       });
   }
@@ -451,12 +448,12 @@ export class ComprehensiveEmployeeFormComponent implements OnInit, OnDestroy {
 
   saveDraft(): void {
     this.saveToDatabase();
-    this.snackBar.open('Draft saved successfully', 'Close', { duration: 2000 });
+    this.toastService.success('Draft saved successfully', 2000);
   }
 
   onSubmit(): void {
     if (this.employeeForm.invalid) {
-      this.snackBar.open('Please fill all required fields', 'Close', { duration: 3000 });
+      this.toastService.warning('Please fill all required fields', 3000);
       this.markFormGroupTouched(this.employeeForm);
       return;
     }
@@ -474,14 +471,14 @@ export class ComprehensiveEmployeeFormComponent implements OnInit, OnDestroy {
           this.draftService.clearFromLocalStorage(draftId);
         }
 
-        this.snackBar.open('Employee created successfully!', 'Close', { duration: 3000 });
+        this.toastService.success('Employee created successfully!', 3000);
         this.router.navigate(['/tenant/employees']);
       },
       error: (error) => {
         console.error('Error creating employee:', error);
         this.error.set(error.error?.message || 'Failed to create employee');
         this.loading.set(false);
-        this.snackBar.open(this.error()!, 'Close', { duration: 5000 });
+        this.toastService.error(this.error()!, 5000);
       }
     });
   }
@@ -541,7 +538,7 @@ export class ComprehensiveEmployeeFormComponent implements OnInit, OnDestroy {
         error: (error) => {
           console.error('Error loading salary components:', error);
           this.loadingSalaryComponents.set(false);
-          this.snackBar.open('Failed to load salary components', 'Close', { duration: 3000 });
+          this.toastService.error('Failed to load salary components', 3000);
         }
       });
   }

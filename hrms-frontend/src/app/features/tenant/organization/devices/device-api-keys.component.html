@@ -9,7 +9,7 @@
         mat-icon-button
         (click)="onRefresh()"
         [disabled]="loading()"
-        matTooltip="Refresh">
+        appTooltip="Refresh">
         <app-icon name="refresh"></app-icon>
       </button>
       <button
@@ -27,7 +27,7 @@
     <!-- Loading State -->
     @if (loading()) {
       <div class="loading-container">
-        <mat-spinner diameter="40"></mat-spinner>
+        <app-progress-spinner size="medium" color="primary"></app-progress-spinner>
         <p>Loading API keys...</p>
       </div>
     }
@@ -62,104 +62,82 @@
 
     <!-- API Keys Table -->
     @if (!loading() && !error() && apiKeys().length > 0) {
-      <div class="table-container">
-        <table mat-table [dataSource]="apiKeys()" class="api-keys-table">
-          <!-- Description Column -->
-          <ng-container matColumnDef="description">
-            <th mat-header-cell *matHeaderCellDef>Description</th>
-            <td mat-cell *matCellDef="let key">
-              <div class="description-cell">
-                <app-icon name="description"></app-icon>
-                <span>{{ key.description }}</span>
-              </div>
-            </td>
-          </ng-container>
+      <app-table
+        [columns]="tableColumns"
+        [data]="apiKeys()"
+        [loading]="loading()"
+        [hoverable]="true"
+        [striped]="true">
 
-          <!-- Status Column -->
-          <ng-container matColumnDef="status">
-            <th mat-header-cell *matHeaderCellDef>Status</th>
-            <td mat-cell *matCellDef="let key">
-              <mat-chip [class]="getStatusClass(key)">
-                {{ getStatusText(key) }}
-              </mat-chip>
-            </td>
-          </ng-container>
+        <!-- Description Template -->
+        <ng-template appTableColumn="description" let-row>
+          <div class="description-cell">
+            <app-icon name="description"></app-icon>
+            <span>{{ row.description }}</span>
+          </div>
+        </ng-template>
 
-          <!-- Created Date Column -->
-          <ng-container matColumnDef="createdAt">
-            <th mat-header-cell *matHeaderCellDef>Created</th>
-            <td mat-cell *matCellDef="let key">
-              <div class="date-cell">
-                <app-icon name="calendar_today"></app-icon>
-                <span>{{ formatDate(key.createdAt) }}</span>
-              </div>
-            </td>
-          </ng-container>
+        <!-- Status Template -->
+        <ng-template appTableColumn="status" let-row>
+          <app-chip [label]="getStatusText(row)" [color]="getStatusClass(row) === 'status-active' ? 'success' : getStatusClass(row) === 'status-expired' ? 'error' : getStatusClass(row) === 'status-expiring' ? 'warning' : 'neutral'" />
+        </ng-template>
 
-          <!-- Expires At Column -->
-          <ng-container matColumnDef="expiresAt">
-            <th mat-header-cell *matHeaderCellDef>Expires</th>
-            <td mat-cell *matCellDef="let key">
-              <div class="date-cell">
-                <app-icon name="event"></app-icon>
-                <span>{{ formatDate(key.expiresAt) }}</span>
-              </div>
-            </td>
-          </ng-container>
+        <!-- Date Template -->
+        <ng-template appTableColumn="createdAt" let-row>
+          <div class="date-cell">
+            <app-icon name="calendar_today"></app-icon>
+            <span>{{ formatDate(row.createdAt) }}</span>
+          </div>
+        </ng-template>
 
-          <!-- Last Used Column -->
-          <ng-container matColumnDef="lastUsedAt">
-            <th mat-header-cell *matHeaderCellDef>Last Used</th>
-            <td mat-cell *matCellDef="let key">
-              <div class="date-cell">
-                <app-icon name="access_time"></app-icon>
-                <span>{{ formatDate(key.lastUsedAt) }}</span>
-              </div>
-            </td>
-          </ng-container>
+        <!-- Expires Template -->
+        <ng-template appTableColumn="expiresAt" let-row>
+          <div class="date-cell">
+            <app-icon name="event"></app-icon>
+            <span>{{ formatDate(row.expiresAt) }}</span>
+          </div>
+        </ng-template>
 
-          <!-- Usage Count Column -->
-          <ng-container matColumnDef="usageCount">
-            <th mat-header-cell *matHeaderCellDef>Usage</th>
-            <td mat-cell *matCellDef="let key">
-              <div class="usage-cell">
-                <app-icon name="trending_up"></app-icon>
-                <span>{{ key.usageCount }}</span>
-              </div>
-            </td>
-          </ng-container>
+        <!-- Last Used Template -->
+        <ng-template appTableColumn="lastUsedAt" let-row>
+          <div class="date-cell">
+            <app-icon name="access_time"></app-icon>
+            <span>{{ formatDate(row.lastUsedAt) }}</span>
+          </div>
+        </ng-template>
 
-          <!-- Actions Column -->
-          <ng-container matColumnDef="actions">
-            <th mat-header-cell *matHeaderCellDef>Actions</th>
-            <td mat-cell *matCellDef="let key">
-              <div class="actions-cell">
-                @if (key.isActive) {
-                  <button
-                    mat-icon-button
-                    (click)="onRotate(key)"
-                    matTooltip="Rotate API key">
-                    <app-icon name="sync"></app-icon>
-                  </button>
-                  <button
-                    mat-icon-button
-                    color="warn"
-                    (click)="onRevoke(key)"
-                    matTooltip="Revoke API key">
-                    <app-icon name="block"></app-icon>
-                  </button>
-                }
-                @if (!key.isActive) {
-                  <span class="revoked-badge">Revoked</span>
-                }
-              </div>
-            </td>
-          </ng-container>
+        <!-- Usage Template -->
+        <ng-template appTableColumn="usageCount" let-row>
+          <div class="usage-cell">
+            <app-icon name="trending_up"></app-icon>
+            <span>{{ row.usageCount }}</span>
+          </div>
+        </ng-template>
 
-          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-          <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
-        </table>
-      </div>
+        <!-- Actions Template -->
+        <ng-template appTableColumn="actions" let-row>
+          <div class="actions-cell">
+            @if (row.isActive) {
+              <button
+                mat-icon-button
+                (click)="onRotate(row)"
+                appTooltip="Rotate API key">
+                <app-icon name="sync"></app-icon>
+              </button>
+              <button
+                mat-icon-button
+                color="warn"
+                (click)="onRevoke(row)"
+                appTooltip="Revoke API key">
+                <app-icon name="block"></app-icon>
+              </button>
+            }
+            @if (!row.isActive) {
+              <span class="revoked-badge">Revoked</span>
+            }
+          </div>
+        </ng-template>
+      </app-table>
 
       <!-- Info Box -->
       <div class="info-box">

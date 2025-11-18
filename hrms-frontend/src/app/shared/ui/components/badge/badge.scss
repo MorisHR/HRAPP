@@ -79,6 +79,10 @@
     background-color: #ef4444;
   }
 
+  &.badge-neutral {
+    background-color: #6b7280;
+  }
+
   // Animation for new badges
   animation: badge-appear 0.3s ease;
 }

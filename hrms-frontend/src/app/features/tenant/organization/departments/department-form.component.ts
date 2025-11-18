@@ -8,8 +8,8 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatCheckboxModule } from '@angular/material/checkbox';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { UiModule } from '../../../../shared/ui/ui.module';
+import { CheckboxComponent } from '../../../../shared/ui';
 import { DepartmentService, DepartmentDropdownDto } from './services/department.service';
 import { EmployeeService } from '../../../../core/services/employee.service';
 
@@ -30,8 +30,8 @@ interface Employee {
     MatSelectModule,
     MatButtonModule,
     MatIconModule,
-    MatCheckboxModule,
-    MatProgressSpinnerModule
+    CheckboxComponent,
+    UiModule
 ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -49,7 +49,7 @@ interface Employee {
       @if (loading()) {
         <mat-card>
           <mat-card-content class="loading-container">
-            <mat-spinner diameter="50"></mat-spinner>
+            <app-progress-spinner size="large" color="primary"></app-progress-spinner>
             <p>Loading...</p>
           </mat-card-content>
         </mat-card>
@@ -169,9 +169,8 @@ interface Employee {
               </mat-card-title>
             </mat-card-header>
             <mat-card-content>
-              <mat-checkbox formControlName="isActive">
-                Active Department
-              </mat-checkbox>
+              <app-checkbox formControlName="isActive" label="Active Department">
+              </app-checkbox>
               <p class="checkbox-hint">Inactive departments are hidden from dropdowns and reports</p>
             </mat-card-content>
           </mat-card>
@@ -188,7 +187,7 @@ interface Employee {
                     color="primary"
                     [disabled]="!departmentForm.valid || submitting()">
               @if (submitting()) {
-                <mat-spinner diameter="20"></mat-spinner>
+                <app-progress-spinner size="small" color="primary"></app-progress-spinner>
               }
               {{ isEditMode ? 'Update Department' : 'Create Department' }}
             </button>

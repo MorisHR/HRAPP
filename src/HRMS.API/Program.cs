@@ -929,6 +929,16 @@ app.UseResponseCompression();
 // HTTPS Redirection - Early to force HTTPS
 app.UseHttpsRedirection();
 
+// ======================
+// FORTUNE 500: SECURITY HEADERS (CRITICAL - P0)
+// ======================
+// Prevents XSS, clickjacking, MIME-sniffing, code injection attacks
+// Compliance: GDPR Article 32, SOC 2 (CC6.1, CC6.6, CC6.7), ISO 27001 (A.8.24)
+// Target: A+ grade on SecurityHeaders.com
+// MUST be early in pipeline (after HTTPS redirection, before routing/CORS)
+app.UseSecurityHeaders();
+Log.Information("Security headers middleware enabled: CSP, X-Frame-Options, HSTS, XSS-Protection, Referrer-Policy, Permissions-Policy");
+
 // Request/Response logging with PII masking (only in non-production for performance)
 if (!app.Environment.IsProduction())
 {

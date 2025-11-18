@@ -7,9 +7,8 @@ import { FormsModule } from '@angular/forms';
 import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
-// Custom UI Module with all components
+// Custom UI Module with all components (includes ProgressSpinner)
 import { UiModule } from '../../../shared/ui/ui.module';
 
 import { AuthService } from '../../../core/services/auth.service';
@@ -66,9 +65,8 @@ interface KpiCard {
     MatSelectModule,
     MatFormFieldModule,
     MatIconModule,
-    MatProgressSpinnerModule,
     BaseChartDirective,
-    // Custom UI Module
+    // Custom UI Module (includes ProgressSpinner - replaces MatProgressSpinnerModule)
     UiModule
   ],
   templateUrl: './tenant-dashboard.component.html',

@@ -1,19 +1,17 @@
-import { Component, Input, OnInit, signal, ChangeDetectorRef, Inject } from '@angular/core';
+import { Component, Input, OnInit, signal, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
-import { MatTableModule } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatDialog, MatDialogModule, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { DialogService, DialogRef } from '../../../../shared/ui';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { MatChipsModule } from '@angular/material/chips';
-import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { UiModule } from '../../../../shared/ui/ui.module';
+import { ToastService, Chip, TooltipDirective } from '../../../../shared/ui';
 import { Clipboard } from '@angular/cdk/clipboard';
 import { DeviceApiKeyService, DeviceApiKeyDto, GenerateApiKeyResponse } from '../../../../core/services/device-api-key.service';
+import { TableComponent, TableColumn } from '../../../../shared/ui/components/table/table';
 
 @Component({
   selector: 'app-device-api-keys',
@@ -22,16 +20,14 @@ import { DeviceApiKeyService, DeviceApiKeyDto, GenerateApiKeyResponse } from '..
     CommonModule,
     ReactiveFormsModule,
     MatCardModule,
-    MatTableModule,
+    TableComponent,
     MatButtonModule,
     MatIconModule,
-    MatDialogModule,
     MatFormFieldModule,
     MatInputModule,
-    MatChipsModule,
-    MatTooltipModule,
-    MatProgressSpinnerModule,
-    MatSnackBarModule
+    TooltipDirective,
+    UiModule,
+    Chip
   ],
   templateUrl: './device-api-keys.component.html',
   styleUrls: ['./device-api-keys.component.scss']
@@ -44,12 +40,22 @@ export class DeviceApiKeysComponent implements OnInit {
   loading = signal<boolean>(false);
   error = signal<string | null>(null);
 
-  displayedColumns: string[] = ['description', 'status', 'createdAt', 'expiresAt', 'lastUsedAt', 'usageCount', 'actions'];
+  // Table columns
+  tableColumns: TableColumn[] = [
+    { key: 'description', label: 'Description', sortable: true },
+    { key: 'status', label: 'Status', sortable: true },
+    { key: 'createdAt', label: 'Created', sortable: true },
+    { key: 'expiresAt', label: 'Expires', sortable: true },
+    { key: 'lastUsedAt', label: 'Last Used', sortable: true },
+    { key: 'usageCount', label: 'Usage', sortable: true },
+    { key: 'actions', label: 'Actions', sortable: false }
+  ];
+
+  private dialogService = inject(DialogService);
 
   constructor(
     private apiKeyService: DeviceApiKeyService,
-    private dialog: MatDialog,
-    private snackBar: MatSnackBar,
+    private toastService: ToastService,
     private clipboard: Clipboard,
     private cdr: ChangeDetectorRef
   ) {}
@@ -78,7 +84,7 @@ export class DeviceApiKeysComponent implements OnInit {
         console.error('Error loading API keys:', error);
         this.error.set('Failed to load API keys');
         this.loading.set(false);
-        this.snackBar.open('Failed to load API keys', 'Close', { duration: 3000 });
+        this.toastService.error('Failed to load API keys', 3000);
       }
     });
   }
@@ -87,7 +93,7 @@ export class DeviceApiKeysComponent implements OnInit {
    * Open dialog to generate a new API key
    */
   onGenerateNewKey(): void {
-    const dialogRef = this.dialog.open(GenerateApiKeyDialogComponent, {
+    const dialogRef = this.dialogService.open(GenerateApiKeyDialogComponent, {
       width: '500px',
       disableClose: true
     });
@@ -109,11 +115,11 @@ export class DeviceApiKeysComponent implements OnInit {
         this.showApiKeyDialog(response);
         // Reload the list
         this.loadApiKeys();
-        this.snackBar.open('API key generated successfully', 'Close', { duration: 3000 });
+        this.toastService.success('API key generated successfully', 3000);
       },
       error: (error) => {
         console.error('Error generating API key:', error);
-        this.snackBar.open('Failed to generate API key', 'Close', { duration: 3000 });
+        this.toastService.error('Failed to generate API key', 3000);
       }
     });
   }
@@ -122,7 +128,7 @@ export class DeviceApiKeysComponent implements OnInit {
    * Show the generated API key in a dialog
    */
   private showApiKeyDialog(response: GenerateApiKeyResponse): void {
-    this.dialog.open(ShowApiKeyDialogComponent, {
+    this.dialogService.open(ShowApiKeyDialogComponent, {
       width: '600px',
       disableClose: true,
       data: response
@@ -133,7 +139,7 @@ export class DeviceApiKeysComponent implements OnInit {
    * Revoke an API key
    */
   onRevoke(apiKey: DeviceApiKeyDto): void {
-    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+    const dialogRef = this.dialogService.open(ConfirmDialogComponent, {
       width: '400px',
       data: {
         title: 'Revoke API Key',
@@ -156,12 +162,12 @@ export class DeviceApiKeysComponent implements OnInit {
   private revokeApiKey(apiKeyId: string): void {
     this.apiKeyService.revokeApiKey(this.deviceId, apiKeyId).subscribe({
       next: () => {
-        this.snackBar.open('API key revoked successfully', 'Close', { duration: 3000 });
+        this.toastService.success('API key revoked successfully', 3000);
         this.loadApiKeys();
       },
       error: (error) => {
         console.error('Error revoking API key:', error);
-        this.snackBar.open('Failed to revoke API key', 'Close', { duration: 3000 });
+        this.toastService.error('Failed to revoke API key', 3000);
       }
     });
   }
@@ -170,7 +176,7 @@ export class DeviceApiKeysComponent implements OnInit {
    * Rotate an API key
    */
   onRotate(apiKey: DeviceApiKeyDto): void {
-    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+    const dialogRef = this.dialogService.open(ConfirmDialogComponent, {
       width: '400px',
       data: {
         title: 'Rotate API Key',
@@ -197,11 +203,11 @@ export class DeviceApiKeysComponent implements OnInit {
         this.showApiKeyDialog(response);
         // Reload the list
         this.loadApiKeys();
-        this.snackBar.open('API key rotated successfully', 'Close', { duration: 3000 });
+        this.toastService.success('API key rotated successfully', 3000);
       },
       error: (error) => {
         console.error('Error rotating API key:', error);
-        this.snackBar.open('Failed to rotate API key', 'Close', { duration: 3000 });
+        this.toastService.error('Failed to rotate API key', 3000);
       }
     });
   }
@@ -266,18 +272,17 @@ export class DeviceApiKeysComponent implements OnInit {
   imports: [
     CommonModule,
     ReactiveFormsModule,
-    MatDialogModule,
     MatFormFieldModule,
     MatInputModule,
     MatButtonModule,
     MatIconModule
   ],
   template: `
-    <h2 mat-dialog-title>
+    <h2 class="dialog-title">
       <mat-icon>key</mat-icon>
       Generate New API Key
     </h2>
-    <mat-dialog-content>
+    <div class="dialog-content">
       <form [formGroup]="form">
         <mat-form-field appearance="outline" class="full-width">
           <mat-label>Description</mat-label>
@@ -300,9 +305,9 @@ export class DeviceApiKeysComponent implements OnInit {
           </div>
         </div>
       </form>
-    </mat-dialog-content>
-    <mat-dialog-actions align="end">
-      <button mat-button mat-dialog-close>Cancel</button>
+    </div>
+    <div class="dialog-actions">
+      <button mat-button (click)="dialogRef.close()">Cancel</button>
       <button
         mat-raised-button
         color="primary"
@@ -311,7 +316,7 @@ export class DeviceApiKeysComponent implements OnInit {
         <mat-icon>vpn_key</mat-icon>
         Generate
       </button>
-    </mat-dialog-actions>
+    </div>
   `,
   styles: [`
     .full-width {
@@ -334,20 +339,28 @@ export class DeviceApiKeysComponent implements OnInit {
       margin-top: 2px;
     }
 
-    h2 {
+    .dialog-title {
       display: flex;
       align-items: center;
       gap: 12px;
     }
+
+    .dialog-content {
+      padding: 16px 0;
+    }
+
+    .dialog-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+    }
   `]
 })
 export class GenerateApiKeyDialogComponent {
+  public dialogRef = inject(DialogRef<GenerateApiKeyDialogComponent, string>);
   form: FormGroup;
 
-  constructor(
-    private fb: FormBuilder,
-    private dialogRef: MatDialogRef<GenerateApiKeyDialogComponent>
-  ) {
+  constructor(private fb: FormBuilder) {
     this.form = this.fb.group({
       description: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(200)]]
     });
@@ -368,18 +381,17 @@ export class GenerateApiKeyDialogComponent {
   standalone: true,
   imports: [
     CommonModule,
-    MatDialogModule,
     MatButtonModule,
     MatIconModule,
     MatFormFieldModule,
     MatInputModule
   ],
   template: `
-    <h2 mat-dialog-title class="success-title">
+    <h2 class="dialog-title success-title">
       <mat-icon>check_circle</mat-icon>
       API Key Generated Successfully
     </h2>
-    <mat-dialog-content>
+    <div class="dialog-content">
       <div class="warning-section">
         <mat-icon>warning</mat-icon>
         <div>
@@ -396,7 +408,7 @@ export class GenerateApiKeyDialogComponent {
             mat-icon-button
             (click)="copyToClipboard()"
             [class.copied]="copied"
-            matTooltip="Copy to clipboard">
+            appTooltip="Copy to clipboard">
             <mat-icon>{{ copied ? 'check' : 'content_copy' }}</mat-icon>
           </button>
         </div>
@@ -418,8 +430,8 @@ export class GenerateApiKeyDialogComponent {
           This dialog will close automatically in {{ countdown }} seconds
         </div>
       }
-    </mat-dialog-content>
-    <mat-dialog-actions align="end">
+    </div>
+    <div class="dialog-actions">
       <button
         mat-raised-button
         color="primary"
@@ -428,7 +440,7 @@ export class GenerateApiKeyDialogComponent {
         <mat-icon>check</mat-icon>
         I've Saved the Key
       </button>
-    </mat-dialog-actions>
+    </div>
   `,
   styles: [`
     .success-title {
@@ -527,23 +539,44 @@ export class GenerateApiKeyDialogComponent {
       font-size: 14px;
     }
 
-    mat-dialog-actions button {
+    .dialog-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    .dialog-actions button {
       min-width: 200px;
+    }
+
+    .dialog-title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .dialog-content {
+      padding: 16px 0;
     }
   `]
 })
 export class ShowApiKeyDialogComponent implements OnInit {
+  public dialogRef = inject(DialogRef<ShowApiKeyDialogComponent, void>);
+  private clipboard = inject(Clipboard);
+  private toastService = inject(ToastService);
+
+  get dialogData(): GenerateApiKeyResponse {
+    return this.dialogRef.data;
+  }
+
+  get data(): GenerateApiKeyResponse {
+    return this.dialogData;
+  }
+
   copied = false;
   hidden = false;
   countdown = 60;
   private countdownInterval: any;
-
-  constructor(
-    private dialogRef: MatDialogRef<ShowApiKeyDialogComponent>,
-    private clipboard: Clipboard,
-    private snackBar: MatSnackBar,
-    @Inject(MAT_DIALOG_DATA) public data: GenerateApiKeyResponse
-  ) {}
 
   ngOnInit(): void {
     // Auto-copy to clipboard on open
@@ -573,9 +606,9 @@ export class ShowApiKeyDialogComponent implements OnInit {
     const success = this.clipboard.copy(this.data.plaintextKey);
     if (success) {
       this.copied = true;
-      this.snackBar.open('API key copied to clipboard', 'Close', { duration: 2000 });
+      this.toastService.success('API key copied to clipboard', 2000);
     } else {
-      this.snackBar.open('Failed to copy API key', 'Close', { duration: 3000 });
+      this.toastService.error('Failed to copy API key', 3000);
     }
   }
 
@@ -603,28 +636,55 @@ export class ShowApiKeyDialogComponent implements OnInit {
   standalone: true,
   imports: [
     CommonModule,
-    MatDialogModule,
     MatButtonModule,
     MatIconModule
   ],
   template: `
-    <h2 mat-dialog-title>{{ data.title }}</h2>
-    <mat-dialog-content>
+    <h2 class="dialog-title">{{ data.title }}</h2>
+    <div class="dialog-content">
       <p>{{ data.message }}</p>
-    </mat-dialog-content>
-    <mat-dialog-actions align="end">
-      <button mat-button [mat-dialog-close]="false">{{ data.cancelText }}</button>
-      <button mat-raised-button color="warn" [mat-dialog-close]="true">{{ data.confirmText }}</button>
-    </mat-dialog-actions>
-  `
+    </div>
+    <div class="dialog-actions">
+      <button mat-button (click)="dialogRef.close(false)">{{ data.cancelText }}</button>
+      <button mat-raised-button color="warn" (click)="dialogRef.close(true)">{{ data.confirmText }}</button>
+    </div>
+  `,
+  styles: [`
+    .dialog-title {
+      margin: 0 0 16px 0;
+      font-size: 1.25rem;
+      font-weight: 500;
+    }
+
+    .dialog-content {
+      padding: 0 0 16px 0;
+    }
+
+    .dialog-content p {
+      margin: 0;
+      color: rgba(0, 0, 0, 0.87);
+    }
+
+    .dialog-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+  `]
 })
 export class ConfirmDialogComponent {
-  constructor(
-    @Inject(MAT_DIALOG_DATA) public data: {
-      title: string;
-      message: string;
-      confirmText: string;
-      cancelText: string;
-    }
-  ) {}
+  public dialogRef = inject(DialogRef<ConfirmDialogComponent, boolean>);
+
+  get dialogData(): {
+    title: string;
+    message: string;
+    confirmText: string;
+    cancelText: string;
+  } {
+    return this.dialogRef.data;
+  }
+
+  get data() {
+    return this.dialogData;
+  }
 }

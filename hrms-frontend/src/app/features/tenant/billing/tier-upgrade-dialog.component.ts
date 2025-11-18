@@ -1,12 +1,10 @@
 import { Component, inject, signal } from '@angular/core';
 
-import { MatDialogRef, MatDialogModule } from '@angular/material/dialog';
+import { DialogRef } from '../../../shared/ui';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatCardModule } from '@angular/material/card';
-import { MatChipsModule } from '@angular/material/chips';
-import { MatDividerModule } from '@angular/material/divider';
-import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { ToastService, Divider, Chip } from '../../../shared/ui';
 
 interface TierOption {
   name: string;
@@ -27,27 +25,25 @@ interface TierOption {
   selector: 'app-tier-upgrade-dialog',
   standalone: true,
   imports: [
-    MatDialogModule,
     MatButtonModule,
     MatIconModule,
     MatCardModule,
-    MatChipsModule,
-    MatDividerModule,
-    MatSnackBarModule
+    Divider,
+    Chip
 ],
   template: `
     <div class="tier-upgrade-dialog">
-      <div mat-dialog-title>
+      <div class="dialog-title">
         <div class="title-content">
           <mat-icon>upgrade</mat-icon>
           <h2>Subscription Tiers</h2>
         </div>
-        <button mat-icon-button mat-dialog-close>
+        <button mat-icon-button (click)="dialogRef.close()">
           <mat-icon>close</mat-icon>
         </button>
       </div>
 
-      <mat-dialog-content>
+      <div class="dialog-content">
         <div class="tier-info">
           <p class="info-text">
             Choose the subscription tier that best fits your organization's needs.
@@ -60,12 +56,12 @@ interface TierOption {
             <mat-card class="tier-card" [class.recommended]="tier.recommended" [class.popular]="tier.popular">
               @if (tier.popular) {
                 <div class="badge-popular">
-                  <mat-chip color="accent">Most Popular</mat-chip>
+                  <app-chip [label]="'Most Popular'" [color]="'primary'" />
                 </div>
               }
               @if (tier.recommended) {
                 <div class="badge-recommended">
-                  <mat-chip color="primary">Recommended</mat-chip>
+                  <app-chip [label]="'Recommended'" [color]="'primary'" />
                 </div>
               }
 
@@ -86,7 +82,7 @@ interface TierOption {
                   </div>
                 </div>
 
-                <mat-divider></mat-divider>
+                <app-divider />
 
                 <div class="features-list">
                   <h4>Features:</h4>
@@ -122,11 +118,11 @@ interface TierOption {
             for tailored solutions.
           </p>
         </div>
-      </mat-dialog-content>
+      </div>
 
-      <mat-dialog-actions align="end">
-        <button mat-button mat-dialog-close>Cancel</button>
-      </mat-dialog-actions>
+      <div class="dialog-actions">
+        <button mat-button (click)="dialogRef.close()">Cancel</button>
+      </div>
     </div>
   `,
   styles: [`
@@ -134,7 +130,7 @@ interface TierOption {
       min-width: 800px;
       max-width: 1200px;
 
-      [mat-dialog-title] {
+      .dialog-title {
         display: flex;
         justify-content: space-between;
         align-items: center;
@@ -162,7 +158,7 @@ interface TierOption {
         }
       }
 
-      mat-dialog-content {
+      .dialog-content {
         padding: 24px;
         max-height: 80vh;
         overflow-y: auto;
@@ -268,7 +264,7 @@ interface TierOption {
                 }
               }
 
-              mat-divider {
+              app-divider {
                 margin: 16px 0;
               }
 
@@ -354,9 +350,11 @@ interface TierOption {
         }
       }
 
-      mat-dialog-actions {
+      .dialog-actions {
         padding: 16px 24px;
         border-top: 1px solid rgba(0, 0, 0, 0.12);
+        display: flex;
+        justify-content: flex-end;
       }
     }
 
@@ -366,7 +364,7 @@ interface TierOption {
         min-width: 0;
         width: 100%;
 
-        mat-dialog-content .tiers-grid {
+        .dialog-content .tiers-grid {
           grid-template-columns: 1fr;
         }
       }
@@ -375,11 +373,11 @@ interface TierOption {
     // Dark mode support
     :host-context(.dark-theme) {
       .tier-upgrade-dialog {
-        [mat-dialog-title] {
+        .dialog-title {
           border-bottom-color: rgba(255, 255, 255, 0.12);
         }
 
-        mat-dialog-content {
+        .dialog-content {
           .tier-info {
             background-color: rgba(25, 118, 210, 0.1);
             border-left-color: #42a5f5;
@@ -397,7 +395,7 @@ interface TierOption {
           }
         }
 
-        mat-dialog-actions {
+        .dialog-actions {
           border-top-color: rgba(255, 255, 255, 0.12);
         }
       }
@@ -405,8 +403,8 @@ interface TierOption {
   `]
 })
 export class TierUpgradeDialogComponent {
-  private dialogRef = inject(MatDialogRef<TierUpgradeDialogComponent>);
-  private snackBar = inject(MatSnackBar);
+  public dialogRef = inject(DialogRef<TierUpgradeDialogComponent, { selectedTier: string }>);
+  private toastService = inject(ToastService);
 
   availableTiers = signal<TierOption[]>([
     {
@@ -497,15 +495,9 @@ export class TierUpgradeDialogComponent {
   }
 
   selectTier(tier: TierOption): void {
-    this.snackBar.open(
+    this.toastService.success(
       `Thank you for your interest in ${tier.displayName}. Our sales team will contact you shortly.`,
-      'Close',
-      {
-        duration: 5000,
-        horizontalPosition: 'center',
-        verticalPosition: 'top',
-        panelClass: ['success-snackbar']
-      }
+      5000
     );
 
     // TODO: Implement actual tier change request

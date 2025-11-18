@@ -1,3 +1,6 @@
+// ChipColor type for UI components
+export type ChipColor = 'primary' | 'success' | 'warning' | 'error' | 'neutral';
+
 export interface Timesheet {
   id: string;
   employeeId: string;
@@ -185,6 +188,17 @@ export function getStatusColor(status: TimesheetStatus): string {
     case TimesheetStatus.Rejected: return 'red';
     case TimesheetStatus.Locked: return 'purple';
     default: return 'gray';
+  }
+}
+
+export function getStatusChipColor(status: TimesheetStatus): ChipColor {
+  switch (status) {
+    case TimesheetStatus.Draft: return 'neutral';
+    case TimesheetStatus.Submitted: return 'primary';
+    case TimesheetStatus.Approved: return 'success';
+    case TimesheetStatus.Rejected: return 'error';
+    case TimesheetStatus.Locked: return 'warning';
+    default: return 'neutral';
   }
 }
 

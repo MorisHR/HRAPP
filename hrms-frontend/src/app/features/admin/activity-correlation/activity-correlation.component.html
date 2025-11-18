@@ -26,78 +26,68 @@
           <mat-datepicker #endPicker></mat-datepicker>
         </mat-form-field>
 
-        <button mat-raised-button color="primary" (click)="generateCorrelation()" [disabled]="loading">
+        <button mat-raised-button color="primary" (click)="generateCorrelation()" [disabled]="loading()">
           <app-icon name="timeline"></app-icon>
           Generate Timeline
         </button>
       </div>
 
-      @if (loading) {
+      @if (loading()) {
         <div class="loading-container">
-          <mat-spinner></mat-spinner>
+          <app-progress-spinner size="medium" color="primary"></app-progress-spinner>
         </div>
       }
 
-      @if (correlation && !loading) {
+      @if (correlation() && !loading()) {
         <div class="correlation-results">
           <h3>Activity Summary</h3>
           <div class="summary-grid">
             <div class="summary-item">
               <label>User:</label>
-              <span>{{ correlation.userEmail || correlation.userId }}</span>
+              <span>{{ correlation()!.userEmail || correlation()!.userId }}</span>
             </div>
             <div class="summary-item">
               <label>Total Actions:</label>
-              <span>{{ correlation.totalActions }}</span>
+              <span>{{ correlation()!.totalActions }}</span>
             </div>
             <div class="summary-item">
               <label>Risk Score:</label>
-              <span [class.warn-text]="correlation.riskScore > 50">{{ correlation.riskScore }}</span>
+              <span [class.warn-text]="correlation()!.riskScore > 50">{{ correlation()!.riskScore }}</span>
             </div>
             <div class="summary-item">
               <label>Anomalies Detected:</label>
-              <span [class.error-text]="correlation.anomalies.length > 0">
-                {{ correlation.anomalies.length }}
+              <span [class.error-text]="correlation()!.anomalies.length > 0">
+                {{ correlation()!.anomalies.length }}
               </span>
             </div>
           </div>
           <h3>Activity Timeline</h3>
-          <table mat-table [dataSource]="correlation.timeline">
-            <ng-container matColumnDef="timestamp">
-              <th mat-header-cell *matHeaderCellDef>Timestamp</th>
-              <td mat-cell *matCellDef="let event">{{ event.timestamp | date:'short' }}</td>
-            </ng-container>
-            <ng-container matColumnDef="actionType">
-              <th mat-header-cell *matHeaderCellDef>Action</th>
-              <td mat-cell *matCellDef="let event">{{ event.actionType }}</td>
-            </ng-container>
-            <ng-container matColumnDef="category">
-              <th mat-header-cell *matHeaderCellDef>Category</th>
-              <td mat-cell *matCellDef="let event">{{ event.category }}</td>
-            </ng-container>
-            <ng-container matColumnDef="severity">
-              <th mat-header-cell *matHeaderCellDef>Severity</th>
-              <td mat-cell *matCellDef="let event">
-                <span [class]="getSeverityColor(event.severity) + '-text'">
-                  {{ event.severity }}
-                </span>
-              </td>
-            </ng-container>
-            <ng-container matColumnDef="entityType">
-              <th mat-header-cell *matHeaderCellDef>Entity Type</th>
-              <td mat-cell *matCellDef="let event">{{ event.entityType || 'N/A' }}</td>
-            </ng-container>
-            <ng-container matColumnDef="success">
-              <th mat-header-cell *matHeaderCellDef>Status</th>
-              <td mat-cell *matCellDef="let event">
-                <mat-icon [class.success-icon]="event.success" [class.error-icon]="!event.success">
-                  {{ event.success ? 'check_circle' : 'error' }}
-                </mat-icon>
-              </td>
-            </ng-container>
-            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-            <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
-          </table>
+          <app-table
+            [columns]="tableColumns"
+            [data]="correlation()!.timeline"
+            [loading]="loading()"
+            [hoverable]="true"
+            [striped]="true">
+
+            <!-- Timestamp Template -->
+            <ng-template appTableColumn="timestamp" let-row>
+              {{ row.timestamp | date:'short' }}
+            </ng-template>
+
+            <!-- Severity Template -->
+            <ng-template appTableColumn="severity" let-row>
+              <span [class]="getSeverityColor(row.severity) + '-text'">
+                {{ row.severity }}
+              </span>
+            </ng-template>
+
+            <!-- Success Template -->
+            <ng-template appTableColumn="success" let-row>
+              <mat-icon [class.success-icon]="row.success" [class.error-icon]="!row.success">
+                {{ row.success ? 'check_circle' : 'error' }}
+              </mat-icon>
+            </ng-template>
+          </app-table>
         </div>
       }
     </mat-card-content>

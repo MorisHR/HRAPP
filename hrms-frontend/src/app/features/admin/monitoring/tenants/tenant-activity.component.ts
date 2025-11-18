@@ -6,7 +6,7 @@ import { FormsModule } from '@angular/forms';
 import { CardComponent } from '../../../../shared/ui/components/card/card';
 import { SortEvent } from '../../../../shared/ui/components/table/table';
 import { Badge } from '../../../../shared/ui/components/badge/badge';
-import { Chip } from '../../../../shared/ui/components/chip/chip';
+import { Chip, ChipColor } from '../../../../shared/ui/components/chip/chip';
 import { ButtonComponent } from '../../../../shared/ui/components/button/button';
 import { SelectComponent, SelectOption } from '../../../../shared/ui/components/select/select';
 import { Paginator, PageEvent } from '../../../../shared/ui/components/paginator/paginator';
@@ -185,19 +185,19 @@ export class TenantActivityComponent implements OnInit {
     alert('CSV export functionality coming soon!');
   }
 
-  getHealthScoreColor(score: number): 'error' | 'warning' | 'success' {
+  getHealthScoreColor(score: number): ChipColor {
     if (score < 50) return 'error';
     if (score < 75) return 'warning';
     return 'success';
   }
 
-  getTierColor(tier: string): 'primary' | 'success' | 'warning' | 'error' {
+  getTierColor(tier: string): ChipColor {
     switch (tier) {
-      case 'free': return 'primary';
-      case 'basic': return 'success';
+      case 'free': return 'neutral';
+      case 'basic': return 'primary';
       case 'premium': return 'warning';
       case 'enterprise': return 'error';
-      default: return 'primary';
+      default: return 'neutral';
     }
   }
 

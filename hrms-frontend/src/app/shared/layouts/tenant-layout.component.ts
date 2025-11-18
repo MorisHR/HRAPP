@@ -3,9 +3,9 @@ import { Component, signal, inject } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatToolbarModule } from '@angular/material/toolbar';
-import { MatListModule } from '@angular/material/list';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
+import { List, ListItem } from '@app/shared/ui';
 import { AuthService } from '../../core/services/auth.service';
 import { ThemeService } from '../../core/services/theme.service';
 
@@ -24,7 +24,8 @@ interface MenuItem {
     RouterModule,
     MatSidenavModule,
     MatToolbarModule,
-    MatListModule,
+    List,
+    ListItem,
     MatIconModule,
     MatButtonModule
 ],
@@ -39,47 +40,53 @@ interface MenuItem {
           }
         </div>
 
-        <mat-nav-list>
+        <app-list>
           @for (item of menuItems; track item.label) {
             @if (item.route) {
               <!-- Regular menu item with route -->
-              <a mat-list-item [routerLink]="item.route" routerLinkActive="active">
-                <mat-icon matListItemIcon>{{ item.icon }}</mat-icon>
-                <span matListItemTitle>{{ item.label }}</span>
-              </a>
+              <app-list-item [clickable]="true">
+                <a [routerLink]="item.route" routerLinkActive="active">
+                  <mat-icon class="item-icon">{{ item.icon }}</mat-icon>
+                  <span class="item-label">{{ item.label }}</span>
+                </a>
+              </app-list-item>
             } @else if (item.children) {
               <!-- Expandable menu item -->
-              <a mat-list-item (click)="toggleMenu(item)" class="expandable-item">
-                <mat-icon matListItemIcon>{{ item.icon }}</mat-icon>
-                <span matListItemTitle>{{ item.label }}</span>
+              <app-list-item [clickable]="true" (itemClick)="toggleMenu(item)" class="expandable-item">
+                <mat-icon class="item-icon">{{ item.icon }}</mat-icon>
+                <span class="item-label">{{ item.label }}</span>
                 <mat-icon class="expand-icon">{{ item.expanded ? 'expand_less' : 'expand_more' }}</mat-icon>
-              </a>
+              </app-list-item>
 
               <!-- Submenu items -->
               @if (item.expanded) {
                 <div class="submenu">
                   @for (child of item.children; track child.label) {
                     @if (child.route) {
-                      <a mat-list-item [routerLink]="child.route" routerLinkActive="active" class="submenu-item">
-                        <mat-icon matListItemIcon>{{ child.icon }}</mat-icon>
-                        <span matListItemTitle>{{ child.label }}</span>
-                      </a>
+                      <app-list-item [clickable]="true" class="submenu-item">
+                        <a [routerLink]="child.route" routerLinkActive="active">
+                          <mat-icon class="item-icon">{{ child.icon }}</mat-icon>
+                          <span class="item-label">{{ child.label }}</span>
+                        </a>
+                      </app-list-item>
                     } @else if (child.children) {
                       <!-- Nested expandable item -->
-                      <a mat-list-item (click)="toggleMenu(child)" class="submenu-item expandable-item">
-                        <mat-icon matListItemIcon>{{ child.icon }}</mat-icon>
-                        <span matListItemTitle>{{ child.label }}</span>
+                      <app-list-item [clickable]="true" (itemClick)="toggleMenu(child)" class="submenu-item expandable-item">
+                        <mat-icon class="item-icon">{{ child.icon }}</mat-icon>
+                        <span class="item-label">{{ child.label }}</span>
                         <mat-icon class="expand-icon">{{ child.expanded ? 'expand_less' : 'expand_more' }}</mat-icon>
-                      </a>
+                      </app-list-item>
 
                       <!-- Nested submenu -->
                       @if (child.expanded) {
                         <div class="submenu submenu-nested">
                           @for (nestedChild of child.children; track nestedChild.label) {
-                            <a mat-list-item [routerLink]="nestedChild.route" routerLinkActive="active" class="submenu-item-nested">
-                              <mat-icon matListItemIcon>{{ nestedChild.icon }}</mat-icon>
-                              <span matListItemTitle>{{ nestedChild.label }}</span>
-                            </a>
+                            <app-list-item [clickable]="true" class="submenu-item-nested">
+                              <a [routerLink]="nestedChild.route" routerLinkActive="active">
+                                <mat-icon class="item-icon">{{ nestedChild.icon }}</mat-icon>
+                                <span class="item-label">{{ nestedChild.label }}</span>
+                              </a>
+                            </app-list-item>
                           }
                         </div>
                       }
@@ -89,7 +96,7 @@ interface MenuItem {
               }
             }
           }
-        </mat-nav-list>
+        </app-list>
       </mat-sidenav>
 
       <!-- Main Content -->
@@ -143,13 +150,18 @@ interface MenuItem {
       }
     }
 
-    mat-nav-list {
+    app-list {
       padding-top: 8px;
 
       a {
         margin: 4px 8px;
         border-radius: 8px;
         transition: background-color 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        text-decoration: none;
+        color: inherit;
 
         &:hover {
           background-color: rgba(0, 0, 0, 0.04);
@@ -159,9 +171,19 @@ interface MenuItem {
           background-color: #000000;
           color: #ffffff;
 
-          mat-icon {
+          .item-icon {
             color: #ffffff;
           }
+        }
+
+        .item-icon {
+          font-size: 20px;
+          width: 20px;
+          height: 20px;
+        }
+
+        .item-label {
+          flex: 1;
         }
       }
 
@@ -187,7 +209,7 @@ interface MenuItem {
           padding-left: 24px;
           font-size: 0.9rem;
 
-          mat-icon {
+          .item-icon {
             font-size: 20px;
             width: 20px;
             height: 20px;
@@ -202,7 +224,7 @@ interface MenuItem {
             padding-left: 32px;
             font-size: 0.85rem;
 
-            mat-icon {
+            .item-icon {
               font-size: 18px;
               width: 18px;
               height: 18px;

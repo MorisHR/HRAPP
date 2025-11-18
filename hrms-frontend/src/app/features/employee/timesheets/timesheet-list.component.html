@@ -88,7 +88,7 @@
     <mat-card-content>
       @if (loading()) {
         <div class="loading-container">
-          <mat-spinner></mat-spinner>
+          <app-progress-spinner size="medium" color="primary"></app-progress-spinner>
           <p>Loading timesheets...</p>
         </div>
       } @else if (filteredTimesheets().length === 0) {
@@ -99,92 +99,78 @@
         </div>
       } @else {
         <div class="table-container">
-          <table mat-table [dataSource]="filteredTimesheets()" class="timesheet-table">
+          <app-table
+            [columns]="columns"
+            [data]="filteredTimesheets()"
+            [loading]="loading()"
+            [hoverable]="true"
+            class="timesheet-table">
 
             <!-- Period Column -->
-            <ng-container matColumnDef="period">
-              <th mat-header-cell *matHeaderCellDef>Period</th>
-              <td mat-cell *matCellDef="let timesheet">
-                <div class="period-cell">
-                  <mat-icon class="period-icon">calendar_today</mat-icon>
-                  <span>{{ formatPeriod(timesheet) }}</span>
-                </div>
-              </td>
-            </ng-container>
+            <ng-template appTableColumn="period" let-timesheet>
+              <div class="period-cell">
+                <mat-icon class="period-icon">calendar_today</mat-icon>
+                <span>{{ formatPeriod(timesheet) }}</span>
+              </div>
+            </ng-template>
 
             <!-- Status Column -->
-            <ng-container matColumnDef="status">
-              <th mat-header-cell *matHeaderCellDef>Status</th>
-              <td mat-cell *matCellDef="let timesheet">
-                <mat-chip [class]="'status-chip-' + getStatusColor(timesheet.status)">
-                  {{ getStatusLabel(timesheet.status) }}
-                </mat-chip>
-              </td>
-            </ng-container>
+            <ng-template appTableColumn="status" let-timesheet>
+              <app-chip
+                [label]="getStatusLabel(timesheet.status)"
+                [color]="getStatusColor(timesheet.status)"
+                [variant]="'filled'">
+              </app-chip>
+            </ng-template>
 
             <!-- Total Hours Column -->
-            <ng-container matColumnDef="totalHours">
-              <th mat-header-cell *matHeaderCellDef>Total Hours</th>
-              <td mat-cell *matCellDef="let timesheet">
-                <div class="hours-cell">
-                  <app-icon name="access_time"></app-icon>
-                  <span>{{ formatHours(getTotalHours(timesheet)) }}</span>
-                </div>
-              </td>
-            </ng-container>
+            <ng-template appTableColumn="totalHours" let-timesheet>
+              <div class="hours-cell">
+                <app-icon name="access_time"></app-icon>
+                <span>{{ formatHours(getTotalHours(timesheet)) }}</span>
+              </div>
+            </ng-template>
 
             <!-- Overtime Column -->
-            <ng-container matColumnDef="overtime">
-              <th mat-header-cell *matHeaderCellDef>Overtime</th>
-              <td mat-cell *matCellDef="let timesheet">
-                @if (timesheet.totalOvertimeHours > 0) {
-                  <span class="overtime-badge">{{ formatHours(timesheet.totalOvertimeHours) }}</span>
-                } @else {
-                  <span class="no-overtime">-</span>
-                }
-              </td>
-            </ng-container>
+            <ng-template appTableColumn="overtime" let-timesheet>
+              @if (timesheet.totalOvertimeHours > 0) {
+                <span class="overtime-badge">{{ formatHours(timesheet.totalOvertimeHours) }}</span>
+              } @else {
+                <span class="no-overtime">-</span>
+              }
+            </ng-template>
 
             <!-- Submitted At Column -->
-            <ng-container matColumnDef="submittedAt">
-              <th mat-header-cell *matHeaderCellDef>Submitted</th>
-              <td mat-cell *matCellDef="let timesheet">
-                {{ formatDate(timesheet.submittedAt) }}
-              </td>
-            </ng-container>
+            <ng-template appTableColumn="submittedAt" let-timesheet>
+              {{ formatDate(timesheet.submittedAt) }}
+            </ng-template>
 
             <!-- Actions Column -->
-            <ng-container matColumnDef="actions">
-              <th mat-header-cell *matHeaderCellDef>Actions</th>
-              <td mat-cell *matCellDef="let timesheet">
-                <div class="action-buttons">
+            <ng-template appTableColumn="actions" let-timesheet>
+              <div class="action-buttons">
+                <button
+                  mat-icon-button
+                  [routerLink]="['/employee/timesheets', timesheet.id]"
+                  appTooltip="View Details">
+                  <app-icon name="visibility"></app-icon>
+                </button>
+
+                @if (canSubmit(timesheet)) {
                   <button
                     mat-icon-button
-                    [routerLink]="['/employee/timesheets', timesheet.id]"
-                    matTooltip="View Details">
-                    <app-icon name="visibility"></app-icon>
+                    color="primary"
+                    (click)="submitTimesheet(timesheet)"
+                    appTooltip="Submit for Approval">
+                    <app-icon name="send"></app-icon>
                   </button>
+                }
 
-                  @if (canSubmit(timesheet)) {
-                    <button
-                      mat-icon-button
-                      color="primary"
-                      (click)="submitTimesheet(timesheet)"
-                      matTooltip="Submit for Approval">
-                      <app-icon name="send"></app-icon>
-                    </button>
-                  }
-
-                  @if (timesheet.isLocked) {
-                    <mat-icon class="locked-icon" matTooltip="Locked">lock</mat-icon>
-                  }
-                </div>
-              </td>
-            </ng-container>
-
-            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-            <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="timesheet-row"></tr>
-          </table>
+                @if (timesheet.isLocked) {
+                  <mat-icon class="locked-icon" appTooltip="Locked">lock</mat-icon>
+                }
+              </div>
+            </ng-template>
+          </app-table>
         </div>
       }
     </mat-card-content>

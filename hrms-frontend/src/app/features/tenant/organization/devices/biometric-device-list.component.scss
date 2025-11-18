@@ -137,7 +137,7 @@ mat-card-content {
   padding: 80px 20px;
   gap: 24px;
 
-  mat-spinner {
+  app-progress-spinner {
     ::ng-deep circle {
       stroke: #3949ab;
       stroke-width: 4px;
@@ -550,7 +550,7 @@ mat-card-content {
       width: 20px;
     }
 
-    mat-spinner {
+    app-progress-spinner {
       ::ng-deep circle {
         stroke: #ffffff;
       }

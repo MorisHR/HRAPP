@@ -138,7 +138,7 @@
         class="submit-button"
         [disabled]="loginForm.invalid || loading()">
         @if (loading()) {
-          <mat-spinner diameter="20"></mat-spinner>
+          <app-progress-spinner size="small" color="primary"></app-progress-spinner>
           <span>Signing in...</span>
         } @else {
           <span>Sign In</span>

@@ -435,23 +435,12 @@ $slow: 500ms;
       }
     }
 
-    mat-chip {
+    app-chip {
       font-size: 11px;
-      height: 24px;
-
-      &.online-chip {
-        background: rgba($success-color, 0.1);
-        color: $success-color;
-      }
-
-      &.offline-chip {
-        background: rgba($warn-color, 0.1);
-        color: $warn-color;
-      }
     }
   }
 
-  mat-divider {
+  app-divider {
     margin: 12px 0;
   }
 
@@ -731,40 +720,9 @@ $slow: 500ms;
     }
   }
 
-  mat-chip {
+  app-chip {
     font-size: 12px;
     font-weight: 500;
-    height: 28px;
-
-    &.success {
-      background: rgba($success-color, 0.1);
-      color: $success-color;
-    }
-
-    &.warn {
-      background: rgba($warn-color, 0.1);
-      color: $warn-color;
-    }
-
-    &.warning {
-      background: rgba($warning-color, 0.1);
-      color: $warning-color;
-    }
-
-    &.info {
-      background: rgba($info-color, 0.1);
-      color: $info-color;
-    }
-
-    &.accent {
-      background: rgba($accent-color, 0.1);
-      color: $accent-color;
-    }
-
-    &.primary {
-      background: rgba($primary-color, 0.1);
-      color: $primary-color;
-    }
   }
 }
 

@@ -167,6 +167,88 @@ interface SortEvent {
 }
 ```
 
+## Custom Column Templates
+
+For columns with custom content (chips, buttons, icons), use column templates:
+
+### Method 1: Using Content Projection
+
+```typescript
+import { TableComponent, TableColumn, TableColumnDirective } from '@app/shared/ui/ui.module';
+
+@Component({
+  selector: 'app-department-list',
+  imports: [TableComponent, TableColumnDirective, MatChipModule, MatIconModule],
+  template: `
+    <app-table
+      [columns]="columns"
+      [data]="departments"
+      [loading]="loading">
+
+      <!-- Custom template for status column -->
+      <ng-template appTableColumn="status" let-row let-value="value">
+        <mat-chip [class.active]="row.isActive">
+          {{ value }}
+        </mat-chip>
+      </ng-template>
+
+      <!-- Custom template for actions column -->
+      <ng-template appTableColumn="actions" let-row>
+        <button mat-icon-button (click)="edit(row)">
+          <mat-icon>edit</mat-icon>
+        </button>
+        <button mat-icon-button (click)="delete(row)">
+          <mat-icon>delete</mat-icon>
+        </button>
+      </ng-template>
+    </app-table>
+  `
+})
+```
+
+### Method 2: Using Column Formatter
+
+For simple value transformations without HTML:
+
+```typescript
+columns: TableColumn[] = [
+  {
+    key: 'salary',
+    label: 'Salary',
+    sortable: true,
+    formatter: (value, row) => `$${value.toLocaleString()}`
+  },
+  {
+    key: 'status',
+    label: 'Status',
+    formatter: (value, row) => row.isActive ? 'Active ✓' : 'Inactive ✗'
+  }
+];
+```
+
+### Method 3: Using ViewChild and TemplateRef
+
+For programmatic template assignment:
+
+```typescript
+@ViewChild('statusTemplate', { read: TemplateRef }) statusTemplate!: TemplateRef<any>;
+
+ngAfterViewInit() {
+  this.columns = [
+    { key: 'name', label: 'Name', sortable: true },
+    { key: 'status', label: 'Status', cellTemplate: this.statusTemplate }
+  ];
+}
+
+template: `
+  <ng-template #statusTemplate let-row let-value="value">
+    <span [class]="'status-' + value.toLowerCase()">{{ value }}</span>
+  </ng-template>
+
+  <app-table [columns]="columns" [data]="data"></app-table>
+`
+```
+
 ## Advanced Examples
 
 ### Complete Example with All Features

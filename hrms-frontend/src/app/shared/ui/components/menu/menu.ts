@@ -19,7 +19,17 @@ export type MenuPosition = 'bottom-left' | 'bottom-right' | 'top-left' | 'top-ri
   styleUrl: './menu.scss'
 })
 export class MenuComponent implements OnDestroy {
-  @Input() trigger!: HTMLElement;
+  private _trigger!: HTMLElement;
+
+  @Input()
+  set trigger(value: HTMLElement | any) {
+    // Support both HTMLElement and Angular Material button elements
+    this._trigger = value?.nativeElement || value;
+  }
+  get trigger(): HTMLElement {
+    return this._trigger;
+  }
+
   @Input() items: MenuItem[] = [];
   @Input() position: MenuPosition = 'bottom-left';
   @Output() itemClick = new EventEmitter<any>();

@@ -7,22 +7,14 @@ import { Subject, takeUntil, finalize } from 'rxjs';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatTableModule } from '@angular/material/table';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
-import { MatCheckboxModule } from '@angular/material/checkbox';
-import { MatDialogModule, MatDialog } from '@angular/material/dialog';
-import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatChipsModule } from '@angular/material/chips';
-import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatTabsModule } from '@angular/material/tabs';
-import { MatMenuModule } from '@angular/material/menu';
-import { MatBadgeModule } from '@angular/material/badge';
-import { MatDividerModule } from '@angular/material/divider';
+import { UiModule } from '../../../shared/ui/ui.module';
+import { ToastService, TableComponent, TableColumn, TableColumnDirective, TooltipDirective } from '../../../shared/ui';
+import { MenuComponent, MenuItem, Chip, CheckboxComponent } from '../../../shared/ui';
 
 // Services
 import {
@@ -49,22 +41,18 @@ interface EmployeeOption {
     MatCardModule,
     MatButtonModule,
     MatIconModule,
-    MatTableModule,
+    TableComponent,
+    TableColumnDirective,
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
     MatDatepickerModule,
     MatNativeDateModule,
-    MatCheckboxModule,
-    MatDialogModule,
-    MatSnackBarModule,
-    MatProgressSpinnerModule,
-    MatChipsModule,
-    MatTooltipModule,
-    MatTabsModule,
-    MatMenuModule,
-    MatBadgeModule,
-    MatDividerModule
+    CheckboxComponent,
+    UiModule,
+    TooltipDirective,
+    MenuComponent,
+    Chip
 ],
   templateUrl: './salary-components.component.html',
   styleUrls: ['./salary-components.component.scss']
@@ -73,8 +61,7 @@ export class SalaryComponentsComponent implements OnInit, OnDestroy {
   private fb = inject(FormBuilder);
   private salaryComponentsService = inject(SalaryComponentsService);
   private employeeService = inject(EmployeeService);
-  private snackBar = inject(MatSnackBar);
-  private dialog = inject(MatDialog);
+  private toastService = inject(ToastService);
   private destroy$ = new Subject<void>();
 
   // State signals
@@ -94,23 +81,56 @@ export class SalaryComponentsComponent implements OnInit, OnDestroy {
   bulkForm!: FormGroup;
 
   // Table columns
-  displayedColumns = [
-    'componentName',
-    'componentType',
-    'amount',
-    'isRecurring',
-    'effectiveDate',
-    'endDate',
-    'isActive',
-    'requiresApproval',
-    'isApproved',
-    'actions'
+  columns: TableColumn[] = [
+    { key: 'componentName', label: 'Component', sortable: true },
+    { key: 'componentType', label: 'Type', sortable: true },
+    { key: 'amount', label: 'Amount', sortable: true },
+    { key: 'isRecurring', label: 'Frequency' },
+    { key: 'effectiveDate', label: 'Effective Date', sortable: true },
+    { key: 'endDate', label: 'End Date' },
+    { key: 'isActive', label: 'Status' },
+    { key: 'requiresApproval', label: 'Approval' },
+    { key: 'isApproved', label: 'Approved' },
+    { key: 'actions', label: 'Actions' }
   ];
 
   // Filter options
   filterType = signal<'all' | 'Allowance' | 'Deduction'>('all');
   filterActive = signal<'all' | 'active' | 'inactive'>('all');
   filterApproval = signal<'all' | 'approved' | 'pending'>('all');
+
+  // Menu configuration
+  getActionMenuItems(component: SalaryComponentDto): MenuItem[] {
+    return [
+      { label: 'Edit', value: 'edit', icon: 'edit' },
+      {
+        label: 'Approve',
+        value: 'approve',
+        icon: 'check_circle',
+        disabled: !component.requiresApproval || component.isApproved
+      },
+      {
+        label: 'Deactivate',
+        value: 'deactivate',
+        icon: 'block',
+        disabled: !component.isActive
+      },
+      { divider: true, label: '', value: null },
+      { label: 'Delete', value: 'delete', icon: 'delete' }
+    ];
+  }
+
+  handleActionMenuClick(value: string, component: SalaryComponentDto): void {
+    if (value === 'edit') {
+      this.editComponent(component);
+    } else if (value === 'approve') {
+      this.approveComponent(component);
+    } else if (value === 'deactivate') {
+      this.deactivateComponent(component);
+    } else if (value === 'delete') {
+      this.deleteComponent(component);
+    }
+  }
 
   constructor() {
     this.initializeForms();
@@ -175,7 +195,7 @@ export class SalaryComponentsComponent implements OnInit, OnDestroy {
         },
         error: (error: any) => {
           console.error('Error loading employees:', error);
-          this.snackBar.open('Failed to load employees', 'Close', { duration: 3000 });
+          this.toastService.error('Failed to load employees', 3000);
         }
       });
   }
@@ -194,7 +214,7 @@ export class SalaryComponentsComponent implements OnInit, OnDestroy {
         },
         error: (error) => {
           console.error('Error loading components:', error);
-          this.snackBar.open('Failed to load salary components', 'Close', { duration: 3000 });
+          this.toastService.error('Failed to load salary components', 3000);
         }
       });
   }
@@ -220,7 +240,7 @@ export class SalaryComponentsComponent implements OnInit, OnDestroy {
         },
         error: (error) => {
           console.error('Error loading employee components:', error);
-          this.snackBar.open('Failed to load employee components', 'Close', { duration: 3000 });
+          this.toastService.error('Failed to load employee components', 3000);
         }
       });
   }
@@ -301,7 +321,7 @@ export class SalaryComponentsComponent implements OnInit, OnDestroy {
 
   onSubmit(): void {
     if (this.componentForm.invalid) {
-      this.snackBar.open('Please fill all required fields', 'Close', { duration: 3000 });
+      this.toastService.warning('Please fill all required fields', 3000);
       return;
     }
 
@@ -336,16 +356,15 @@ export class SalaryComponentsComponent implements OnInit, OnDestroy {
       )
       .subscribe({
         next: () => {
-          this.snackBar.open('Salary component created successfully', 'Close', { duration: 3000 });
+          this.toastService.success('Salary component created successfully', 3000);
           this.cancelForm();
           this.loadAllComponents();
         },
         error: (error) => {
           console.error('Error creating component:', error);
-          this.snackBar.open(
+          this.toastService.error(
             error.error?.message || 'Failed to create salary component',
-            'Close',
-            { duration: 5000 }
+            5000
           );
         }
       });
@@ -371,16 +390,15 @@ export class SalaryComponentsComponent implements OnInit, OnDestroy {
       )
       .subscribe({
         next: () => {
-          this.snackBar.open('Salary component updated successfully', 'Close', { duration: 3000 });
+          this.toastService.success('Salary component updated successfully', 3000);
           this.cancelForm();
           this.loadAllComponents();
         },
         error: (error) => {
           console.error('Error updating component:', error);
-          this.snackBar.open(
+          this.toastService.error(
             error.error?.message || 'Failed to update salary component',
-            'Close',
-            { duration: 5000 }
+            5000
           );
         }
       });
@@ -395,12 +413,12 @@ export class SalaryComponentsComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: () => {
-          this.snackBar.open('Component deactivated successfully', 'Close', { duration: 3000 });
+          this.toastService.success('Component deactivated successfully', 3000);
           this.loadAllComponents();
         },
         error: (error) => {
           console.error('Error deactivating component:', error);
-          this.snackBar.open('Failed to deactivate component', 'Close', { duration: 3000 });
+          this.toastService.error('Failed to deactivate component', 3000);
         }
       });
   }
@@ -414,19 +432,19 @@ export class SalaryComponentsComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: () => {
-          this.snackBar.open('Component deleted successfully', 'Close', { duration: 3000 });
+          this.toastService.success('Component deleted successfully', 3000);
           this.loadAllComponents();
         },
         error: (error) => {
           console.error('Error deleting component:', error);
-          this.snackBar.open('Failed to delete component', 'Close', { duration: 3000 });
+          this.toastService.error('Failed to delete component', 3000);
         }
       });
   }
 
   approveComponent(component: SalaryComponentDto): void {
     if (component.isApproved) {
-      this.snackBar.open('Component is already approved', 'Close', { duration: 2000 });
+      this.toastService.info('Component is already approved', 2000);
       return;
     }
 
@@ -434,12 +452,12 @@ export class SalaryComponentsComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: () => {
-          this.snackBar.open('Component approved successfully', 'Close', { duration: 3000 });
+          this.toastService.success('Component approved successfully', 3000);
           this.loadAllComponents();
         },
         error: (error) => {
           console.error('Error approving component:', error);
-          this.snackBar.open('Failed to approve component', 'Close', { duration: 3000 });
+          this.toastService.error('Failed to approve component', 3000);
         }
       });
   }
@@ -460,7 +478,7 @@ export class SalaryComponentsComponent implements OnInit, OnDestroy {
 
   onBulkSubmit(): void {
     if (this.bulkForm.invalid) {
-      this.snackBar.open('Please fill all required fields', 'Close', { duration: 3000 });
+      this.toastService.warning('Please fill all required fields', 3000);
       return;
     }
 
@@ -489,20 +507,18 @@ export class SalaryComponentsComponent implements OnInit, OnDestroy {
       )
       .subscribe({
         next: (response) => {
-          this.snackBar.open(
+          this.toastService.success(
             `Successfully created ${response.componentIds.length} salary components`,
-            'Close',
-            { duration: 3000 }
+            3000
           );
           this.toggleBulkMode();
           this.loadAllComponents();
         },
         error: (error) => {
           console.error('Error bulk creating components:', error);
-          this.snackBar.open(
+          this.toastService.error(
             error.error?.message || 'Failed to create salary components',
-            'Close',
-            { duration: 5000 }
+            5000
           );
         }
       });
@@ -538,7 +554,7 @@ export class SalaryComponentsComponent implements OnInit, OnDestroy {
   // Calculate totals for selected employee
   calculateTotals(month: number, year: number, employeeId?: string): void {
     if (!employeeId) {
-      this.snackBar.open('Please select an employee first', 'Close', { duration: 2000 });
+      this.toastService.info('Please select an employee first', 2000);
       return;
     }
 
@@ -556,7 +572,7 @@ export class SalaryComponentsComponent implements OnInit, OnDestroy {
                   Total Deductions: ${this.formatCurrency(deductions.totalDeductions || 0)}
                   Net: ${this.formatCurrency((allowances.totalAllowances || 0) - (deductions.totalDeductions || 0))}
                 `;
-                this.snackBar.open(message, 'Close', { duration: 5000 });
+                this.toastService.info(message, 5000);
               },
               error: (error) => {
                 console.error('Error getting deductions:', error);
@@ -565,7 +581,7 @@ export class SalaryComponentsComponent implements OnInit, OnDestroy {
         },
         error: (error) => {
           console.error('Error getting allowances:', error);
-          this.snackBar.open('Failed to calculate totals', 'Close', { duration: 3000 });
+          this.toastService.error('Failed to calculate totals', 3000);
         }
       });
   }

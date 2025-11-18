@@ -5,16 +5,15 @@ import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angula
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatTableModule } from '@angular/material/table';
-import { MatChipsModule } from '@angular/material/chips';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { UiModule } from '../../../shared/ui/ui.module';
 import { MatFormFieldModule } from '@angular/material/form-field';
+import { Chip, ChipColor } from '../../../shared/ui';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
-import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
-import { MatTooltipModule } from '@angular/material/tooltip';
+import { ToastService } from '../../../shared/ui';
+import { TableComponent, TableColumn, TableColumnDirective, TooltipDirective } from '../../../shared/ui';
 import { LeaveService } from '../../../core/services/leave.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { Leave, LeaveBalance as ApiLeaveBalance, LeaveType, LeaveStatus, ApplyLeaveRequest } from '../../../core/models/leave.model';
@@ -50,23 +49,23 @@ interface LeaveBalance {
     MatCardModule,
     MatButtonModule,
     MatIconModule,
-    MatTableModule,
-    MatChipsModule,
-    MatProgressSpinnerModule,
     MatFormFieldModule,
+    Chip,
+    UiModule,
     MatInputModule,
     MatSelectModule,
     MatDatepickerModule,
     MatNativeDateModule,
-    MatSnackBarModule,
-    MatTooltipModule
+    TableComponent,
+    TableColumnDirective,
+    TooltipDirective
   ],
   templateUrl: './employee-leave.component.html',
   styleUrl: './employee-leave.component.scss'
 })
 export class EmployeeLeaveComponent implements OnInit {
   private fb = inject(FormBuilder);
-  private snackBar = inject(MatSnackBar);
+  private toastService = inject(ToastService);
   private leaveService = inject(LeaveService);
   private authService = inject(AuthService);
 
@@ -78,7 +77,15 @@ export class EmployeeLeaveComponent implements OnInit {
   employeeId = signal<string>('');
 
   leaveForm: FormGroup;
-  displayedColumns = ['leaveType', 'dates', 'days', 'status', 'appliedDate', 'actions'];
+
+  columns: TableColumn[] = [
+    { key: 'leaveType', label: 'Leave Type' },
+    { key: 'dates', label: 'Period' },
+    { key: 'days', label: 'Days' },
+    { key: 'status', label: 'Status' },
+    { key: 'appliedDate', label: 'Applied' },
+    { key: 'actions', label: 'Actions' }
+  ];
 
   leaveTypes = [
     { value: 'annual', label: 'Annual Leave' },
@@ -116,7 +123,7 @@ export class EmployeeLeaveComponent implements OnInit {
       this.employeeId.set(user.id);
       this.loadLeaveData();
     } else {
-      this.snackBar.open('Unable to load employee information', 'Close', { duration: 3000 });
+      this.toastService.error('Unable to load employee information', 3000);
     }
   }
 
@@ -139,7 +146,7 @@ export class EmployeeLeaveComponent implements OnInit {
         console.error('Failed to load leave balance:', err);
         // Fallback to mock data
         this.leaveBalances.set(this.generateMockBalances());
-        this.snackBar.open('⚠️ Using demo leave balance. API issue.', 'Close', { duration: 3000 });
+        this.toastService.warning('Using demo leave balance. API issue.', 3000);
       }
     });
 
@@ -154,7 +161,7 @@ export class EmployeeLeaveComponent implements OnInit {
         this.loading.set(false);
         // Fallback to mock data
         this.leaveRequests.set(this.generateMockRequests());
-        this.snackBar.open('⚠️ Using demo leave data. API issue.', 'Close', { duration: 3000 });
+        this.toastService.warning('Using demo leave data. API issue.', 3000);
       }
     });
   }
@@ -202,9 +209,7 @@ export class EmployeeLeaveComponent implements OnInit {
   onSubmit(): void {
     if (this.leaveForm.invalid) {
       this.markFormGroupTouched(this.leaveForm);
-      this.snackBar.open('Please fill all required fields correctly', 'Close', {
-        duration: 3000
-      });
+      this.toastService.warning('Please fill all required fields correctly', 3000);
       return;
     }
 
@@ -214,7 +219,7 @@ export class EmployeeLeaveComponent implements OnInit {
 
     // Validation: End date must be after start date
     if (endDate <= startDate) {
-      this.snackBar.open('End date must be after start date', 'Close', { duration: 3000 });
+      this.toastService.warning('End date must be after start date', 3000);
       return;
     }
 
@@ -225,10 +230,9 @@ export class EmployeeLeaveComponent implements OnInit {
     const selectedType = formValue.leaveType;
     const balance = this.leaveBalances().find(b => b.type === selectedType);
     if (balance && balance.remaining < days) {
-      this.snackBar.open(
+      this.toastService.warning(
         `Insufficient leave balance. You have ${balance.remaining} days remaining.`,
-        'Close',
-        { duration: 4000 }
+        4000
       );
       return;
     }
@@ -249,11 +253,7 @@ export class EmployeeLeaveComponent implements OnInit {
         this.showForm.set(false);
         this.leaveForm.reset();
 
-        this.snackBar.open(
-          '✓ Leave request submitted successfully',
-          'Close',
-          { duration: 5000, panelClass: ['success-snackbar'] }
-        );
+        this.toastService.success('Leave request submitted successfully', 5000);
 
         // Refresh balance
         this.loadLeaveData();
@@ -261,10 +261,9 @@ export class EmployeeLeaveComponent implements OnInit {
       error: (err) => {
         console.error('Leave application failed:', err);
         this.submitting.set(false);
-        this.snackBar.open(
-          err.error?.message || '❌ Failed to submit leave request. Please try again.',
-          'Close',
-          { duration: 3000 }
+        this.toastService.error(
+          err.error?.message || 'Failed to submit leave request. Please try again.',
+          3000
         );
       }
     });
@@ -291,7 +290,7 @@ export class EmployeeLeaveComponent implements OnInit {
 
   cancelRequest(request: LeaveRequest): void {
     if (request.status !== 'pending') {
-      this.snackBar.open('Only pending requests can be cancelled', 'Close', { duration: 3000 });
+      this.toastService.warning('Only pending requests can be cancelled', 3000);
       return;
     }
 
@@ -306,7 +305,7 @@ export class EmployeeLeaveComponent implements OnInit {
           requests.map(r => r.id === request.id ? this.mapToLeaveRequest(updatedLeave) : r)
         );
         this.loading.set(false);
-        this.snackBar.open('✓ Leave request cancelled successfully', 'Close', { duration: 3000 });
+        this.toastService.success('Leave request cancelled successfully', 3000);
 
         // Refresh balance
         this.loadLeaveData();
@@ -314,23 +313,22 @@ export class EmployeeLeaveComponent implements OnInit {
       error: (err) => {
         console.error('Failed to cancel leave:', err);
         this.loading.set(false);
-        this.snackBar.open(
-          err.error?.message || '❌ Failed to cancel leave request.',
-          'Close',
-          { duration: 3000 }
+        this.toastService.error(
+          err.error?.message || 'Failed to cancel leave request.',
+          3000
         );
       }
     });
   }
 
-  getStatusColor(status: string): string {
-    const colors: Record<string, string> = {
-      'pending': 'accent',
+  getStatusColor(status: string): ChipColor {
+    const colors: Record<string, ChipColor> = {
+      'pending': 'warning',
       'approved': 'success',
       'rejected': 'error',
-      'cancelled': ''
+      'cancelled': 'neutral'
     };
-    return colors[status] || '';
+    return colors[status] || 'neutral';
   }
 
   getStatusLabel(status: string): string {
@@ -364,9 +362,9 @@ export class EmployeeLeaveComponent implements OnInit {
     return (balance.remaining / balance.total) * 100;
   }
 
-  getBalanceColor(percentage: number): string {
+  getBalanceColor(percentage: number): ChipColor {
     if (percentage > 50) return 'success';
-    if (percentage > 25) return 'warn';
+    if (percentage > 25) return 'warning';
     return 'error';
   }
 

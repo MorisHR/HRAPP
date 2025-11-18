@@ -9,8 +9,8 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatSelectModule } from '@angular/material/select';
 import { MatIconModule } from '@angular/material/icon';
 import { MatToolbarModule } from '@angular/material/toolbar';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { UiModule } from '../../../shared/ui/ui.module';
+import { ToastService } from '../../../shared/ui';
 import { TenantService } from '../../../core/services/tenant.service';
 import { PricingTierService, type TierType, type PricingTier } from '../../../core/services/pricing-tier.service';
 import { IndustrySectorService } from '../../../core/services/industry-sector.service';
@@ -30,8 +30,7 @@ import { Observable } from 'rxjs';
     MatSelectModule,
     MatIconModule,
     MatToolbarModule,
-    MatProgressSpinnerModule,
-    MatSnackBarModule
+    UiModule,
   ],
   templateUrl: './tenant-form.component.html',
   styleUrl: './tenant-form.component.scss',
@@ -44,7 +43,7 @@ export class TenantFormComponent implements OnInit {
   private tenantService = inject(TenantService);
   pricingService = inject(PricingTierService); // Public for template access
   sectorService = inject(IndustrySectorService); // Public for template access
-  private snackBar = inject(MatSnackBar);
+  private toastService = inject(ToastService);
 
   loading = signal(false);
   selectedTier = signal<PricingTier | null>(null);
@@ -153,10 +152,7 @@ export class TenantFormComponent implements OnInit {
       error: (error) => {
         console.error('❌ Error loading tenant data:', error);
         this.loading.set(false);
-        this.snackBar.open('Failed to load tenant data. Please try again.', 'Close', {
-          duration: 5000,
-          panelClass: ['error-snackbar']
-        });
+        this.toastService.error('Failed to load tenant data. Please try again.', 5000);
         this.router.navigate(['/admin/tenants']);
       }
     });
@@ -209,10 +205,7 @@ export class TenantFormComponent implements OnInit {
   onSubmit(): void {
     if (this.tenantForm.invalid) {
       this.tenantForm.markAllAsTouched();
-      this.snackBar.open('Please fix all validation errors before submitting', 'Close', {
-        duration: 5000,
-        panelClass: ['error-snackbar']
-      });
+      this.toastService.error('Please fix all validation errors before submitting', 5000);
       return;
     }
 
@@ -222,7 +215,7 @@ export class TenantFormComponent implements OnInit {
       // UPDATE MODE
       const id = this.tenantId();
       if (!id) {
-        this.snackBar.open('Invalid tenant ID', 'Close', { duration: 5000 });
+        this.toastService.error('Invalid tenant ID', 5000);
         this.loading.set(false);
         return;
       }
@@ -248,19 +241,13 @@ export class TenantFormComponent implements OnInit {
       this.tenantService.updateTenant(id, updatePayload).subscribe({
         next: (response) => {
           this.loading.set(false);
-          this.snackBar.open('Tenant updated successfully!', 'Close', {
-            duration: 5000,
-            panelClass: ['success-snackbar']
-          });
+          this.toastService.success('Tenant updated successfully!', 5000);
           this.router.navigate(['/admin/tenants']);
         },
         error: (error) => {
           this.loading.set(false);
           const errorMessage = error.error?.message || error.message || 'Failed to update tenant. Please try again.';
-          this.snackBar.open(errorMessage, 'Close', {
-            duration: 7000,
-            panelClass: ['error-snackbar']
-          });
+          this.toastService.error(errorMessage, 7000);
           console.error('Error updating tenant:', error);
         }
       });
@@ -269,19 +256,13 @@ export class TenantFormComponent implements OnInit {
       this.tenantService.createTenant(this.tenantForm.value).subscribe({
         next: (response) => {
           this.loading.set(false);
-          this.snackBar.open('Tenant created successfully!', 'Close', {
-            duration: 5000,
-            panelClass: ['success-snackbar']
-          });
+          this.toastService.success('Tenant created successfully!', 5000);
           this.router.navigate(['/admin/tenants']);
         },
         error: (error) => {
           this.loading.set(false);
           const errorMessage = error.error?.message || error.message || 'Failed to create tenant. Please try again.';
-          this.snackBar.open(errorMessage, 'Close', {
-            duration: 7000,
-            panelClass: ['error-snackbar']
-          });
+          this.toastService.error(errorMessage, 7000);
           console.error('Error creating tenant:', error);
         }
       });

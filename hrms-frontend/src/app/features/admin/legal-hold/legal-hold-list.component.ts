@@ -1,13 +1,11 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
-import { MatTableModule } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatChipsModule } from '@angular/material/chips';
-import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatDialogModule } from '@angular/material/dialog';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { Chip, ChipColor } from '@app/shared/ui';
+import { UiModule } from '../../../shared/ui/ui.module';
+import { TableComponent, TableColumn, TableColumnDirective, TooltipDirective } from '../../../shared/ui';
 import { LegalHold, LegalHoldStatus } from '../../../models/legal-hold.model';
 import { LegalHoldService } from '../../../services/legal-hold.service';
 import { NotificationService } from '../../../services/notification.service';
@@ -18,13 +16,13 @@ import { NotificationService } from '../../../services/notification.service';
   imports: [
     CommonModule,
     MatCardModule,
-    MatTableModule,
     MatButtonModule,
     MatIconModule,
-    MatChipsModule,
-    MatTooltipModule,
-    MatDialogModule,
-    MatProgressSpinnerModule
+    Chip,
+    UiModule,
+    TableComponent,
+    TableColumnDirective,
+    TooltipDirective
   ],
   templateUrl: './legal-hold-list.component.html',
   styleUrls: ['./legal-hold-list.component.css']
@@ -33,14 +31,14 @@ export class LegalHoldListComponent implements OnInit {
   legalHolds: LegalHold[] = [];
   loading = false;
 
-  displayedColumns: string[] = [
-    'caseNumber',
-    'description',
-    'startDate',
-    'endDate',
-    'status',
-    'affectedCount',
-    'actions'
+  columns: TableColumn[] = [
+    { key: 'caseNumber', label: 'Case Number' },
+    { key: 'description', label: 'Description' },
+    { key: 'startDate', label: 'Start Date' },
+    { key: 'endDate', label: 'End Date' },
+    { key: 'status', label: 'Status' },
+    { key: 'affectedCount', label: 'Affected Records' },
+    { key: 'actions', label: 'Actions' }
   ];
 
   constructor(
@@ -67,16 +65,16 @@ export class LegalHoldListComponent implements OnInit {
     });
   }
 
-  getStatusColor(status: LegalHoldStatus): string {
+  getStatusColor(status: LegalHoldStatus): ChipColor {
     switch (status) {
       case LegalHoldStatus.ACTIVE:
-        return 'warn';
+        return 'warning';
       case LegalHoldStatus.RELEASED:
-        return 'primary';
+        return 'success';
       case LegalHoldStatus.EXPIRED:
-        return '';
+        return 'neutral';
       default:
-        return '';
+        return 'neutral';
     }
   }
 

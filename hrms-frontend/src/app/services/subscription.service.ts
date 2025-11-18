@@ -13,6 +13,9 @@ import {
   SubscriptionTier
 } from '../models/subscription.model';
 
+// ChipColor type for UI components
+type ChipColor = 'primary' | 'success' | 'warning' | 'error' | 'neutral';
+
 @Injectable({
   providedIn: 'root'
 })
@@ -146,6 +149,20 @@ export class SubscriptionService {
   }
 
   /**
+   * Get status chip color (type-safe for ChipColor)
+   */
+  getStatusChipColor(status: PaymentStatus): ChipColor {
+    switch (status) {
+      case PaymentStatus.Paid: return 'success';
+      case PaymentStatus.Pending: return 'warning';
+      case PaymentStatus.Overdue: return 'error';
+      case PaymentStatus.Failed: return 'error';
+      case PaymentStatus.Cancelled: return 'neutral';
+      default: return 'neutral';
+    }
+  }
+
+  /**
    * Get tier badge color
    */
   getTierColor(tier: SubscriptionTier): string {
@@ -156,6 +173,19 @@ export class SubscriptionService {
       [SubscriptionTier.Enterprise]: 'warn'
     };
     return colors[tier] || 'default';
+  }
+
+  /**
+   * Get tier chip color (type-safe for ChipColor)
+   */
+  getTierChipColor(tier: SubscriptionTier): ChipColor {
+    switch (tier) {
+      case SubscriptionTier.Free: return 'neutral';
+      case SubscriptionTier.Basic: return 'primary';
+      case SubscriptionTier.Professional: return 'warning';
+      case SubscriptionTier.Enterprise: return 'error';
+      default: return 'neutral';
+    }
   }
 
   /**

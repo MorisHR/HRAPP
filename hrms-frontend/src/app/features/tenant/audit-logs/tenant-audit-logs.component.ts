@@ -1,16 +1,11 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { MatDialog, MatDialogModule } from '@angular/material/dialog';
-import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
-import { MatTableModule } from '@angular/material/table';
-import { MatPaginatorModule } from '@angular/material/paginator';
+import { DialogService, Tabs, Tab, TooltipDirective, ExpansionPanel, ExpansionPanelGroup } from '../../../shared/ui';
+import { ToastService } from '../../../shared/ui';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
-import { MatExpansionModule } from '@angular/material/expansion';
-import { MatTabsModule } from '@angular/material/tabs';
-import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { UiModule } from '../../../shared/ui/ui.module';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -24,6 +19,7 @@ import {
   PagedResult,
   AuditLogHelper
 } from '../../../models/audit-log.model';
+import { TableComponent, TableColumn } from '../../../shared/ui/components/table/table';
 
 @Component({
   selector: 'app-tenant-audit-logs',
@@ -31,37 +27,41 @@ import {
   imports: [
     CommonModule,
     FormsModule,
-    MatTableModule,
-    MatPaginatorModule,
+    TableComponent,
     MatDatepickerModule,
     MatNativeDateModule,
-    MatExpansionModule,
-    MatTabsModule,
-    MatTooltipModule,
-    MatProgressSpinnerModule,
+    ExpansionPanel,
+    ExpansionPanelGroup,
+    TooltipDirective,
     MatButtonModule,
+    Tabs,
+    UiModule,
     MatIconModule,
     MatFormFieldModule,
     MatInputModule,
-    MatCardModule,
-    MatDialogModule,
-    MatSnackBarModule
+    MatCardModule
   ],
   templateUrl: './tenant-audit-logs.component.html',
   styleUrls: ['./tenant-audit-logs.component.scss']
 })
 export class TenantAuditLogsComponent implements OnInit {
   // Data
-  auditLogs: AuditLog[] = [];
-  statistics: AuditLogStatistics | null = null;
+  auditLogs = signal<AuditLog[]>([]);
+  statistics = signal<AuditLogStatistics | null>(null);
 
   // State
-  loading = false;
-  loadingStats = false;
-  selectedTab = 0;
+  loading = signal(false);
+  loadingStats = signal(false);
+
+  // Tabs configuration
+  tabs: Tab[] = [
+    { label: 'Audit Logs', value: 'logs' },
+    { label: 'Statistics', value: 'statistics' }
+  ];
+  activeTab = 'logs';
 
   // Pagination
-  totalCount = 0;
+  totalCount = signal(0);
   pageNumber = 1;
   pageSize = 50;
   pageSizeOptions = [25, 50, 100];
@@ -74,22 +74,23 @@ export class TenantAuditLogsComponent implements OnInit {
     sortDescending: true
   };
 
-  // Display columns (NO tenant column for tenant admin)
-  displayedColumns: string[] = [
-    'performedAt',
-    'userEmail',
-    'actionType',
-    'category',
-    'severity',
-    'entityType',
-    'success',
-    'actions'
+  // Table columns (NO tenant column for tenant admin)
+  tableColumns: TableColumn[] = [
+    { key: 'performedAt', label: 'Timestamp', sortable: true },
+    { key: 'userEmail', label: 'User', sortable: true },
+    { key: 'actionType', label: 'Action', sortable: true },
+    { key: 'category', label: 'Category', sortable: true },
+    { key: 'severity', label: 'Severity', sortable: true },
+    { key: 'entityType', label: 'Entity', sortable: true },
+    { key: 'success', label: 'Status', sortable: true },
+    { key: 'actions', label: 'Actions', sortable: false }
   ];
+
+  private toastService = inject(ToastService);
+  private dialogService = inject(DialogService);
 
   constructor(
     private auditLogService: AuditLogService,
-    private dialog: MatDialog,
-    private snackBar: MatSnackBar,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -99,29 +100,29 @@ export class TenantAuditLogsComponent implements OnInit {
   }
 
   loadAuditLogs(): void {
-    this.loading = true;
+    this.loading.set(true);
     this.cdr.detectChanges();
 
     // IMPORTANT: Using getTenantAuditLogs() - backend auto-filters by tenant
     this.auditLogService.getTenantAuditLogs(this.filter).subscribe({
       next: (result: PagedResult<AuditLog>) => {
-        this.auditLogs = result.items;
-        this.totalCount = result.totalCount;
+        this.auditLogs.set(result.items);
+        this.totalCount.set(result.totalCount);
         this.pageNumber = result.pageNumber;
-        this.loading = false;
+        this.loading.set(false);
         this.cdr.detectChanges();
       },
       error: (error) => {
         console.error('Error loading audit logs', error);
-        this.snackBar.open('Error loading audit logs', 'Close', { duration: 3000 });
-        this.loading = false;
+        this.toastService.error('Error loading audit logs', 3000);
+        this.loading.set(false);
         this.cdr.detectChanges();
       }
     });
   }
 
   loadStatistics(): void {
-    this.loadingStats = true;
+    this.loadingStats.set(true);
     this.cdr.detectChanges();
 
     const startDate = this.filter.startDate || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
@@ -129,13 +130,13 @@ export class TenantAuditLogsComponent implements OnInit {
 
     this.auditLogService.getTenantStatistics(startDate, endDate).subscribe({
       next: (stats) => {
-        this.statistics = stats;
-        this.loadingStats = false;
+        this.statistics.set(stats);
+        this.loadingStats.set(false);
         this.cdr.detectChanges();
       },
       error: (error) => {
         console.error('Error loading statistics', error);
-        this.loadingStats = false;
+        this.loadingStats.set(false);
         this.cdr.detectChanges();
       }
     });
@@ -173,7 +174,7 @@ export class TenantAuditLogsComponent implements OnInit {
       },
       error: (error) => {
         console.error('Error loading audit log detail', error);
-        this.snackBar.open('Error loading details', 'Close', { duration: 3000 });
+        this.toastService.error('Error loading details', 3000);
       }
     });
   }
@@ -183,11 +184,11 @@ export class TenantAuditLogsComponent implements OnInit {
       next: (blob) => {
         const filename = `audit_logs_${new Date().getTime()}.csv`;
         this.auditLogService.downloadBlob(blob, filename);
-        this.snackBar.open('Export completed', 'Close', { duration: 3000 });
+        this.toastService.success('Export completed', 3000);
       },
       error: (error) => {
         console.error('Export failed', error);
-        this.snackBar.open('Export failed', 'Close', { duration: 3000 });
+        this.toastService.error('Export failed', 3000);
       }
     });
   }
@@ -228,5 +229,9 @@ export class TenantAuditLogsComponent implements OnInit {
     if (hours > 0) return `${hours}h ago`;
     if (minutes > 0) return `${minutes}m ago`;
     return 'Just now';
+  }
+
+  onTabChange(value: string): void {
+    this.activeTab = value;
   }
 }

@@ -164,7 +164,7 @@
       button {
         min-width: 120px;
 
-        mat-spinner {
+        app-progress-spinner {
           display: inline-block;
           margin-right: 8px;
         }
@@ -218,7 +218,7 @@
       justify-content: center;
       padding: 60px 20px;
 
-      mat-spinner {
+      app-progress-spinner {
         margin-bottom: 20px;
       }
 

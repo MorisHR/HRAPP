@@ -4,12 +4,12 @@ import { FormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatTabsModule } from '@angular/material/tabs';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { UiModule } from '../../../shared/ui/ui.module';
+import { Tabs, Tab } from '../../../shared/ui';
 import { SoxComplianceReport, GdprComplianceReport } from '../../../models/compliance-report.model';
 import { ComplianceReportService } from '../../../services/compliance-report.service';
 import { NotificationService } from '../../../services/notification.service';
@@ -23,12 +23,12 @@ import { NotificationService } from '../../../services/notification.service';
     MatCardModule,
     MatButtonModule,
     MatIconModule,
-    MatTabsModule,
     MatFormFieldModule,
+    Tabs,
     MatInputModule,
     MatDatepickerModule,
     MatNativeDateModule,
-    MatProgressSpinnerModule
+    UiModule
   ],
   templateUrl: './compliance-reports.component.html',
   styleUrls: ['./compliance-reports.component.css']
@@ -37,6 +37,13 @@ export class ComplianceReportsComponent implements OnInit {
   loading = false;
   soxReport?: SoxComplianceReport;
   gdprReport?: GdprComplianceReport;
+
+  // Tabs configuration
+  tabs: Tab[] = [
+    { label: 'SOX Compliance', value: 'sox' },
+    { label: 'GDPR Compliance', value: 'gdpr' }
+  ];
+  activeTab = 'sox';
 
   // SOX Report Parameters
   soxStartDate: Date = new Date(new Date().setDate(new Date().getDate() - 90));
@@ -102,5 +109,9 @@ export class ComplianceReportsComponent implements OnInit {
 
   exportGdprReport(): void {
     this.notificationService.info('Export functionality not yet implemented');
+  }
+
+  onTabChange(value: string): void {
+    this.activeTab = value;
   }
 }

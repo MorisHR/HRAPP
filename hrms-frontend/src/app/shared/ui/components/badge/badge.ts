@@ -1,7 +1,7 @@
 import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
-export type BadgeColor = 'primary' | 'success' | 'warning' | 'error';
+export type BadgeColor = 'primary' | 'success' | 'warning' | 'error' | 'neutral';
 export type BadgePosition = 'top-right' | 'top-left' | 'bottom-right' | 'bottom-left';
 
 @Component({

@@ -1,16 +1,10 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { MatDialog, MatDialogModule } from '@angular/material/dialog';
-import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
-import { MatTableModule } from '@angular/material/table';
-import { MatPaginatorModule } from '@angular/material/paginator';
+import { ToastService, TableComponent, TableColumn, TableColumnDirective, Tabs, Tab, TooltipDirective, Paginator, ExpansionPanel, ExpansionPanelGroup } from '../../../shared/ui';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
-import { MatExpansionModule } from '@angular/material/expansion';
-import { MatTabsModule } from '@angular/material/tabs';
-import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { UiModule } from '../../../shared/ui/ui.module';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -31,21 +25,21 @@ import {
   imports: [
     CommonModule,
     FormsModule,
-    MatTableModule,
-    MatPaginatorModule,
+    Paginator,
     MatDatepickerModule,
     MatNativeDateModule,
-    MatExpansionModule,
-    MatTabsModule,
-    MatTooltipModule,
-    MatProgressSpinnerModule,
+    ExpansionPanel,
+    ExpansionPanelGroup,
+    TooltipDirective,
+    UiModule,
+    Tabs,
     MatButtonModule,
     MatIconModule,
     MatFormFieldModule,
     MatInputModule,
     MatCardModule,
-    MatDialogModule,
-    MatSnackBarModule
+    TableComponent,
+    TableColumnDirective
   ],
   templateUrl: './audit-logs.component.html',
   styleUrls: ['./audit-logs.component.scss']
@@ -58,7 +52,13 @@ export class AdminAuditLogsComponent implements OnInit {
   // State
   loading = false;
   loadingStats = false;
-  selectedTab = 0;
+
+  // Tabs configuration
+  tabs: Tab[] = [
+    { label: 'Audit Logs', value: 'logs' },
+    { label: 'Statistics', value: 'statistics' }
+  ];
+  activeTab = 'logs';
 
   // Pagination
   totalCount = 0;
@@ -75,22 +75,22 @@ export class AdminAuditLogsComponent implements OnInit {
   };
 
   // Display columns
-  displayedColumns: string[] = [
-    'performedAt',
-    'tenantName',
-    'userEmail',
-    'actionType',
-    'category',
-    'severity',
-    'entityType',
-    'success',
-    'actions'
+  columns: TableColumn[] = [
+    { key: 'performedAt', label: 'Timestamp', sortable: true },
+    { key: 'tenantName', label: 'Tenant' },
+    { key: 'userEmail', label: 'User' },
+    { key: 'actionType', label: 'Action' },
+    { key: 'category', label: 'Category' },
+    { key: 'severity', label: 'Severity' },
+    { key: 'entityType', label: 'Entity' },
+    { key: 'success', label: 'Status' },
+    { key: 'actions', label: 'Actions' }
   ];
+
+  private toastService = inject(ToastService);
 
   constructor(
     private auditLogService: AuditLogService,
-    private dialog: MatDialog,
-    private snackBar: MatSnackBar,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -113,7 +113,7 @@ export class AdminAuditLogsComponent implements OnInit {
       },
       error: (error) => {
         console.error('Error loading audit logs', error);
-        this.snackBar.open('Error loading audit logs', 'Close', { duration: 3000 });
+        this.toastService.error('Error loading audit logs', 3000);
         this.loading = false;
         this.cdr.detectChanges();
       }
@@ -174,7 +174,7 @@ export class AdminAuditLogsComponent implements OnInit {
       },
       error: (error) => {
         console.error('Error loading audit log detail', error);
-        this.snackBar.open('Error loading details', 'Close', { duration: 3000 });
+        this.toastService.error('Error loading details', 3000);
       }
     });
   }
@@ -184,11 +184,11 @@ export class AdminAuditLogsComponent implements OnInit {
       next: (blob) => {
         const filename = `audit_logs_system_${new Date().getTime()}.csv`;
         this.auditLogService.downloadBlob(blob, filename);
-        this.snackBar.open('Export completed', 'Close', { duration: 3000 });
+        this.toastService.success('Export completed', 3000);
       },
       error: (error) => {
         console.error('Export failed', error);
-        this.snackBar.open('Export failed', 'Close', { duration: 3000 });
+        this.toastService.error('Export failed', 3000);
       }
     });
   }
@@ -229,5 +229,9 @@ export class AdminAuditLogsComponent implements OnInit {
     if (hours > 0) return `${hours}h ago`;
     if (minutes > 0) return `${minutes}m ago`;
     return 'Just now';
+  }
+
+  onTabChange(value: string): void {
+    this.activeTab = value;
   }
 }

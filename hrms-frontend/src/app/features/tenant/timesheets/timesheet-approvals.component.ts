@@ -5,15 +5,12 @@ import { SelectionModel } from '@angular/cdk/collections';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatTableModule } from '@angular/material/table';
-import { MatCheckboxModule } from '@angular/material/checkbox';
-import { MatChipsModule } from '@angular/material/chips';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { Chip, ChipColor, CheckboxComponent } from '@app/shared/ui';
+import { UiModule } from '../../../shared/ui/ui.module';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { FormsModule, ReactiveFormsModule, FormControl } from '@angular/forms';
+import { TableComponent, TableColumn, TableColumnDirective, TooltipDirective } from '../../../shared/ui';
 import { TimesheetService } from '../../../core/services/timesheet.service';
 import {
   Timesheet,
@@ -31,28 +28,35 @@ import {
     MatCardModule,
     MatButtonModule,
     MatIconModule,
-    MatTableModule,
-    MatCheckboxModule,
-    MatChipsModule,
-    MatProgressSpinnerModule,
-    MatTooltipModule,
-    MatDialogModule,
+    CheckboxComponent,
+    Chip,
+    UiModule,
     MatFormFieldModule,
-    MatInputModule
+    MatInputModule,
+    TableComponent,
+    TableColumnDirective,
+    TooltipDirective
 ],
   templateUrl: './timesheet-approvals.component.html',
   styleUrl: './timesheet-approvals.component.scss'
 })
 export class TimesheetApprovalsComponent implements OnInit {
   private timesheetService = inject(TimesheetService);
-  private dialog = inject(MatDialog);
 
   pendingTimesheets = this.timesheetService.pendingApprovals;
   loading = this.timesheetService.loading;
 
   selection = new SelectionModel<Timesheet>(true, []);
 
-  displayedColumns = ['select', 'employee', 'period', 'totalHours', 'overtime', 'submittedAt', 'actions'];
+  columns: TableColumn[] = [
+    { key: 'select', label: '' },
+    { key: 'employee', label: 'Employee' },
+    { key: 'period', label: 'Period' },
+    { key: 'totalHours', label: 'Total Hours' },
+    { key: 'overtime', label: 'Overtime' },
+    { key: 'submittedAt', label: 'Submitted' },
+    { key: 'actions', label: 'Actions' }
+  ];
 
   // Computed stats
   stats = computed(() => {
@@ -98,8 +102,19 @@ export class TimesheetApprovalsComponent implements OnInit {
     return getStatusLabel(status);
   }
 
-  getStatusColor(status: number): string {
-    return getStatusColor(status);
+  getStatusColor(status: number): ChipColor {
+    const originalColor = getStatusColor(status);
+    // Map Material colors to custom Chip colors
+    switch (originalColor) {
+      case 'primary':
+        return 'primary';
+      case 'accent':
+        return 'success';
+      case 'warn':
+        return 'error';
+      default:
+        return 'neutral';
+    }
   }
 
   formatPeriod(timesheet: Timesheet): string {

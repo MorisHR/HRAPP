@@ -1,9 +1,13 @@
 <div class="compliance-reports">
   <h1>Compliance Reports</h1>
 
-  <mat-tab-group>
+  <app-tabs
+    [tabs]="tabs"
+    [activeTab]="activeTab"
+    (tabChange)="onTabChange($event)">
+
     <!-- SOX Reports Tab -->
-    <mat-tab label="SOX Compliance">
+    <div *ngIf="activeTab === 'sox'">
       <mat-card>
         <mat-card-header>
           <mat-card-title>Sarbanes-Oxley (SOX) Compliance Report</mat-card-title>
@@ -32,7 +36,7 @@
 
           @if (loading) {
             <div class="loading-container">
-              <mat-spinner></mat-spinner>
+              <app-progress-spinner size="medium" color="primary"></app-progress-spinner>
             </div>
           }
 
@@ -93,10 +97,10 @@
           }
         </mat-card-content>
       </mat-card>
-    </mat-tab>
+    </div>
 
     <!-- GDPR Reports Tab -->
-    <mat-tab label="GDPR Compliance">
+    <div *ngIf="activeTab === 'gdpr'">
       <mat-card>
         <mat-card-header>
           <mat-card-title>GDPR Data Subject Rights Report</mat-card-title>
@@ -116,7 +120,7 @@
 
           @if (loading) {
             <div class="loading-container">
-              <mat-spinner></mat-spinner>
+              <app-progress-spinner size="medium" color="primary"></app-progress-spinner>
             </div>
           }
 
@@ -155,6 +159,6 @@
           }
         </mat-card-content>
       </mat-card>
-    </mat-tab>
-  </mat-tab-group>
+    </div>
+  </app-tabs>
 </div>

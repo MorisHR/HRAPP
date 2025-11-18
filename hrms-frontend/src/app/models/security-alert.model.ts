@@ -5,6 +5,9 @@ import { AuditActionType, AuditCategory, AuditSeverity } from './audit-log.model
 // Re-export from audit-log.model for convenience
 export { AuditSeverity, AuditActionType, AuditCategory } from './audit-log.model';
 
+// ChipColor type for UI components
+export type ChipColor = 'primary' | 'success' | 'warning' | 'error' | 'neutral';
+
 /**
  * Security alert types for real-time threat detection
  * Supports Fortune 500 compliance requirements (SOX, GDPR, ISO 27001, PCI-DSS)
@@ -263,6 +266,16 @@ export class SecurityAlertHelpers {
     }
   }
 
+  static getSeverityChipColor(severity: AuditSeverity): ChipColor {
+    switch (severity) {
+      case AuditSeverity.INFO: return 'primary';
+      case AuditSeverity.WARNING: return 'warning';
+      case AuditSeverity.CRITICAL: return 'error';
+      case AuditSeverity.EMERGENCY: return 'error';
+      default: return 'neutral';
+    }
+  }
+
   static getSeverityIcon(severity: AuditSeverity): string {
     switch (severity) {
       case AuditSeverity.INFO: return 'info-circle';
@@ -287,12 +300,34 @@ export class SecurityAlertHelpers {
     }
   }
 
+  static getStatusChipColor(status: SecurityAlertStatus): ChipColor {
+    switch (status) {
+      case SecurityAlertStatus.NEW: return 'error';
+      case SecurityAlertStatus.ACKNOWLEDGED: return 'warning';
+      case SecurityAlertStatus.IN_PROGRESS: return 'primary';
+      case SecurityAlertStatus.RESOLVED: return 'success';
+      case SecurityAlertStatus.FALSE_POSITIVE: return 'neutral';
+      case SecurityAlertStatus.ESCALATED: return 'error';
+      case SecurityAlertStatus.PENDING_REVIEW: return 'warning';
+      case SecurityAlertStatus.CLOSED: return 'neutral';
+      default: return 'neutral';
+    }
+  }
+
   static getRiskScoreColor(score: number): string {
     if (score >= 90) return 'red';
     if (score >= 70) return 'orange';
     if (score >= 50) return 'yellow';
     if (score >= 30) return 'blue';
     return 'gray';
+  }
+
+  static getRiskScoreChipColor(score: number): ChipColor {
+    if (score >= 90) return 'error';
+    if (score >= 70) return 'error';
+    if (score >= 50) return 'warning';
+    if (score >= 30) return 'primary';
+    return 'neutral';
   }
 
   static getRiskScoreLabel(score: number): string {

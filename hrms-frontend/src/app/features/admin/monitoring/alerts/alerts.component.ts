@@ -6,6 +6,7 @@ import { FormsModule } from '@angular/forms';
 import { CardComponent } from '../../../../shared/ui/components/card/card';
 import { SortEvent } from '../../../../shared/ui/components/table/table';
 import { Badge } from '../../../../shared/ui/components/badge/badge';
+import { ChipColor } from '../../../../shared/ui/components/chip/chip';
 import { ButtonComponent } from '../../../../shared/ui/components/button/button';
 import { SelectComponent, SelectOption } from '../../../../shared/ui/components/select/select';
 import { Paginator, PageEvent } from '../../../../shared/ui/components/paginator/paginator';
@@ -269,33 +270,33 @@ export class AlertsComponent implements OnInit {
     alert('CSV export functionality coming soon!');
   }
 
-  getSeverityColor(severity: string): 'error' | 'warning' | 'primary' {
+  getSeverityColor(severity: string): ChipColor {
     switch (severity) {
       case 'Critical': return 'error';
       case 'High': return 'error';
       case 'Medium': return 'warning';
-      case 'Low': return 'primary';
-      default: return 'primary';
+      case 'Low': return 'neutral';
+      default: return 'neutral';
     }
   }
 
-  getStatusColor(status: string): 'error' | 'warning' | 'success' {
+  getStatusColor(status: string): ChipColor {
     switch (status) {
       case 'Active': return 'error';
       case 'Acknowledged': return 'warning';
       case 'Resolved': return 'success';
-      default: return 'primary' as any;
+      default: return 'neutral';
     }
   }
 
-  getTypeColor(type: string): 'error' | 'warning' | 'primary' {
+  getTypeColor(type: string): ChipColor {
     switch (type) {
       case 'Performance': return 'warning';
       case 'Security': return 'error';
       case 'Capacity': return 'primary';
       case 'Availability': return 'error';
       case 'Compliance': return 'primary';
-      default: return 'primary';
+      default: return 'neutral';
     }
   }
 

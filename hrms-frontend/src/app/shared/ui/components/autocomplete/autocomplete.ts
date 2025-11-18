@@ -34,6 +34,7 @@
 import { Component, Input, Output, EventEmitter, HostListener, ElementRef, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 
 @Component({
   selector: 'app-autocomplete',
@@ -59,7 +60,10 @@ export class Autocomplete implements OnInit, OnDestroy {
   filteredOptions: any[] = [];
   highlightedIndex: number = -1;
 
-  constructor(private elementRef: ElementRef) {}
+  constructor(
+    private elementRef: ElementRef,
+    private sanitizer: DomSanitizer
+  ) {}
 
   ngOnInit(): void {
     if (this.value) {
@@ -178,15 +182,39 @@ export class Autocomplete implements OnInit, OnDestroy {
     }, 0);
   }
 
-  highlightMatch(text: string): string {
+  /**
+   * SECURITY FIX: XSS Prevention
+   * Highlights matching text with proper HTML escaping to prevent XSS attacks
+   * Complies with OWASP A03:2021 - Injection
+   */
+  highlightMatch(text: string): SafeHtml {
     if (!this.inputValue || !text) {
-      return text;
+      return this.escapeHTML(text);
     }
 
+    // Step 1: Escape HTML entities in the original text to prevent XSS
+    const escapedText = this.escapeHTML(text);
+
+    // Step 2: Apply highlighting with <mark> tags (safe after escaping)
     const regex = new RegExp(`(${this.escapeRegExp(this.inputValue)})`, 'gi');
-    return text.replace(regex, '<mark>$1</mark>');
+    const highlighted = escapedText.replace(regex, '<mark>$1</mark>');
+
+    // Step 3: Return as SafeHtml (Angular will render it safely)
+    return this.sanitizer.bypassSecurityTrustHtml(highlighted);
   }
 
+  /**
+   * Escapes HTML entities to prevent XSS
+   */
+  private escapeHTML(text: string): string {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  /**
+   * Escapes special regex characters
+   */
   private escapeRegExp(str: string): string {
     return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   }

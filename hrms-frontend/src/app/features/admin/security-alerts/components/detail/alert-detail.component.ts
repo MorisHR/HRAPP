@@ -357,10 +357,24 @@ export class AlertDetailComponent implements OnInit, OnDestroy {
   }
 
   /**
+   * Get severity chip color
+   */
+  getSeverityChipColor(severity: AuditSeverity): string {
+    return SecurityAlertHelpers.getSeverityChipColor(severity);
+  }
+
+  /**
    * Get status color
    */
   getStatusColor(status: SecurityAlertStatus): string {
     return SecurityAlertHelpers.getStatusColor(status);
+  }
+
+  /**
+   * Get status chip color
+   */
+  getStatusChipColor(status: SecurityAlertStatus): string {
+    return SecurityAlertHelpers.getStatusChipColor(status);
   }
 
   /**

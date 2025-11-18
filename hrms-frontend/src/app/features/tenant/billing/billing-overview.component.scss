@@ -43,7 +43,7 @@
   padding: 80px 20px;
   text-align: center;
 
-  mat-spinner {
+  app-progress-spinner {
     margin-bottom: 24px;
   }
 
@@ -188,7 +188,7 @@
     }
   }
 
-  mat-divider {
+  app-divider {
     margin: 8px 0;
   }
 }

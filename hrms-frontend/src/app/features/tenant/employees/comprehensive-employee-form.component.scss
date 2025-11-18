@@ -314,7 +314,7 @@ $border-color: #e0e0e0;
         }
       }
 
-      mat-spinner {
+      app-progress-spinner {
         display: inline-block;
         margin-right: 8px;
       }
@@ -420,7 +420,7 @@ $border-color: #e0e0e0;
 }
 
 // Loading Spinner Styling
-mat-spinner {
+app-progress-spinner {
   ::ng-deep circle {
     stroke: white;
   }
@@ -499,7 +499,7 @@ mat-spinner {
         margin-bottom: 16px;
       }
 
-      mat-spinner {
+      app-progress-spinner {
         margin-bottom: 16px;
       }
 

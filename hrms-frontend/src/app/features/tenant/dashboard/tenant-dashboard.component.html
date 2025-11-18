@@ -218,7 +218,7 @@
                 <div class="widget-content">
                   @if (activitiesLoading()) {
                     <div class="widget-loading">
-                      <mat-progress-spinner diameter="40" mode="indeterminate"></mat-progress-spinner>
+                      <app-progress-spinner size="medium" color="primary"></app-progress-spinner>
                     </div>
                   } @else if (activities().length === 0) {
                     <div class="widget-empty">
@@ -257,7 +257,7 @@
                 <div class="widget-content">
                   @if (birthdaysLoading()) {
                     <div class="widget-loading">
-                      <mat-progress-spinner diameter="40" mode="indeterminate"></mat-progress-spinner>
+                      <app-progress-spinner size="medium" color="primary"></app-progress-spinner>
                     </div>
                   } @else if (birthdays().length === 0) {
                     <div class="widget-empty">

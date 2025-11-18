@@ -13,7 +13,7 @@
       (click)="selectTab(tab, i)"
       type="button"
     >
-      <span *ngIf="tab.icon" class="tabs__icon" [innerHTML]="tab.icon"></span>
+      <span *ngIf="tab.icon" class="tabs__icon" [innerHTML]="getSafeIcon(tab.icon)"></span>
       <span class="tabs__label">{{ tab.label }}</span>
     </button>
   </div>

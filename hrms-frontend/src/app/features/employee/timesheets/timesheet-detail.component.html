@@ -1,7 +1,7 @@
 <div class="timesheet-detail-container">
   @if (loading()) {
     <div class="loading-container">
-      <mat-spinner></mat-spinner>
+      <app-progress-spinner size="medium" color="primary"></app-progress-spinner>
       <p>Loading timesheet details...</p>
     </div>
   } @else if (timesheet()) {
@@ -14,9 +14,10 @@
         <h1>Timesheet Details</h1>
         <p class="subtitle">{{ getPeriodDisplay() }}</p>
       </div>
-      <mat-chip [class]="'status-chip-' + getStatusColor(timesheet()!.status)">
-        {{ getStatusLabel(timesheet()!.status) }}
-      </mat-chip>
+      <app-chip
+        [label]="getStatusLabel(timesheet()!.status)"
+        [color]="getStatusColor(timesheet()!.status)">
+      </app-chip>
     </div>
 
     <!-- Summary Cards -->
@@ -95,97 +96,75 @@
       </mat-card-header>
       <mat-card-content>
         <div class="table-container">
-          <table mat-table [dataSource]="timesheet()!.entries || []" class="entries-table">
+          <app-table
+            [columns]="columns"
+            [data]="timesheet()?.entries || []"
+            [loading]="loading()"
+            [hoverable]="true"
+            class="entries-table">
 
             <!-- Date Column -->
-            <ng-container matColumnDef="date">
-              <th mat-header-cell *matHeaderCellDef>Date</th>
-              <td mat-cell *matCellDef="let entry">
-                <div class="date-cell">
-                  <strong>{{ formatDate(entry.date) }}</strong>
-                </div>
-              </td>
-            </ng-container>
+            <ng-template appTableColumn="date" let-entry>
+              <div class="date-cell">
+                <strong>{{ formatDate(entry.date) }}</strong>
+              </div>
+            </ng-template>
 
             <!-- Day Type Column -->
-            <ng-container matColumnDef="dayType">
-              <th mat-header-cell *matHeaderCellDef>Type</th>
-              <td mat-cell *matCellDef="let entry">
-                <span [class]="'day-type-badge ' + getDayTypeColor(entry.dayType)">
-                  {{ getDayTypeLabel(entry.dayType) }}
-                </span>
-              </td>
-            </ng-container>
+            <ng-template appTableColumn="dayType" let-entry>
+              <span [class]="'day-type-badge ' + getDayTypeColor(entry.dayType)">
+                {{ getDayTypeLabel(entry.dayType) }}
+              </span>
+            </ng-template>
 
             <!-- Clock In Column -->
-            <ng-container matColumnDef="clockIn">
-              <th mat-header-cell *matHeaderCellDef>Clock In</th>
-              <td mat-cell *matCellDef="let entry">
-                {{ formatTime(entry.clockInTime) }}
-              </td>
-            </ng-container>
+            <ng-template appTableColumn="clockIn" let-entry>
+              {{ formatTime(entry.clockInTime) }}
+            </ng-template>
 
             <!-- Clock Out Column -->
-            <ng-container matColumnDef="clockOut">
-              <th mat-header-cell *matHeaderCellDef>Clock Out</th>
-              <td mat-cell *matCellDef="let entry">
-                {{ formatTime(entry.clockOutTime) }}
-              </td>
-            </ng-container>
+            <ng-template appTableColumn="clockOut" let-entry>
+              {{ formatTime(entry.clockOutTime) }}
+            </ng-template>
 
             <!-- Regular Hours Column -->
-            <ng-container matColumnDef="regular">
-              <th mat-header-cell *matHeaderCellDef>Regular</th>
-              <td mat-cell *matCellDef="let entry">
-                @if (entry.regularHours > 0) {
-                  <span class="hours-value">{{ formatHours(entry.regularHours) }}</span>
-                } @else {
-                  <span class="no-hours">-</span>
-                }
-              </td>
-            </ng-container>
+            <ng-template appTableColumn="regular" let-entry>
+              @if (entry.regularHours > 0) {
+                <span class="hours-value">{{ formatHours(entry.regularHours) }}</span>
+              } @else {
+                <span class="no-hours">-</span>
+              }
+            </ng-template>
 
             <!-- Overtime Column -->
-            <ng-container matColumnDef="overtime">
-              <th mat-header-cell *matHeaderCellDef>Overtime</th>
-              <td mat-cell *matCellDef="let entry">
-                @if (entry.overtimeHours > 0) {
-                  <span class="hours-value overtime">{{ formatHours(entry.overtimeHours) }}</span>
-                } @else {
-                  <span class="no-hours">-</span>
-                }
-              </td>
-            </ng-container>
+            <ng-template appTableColumn="overtime" let-entry>
+              @if (entry.overtimeHours > 0) {
+                <span class="hours-value overtime">{{ formatHours(entry.overtimeHours) }}</span>
+              } @else {
+                <span class="no-hours">-</span>
+              }
+            </ng-template>
 
             <!-- Total Column -->
-            <ng-container matColumnDef="total">
-              <th mat-header-cell *matHeaderCellDef>Total</th>
-              <td mat-cell *matCellDef="let entry">
-                @if (getTotalHours(entry) > 0) {
-                  <strong>{{ formatHours(getTotalHours(entry)) }}</strong>
-                } @else {
-                  <span class="no-hours">-</span>
-                }
-              </td>
-            </ng-container>
+            <ng-template appTableColumn="total" let-entry>
+              @if (getTotalHours(entry) > 0) {
+                <strong>{{ formatHours(getTotalHours(entry)) }}</strong>
+              } @else {
+                <span class="no-hours">-</span>
+              }
+            </ng-template>
 
             <!-- Notes Column -->
-            <ng-container matColumnDef="notes">
-              <th mat-header-cell *matHeaderCellDef>Notes</th>
-              <td mat-cell *matCellDef="let entry">
-                @if (entry.notes) {
-                  <span class="notes-text" [matTooltip]="entry.notes">
-                    {{ entry.notes.substring(0, 30) }}{{ entry.notes.length > 30 ? '...' : '' }}
-                  </span>
-                } @else {
-                  <span class="no-hours">-</span>
-                }
-              </td>
-            </ng-container>
-
-            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-            <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="entry-row"></tr>
-          </table>
+            <ng-template appTableColumn="notes" let-entry>
+              @if (entry.notes) {
+                <span class="notes-text" [appTooltip]="entry.notes">
+                  {{ entry.notes.substring(0, 30) }}{{ entry.notes.length > 30 ? '...' : '' }}
+                </span>
+              } @else {
+                <span class="no-hours">-</span>
+              }
+            </ng-template>
+          </app-table>
         </div>
       </mat-card-content>
     </mat-card>

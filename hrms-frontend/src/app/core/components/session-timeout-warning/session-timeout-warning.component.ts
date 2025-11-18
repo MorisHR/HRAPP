@@ -1,6 +1,5 @@
 import { Component, inject } from '@angular/core';
 
-import { MatDialogModule } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { SessionManagementService } from '../../services/session-management.service';
@@ -14,7 +13,7 @@ import { SessionManagementService } from '../../services/session-management.serv
 @Component({
   selector: 'app-session-timeout-warning',
   standalone: true,
-  imports: [MatDialogModule, MatButtonModule, MatIconModule],
+  imports: [MatButtonModule, MatIconModule],
   template: `
     <div class="session-warning-modal">
       <div class="modal-header">

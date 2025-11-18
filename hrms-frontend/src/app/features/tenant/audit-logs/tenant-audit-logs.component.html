@@ -18,18 +18,20 @@
   </div>
 
   <!-- Tabs -->
-  <mat-tab-group [(selectedIndex)]="selectedTab">
+  <app-tabs
+    [tabs]="tabs"
+    [activeTab]="activeTab"
+    (tabChange)="onTabChange($event)">
+
     <!-- Audit Logs Tab -->
-    <mat-tab label="Audit Logs">
+    <div *ngIf="activeTab === 'logs'">
       <!-- Filter Panel -->
       <div class="filter-panel">
-        <mat-expansion-panel>
-          <mat-expansion-panel-header>
-            <mat-panel-title>
-              <app-icon name="filter_list"></app-icon>
-              Filters
-            </mat-panel-title>
-          </mat-expansion-panel-header>
+        <app-expansion-panel>
+          <div panel-title>
+            <app-icon name="filter_list"></app-icon>
+            Filters
+          </div>
 
           <div class="filter-content">
             <div class="filter-row">
@@ -67,132 +69,79 @@
               <button mat-raised-button color="primary" (click)="loadAuditLogs()">Apply Filters</button>
             </div>
           </div>
-        </mat-expansion-panel>
+        </app-expansion-panel>
       </div>
 
       <!-- Table -->
       <div class="table-container">
-        @if (!loading && auditLogs.length > 0) {
-          <div class="table-wrapper">
-            <table mat-table [dataSource]="auditLogs" class="audit-logs-table">
-              <!-- Timestamp Column -->
-              <ng-container matColumnDef="performedAt">
-                <th mat-header-cell *matHeaderCellDef (click)="onSortChange('PerformedAt')">
-                  Timestamp
-                  @if (filter.sortBy === 'PerformedAt') {
-                    <app-icon [name]="filter.sortDescending ? 'arrow_downward' : 'arrow_upward'"></app-icon>
-                  }
-                </th>
-                <td mat-cell *matCellDef="let log">
-                  <div class="timestamp">
-                    <div class="date">{{ log.performedAt | date:'short' }}</div>
-                    <div class="relative">{{ getRelativeTime(log.performedAt) }}</div>
-                  </div>
-                </td>
-              </ng-container>
-              <!-- User Column -->
-              <ng-container matColumnDef="userEmail">
-                <th mat-header-cell *matHeaderCellDef>User</th>
-                <td mat-cell *matCellDef="let log">
-                  <div class="user-info">
-                    <div class="user-avatar">{{ log.userEmail?.charAt(0)?.toUpperCase() || 'S' }}</div>
-                    <div class="user-details">
-                      <div class="email">{{ log.userEmail || 'System' }}</div>
-                      @if (log.userRole) {
-                        <div class="role">{{ log.userRole }}</div>
-                      }
-                    </div>
-                  </div>
-                </td>
-              </ng-container>
-              <!-- Action Type Column -->
-              <ng-container matColumnDef="actionType">
-                <th mat-header-cell *matHeaderCellDef>Action</th>
-                <td mat-cell *matCellDef="let log">
-                  <span class="action-badge">{{ log.actionTypeName }}</span>
-                </td>
-              </ng-container>
-              <!-- Category Column -->
-              <ng-container matColumnDef="category">
-                <th mat-header-cell *matHeaderCellDef>Category</th>
-                <td mat-cell *matCellDef="let log">
-                  <span class="category-badge" [ngClass]="getCategoryClass(log.category)">
-                    {{ log.categoryName }}
-                  </span>
-                </td>
-              </ng-container>
-              <!-- Severity Column -->
-              <ng-container matColumnDef="severity">
-                <th mat-header-cell *matHeaderCellDef>Severity</th>
-                <td mat-cell *matCellDef="let log">
-                  <span class="severity-badge" [ngClass]="getSeverityClass(log.severity)">
-                    <app-icon [name]="log.severity === 1 ? 'info' : log.severity === 2 ? 'warning' : 'error'"></app-icon>
-                    {{ log.severityName }}
-                  </span>
-                </td>
-              </ng-container>
-              <!-- Entity Type Column -->
-              <ng-container matColumnDef="entityType">
-                <th mat-header-cell *matHeaderCellDef>Entity</th>
-                <td mat-cell *matCellDef="let log">
-                  {{ log.entityType || '-' }}
-                </td>
-              </ng-container>
-              <!-- Success Column -->
-              <ng-container matColumnDef="success">
-                <th mat-header-cell *matHeaderCellDef>Status</th>
-                <td mat-cell *matCellDef="let log">
-                  <mat-icon [class.success]="log.success" [class.failed]="!log.success">
-                    {{ log.success ? 'check_circle' : 'error' }}
-                  </mat-icon>
-                </td>
-              </ng-container>
-              <!-- Actions Column -->
-              <ng-container matColumnDef="actions">
-                <th mat-header-cell *matHeaderCellDef>Actions</th>
-                <td mat-cell *matCellDef="let log">
-                  <button mat-icon-button (click)="viewDetails(log)" matTooltip="View Details">
-                    <app-icon name="visibility"></app-icon>
-                  </button>
-                </td>
-              </ng-container>
-              <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
-              <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="audit-row"></tr>
-            </table>
-            <!-- Paginator -->
-            <mat-paginator
-              [length]="totalCount"
-              [pageSize]="pageSize"
-              [pageSizeOptions]="pageSizeOptions"
-              [pageIndex]="pageNumber - 1"
-              (page)="onPageChange($event)"
-              showFirstLastButtons>
-            </mat-paginator>
-          </div>
-        }
+        <app-table
+          [columns]="tableColumns"
+          [data]="auditLogs()"
+          [loading]="loading()"
+          [hoverable]="true"
+          [striped]="true">
 
-        <!-- Loading State -->
-        @if (loading) {
-          <div class="loading-state">
-            <mat-spinner diameter="50"></mat-spinner>
-            <p>Loading audit logs...</p>
-          </div>
-        }
+          <!-- Timestamp Template -->
+          <ng-template appTableColumn="performedAt" let-row>
+            <div class="timestamp">
+              <div class="date">{{ row.performedAt | date:'short' }}</div>
+              <div class="relative">{{ getRelativeTime(row.performedAt) }}</div>
+            </div>
+          </ng-template>
 
-        <!-- Empty State -->
-        @if (!loading && auditLogs.length === 0) {
-          <div class="empty-state">
-            <app-icon name="history"></app-icon>
-            <h3>No Audit Logs Found</h3>
-            <p>Try adjusting your filters or date range</p>
-          </div>
-        }
+          <!-- User Template -->
+          <ng-template appTableColumn="userEmail" let-row>
+            <div class="user-info">
+              <div class="user-avatar">{{ row.userEmail?.charAt(0)?.toUpperCase() || 'S' }}</div>
+              <div class="user-details">
+                <div class="email">{{ row.userEmail || 'System' }}</div>
+                @if (row.userRole) {
+                  <div class="role">{{ row.userRole }}</div>
+                }
+              </div>
+            </div>
+          </ng-template>
+
+          <!-- Action Template -->
+          <ng-template appTableColumn="actionType" let-row>
+            <span class="action-badge">{{ row.actionTypeName }}</span>
+          </ng-template>
+
+          <!-- Category Template -->
+          <ng-template appTableColumn="category" let-row>
+            <span class="category-badge" [ngClass]="getCategoryClass(row.category)">
+              {{ row.categoryName }}
+            </span>
+          </ng-template>
+
+          <!-- Severity Template -->
+          <ng-template appTableColumn="severity" let-row>
+            <span class="severity-badge" [ngClass]="getSeverityClass(row.severity)">
+              <app-icon [name]="row.severity === 1 ? 'info' : row.severity === 2 ? 'warning' : 'error'"></app-icon>
+              {{ row.severityName }}
+            </span>
+          </ng-template>
+
+          <!-- Success Template -->
+          <ng-template appTableColumn="success" let-row>
+            <mat-icon [class.success]="row.success" [class.failed]="!row.success">
+              {{ row.success ? 'check_circle' : 'error' }}
+            </mat-icon>
+          </ng-template>
+
+          <!-- Actions Template -->
+          <ng-template appTableColumn="actions" let-row>
+            <button mat-icon-button (click)="viewDetails(row)" appTooltip="View Details">
+              <app-icon name="visibility"></app-icon>
+            </button>
+          </ng-template>
+        </app-table>
       </div>
-    </mat-tab>
+    </div>
 
     <!-- Statistics Tab -->
-    <mat-tab label="Statistics">
-      @if (!loadingStats && statistics) {
+    <div *ngIf="activeTab === 'statistics'">
+      @if (!loadingStats() && statistics()) {
         <div class="statistics-container">
           <div class="stats-grid">
             <!-- Summary Cards -->
@@ -202,7 +151,7 @@
                 <mat-card-title>Total Actions</mat-card-title>
               </mat-card-header>
               <mat-card-content>
-                <div class="stat-value">{{ statistics.totalActions | number }}</div>
+                <div class="stat-value">{{ statistics()!.totalActions | number }}</div>
                 <div class="stat-label">All time</div>
               </mat-card-content>
             </mat-card>
@@ -212,7 +161,7 @@
                 <mat-card-title>Today</mat-card-title>
               </mat-card-header>
               <mat-card-content>
-                <div class="stat-value">{{ statistics.actionsToday | number }}</div>
+                <div class="stat-value">{{ statistics()!.actionsToday | number }}</div>
                 <div class="stat-label">Actions</div>
               </mat-card-content>
             </mat-card>
@@ -222,7 +171,7 @@
                 <mat-card-title>Failed Logins</mat-card-title>
               </mat-card-header>
               <mat-card-content>
-                <div class="stat-value">{{ statistics.failedLogins | number }}</div>
+                <div class="stat-value">{{ statistics()!.failedLogins | number }}</div>
                 <div class="stat-label">Security alerts</div>
               </mat-card-content>
             </mat-card>
@@ -232,7 +181,7 @@
                 <mat-card-title>Critical Events</mat-card-title>
               </mat-card-header>
               <mat-card-content>
-                <div class="stat-value">{{ statistics.criticalEvents | number }}</div>
+                <div class="stat-value">{{ statistics()!.criticalEvents | number }}</div>
                 <div class="stat-label">Requires attention</div>
               </mat-card-content>
             </mat-card>
@@ -243,9 +192,9 @@
               <mat-card-title>Most Active Users</mat-card-title>
             </mat-card-header>
             <mat-card-content>
-              @if (statistics.mostActiveUsers.length > 0) {
+              @if (statistics()!.mostActiveUsers.length > 0) {
                 <div class="user-list">
-                  @for (user of statistics.mostActiveUsers; track user) {
+                  @for (user of statistics()!.mostActiveUsers; track user) {
                     <div class="user-item">
                       <div class="user-avatar">{{ user.userEmail.charAt(0).toUpperCase() }}</div>
                       <div class="user-info">
@@ -257,7 +206,7 @@
                   }
                 </div>
               }
-              @if (statistics.mostActiveUsers.length === 0) {
+              @if (statistics()!.mostActiveUsers.length === 0) {
                 <div class="no-data">
                   No activity data available
                 </div>
@@ -268,12 +217,12 @@
       }
 
       <!-- Loading State -->
-      @if (loadingStats) {
+      @if (loadingStats()) {
         <div class="loading-state">
-          <mat-spinner diameter="50"></mat-spinner>
+          <app-progress-spinner size="large" color="primary"></app-progress-spinner>
           <p>Loading statistics...</p>
         </div>
       }
-    </mat-tab>
-  </mat-tab-group>
+    </div>
+  </app-tabs>
 </div>

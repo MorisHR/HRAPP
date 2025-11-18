@@ -2,17 +2,14 @@ import { Component, OnInit, signal, computed, inject } from '@angular/core';
 
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { MatTableModule } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
-import { MatDialog, MatDialogModule } from '@angular/material/dialog';
-import { MatChipsModule } from '@angular/material/chips';
-import { MatTooltipModule } from '@angular/material/tooltip';
+import { UiModule } from '../../../shared/ui/ui.module';
+import { ToastService, TableComponent, TableColumn, TableColumnDirective, TooltipDirective } from '../../../shared/ui';
+import { Chip } from '@app/shared/ui';
 import { MatCardModule } from '@angular/material/card';
 import { LocationService } from '../../../core/services/location.service';
 import { Location, LocationType, LocationFilter } from '../../../core/models/location';
@@ -36,18 +33,17 @@ import { MAURITIUS_DISTRICTS, LOCATION_TYPES } from '../../../core/constants/mau
   standalone: true,
   imports: [
     FormsModule,
-    MatTableModule,
     MatButtonModule,
     MatIconModule,
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
-    MatProgressSpinnerModule,
-    MatSnackBarModule,
-    MatDialogModule,
-    MatChipsModule,
-    MatTooltipModule,
-    MatCardModule
+    UiModule,
+    Chip,
+    TooltipDirective,
+    MatCardModule,
+    TableComponent,
+    TableColumnDirective
 ],
   template: `
     <div class="location-list-container">
@@ -138,7 +134,7 @@ import { MAURITIUS_DISTRICTS, LOCATION_TYPES } from '../../../core/constants/mau
         <!-- Loading State -->
         @if (loading()) {
           <div class="loading-container">
-            <mat-spinner diameter="50"></mat-spinner>
+            <app-progress-spinner size="large" color="primary"></app-progress-spinner>
             <p>Loading locations...</p>
           </div>
         }
@@ -176,96 +172,66 @@ import { MAURITIUS_DISTRICTS, LOCATION_TYPES } from '../../../core/constants/mau
     
             <!-- Table -->
             <div class="table-container">
-              <table mat-table [dataSource]="filteredLocations()" class="locations-table">
-                <!-- Name Column -->
-                <ng-container matColumnDef="name">
-                  <th mat-header-cell *matHeaderCellDef>Name</th>
-                  <td mat-cell *matCellDef="let location">
-                    <strong>{{ location.name }}</strong>
-                  </td>
-                </ng-container>
-    
-                <!-- District Column -->
-                <ng-container matColumnDef="district">
-                  <th mat-header-cell *matHeaderCellDef>District</th>
-                  <td mat-cell *matCellDef="let location">
-                    {{ location.district }}
-                  </td>
-                </ng-container>
-    
-                <!-- Type Column -->
-                <ng-container matColumnDef="type">
-                  <th mat-header-cell *matHeaderCellDef>Type</th>
-                  <td mat-cell *matCellDef="let location">
-                    <mat-chip [style.background-color]="getTypeColor(location.type)">
-                      {{ location.type }}
-                    </mat-chip>
-                  </td>
-                </ng-container>
-    
-                <!-- Region Column -->
-                <ng-container matColumnDef="region">
-                  <th mat-header-cell *matHeaderCellDef>Region</th>
-                  <td mat-cell *matCellDef="let location">
-                    {{ location.region || '-' }}
-                  </td>
-                </ng-container>
-    
-                <!-- Postal Code Column -->
-                <ng-container matColumnDef="postalCode">
-                  <th mat-header-cell *matHeaderCellDef>Postal Code</th>
-                  <td mat-cell *matCellDef="let location">
-                    {{ location.postalCode || '-' }}
-                  </td>
-                </ng-container>
-    
-                <!-- Status Column -->
-                <ng-container matColumnDef="status">
-                  <th mat-header-cell *matHeaderCellDef>Status</th>
-                  <td mat-cell *matCellDef="let location">
-                    <mat-chip [color]="location.isActive ? 'primary' : 'warn'">
-                      {{ location.isActive ? 'Active' : 'Inactive' }}
-                    </mat-chip>
-                  </td>
-                </ng-container>
-    
-                <!-- Actions Column -->
-                <ng-container matColumnDef="actions">
-                  <th mat-header-cell *matHeaderCellDef>Actions</th>
-                  <td mat-cell *matCellDef="let location">
-                    <div class="action-buttons">
-                      <button
-                        mat-icon-button
-                        color="primary"
-                        (click)="editLocation(location)"
-                        matTooltip="Edit location"
-                        >
-                        <mat-icon>edit</mat-icon>
-                      </button>
-                      <button
-                        mat-icon-button
-                        color="warn"
-                        (click)="deleteLocation(location)"
-                        matTooltip="Delete location"
-                        >
-                        <mat-icon>delete</mat-icon>
-                      </button>
-                    </div>
-                  </td>
-                </ng-container>
-    
-                <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-                <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
-    
-                <!-- No Data Row -->
-                <tr class="mat-row" *matNoDataRow>
-                  <td class="mat-cell no-data" [attr.colspan]="displayedColumns.length">
-                    <mat-icon>search_off</mat-icon>
-                    <p>No locations found</p>
-                    <p class="hint">Try adjusting your filters or add a new location</p>
-                  </td>
-                </tr>
-              </table>
+              <app-table
+                [data]="filteredLocations()"
+                [columns]="columns"
+                [loading]="loading()"
+                [hoverable]="true">
+
+                <!-- Custom template for name column -->
+                <ng-template appTableColumn="name" let-row>
+                  <strong>{{ row.name }}</strong>
+                </ng-template>
+
+                <!-- Custom template for type column -->
+                <ng-template appTableColumn="type" let-row>
+                  <app-chip [label]="row.type" [color]="'neutral'" [style.background-color]="getTypeColor(row.type)" />
+                </ng-template>
+
+                <!-- Custom template for region column -->
+                <ng-template appTableColumn="region" let-row>
+                  {{ row.region || '-' }}
+                </ng-template>
+
+                <!-- Custom template for postalCode column -->
+                <ng-template appTableColumn="postalCode" let-row>
+                  {{ row.postalCode || '-' }}
+                </ng-template>
+
+                <!-- Custom template for status column -->
+                <ng-template appTableColumn="status" let-row>
+                  <app-chip [label]="row.isActive ? 'Active' : 'Inactive'" [color]="row.isActive ? 'success' : 'error'" />
+                </ng-template>
+
+                <!-- Custom template for actions column -->
+                <ng-template appTableColumn="actions" let-row>
+                  <div class="action-buttons">
+                    <button
+                      mat-icon-button
+                      color="primary"
+                      (click)="editLocation(row)"
+                      appTooltip="Edit location">
+                      <mat-icon>edit</mat-icon>
+                    </button>
+                    <button
+                      mat-icon-button
+                      color="warn"
+                      (click)="deleteLocation(row)"
+                      appTooltip="Delete location">
+                      <mat-icon>delete</mat-icon>
+                    </button>
+                  </div>
+                </ng-template>
+              </app-table>
+
+              <!-- Empty State -->
+              @if (!loading() && filteredLocations().length === 0) {
+                <div class="no-data">
+                  <mat-icon>search_off</mat-icon>
+                  <p>No locations found</p>
+                  <p class="hint">Try adjusting your filters or add a new location</p>
+                </div>
+              }
             </div>
           </mat-card>
         }
@@ -426,10 +392,8 @@ import { MAURITIUS_DISTRICTS, LOCATION_TYPES } from '../../../core/constants/mau
       color: #999;
     }
 
-    mat-chip {
+    app-chip {
       font-size: 12px;
-      min-height: 24px;
-      padding: 4px 12px;
     }
 
     @media (max-width: 768px) {
@@ -459,11 +423,18 @@ import { MAURITIUS_DISTRICTS, LOCATION_TYPES } from '../../../core/constants/mau
 export class LocationListComponent implements OnInit {
   private locationService = inject(LocationService);
   private router = inject(Router);
-  private snackBar = inject(MatSnackBar);
-  private dialog = inject(MatDialog);
+  private toastService = inject(ToastService);
 
   // Table columns
-  displayedColumns = ['name', 'district', 'type', 'region', 'postalCode', 'status', 'actions'];
+  columns: TableColumn[] = [
+    { key: 'name', label: 'Name' },
+    { key: 'district', label: 'District' },
+    { key: 'type', label: 'Type' },
+    { key: 'region', label: 'Region' },
+    { key: 'postalCode', label: 'Postal Code' },
+    { key: 'status', label: 'Status' },
+    { key: 'actions', label: 'Actions' }
+  ];
 
   // Constants
   districts = MAURITIUS_DISTRICTS;
@@ -509,10 +480,7 @@ export class LocationListComponent implements OnInit {
       error: (error) => {
         this.errorMessage.set(error.message || 'Failed to load locations');
         this.loading.set(false);
-        this.snackBar.open('Failed to load locations', 'Close', {
-          duration: 5000,
-          panelClass: ['error-snackbar']
-        });
+        this.toastService.error('Failed to load locations', 5000);
       }
     });
   }
@@ -582,17 +550,13 @@ export class LocationListComponent implements OnInit {
 
     this.locationService.deleteLocation(location.id).subscribe({
       next: () => {
-        this.snackBar.open('Location deleted successfully', 'Close', {
-          duration: 3000,
-          panelClass: ['success-snackbar']
-        });
+        this.toastService.success('Location deleted successfully', 3000);
         this.loadLocations();
       },
       error: (error) => {
-        this.snackBar.open(
+        this.toastService.error(
           error.message || 'Failed to delete location',
-          'Close',
-          { duration: 5000, panelClass: ['error-snackbar'] }
+          5000
         );
       }
     });
@@ -614,19 +578,17 @@ export class LocationListComponent implements OnInit {
 
     this.locationService.seedMauritiusLocations().subscribe({
       next: (response) => {
-        this.snackBar.open(
+        this.toastService.success(
           `Successfully seeded ${response.data.totalSeeded} locations across ${response.data.districts.length} districts`,
-          'Close',
-          { duration: 5000, panelClass: ['success-snackbar'] }
+          5000
         );
         this.loadLocations();
       },
       error: (error) => {
         this.loading.set(false);
-        this.snackBar.open(
+        this.toastService.error(
           error.message || 'Failed to seed locations',
-          'Close',
-          { duration: 5000, panelClass: ['error-snackbar'] }
+          5000
         );
       }
     });

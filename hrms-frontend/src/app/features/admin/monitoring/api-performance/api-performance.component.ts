@@ -10,6 +10,7 @@ import { ButtonComponent } from '../../../../shared/ui/components/button/button'
 import { SelectComponent, SelectOption } from '../../../../shared/ui/components/select/select';
 import { Paginator, PageEvent } from '../../../../shared/ui/components/paginator/paginator';
 import { Datepicker } from '../../../../shared/ui/components/datepicker/datepicker';
+import { ChipColor } from '../../../../shared/ui';
 
 // Services
 import { MonitoringService } from '../../../../core/services/monitoring.service';
@@ -171,23 +172,23 @@ export class ApiPerformanceComponent implements OnInit {
     alert('CSV export functionality coming soon!');
   }
 
-  getStatusColor(status: string): 'success' | 'warning' | 'error' {
+  getStatusColor(status: string): ChipColor {
     switch (status) {
       case 'Excellent': return 'success';
       case 'Good': return 'success';
       case 'Warning': return 'warning';
       case 'Critical': return 'error';
-      default: return 'warning';
+      default: return 'neutral';
     }
   }
 
-  getMethodColor(method: string): 'primary' | 'success' | 'warning' | 'error' {
+  getMethodColor(method: string): ChipColor {
     switch (method) {
       case 'GET': return 'primary';
       case 'POST': return 'success';
       case 'PUT': return 'warning';
       case 'DELETE': return 'error';
-      default: return 'primary';
+      default: return 'neutral';
     }
   }
 

@@ -133,8 +133,8 @@ export type { ProgressBarColor, ProgressBarHeight } from './components/progress-
 export { ProgressSpinner } from './components/progress-spinner/progress-spinner';
 export type { ProgressSpinnerColor, ProgressSpinnerSize } from './components/progress-spinner/progress-spinner';
 
-// Export table component and types
-export { TableComponent } from './components/table/table';
+// Export table component, directive, and types
+export { TableComponent, TableColumnDirective } from './components/table/table';
 export type { TableColumn, SortEvent } from './components/table/table';
 
 // Export radio components and types

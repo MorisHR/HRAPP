@@ -5,9 +5,8 @@ import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatToolbarModule } from '@angular/material/toolbar';
-import { MatChipsModule } from '@angular/material/chips';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatDividerModule } from '@angular/material/divider';
+import { UiModule } from '../../../shared/ui/ui.module';
+import { Divider, Chip, ChipColor } from '../../../shared/ui';
 import { TenantService } from '../../../core/services/tenant.service';
 import { Tenant, TenantStatus } from '../../../core/models/tenant.model';
 
@@ -20,9 +19,9 @@ import { Tenant, TenantStatus } from '../../../core/models/tenant.model';
     MatButtonModule,
     MatIconModule,
     MatToolbarModule,
-    MatChipsModule,
-    MatProgressSpinnerModule,
-    MatDividerModule
+    UiModule,
+    Divider,
+    Chip
 ],
   template: `
     <div class="tenant-detail-container">
@@ -43,7 +42,7 @@ import { Tenant, TenantStatus } from '../../../core/models/tenant.model';
       <div class="content">
         @if (loading()) {
           <div class="loading-container">
-            <mat-spinner></mat-spinner>
+            <app-progress-spinner size="medium" color="primary"></app-progress-spinner>
             <p>Loading tenant details...</p>
           </div>
         } @else if (error()) {
@@ -62,9 +61,11 @@ import { Tenant, TenantStatus } from '../../../core/models/tenant.model';
             <mat-card-header>
               <mat-card-title>{{ tenant()!.companyName }}</mat-card-title>
               <mat-card-subtitle>
-                <mat-chip [color]="getStatusColor(tenant()!.status)">
-                  {{ tenant()!.status }}
-                </mat-chip>
+                <app-chip
+                  [label]="tenant()!.status"
+                  [color]="getStatusColor(tenant()!.status)"
+                  [variant]="'filled'">
+                </app-chip>
               </mat-card-subtitle>
             </mat-card-header>
 
@@ -73,7 +74,7 @@ import { Tenant, TenantStatus } from '../../../core/models/tenant.model';
                 <!-- Company Information -->
                 <div class="info-section">
                   <h3>Company Information</h3>
-                  <mat-divider></mat-divider>
+                  <app-divider />
 
                   <div class="info-row">
                     <span class="label">Company Name:</span>
@@ -104,14 +105,16 @@ import { Tenant, TenantStatus } from '../../../core/models/tenant.model';
                 <!-- Subscription Details -->
                 <div class="info-section">
                   <h3>Subscription Details</h3>
-                  <mat-divider></mat-divider>
+                  <app-divider />
 
                   <div class="info-row">
                     <span class="label">Status:</span>
                     <span class="value">
-                      <mat-chip [color]="getStatusColor(tenant()!.status)">
-                        {{ tenant()!.status }}
-                      </mat-chip>
+                      <app-chip
+                        [label]="tenant()!.status"
+                        [color]="getStatusColor(tenant()!.status)"
+                        [variant]="'filled'">
+                      </app-chip>
                     </span>
                   </div>
 
@@ -134,7 +137,7 @@ import { Tenant, TenantStatus } from '../../../core/models/tenant.model';
                 <!-- Timestamps -->
                 <div class="info-section">
                   <h3>System Information</h3>
-                  <mat-divider></mat-divider>
+                  <app-divider />
 
                   <div class="info-row">
                     <span class="label">Tenant ID:</span>
@@ -294,16 +297,16 @@ export class TenantDetailComponent implements OnInit {
     });
   }
 
-  getStatusColor(status: TenantStatus): string {
+  getStatusColor(status: TenantStatus): ChipColor {
     switch (status) {
       case TenantStatus.Active:
-        return 'primary';
+        return 'success';
       case TenantStatus.Trial:
-        return 'accent';
+        return 'warning';
       case TenantStatus.Suspended:
-        return 'warn';
+        return 'error';
       default:
-        return '';
+        return 'neutral';
     }
   }
 

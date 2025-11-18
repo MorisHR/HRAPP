@@ -1,12 +1,10 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
 
-import { MAT_DIALOG_DATA, MatDialogRef, MatDialogModule } from '@angular/material/dialog';
+import { DialogRef, ChipColor } from '../../../shared/ui';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatChipsModule } from '@angular/material/chips';
-import { MatDividerModule } from '@angular/material/divider';
-import { MatListModule } from '@angular/material/list';
+import { UiModule } from '../../../shared/ui/ui.module';
+import { Divider, Chip, List, ListItem } from '../../../shared/ui';
 
 import { SubscriptionService } from '../../../services/subscription.service';
 import { SubscriptionPayment, TenantSubscriptionHistory } from '../../../models/subscription.model';
@@ -20,27 +18,27 @@ export interface PaymentDetailDialogData {
   selector: 'app-payment-detail-dialog',
   standalone: true,
   imports: [
-    MatDialogModule,
     MatButtonModule,
     MatIconModule,
-    MatProgressSpinnerModule,
-    MatChipsModule,
-    MatDividerModule,
-    MatListModule
+    UiModule,
+    Divider,
+    List,
+    ListItem,
+    Chip
 ],
   template: `
     <div class="payment-detail-dialog">
-      <div mat-dialog-title>
+      <div class="dialog-title">
         <h2>Payment Details</h2>
-        <button mat-icon-button mat-dialog-close>
+        <button mat-icon-button (click)="dialogRef.close()">
           <mat-icon>close</mat-icon>
         </button>
       </div>
 
-      <mat-dialog-content>
+      <div class="dialog-content">
         @if (loading()) {
           <div class="loading-state">
-            <mat-spinner diameter="40"></mat-spinner>
+            <app-progress-spinner size="medium" color="primary"></app-progress-spinner>
             <p>Loading payment details...</p>
           </div>
         }
@@ -57,88 +55,108 @@ export interface PaymentDetailDialogData {
             <!-- Current Payment Info -->
             <section class="detail-section">
               <h3>Current Payment</h3>
-              <mat-list>
-                <mat-list-item>
-                  <span matListItemTitle>Payment ID</span>
-                  <span matListItemLine>{{ payment()!.id }}</span>
-                </mat-list-item>
-                <mat-list-item>
-                  <span matListItemTitle>Tenant</span>
-                  <span matListItemLine>{{ payment()!.tenantName }} ({{ payment()!.tenantSubdomain }})</span>
-                </mat-list-item>
-                <mat-list-item>
-                  <span matListItemTitle>Amount</span>
-                  <span matListItemLine class="amount">{{ formatCurrency(payment()!.amount) }}</span>
-                </mat-list-item>
-                <mat-list-item>
-                  <span matListItemTitle>Due Date</span>
-                  <span matListItemLine>{{ formatDate(payment()!.dueDate) }}</span>
-                </mat-list-item>
-                <mat-list-item>
-                  <span matListItemTitle>Status</span>
-                  <span matListItemLine>
-                    <mat-chip [color]="getStatusColor(payment()!.status)">
-                      {{ payment()!.status }}
-                    </mat-chip>
-                  </span>
-                </mat-list-item>
-                <mat-list-item>
-                  <span matListItemTitle>Subscription Tier</span>
-                  <span matListItemLine>
-                    <mat-chip [color]="getTierColor(payment()!.subscriptionTier)">
-                      {{ payment()!.subscriptionTier }}
-                    </mat-chip>
-                  </span>
-                </mat-list-item>
+              <app-list>
+                <app-list-item>
+                  <div class="list-item-content">
+                    <span class="item-title">Payment ID</span>
+                    <span class="item-line">{{ payment()!.id }}</span>
+                  </div>
+                </app-list-item>
+                <app-list-item>
+                  <div class="list-item-content">
+                    <span class="item-title">Tenant</span>
+                    <span class="item-line">{{ payment()!.tenantName }} ({{ payment()!.tenantSubdomain }})</span>
+                  </div>
+                </app-list-item>
+                <app-list-item>
+                  <div class="list-item-content">
+                    <span class="item-title">Amount</span>
+                    <span class="item-line amount">{{ formatCurrency(payment()!.amount) }}</span>
+                  </div>
+                </app-list-item>
+                <app-list-item>
+                  <div class="list-item-content">
+                    <span class="item-title">Due Date</span>
+                    <span class="item-line">{{ formatDate(payment()!.dueDate) }}</span>
+                  </div>
+                </app-list-item>
+                <app-list-item>
+                  <div class="list-item-content">
+                    <span class="item-title">Status</span>
+                    <span class="item-line">
+                      <app-chip [label]="payment()!.status" [color]="getStatusColor(payment()!.status)" />
+                    </span>
+                  </div>
+                </app-list-item>
+                <app-list-item>
+                  <div class="list-item-content">
+                    <span class="item-title">Subscription Tier</span>
+                    <span class="item-line">
+                      <app-chip [label]="payment()!.subscriptionTier" [color]="getTierColor(payment()!.subscriptionTier)" />
+                    </span>
+                  </div>
+                </app-list-item>
                 @if (payment()!.paymentDate) {
-                  <mat-list-item>
-                    <span matListItemTitle>Payment Date</span>
-                    <span matListItemLine>{{ formatDate(payment()!.paymentDate!) }}</span>
-                  </mat-list-item>
+                  <app-list-item>
+                    <div class="list-item-content">
+                      <span class="item-title">Payment Date</span>
+                      <span class="item-line">{{ formatDate(payment()!.paymentDate!) }}</span>
+                    </div>
+                  </app-list-item>
                 }
                 @if (payment()!.reminderSentDate) {
-                  <mat-list-item>
-                    <span matListItemTitle>Last Reminder Sent</span>
-                    <span matListItemLine>{{ formatDate(payment()!.reminderSentDate!) }}</span>
-                  </mat-list-item>
+                  <app-list-item>
+                    <div class="list-item-content">
+                      <span class="item-title">Last Reminder Sent</span>
+                      <span class="item-line">{{ formatDate(payment()!.reminderSentDate!) }}</span>
+                    </div>
+                  </app-list-item>
                 }
-              </mat-list>
+              </app-list>
             </section>
 
-            <mat-divider></mat-divider>
+            <app-divider />
 
             <!-- Tenant Subscription Summary -->
             <section class="detail-section">
               <h3>Subscription Summary</h3>
-              <mat-list>
-                <mat-list-item>
-                  <span matListItemTitle>Current Tier</span>
-                  <span matListItemLine>
-                    <mat-chip [color]="getTierColor(history()!.currentTier)">
-                      {{ history()!.currentTier }}
-                    </mat-chip>
-                  </span>
-                </mat-list-item>
-                <mat-list-item>
-                  <span matListItemTitle>Subscription Start</span>
-                  <span matListItemLine>{{ formatDate(history()!.subscriptionStartDate) }}</span>
-                </mat-list-item>
-                <mat-list-item>
-                  <span matListItemTitle>Total Payments</span>
-                  <span matListItemLine>{{ history()!.payments.length }}</span>
-                </mat-list-item>
-                <mat-list-item>
-                  <span matListItemTitle>Total Paid</span>
-                  <span matListItemLine class="amount success">{{ formatCurrency(history()!.totalPaid) }}</span>
-                </mat-list-item>
-                <mat-list-item>
-                  <span matListItemTitle>Total Overdue</span>
-                  <span matListItemLine class="amount error">{{ formatCurrency(history()!.totalOverdue) }}</span>
-                </mat-list-item>
-              </mat-list>
+              <app-list>
+                <app-list-item>
+                  <div class="list-item-content">
+                    <span class="item-title">Current Tier</span>
+                    <span class="item-line">
+                      <app-chip [label]="history()!.currentTier" [color]="getTierColor(history()!.currentTier)" />
+                    </span>
+                  </div>
+                </app-list-item>
+                <app-list-item>
+                  <div class="list-item-content">
+                    <span class="item-title">Subscription Start</span>
+                    <span class="item-line">{{ formatDate(history()!.subscriptionStartDate) }}</span>
+                  </div>
+                </app-list-item>
+                <app-list-item>
+                  <div class="list-item-content">
+                    <span class="item-title">Total Payments</span>
+                    <span class="item-line">{{ history()!.payments.length }}</span>
+                  </div>
+                </app-list-item>
+                <app-list-item>
+                  <div class="list-item-content">
+                    <span class="item-title">Total Paid</span>
+                    <span class="item-line amount success">{{ formatCurrency(history()!.totalPaid) }}</span>
+                  </div>
+                </app-list-item>
+                <app-list-item>
+                  <div class="list-item-content">
+                    <span class="item-title">Total Overdue</span>
+                    <span class="item-line amount error">{{ formatCurrency(history()!.totalOverdue) }}</span>
+                  </div>
+                </app-list-item>
+              </app-list>
             </section>
 
-            <mat-divider></mat-divider>
+            <app-divider />
 
             <!-- Payment History -->
             <section class="detail-section">
@@ -154,9 +172,7 @@ export interface PaymentDetailDialogData {
                           <mat-icon>event</mat-icon>
                           <span>{{ formatDate(historicalPayment.dueDate) }}</span>
                         </div>
-                        <mat-chip [color]="getStatusColor(historicalPayment.status)" class="history-status">
-                          {{ historicalPayment.status }}
-                        </mat-chip>
+                        <app-chip [label]="historicalPayment.status" [color]="getStatusColor(historicalPayment.status)" class="history-status" />
                       </div>
                       <div class="history-details">
                         <span class="history-amount">{{ formatCurrency(historicalPayment.amount) }}</span>
@@ -166,7 +182,7 @@ export interface PaymentDetailDialogData {
                       </div>
                       @if (historicalPayment.id === payment()!.id) {
                         <div class="current-badge">
-                          <mat-chip color="accent">Current</mat-chip>
+                          <app-chip label="Current" color="primary" />
                         </div>
                       }
                     </div>
@@ -176,10 +192,10 @@ export interface PaymentDetailDialogData {
             </section>
           </div>
         }
-      </mat-dialog-content>
+      </div>
 
-      <mat-dialog-actions align="end">
-        <button mat-button mat-dialog-close>Close</button>
+      <div class="dialog-actions">
+        <button mat-button (click)="dialogRef.close()">Close</button>
         @if (payment() && payment()!.status !== 'Paid') {
           <button mat-raised-button color="primary" (click)="recordPayment()">
             <mat-icon>payment</mat-icon>
@@ -190,7 +206,7 @@ export interface PaymentDetailDialogData {
             Send Reminder
           </button>
         }
-      </mat-dialog-actions>
+      </div>
     </div>
   `,
   styles: [`
@@ -198,7 +214,7 @@ export interface PaymentDetailDialogData {
       width: 600px;
       max-width: 90vw;
 
-      [mat-dialog-title] {
+      .dialog-title {
         display: flex;
         justify-content: space-between;
         align-items: center;
@@ -213,7 +229,7 @@ export interface PaymentDetailDialogData {
         }
       }
 
-      mat-dialog-content {
+      .dialog-content {
         padding: 0;
         max-height: 70vh;
         overflow-y: auto;
@@ -250,35 +266,35 @@ export interface PaymentDetailDialogData {
               color: rgba(0, 0, 0, 0.87);
             }
 
-            mat-list {
+            app-list {
               padding: 0;
+            }
 
-              mat-list-item {
-                height: auto;
-                min-height: 48px;
-                padding: 8px 0;
+            .list-item-content {
+              display: flex;
+              flex-direction: column;
+              width: 100%;
 
-                [matListItemTitle] {
-                  font-weight: 500;
-                  color: rgba(0, 0, 0, 0.6);
-                  font-size: 0.875rem;
-                }
+              .item-title {
+                font-weight: 500;
+                color: rgba(0, 0, 0, 0.6);
+                font-size: 0.875rem;
+              }
 
-                [matListItemLine] {
-                  font-size: 0.875rem;
-                  margin-top: 4px;
+              .item-line {
+                font-size: 0.875rem;
+                margin-top: 4px;
 
-                  &.amount {
-                    font-weight: 600;
-                    font-size: 1rem;
+                &.amount {
+                  font-weight: 600;
+                  font-size: 1rem;
 
-                    &.success {
-                      color: #4caf50;
-                    }
+                  &.success {
+                    color: #4caf50;
+                  }
 
-                    &.error {
-                      color: #f44336;
-                    }
+                  &.error {
+                    color: #f44336;
                   }
                 }
               }
@@ -362,10 +378,12 @@ export interface PaymentDetailDialogData {
         }
       }
 
-      mat-dialog-actions {
+      .dialog-actions {
         padding: 16px 24px;
         border-top: 1px solid rgba(0, 0, 0, 0.12);
         gap: 8px;
+        display: flex;
+        justify-content: flex-end;
 
         button {
           mat-icon {
@@ -378,11 +396,11 @@ export interface PaymentDetailDialogData {
     // Dark mode
     :host-context(.dark-theme) {
       .payment-detail-dialog {
-        [mat-dialog-title] {
+        .dialog-title {
           border-bottom-color: rgba(255, 255, 255, 0.12);
         }
 
-        mat-dialog-content {
+        .dialog-content {
           .error-state p,
           .loading-state p {
             color: rgba(255, 255, 255, 0.7);
@@ -394,8 +412,8 @@ export interface PaymentDetailDialogData {
                 color: rgba(255, 255, 255, 0.87);
               }
 
-              mat-list-item {
-                [matListItemTitle] {
+              .list-item-content {
+                .item-title {
                   color: rgba(255, 255, 255, 0.7);
                 }
               }
@@ -426,7 +444,7 @@ export interface PaymentDetailDialogData {
           }
         }
 
-        mat-dialog-actions {
+        .dialog-actions {
           border-top-color: rgba(255, 255, 255, 0.12);
         }
       }
@@ -435,8 +453,15 @@ export interface PaymentDetailDialogData {
 })
 export class PaymentDetailDialogComponent implements OnInit {
   private subscriptionService = inject(SubscriptionService);
-  private dialogRef = inject(MatDialogRef<PaymentDetailDialogComponent>);
-  data = inject<PaymentDetailDialogData>(MAT_DIALOG_DATA);
+  public dialogRef = inject(DialogRef<PaymentDetailDialogComponent, void>);
+
+  get dialogData(): PaymentDetailDialogData {
+    return this.dialogRef.data;
+  }
+
+  get data(): PaymentDetailDialogData {
+    return this.dialogData;
+  }
 
   loading = signal(true);
   error = signal<string | null>(null);
@@ -475,12 +500,12 @@ export class PaymentDetailDialogComponent implements OnInit {
     return this.subscriptionService.formatDate(date);
   }
 
-  getStatusColor(status: string): string {
-    return this.subscriptionService.getStatusColor(status as any);
+  getStatusColor(status: string): ChipColor {
+    return this.subscriptionService.getStatusChipColor(status as any);
   }
 
-  getTierColor(tier: string): string {
-    return this.subscriptionService.getTierColor(tier as any);
+  getTierColor(tier: string): ChipColor {
+    return this.subscriptionService.getTierChipColor(tier as any);
   }
 
   recordPayment(): void {

@@ -11,7 +11,7 @@
   <!-- Loading State -->
   @if (loading()) {
     <div class="loading-container">
-      <mat-spinner></mat-spinner>
+      <app-progress-spinner size="medium" color="primary"></app-progress-spinner>
       <p>Loading subscription data...</p>
     </div>
   }
@@ -135,16 +135,13 @@
 
     <!-- Tabs for Different Views -->
     <mat-card class="tabs-card">
-      <mat-tab-group>
+      <app-tabs
+        [tabs]="tabs()"
+        [activeTab]="activeTab"
+        (tabChange)="onTabChange($event)">
+
         <!-- Overdue Payments Tab -->
-        <mat-tab>
-          <ng-template mat-tab-label>
-            <mat-icon class="tab-icon">warning</mat-icon>
-            Overdue Payments
-            @if (overduePayments().length > 0) {
-              <span class="badge-count" [matBadge]="overduePayments().length" matBadgeColor="warn"></span>
-            }
-          </ng-template>
+        <div *ngIf="activeTab === 'overdue'">
 
           @if (overduePayments().length === 0) {
             <div class="empty-state">
@@ -153,96 +150,75 @@
             </div>
           } @else {
             <div class="table-container">
-              <table mat-table [dataSource]="overduePayments()" class="payments-table">
-                <ng-container matColumnDef="tenant">
-                  <th mat-header-cell *matHeaderCellDef>Tenant</th>
-                  <td mat-cell *matCellDef="let payment">
-                    <div class="tenant-cell">
-                      <strong>{{ payment.tenantName }}</strong>
-                      <small>{{ payment.tenantSubdomain }}</small>
-                    </div>
-                  </td>
-                </ng-container>
+              <app-table
+                [data]="overduePayments()"
+                [columns]="paymentColumns"
+                [loading]="loading()"
+                [hoverable]="true">
 
-                <ng-container matColumnDef="amount">
-                  <th mat-header-cell *matHeaderCellDef>Amount</th>
-                  <td mat-cell *matCellDef="let payment">
-                    {{ formatCurrency(payment.amount) }}
-                  </td>
-                </ng-container>
+                <!-- Custom template for tenant column -->
+                <ng-template appTableColumn="tenant" let-row>
+                  <div class="tenant-cell">
+                    <strong>{{ row.tenantName }}</strong>
+                    <small>{{ row.tenantSubdomain }}</small>
+                  </div>
+                </ng-template>
 
-                <ng-container matColumnDef="dueDate">
-                  <th mat-header-cell *matHeaderCellDef>Due Date</th>
-                  <td mat-cell *matCellDef="let payment">
-                    <div class="date-cell">
-                      <div>{{ formatDate(payment.dueDate) }}</div>
-                      <small class="overdue-text">{{ getDaysOverdue(payment.dueDate) }} days overdue</small>
-                    </div>
-                  </td>
-                </ng-container>
+                <!-- Custom template for amount column -->
+                <ng-template appTableColumn="amount" let-row>
+                  {{ formatCurrency(row.amount) }}
+                </ng-template>
 
-                <ng-container matColumnDef="tier">
-                  <th mat-header-cell *matHeaderCellDef>Tier</th>
-                  <td mat-cell *matCellDef="let payment">
-                    <mat-chip [color]="getTierColor(payment.subscriptionTier)">
-                      {{ payment.subscriptionTier }}
-                    </mat-chip>
-                  </td>
-                </ng-container>
+                <!-- Custom template for dueDate column -->
+                <ng-template appTableColumn="dueDate" let-row>
+                  <div class="date-cell">
+                    <div>{{ formatDate(row.dueDate) }}</div>
+                    <small class="overdue-text">{{ getDaysOverdue(row.dueDate) }} days overdue</small>
+                  </div>
+                </ng-template>
 
-                <ng-container matColumnDef="status">
-                  <th mat-header-cell *matHeaderCellDef>Status</th>
-                  <td mat-cell *matCellDef="let payment">
-                    <mat-chip [color]="getStatusColor(payment.status)">
-                      {{ payment.status }}
-                    </mat-chip>
-                  </td>
-                </ng-container>
+                <!-- Custom template for tier column -->
+                <ng-template appTableColumn="tier" let-row>
+                  <app-chip [label]="row.subscriptionTier" [color]="getTierColor(row.subscriptionTier)" />
+                </ng-template>
 
-                <ng-container matColumnDef="actions">
-                  <th mat-header-cell *matHeaderCellDef>Actions</th>
-                  <td mat-cell *matCellDef="let payment">
-                    <div class="action-buttons">
-                      <button
-                        mat-icon-button
-                        color="primary"
-                        matTooltip="Record Payment"
-                        (click)="recordPayment(payment.id)">
-                        <app-icon name="payment"></app-icon>
-                      </button>
-                      <button
-                        mat-icon-button
-                        color="accent"
-                        matTooltip="Send Reminder"
-                        (click)="sendReminder(payment.id)">
-                        <app-icon name="email"></app-icon>
-                      </button>
-                      <button
-                        mat-icon-button
-                        matTooltip="View Details"
-                        (click)="viewPaymentDetails(payment)">
-                        <app-icon name="visibility"></app-icon>
-                      </button>
-                    </div>
-                  </td>
-                </ng-container>
+                <!-- Custom template for status column -->
+                <ng-template appTableColumn="status" let-row>
+                  <app-chip [label]="row.status" [color]="getStatusColor(row.status)" />
+                </ng-template>
 
-                <tr mat-header-row *matHeaderRowDef="paymentColumns"></tr>
-                <tr mat-row *matRowDef="let row; columns: paymentColumns;"></tr>
-              </table>
+                <!-- Custom template for actions column -->
+                <ng-template appTableColumn="actions" let-row>
+                  <div class="action-buttons">
+                    <button
+                      mat-icon-button
+                      color="primary"
+                      appTooltip="Record Payment"
+                      (click)="recordPayment(row.id)">
+                      <app-icon name="payment"></app-icon>
+                    </button>
+                    <button
+                      mat-icon-button
+                      color="accent"
+                      appTooltip="Send Reminder"
+                      (click)="sendReminder(row.id)">
+                      <app-icon name="email"></app-icon>
+                    </button>
+                    <button
+                      mat-icon-button
+                      appTooltip="View Details"
+                      (click)="viewPaymentDetails(row)">
+                      <app-icon name="visibility"></app-icon>
+                    </button>
+                  </div>
+                </ng-template>
+              </app-table>
             </div>
           }
-        </mat-tab>
+        </div>
 
         <!-- Pending Payments Tab -->
-        <mat-tab>
-          <ng-template mat-tab-label>
-            <mat-icon class="tab-icon">hourglass_empty</mat-icon>
-            Pending Payments
-            @if (pendingPayments().length > 0) {
-              <span class="badge-count" [matBadge]="pendingPayments().length" matBadgeColor="primary"></span>
-            }
-          </ng-template>
+        <div *ngIf="activeTab === 'pending'">
 
           @if (pendingPayments().length === 0) {
             <div class="empty-state">
@@ -251,96 +227,75 @@
             </div>
           } @else {
             <div class="table-container">
-              <table mat-table [dataSource]="pendingPayments()" class="payments-table">
-                <ng-container matColumnDef="tenant">
-                  <th mat-header-cell *matHeaderCellDef>Tenant</th>
-                  <td mat-cell *matCellDef="let payment">
-                    <div class="tenant-cell">
-                      <strong>{{ payment.tenantName }}</strong>
-                      <small>{{ payment.tenantSubdomain }}</small>
-                    </div>
-                  </td>
-                </ng-container>
+              <app-table
+                [data]="pendingPayments()"
+                [columns]="paymentColumns"
+                [loading]="loading()"
+                [hoverable]="true">
 
-                <ng-container matColumnDef="amount">
-                  <th mat-header-cell *matHeaderCellDef>Amount</th>
-                  <td mat-cell *matCellDef="let payment">
-                    {{ formatCurrency(payment.amount) }}
-                  </td>
-                </ng-container>
+                <!-- Custom template for tenant column -->
+                <ng-template appTableColumn="tenant" let-row>
+                  <div class="tenant-cell">
+                    <strong>{{ row.tenantName }}</strong>
+                    <small>{{ row.tenantSubdomain }}</small>
+                  </div>
+                </ng-template>
 
-                <ng-container matColumnDef="dueDate">
-                  <th mat-header-cell *matHeaderCellDef>Due Date</th>
-                  <td mat-cell *matCellDef="let payment">
-                    <div class="date-cell">
-                      <div>{{ formatDate(payment.dueDate) }}</div>
-                      <small>{{ formatRelativeDate(payment.dueDate) }}</small>
-                    </div>
-                  </td>
-                </ng-container>
+                <!-- Custom template for amount column -->
+                <ng-template appTableColumn="amount" let-row>
+                  {{ formatCurrency(row.amount) }}
+                </ng-template>
 
-                <ng-container matColumnDef="tier">
-                  <th mat-header-cell *matHeaderCellDef>Tier</th>
-                  <td mat-cell *matCellDef="let payment">
-                    <mat-chip [color]="getTierColor(payment.subscriptionTier)">
-                      {{ payment.subscriptionTier }}
-                    </mat-chip>
-                  </td>
-                </ng-container>
+                <!-- Custom template for dueDate column -->
+                <ng-template appTableColumn="dueDate" let-row>
+                  <div class="date-cell">
+                    <div>{{ formatDate(row.dueDate) }}</div>
+                    <small>{{ formatRelativeDate(row.dueDate) }}</small>
+                  </div>
+                </ng-template>
 
-                <ng-container matColumnDef="status">
-                  <th mat-header-cell *matHeaderCellDef>Status</th>
-                  <td mat-cell *matCellDef="let payment">
-                    <mat-chip [color]="getStatusColor(payment.status)">
-                      {{ payment.status }}
-                    </mat-chip>
-                  </td>
-                </ng-container>
+                <!-- Custom template for tier column -->
+                <ng-template appTableColumn="tier" let-row>
+                  <app-chip [label]="row.subscriptionTier" [color]="getTierColor(row.subscriptionTier)" />
+                </ng-template>
 
-                <ng-container matColumnDef="actions">
-                  <th mat-header-cell *matHeaderCellDef>Actions</th>
-                  <td mat-cell *matCellDef="let payment">
-                    <div class="action-buttons">
-                      <button
-                        mat-icon-button
-                        color="primary"
-                        matTooltip="Record Payment"
-                        (click)="recordPayment(payment.id)">
-                        <app-icon name="payment"></app-icon>
-                      </button>
-                      <button
-                        mat-icon-button
-                        color="accent"
-                        matTooltip="Send Reminder"
-                        (click)="sendReminder(payment.id)">
-                        <app-icon name="email"></app-icon>
-                      </button>
-                      <button
-                        mat-icon-button
-                        matTooltip="View Details"
-                        (click)="viewPaymentDetails(payment)">
-                        <app-icon name="visibility"></app-icon>
-                      </button>
-                    </div>
-                  </td>
-                </ng-container>
+                <!-- Custom template for status column -->
+                <ng-template appTableColumn="status" let-row>
+                  <app-chip [label]="row.status" [color]="getStatusColor(row.status)" />
+                </ng-template>
 
-                <tr mat-header-row *matHeaderRowDef="paymentColumns"></tr>
-                <tr mat-row *matRowDef="let row; columns: paymentColumns;"></tr>
-              </table>
+                <!-- Custom template for actions column -->
+                <ng-template appTableColumn="actions" let-row>
+                  <div class="action-buttons">
+                    <button
+                      mat-icon-button
+                      color="primary"
+                      appTooltip="Record Payment"
+                      (click)="recordPayment(row.id)">
+                      <app-icon name="payment"></app-icon>
+                    </button>
+                    <button
+                      mat-icon-button
+                      color="accent"
+                      appTooltip="Send Reminder"
+                      (click)="sendReminder(row.id)">
+                      <app-icon name="email"></app-icon>
+                    </button>
+                    <button
+                      mat-icon-button
+                      appTooltip="View Details"
+                      (click)="viewPaymentDetails(row)">
+                      <app-icon name="visibility"></app-icon>
+                    </button>
+                  </div>
+                </ng-template>
+              </app-table>
             </div>
           }
-        </mat-tab>
+        </div>
 
         <!-- Upcoming Renewals Tab -->
-        <mat-tab>
-          <ng-template mat-tab-label>
-            <mat-icon class="tab-icon">event</mat-icon>
-            Upcoming Renewals (30 days)
-            @if (upcomingRenewals().length > 0) {
-              <span class="badge-count" [matBadge]="upcomingRenewals().length"></span>
-            }
-          </ng-template>
+        <div *ngIf="activeTab === 'renewals'">
 
           @if (upcomingRenewals().length === 0) {
             <div class="empty-state">
@@ -349,64 +304,47 @@
             </div>
           } @else {
             <div class="table-container">
-              <table mat-table [dataSource]="upcomingRenewals()" class="renewals-table">
-                <ng-container matColumnDef="tenant">
-                  <th mat-header-cell *matHeaderCellDef>Tenant</th>
-                  <td mat-cell *matCellDef="let renewal">
-                    <strong>{{ renewal.tenantName }}</strong>
-                  </td>
-                </ng-container>
+              <app-table
+                [data]="upcomingRenewals()"
+                [columns]="renewalColumns"
+                [loading]="loading()"
+                [hoverable]="true">
 
-                <ng-container matColumnDef="renewalDate">
-                  <th mat-header-cell *matHeaderCellDef>Renewal Date</th>
-                  <td mat-cell *matCellDef="let renewal">
-                    <div class="date-cell">
-                      <div>{{ formatDate(renewal.renewalDate) }}</div>
-                      <small>{{ formatRelativeDate(renewal.renewalDate) }}</small>
-                    </div>
-                  </td>
-                </ng-container>
+                <!-- Custom template for tenant column -->
+                <ng-template appTableColumn="tenant" let-row>
+                  <strong>{{ row.tenantName }}</strong>
+                </ng-template>
 
-                <ng-container matColumnDef="amount">
-                  <th mat-header-cell *matHeaderCellDef>Amount</th>
-                  <td mat-cell *matCellDef="let renewal">
-                    {{ formatCurrency(renewal.amount) }}
-                  </td>
-                </ng-container>
+                <!-- Custom template for renewalDate column -->
+                <ng-template appTableColumn="renewalDate" let-row>
+                  <div class="date-cell">
+                    <div>{{ formatDate(row.renewalDate) }}</div>
+                    <small>{{ formatRelativeDate(row.renewalDate) }}</small>
+                  </div>
+                </ng-template>
 
-                <ng-container matColumnDef="tier">
-                  <th mat-header-cell *matHeaderCellDef>Tier</th>
-                  <td mat-cell *matCellDef="let renewal">
-                    <mat-chip [color]="getTierColor(renewal.tier)">
-                      {{ renewal.tier }}
-                    </mat-chip>
-                  </td>
-                </ng-container>
+                <!-- Custom template for amount column -->
+                <ng-template appTableColumn="amount" let-row>
+                  {{ formatCurrency(row.amount) }}
+                </ng-template>
 
-                <ng-container matColumnDef="daysUntil">
-                  <th mat-header-cell *matHeaderCellDef>Days Until</th>
-                  <td mat-cell *matCellDef="let renewal">
-                    <span class="days-badge">{{ renewal.daysUntilRenewal }}</span>
-                  </td>
-                </ng-container>
+                <!-- Custom template for tier column -->
+                <ng-template appTableColumn="tier" let-row>
+                  <app-chip [label]="row.tier" [color]="getTierColor(row.tier)" />
+                </ng-template>
 
-                <tr mat-header-row *matHeaderRowDef="renewalColumns"></tr>
-                <tr mat-row *matRowDef="let row; columns: renewalColumns;"></tr>
-              </table>
+                <!-- Custom template for daysUntil column -->
+                <ng-template appTableColumn="daysUntil" let-row>
+                  <span class="days-badge">{{ row.daysUntilRenewal }}</span>
+                </ng-template>
+              </app-table>
             </div>
           }
-        </mat-tab>
+        </div>
 
         <!-- Recently Suspended Tab -->
-        @if (overview()?.recentlySuspendedTenants) {
-          <mat-tab>
-            <ng-template mat-tab-label>
-              <mat-icon class="tab-icon">block</mat-icon>
-              Recently Suspended
-              @if (overview()!.recentlySuspendedTenants.length > 0) {
-                <span class="badge-count" [matBadge]="overview()!.recentlySuspendedTenants.length" matBadgeColor="warn"></span>
-              }
-            </ng-template>
+        <div *ngIf="activeTab === 'suspended'">
+          @if (overview()?.recentlySuspendedTenants) {
 
             @if (overview()!.recentlySuspendedTenants.length === 0) {
               <div class="empty-state">
@@ -430,9 +368,9 @@
                 }
               </div>
             }
-          </mat-tab>
-        }
-      </mat-tab-group>
+          }
+        </div>
+      </app-tabs>
     </mat-card>
   }
 </div>

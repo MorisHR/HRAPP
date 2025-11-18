@@ -243,7 +243,7 @@
         </button>
         @if (loading()) {
           <button mat-raised-button color="primary" type="submit" [disabled]="true">
-            <mat-spinner diameter="20" class="button-spinner"></mat-spinner>
+            <app-progress-spinner size="small" color="primary" class="button-spinner"></app-progress-spinner>
             Creating...
           </button>
         } @else {

@@ -4,8 +4,6 @@ import { RouterModule } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatTableModule } from '@angular/material/table';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { CommonModule } from '@angular/common';
 import { EmployeeService } from '../../../core/services/employee.service';
 import { Employee } from '../../../core/models/employee.model';
@@ -32,8 +30,6 @@ import { ErrorTrackingService } from '../../../core/services/error-tracking.serv
     MatCardModule,
     MatButtonModule,
     MatIconModule,
-    MatTableModule,
-    MatProgressSpinnerModule,
     // Custom UI Components
     CardComponent,
     ButtonComponent,
@@ -144,7 +140,7 @@ import { ErrorTrackingService } from '../../../core/services/error-tracking.serv
           <mat-card-content>
             @if (loading()) {
               <div class="loading-spinner">
-                <mat-spinner></mat-spinner>
+                <app-progress-spinner size="large" color="primary"></app-progress-spinner>
                 <p>Loading employees...</p>
               </div>
             } @else if (employees().length === 0) {
@@ -158,42 +154,24 @@ import { ErrorTrackingService } from '../../../core/services/error-tracking.serv
                 </button>
               </div>
             } @else {
-              <table mat-table [dataSource]="employees()" class="employee-table">
-                <ng-container matColumnDef="employeeCode">
-                  <th mat-header-cell *matHeaderCellDef>Employee Code</th>
-                  <td mat-cell *matCellDef="let employee">{{ employee.employeeCode }}</td>
-                </ng-container>
+              <!-- Material Components Fallback - Now using app-table -->
+              <app-table
+                [columns]="materialTableColumns"
+                [data]="employees()"
+                [loading]="loading()"
+                [hoverable]="true"
+                [striped]="true">
 
-                <ng-container matColumnDef="fullName">
-                  <th mat-header-cell *matHeaderCellDef>Full Name</th>
-                  <td mat-cell *matCellDef="let employee">{{ employee.fullName }}</td>
-                </ng-container>
-
-                <ng-container matColumnDef="email">
-                  <th mat-header-cell *matHeaderCellDef>Email</th>
-                  <td mat-cell *matCellDef="let employee">{{ employee.email }}</td>
-                </ng-container>
-
-                <ng-container matColumnDef="department">
-                  <th mat-header-cell *matHeaderCellDef>Department</th>
-                  <td mat-cell *matCellDef="let employee">{{ employee.department || 'N/A' }}</td>
-                </ng-container>
-
-                <ng-container matColumnDef="actions">
-                  <th mat-header-cell *matHeaderCellDef>Actions</th>
-                  <td mat-cell *matCellDef="let employee">
-                    <button mat-icon-button [routerLink]="['/tenant/employees', employee.id]">
-                      <mat-icon>edit</mat-icon>
-                    </button>
-                    <button mat-icon-button color="warn" (click)="deleteEmployee(employee.id)">
-                      <mat-icon>delete</mat-icon>
-                    </button>
-                  </td>
-                </ng-container>
-
-                <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-                <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
-              </table>
+                <!-- Actions Column Template -->
+                <ng-template appTableColumn="actions" let-row>
+                  <button mat-icon-button [routerLink]="['/tenant/employees', row.id]">
+                    <mat-icon>edit</mat-icon>
+                  </button>
+                  <button mat-icon-button color="warn" (click)="deleteEmployee(row.id)">
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                </ng-template>
+              </app-table>
             }
           </mat-card-content>
         </mat-card>
@@ -362,7 +340,6 @@ export class EmployeeListComponent implements OnInit {
 
   employees = signal<Employee[]>([]);
   loading = signal(false);
-  displayedColumns = ['employeeCode', 'fullName', 'email', 'department', 'actions'];
 
   // ========================================
   // FORTUNE 500 DUAL-RUN PATTERN
@@ -376,6 +353,15 @@ export class EmployeeListComponent implements OnInit {
     { key: 'fullName', label: 'Full Name', sortable: true },
     { key: 'email', label: 'Email', sortable: true },
     { key: 'department', label: 'Department', sortable: false },
+  ];
+
+  // Table columns for Material fallback (also using app-table now)
+  materialTableColumns: TableColumn[] = [
+    { key: 'employeeCode', label: 'Employee Code', sortable: true },
+    { key: 'fullName', label: 'Full Name', sortable: true },
+    { key: 'email', label: 'Email', sortable: true },
+    { key: 'department', label: 'Department', sortable: true },
+    { key: 'actions', label: 'Actions', sortable: false }
   ];
 
   ngOnInit(): void {

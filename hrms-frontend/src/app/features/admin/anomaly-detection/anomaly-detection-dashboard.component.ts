@@ -1,16 +1,15 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
-import { MatTableModule } from '@angular/material/table';
-import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
+import { PageEvent } from '@angular/material/paginator';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatChipsModule } from '@angular/material/chips';
-import { MatTooltipModule } from '@angular/material/tooltip';
+import { Chip, ChipColor, Paginator } from '@app/shared/ui';
 import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatDialog, MatDialogModule } from '@angular/material/dialog';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { DialogService } from '../../../shared/ui';
+import { UiModule } from '../../../shared/ui/ui.module';
+import { TableComponent, TableColumn, TableColumnDirective, TooltipDirective } from '../../../shared/ui';
 import { FormsModule } from '@angular/forms';
 import { DetectedAnomaly, AnomalyStatus, AnomalyStatistics, AnomalyRiskLevel } from '../../../models/anomaly.model';
 import { AnomalyDetectionService } from '../../../services/anomaly-detection.service';
@@ -23,16 +22,16 @@ import { NotificationService } from '../../../services/notification.service';
     CommonModule,
     FormsModule,
     MatCardModule,
-    MatTableModule,
-    MatPaginatorModule,
+    Paginator,
     MatButtonModule,
     MatIconModule,
-    MatChipsModule,
-    MatTooltipModule,
+    Chip,
     MatSelectModule,
     MatFormFieldModule,
-    MatDialogModule,
-    MatProgressSpinnerModule
+    UiModule,
+    TableComponent,
+    TableColumnDirective,
+    TooltipDirective
   ],
   templateUrl: './anomaly-detection-dashboard.component.html',
   styleUrls: ['./anomaly-detection-dashboard.component.css']
@@ -46,22 +45,23 @@ export class AnomalyDetectionDashboardComponent implements OnInit {
   pageNumber = 1;
   selectedStatus?: AnomalyStatus;
 
-  displayedColumns: string[] = [
-    'detectedAt',
-    'anomalyType',
-    'riskLevel',
-    'userEmail',
-    'description',
-    'status',
-    'actions'
+  columns: TableColumn[] = [
+    { key: 'detectedAt', label: 'Detected At' },
+    { key: 'anomalyType', label: 'Type' },
+    { key: 'riskLevel', label: 'Risk Level' },
+    { key: 'userEmail', label: 'User' },
+    { key: 'description', label: 'Description' },
+    { key: 'status', label: 'Status' },
+    { key: 'actions', label: 'Actions' }
   ];
 
   statusOptions = Object.values(AnomalyStatus);
 
+  private dialogService = DialogService;
+
   constructor(
     private anomalyService: AnomalyDetectionService,
     private notificationService: NotificationService,
-    private dialog: MatDialog,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -118,34 +118,34 @@ export class AnomalyDetectionDashboardComponent implements OnInit {
     this.loadAnomalies();
   }
 
-  getRiskLevelColor(riskLevel: AnomalyRiskLevel): string {
+  getRiskLevelColor(riskLevel: AnomalyRiskLevel): ChipColor {
     switch (riskLevel) {
       case AnomalyRiskLevel.CRITICAL:
       case AnomalyRiskLevel.EMERGENCY:
-        return 'warn';
+        return 'error';
       case AnomalyRiskLevel.HIGH:
-        return 'accent';
+        return 'warning';
       case AnomalyRiskLevel.MEDIUM:
         return 'primary';
       default:
-        return '';
+        return 'neutral';
     }
   }
 
-  getStatusColor(status: AnomalyStatus): string {
+  getStatusColor(status: AnomalyStatus): ChipColor {
     switch (status) {
       case AnomalyStatus.NEW:
-        return 'warn';
+        return 'warning';
       case AnomalyStatus.INVESTIGATING:
-        return 'accent';
-      case AnomalyStatus.CONFIRMED_THREAT:
-        return 'warn';
-      case AnomalyStatus.RESOLVED:
         return 'primary';
+      case AnomalyStatus.CONFIRMED_THREAT:
+        return 'error';
+      case AnomalyStatus.RESOLVED:
+        return 'success';
       case AnomalyStatus.FALSE_POSITIVE:
-        return '';
+        return 'neutral';
       default:
-        return '';
+        return 'neutral';
     }
   }
 
