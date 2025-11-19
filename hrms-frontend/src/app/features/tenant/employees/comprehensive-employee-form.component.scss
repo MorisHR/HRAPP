@@ -1,5 +1,5 @@
 // Executive Theme Colors
-$primary-color: #1a237e; // Deep Blue
+$primary-color: #000000; // Executive Black
 $accent-color: #0288d1; // Light Blue
 $success-color: #388e3c;
 $warning-color: #f57c00;
@@ -681,6 +681,34 @@ app-progress-spinner {
         }
       }
     }
+  }
+}
+
+// ========================================
+// SECTION ICON STATES (Fortune 500)
+// ========================================
+// Dynamic icons show validation state clearly
+
+.section-icon--default {
+  color: #9E9E9E !important;  // Gray - neutral state (not touched)
+  opacity: 0.7;
+}
+
+.section-icon--error {
+  color: #FFC107 !important;  // Yellow/Amber - warning (has validation errors)
+  animation: pulse-warning 2s ease-in-out infinite;
+}
+
+.section-icon--valid {
+  color: #4CAF50 !important;  // Green - success (section complete)
+}
+
+@keyframes pulse-warning {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
   }
 }
 

@@ -1,17 +1,13 @@
-// PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP
-// DIALOG CONTAINER STYLES
-// Part of the Fortune 500-grade HRMS design system
-// Comprehensive dialog styling with animations and accessibility
-// PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP
+// ============================================================================
+// DIALOG CONTAINER COMPONENT - Fortune 500 Grade CSS Custom Properties Migration
+// ============================================================================
+// Pure CSS implementation using CSS custom properties only
+// No SCSS imports, variables, functions, or mixins
+// ============================================================================
 
-// Variables and mixins imported if needed
-// Uncomment if you have these files:
-// @import '../../../../../../../src/styles/variables';
-// @import '../../../../../../../src/styles/mixins';
-
-// PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP
+// ============================================================================
 // OVERLAY (Host Element)
-// PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP
+// ============================================================================
 
 :host {
   position: fixed;
@@ -19,16 +15,16 @@
   left: 0;
   right: 0;
   bottom: 0;
-  z-index: 1000;
+  z-index: var(--z-modal);
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
 }
 
-// PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP
+// ============================================================================
 // BACKDROP
-// PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP
+// ============================================================================
 
 .dialog-backdrop {
   position: absolute;
@@ -36,58 +32,46 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: var(--color-alpha-black-32);
   backdrop-filter: blur(2px);
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 1rem;
+  padding: var(--spacing-4);
   overflow-y: auto;
-  animation: fadeIn 200ms ease-out;
+  animation: fadeIn var(--duration-normal) ease-out;
 
   // Support for custom backdrop classes
   &.dark-backdrop {
-    background-color: rgba(0, 0, 0, 0.75);
+    background-color: var(--color-alpha-black-75);
   }
 
   &.light-backdrop {
-    background-color: rgba(255, 255, 255, 0.9);
+    background-color: var(--color-alpha-white-90);
   }
 }
 
-// PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP
+// ============================================================================
 // DIALOG PANEL
-// PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP
+// ============================================================================
 
 .dialog-panel {
   position: relative;
   display: flex;
   flex-direction: column;
-  background-color: var(--color-surface, #ffffff);
-  border-radius: 12px;
-  box-shadow:
-    0 24px 38px 3px rgba(0, 0, 0, 0.14),
-    0 9px 46px 8px rgba(0, 0, 0, 0.12),
-    0 11px 15px -7px rgba(0, 0, 0, 0.2);
+  background-color: var(--color-surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--elevation-5);
   overflow: hidden;
   max-width: 100%;
   max-height: 100%;
-  animation: slideIn 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  animation: slideIn var(--duration-slow) var(--easing-standard);
 
   // Prevent backdrop clicks from propagating
   pointer-events: auto;
 
   // Ensure proper stacking
   z-index: 1;
-
-  // Dark mode support
-  @media (prefers-color-scheme: dark) {
-    background-color: var(--color-surface-dark, #1e1e1e);
-    box-shadow:
-      0 24px 38px 3px rgba(0, 0, 0, 0.4),
-      0 9px 46px 8px rgba(0, 0, 0, 0.3),
-      0 11px 15px -7px rgba(0, 0, 0, 0.5);
-  }
 
   // Responsive behavior
   @media (max-width: 768px) {
@@ -98,14 +82,14 @@
   }
 }
 
-// PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP
+// ============================================================================
 // CLOSE BUTTON
-// PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP
+// ============================================================================
 
 .dialog-close-button {
   position: absolute;
-  top: 16px;
-  right: 16px;
+  top: var(--spacing-4);
+  right: var(--spacing-4);
   z-index: 10;
   display: flex;
   align-items: center;
@@ -114,25 +98,25 @@
   height: 40px;
   padding: 0;
   border: none;
-  border-radius: 50%;
+  border-radius: var(--radius-full);
   background-color: transparent;
-  color: var(--color-text-secondary, #64748b);
+  color: var(--color-text-secondary);
   cursor: pointer;
-  transition: all 200ms ease;
+  transition: var(--transition-all);
 
   &:hover {
-    background-color: var(--color-hover, rgba(0, 0, 0, 0.04));
-    color: var(--color-text-primary, #1e293b);
+    background-color: var(--color-alpha-black-4);
+    color: var(--color-text-primary);
   }
 
   &:active {
-    background-color: var(--color-active, rgba(0, 0, 0, 0.08));
+    background-color: var(--color-alpha-black-8);
     transform: scale(0.95);
   }
 
   &:focus-visible {
-    outline: 2px solid var(--color-primary, #3b82f6);
-    outline-offset: 2px;
+    outline: var(--focus-ring-width) solid var(--focus-ring-color);
+    outline-offset: var(--focus-ring-offset);
   }
 
   svg {
@@ -140,30 +124,16 @@
     height: 20px;
     stroke-width: 2;
   }
-
-  // Dark mode
-  @media (prefers-color-scheme: dark) {
-    color: var(--color-text-secondary-dark, #94a3b8);
-
-    &:hover {
-      background-color: rgba(255, 255, 255, 0.1);
-      color: var(--color-text-primary-dark, #f1f5f9);
-    }
-
-    &:active {
-      background-color: rgba(255, 255, 255, 0.15);
-    }
-  }
 }
 
-// PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP
+// ============================================================================
 // CONTENT CONTAINER
-// PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP
+// ============================================================================
 
 .dialog-content {
   flex: 1;
   overflow: auto;
-  padding: 24px;
+  padding: var(--spacing-6);
 
   // Custom scrollbar
   &::-webkit-scrollbar {
@@ -176,27 +146,27 @@
   }
 
   &::-webkit-scrollbar-thumb {
-    background-color: rgba(0, 0, 0, 0.2);
-    border-radius: 4px;
+    background-color: var(--color-alpha-black-12);
+    border-radius: var(--radius-sm);
 
     &:hover {
-      background-color: rgba(0, 0, 0, 0.3);
+      background-color: var(--color-alpha-black-24);
     }
   }
 
   // Firefox scrollbar
   scrollbar-width: thin;
-  scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+  scrollbar-color: var(--color-alpha-black-12) transparent;
 
   // Mobile spacing
   @media (max-width: 768px) {
-    padding: 20px 16px;
+    padding: var(--spacing-5) var(--spacing-4);
   }
 }
 
-// PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP
+// ============================================================================
 // ANIMATIONS
-// PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP
+// ============================================================================
 
 // Backdrop fade in
 @keyframes fadeIn {
@@ -223,11 +193,11 @@
 // Exit animations (applied via JS)
 :host.dialog-exit {
   .dialog-backdrop {
-    animation: fadeOut 200ms ease-in;
+    animation: fadeOut var(--duration-normal) ease-in;
   }
 
   .dialog-panel {
-    animation: slideOut 250ms ease-in;
+    animation: slideOut var(--duration-normal) ease-in;
   }
 }
 
@@ -251,9 +221,9 @@
   }
 }
 
-// PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP
+// ============================================================================
 // ACCESSIBILITY
-// PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP
+// ============================================================================
 
 // High contrast mode support
 @media (prefers-contrast: high) {
@@ -282,9 +252,9 @@
   }
 }
 
-// PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP
+// ============================================================================
 // UTILITY CLASSES
-// PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP
+// ============================================================================
 
 // Small dialog variant
 .dialog-panel--small {
@@ -315,9 +285,7 @@
 
 // Custom panel classes
 .dialog-panel--elevated {
-  box-shadow:
-    0 32px 64px rgba(0, 0, 0, 0.2),
-    0 16px 32px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--shadow-2xl);
 }
 
 .dialog-panel--no-padding {

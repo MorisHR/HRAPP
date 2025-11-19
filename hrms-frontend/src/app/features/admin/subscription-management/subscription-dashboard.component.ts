@@ -1,11 +1,11 @@
 import { Component, OnInit, signal, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
-import { MatCardModule } from '@angular/material/card';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
 import { UiModule } from '../../../shared/ui/ui.module';
 import { TableComponent, TableColumn, TableColumnDirective, Tabs, Tab, Chip, ChipColor, TooltipDirective } from '../../../shared/ui';
+import { CardComponent } from '../../../shared/ui/components/card/card';
+import { ButtonComponent } from '../../../shared/ui/components/button/button';
+import { IconComponent } from '../../../shared/ui/components/icon/icon';
 import { DialogService } from '../../../shared/ui';
 import { BaseChartDirective } from 'ng2-charts';
 import { ChartConfiguration, ChartType } from 'chart.js';
@@ -27,16 +27,16 @@ import { PaymentDetailDialogComponent } from './payment-detail-dialog.component'
   imports: [
     CommonModule,
     RouterModule,
-    MatCardModule,
-    MatButtonModule,
-    MatIconModule,
     UiModule,
     BaseChartDirective,
     Tabs,
     TableComponent,
     TableColumnDirective,
     Chip,
-    TooltipDirective
+    TooltipDirective,
+    CardComponent,
+    ButtonComponent,
+    IconComponent
 ],
   templateUrl: './subscription-dashboard.component.html',
   styleUrl: './subscription-dashboard.component.scss'

@@ -4,8 +4,9 @@
 // Replaces Angular Material's MatDatepickerModule
 // ═══════════════════════════════════════════════════════════
 
-import { Component, input, model, computed, signal, ElementRef, ViewChild, HostListener } from '@angular/core';
+import { Component, input, model, computed, signal, ElementRef, ViewChild, HostListener, forwardRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { IconComponent } from '../icon/icon';
 import { InputComponent } from '../input/input';
 import { ButtonComponent } from '../button/button';
@@ -14,6 +15,11 @@ import { ButtonComponent } from '../button/button';
   selector: 'app-datepicker',
   standalone: true,
   imports: [CommonModule, IconComponent, InputComponent, ButtonComponent],
+  providers: [{
+    provide: NG_VALUE_ACCESSOR,
+    useExisting: forwardRef(() => Datepicker),
+    multi: true
+  }],
   template: `
     <div class="datepicker">
       <app-input
@@ -222,7 +228,7 @@ import { ButtonComponent } from '../button/button';
     }
   `]
 })
-export class Datepicker {
+export class Datepicker implements ControlValueAccessor {
   @ViewChild('calendarPopup', { read: ElementRef }) calendarPopup?: ElementRef;
 
   value = model<Date | null>(null);
@@ -237,6 +243,26 @@ export class Datepicker {
   protected showCalendar = signal(false);
   protected currentDate = signal(new Date());
   protected weekdays = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
+
+  // ControlValueAccessor implementation
+  private onChange: (value: Date | null) => void = () => {};
+  private onTouched: () => void = () => {};
+
+  writeValue(value: Date | null): void {
+    this.value.set(value);
+  }
+
+  registerOnChange(fn: (value: Date | null) => void): void {
+    this.onChange = fn;
+  }
+
+  registerOnTouched(fn: () => void): void {
+    this.onTouched = fn;
+  }
+
+  setDisabledState(isDisabled: boolean): void {
+    // The disabled state is handled via input signal
+  }
 
   protected formattedValue = computed(() => {
     const date = this.value();
@@ -360,7 +386,10 @@ export class Datepicker {
     if (min && date < min) return;
     if (max && date > max) return;
 
-    this.value.set(new Date(date));
+    const normalized = new Date(date);
+    this.value.set(normalized);
+    this.onChange(normalized);
+    this.onTouched();
     this.closeCalendar();
   }
 
@@ -370,6 +399,8 @@ export class Datepicker {
 
   protected clearDate(): void {
     this.value.set(null);
+    this.onChange(null);
+    this.onTouched();
     this.closeCalendar();
   }
 

@@ -54,6 +54,10 @@ public class MonitoringService : IMonitoringService
     private readonly TimeSpan _dashboardCacheTtl = TimeSpan.FromMinutes(5);
     private readonly TimeSpan _healthCacheTtl = TimeSpan.FromMinutes(2);
 
+    /// <summary>
+    /// Initializes the MonitoringService with write/read contexts and caching layers.
+    /// FORTUNE 500 FIX: Implements robust fallback when read replica is not configured.
+    /// </summary>
     public MonitoringService(
         MasterDbContext writeContext,
         [FromKeyedServices("ReadReplica")] MasterDbContext readContext,
@@ -61,11 +65,50 @@ public class MonitoringService : IMonitoringService
         IRedisCacheService redisCache,
         ILogger<MonitoringService> logger)
     {
-        _writeContext = writeContext;
-        _readContext = readContext;
-        _memoryCache = memoryCache;
-        _redisCache = redisCache;
-        _logger = logger;
+        _writeContext = writeContext ?? throw new ArgumentNullException(nameof(writeContext));
+        _memoryCache = memoryCache ?? throw new ArgumentNullException(nameof(memoryCache));
+        _redisCache = redisCache ?? throw new ArgumentNullException(nameof(redisCache));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+
+        // CRITICAL FIX: Detect if read replica connection is properly initialized
+        // This handles development environments where read replica is not configured
+        try
+        {
+            // Check if readContext is null or if its connection string is not configured
+            if (readContext == null)
+            {
+                _logger.LogWarning(
+                    "MONITORING SERVICE: Read replica context is null. " +
+                    "Falling back to master database connection for read operations.");
+                _readContext = writeContext; // Fallback to master DB
+            }
+            else
+            {
+                var readConnection = readContext.Database?.GetDbConnection();
+                if (readConnection == null || string.IsNullOrEmpty(readConnection.ConnectionString))
+                {
+                    _logger.LogWarning(
+                        "MONITORING SERVICE: Read replica connection not configured or invalid. " +
+                        "Falling back to master database connection for read operations. " +
+                        "This is expected in development environments.");
+                    _readContext = writeContext; // Fallback to master DB
+                }
+                else
+                {
+                    _readContext = readContext;
+                    _logger.LogInformation(
+                        "MONITORING SERVICE: Read replica connection initialized successfully. " +
+                        "SELECT queries will be offloaded from primary database.");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex,
+                "MONITORING SERVICE: Failed to validate read replica connection. " +
+                "Falling back to master database connection for read operations.");
+            _readContext = writeContext; // Fallback to master DB on any error
+        }
     }
 
     // ============================================
@@ -117,6 +160,13 @@ public class MonitoringService : IMonitoringService
         try
         {
             _logger.LogDebug("Fetching fresh dashboard metrics from read replica");
+
+            // DEFENSIVE: Verify database connection is available before querying
+            if (string.IsNullOrEmpty(_readContext.Database.GetConnectionString()))
+            {
+                _logger.LogWarning("Read replica connection string not configured, returning default metrics");
+                return GetDefaultDashboardMetrics();
+            }
 
             // Call the database function to get aggregated metrics (using read replica)
             var rawMetrics = await _readContext.Database
@@ -255,7 +305,14 @@ public class MonitoringService : IMonitoringService
                 FROM pg_stat_database
                 WHERE datname = current_database()";
 
-            await using (var cmd = _readContext.Database.GetDbConnection().CreateCommand())
+            // CRITICAL FIX: Ensure connection is open before executing commands
+            var connection = _readContext.Database.GetDbConnection();
+            if (connection.State != System.Data.ConnectionState.Open)
+            {
+                await _readContext.Database.OpenConnectionAsync();
+            }
+
+            await using (var cmd = connection.CreateCommand())
             {
                 cmd.CommandText = statsQuery;
                 await using var reader = await cmd.ExecuteReaderAsync();
@@ -293,7 +350,8 @@ public class MonitoringService : IMonitoringService
                 FROM pg_stat_database
                 WHERE datname = current_database()";
 
-            await using (var cmd = _readContext.Database.GetDbConnection().CreateCommand())
+            // Reuse already-open connection
+            await using (var cmd = connection.CreateCommand())
             {
                 cmd.CommandText = ioQuery;
                 await using var reader = await cmd.ExecuteReaderAsync();
@@ -314,7 +372,8 @@ public class MonitoringService : IMonitoringService
 
             try
             {
-                await using (var cmd = _readContext.Database.GetDbConnection().CreateCommand())
+                // Reuse already-open connection
+                await using (var cmd = connection.CreateCommand())
                 {
                     cmd.CommandText = queryStatsQuery;
                     await using var reader = await cmd.ExecuteReaderAsync();
@@ -1171,10 +1230,17 @@ public class MonitoringService : IMonitoringService
         {
             _logger.LogDebug("Capturing performance snapshot");
 
-            // Use write context for function that writes data
-            var result = await _writeContext.Database
-                .SqlQueryRaw<long>("SELECT monitoring.capture_performance_snapshot()")
-                .FirstOrDefaultAsync();
+            // FIXED: Use proper query for PostgreSQL function that returns a scalar value
+            // The function returns a single integer, not a table with a "Value" column
+            // We need to use ExecuteSqlRawAsync and query it properly
+            await using var connection = _writeContext.Database.GetDbConnection();
+            await _writeContext.Database.OpenConnectionAsync();
+
+            await using var command = connection.CreateCommand();
+            command.CommandText = "SELECT monitoring.capture_performance_snapshot()";
+
+            var resultObj = await command.ExecuteScalarAsync();
+            var result = Convert.ToInt32(resultObj ?? 0);
 
             _logger.LogInformation("Performance snapshot captured: {RowsInserted} rows", result);
 
@@ -1184,7 +1250,7 @@ public class MonitoringService : IMonitoringService
             _memoryCache.Remove(DashboardMetricsCacheKey);
             _memoryCache.Remove(InfrastructureHealthCacheKey);
 
-            return (int)result;
+            return result;
         }
         catch (Exception ex)
         {
@@ -1344,6 +1410,33 @@ public class MonitoringService : IMonitoringService
     }
 
     /// <summary>
+    /// DEFENSIVE: Returns default dashboard metrics when database is unavailable
+    /// Prevents complete failure when monitoring schema or read replica is not accessible
+    /// </summary>
+    private DashboardMetricsDto GetDefaultDashboardMetrics()
+    {
+        return new DashboardMetricsDto
+        {
+            SystemStatus = "Unknown",
+            CacheHitRate = 0,
+            ActiveConnections = 0,
+            ConnectionPoolUtilization = 0,
+            ApiResponseTimeP95 = 0,
+            ApiResponseTimeP99 = 0,
+            ApiErrorRate = 0,
+            ActiveTenants = 0,
+            TotalTenants = 0,
+            AvgSchemaSwitchTime = 0,
+            CriticalAlerts = 0,
+            WarningAlerts = 0,
+            FailedAuthAttemptsLastHour = 0,
+            IdorPreventionTriggersLastHour = 0,
+            LastUpdated = DateTime.UtcNow,
+            NextUpdate = DateTime.UtcNow.AddMinutes(5)
+        };
+    }
+
+    /// <summary>
     /// FORTUNE 500: Collect system resource metrics with defensive error handling.
     /// Queries PostgreSQL system views to gather CPU, memory, disk, and network metrics.
     /// Falls back to safe default values if monitoring schema/extensions are not available.
@@ -1382,6 +1475,7 @@ public class MonitoringService : IMonitoringService
     /// Collect CPU usage metrics from PostgreSQL system views.
     /// Attempts to use pg_stat_statements for accurate CPU tracking.
     /// Falls back to connection-based estimation if extension is not available.
+    /// CRITICAL FIX: Ensures database connection is open before executing queries.
     /// </summary>
     private async Task CollectCpuMetrics(InfrastructureHealthDto health)
     {
@@ -1402,7 +1496,14 @@ public class MonitoringService : IMonitoringService
                 FROM pg_stat_statements
                 WHERE query NOT LIKE '%pg_stat_statements%'";
 
-            await using (var cmd = _readContext.Database.GetDbConnection().CreateCommand())
+            // CRITICAL FIX: Ensure connection is open before executing commands
+            var connection = _readContext.Database.GetDbConnection();
+            if (connection.State != System.Data.ConnectionState.Open)
+            {
+                await _readContext.Database.OpenConnectionAsync();
+            }
+
+            await using (var cmd = connection.CreateCommand())
             {
                 cmd.CommandText = cpuQuery;
                 await using var reader = await cmd.ExecuteReaderAsync();
@@ -1435,6 +1536,7 @@ public class MonitoringService : IMonitoringService
     /// <summary>
     /// Collect memory usage metrics from PostgreSQL configuration and statistics.
     /// Calculates memory usage as: (shared_buffers + temp_buffers) / total_system_memory * 100
+    /// CRITICAL FIX: Ensures database connection is open before executing queries.
     /// </summary>
     private async Task CollectMemoryMetrics(InfrastructureHealthDto health)
     {
@@ -1454,7 +1556,14 @@ public class MonitoringService : IMonitoringService
                         2
                     ) as memory_usage_percent";
 
-            await using (var cmd = _readContext.Database.GetDbConnection().CreateCommand())
+            // CRITICAL FIX: Ensure connection is open before executing commands
+            var connection = _readContext.Database.GetDbConnection();
+            if (connection.State != System.Data.ConnectionState.Open)
+            {
+                await _readContext.Database.OpenConnectionAsync();
+            }
+
+            await using (var cmd = connection.CreateCommand())
             {
                 cmd.CommandText = memoryQuery;
                 await using var reader = await cmd.ExecuteReaderAsync();
@@ -1494,6 +1603,7 @@ public class MonitoringService : IMonitoringService
     /// <summary>
     /// Collect disk usage metrics from PostgreSQL tablespace and database size statistics.
     /// Calculates: current_database_size / tablespace_size * 100
+    /// CRITICAL FIX: Ensures database connection is open before executing queries.
     /// </summary>
     private async Task CollectDiskMetrics(InfrastructureHealthDto health)
     {
@@ -1514,7 +1624,14 @@ public class MonitoringService : IMonitoringService
                         0
                     ) as disk_usage_percent";
 
-            await using (var cmd = _readContext.Database.GetDbConnection().CreateCommand())
+            // CRITICAL FIX: Ensure connection is open before executing commands
+            var connection = _readContext.Database.GetDbConnection();
+            if (connection.State != System.Data.ConnectionState.Open)
+            {
+                await _readContext.Database.OpenConnectionAsync();
+            }
+
+            await using (var cmd = connection.CreateCommand())
             {
                 cmd.CommandText = diskQuery;
                 await using var reader = await cmd.ExecuteReaderAsync();
@@ -1554,6 +1671,7 @@ public class MonitoringService : IMonitoringService
     /// <summary>
     /// Measure network latency to database by executing a simple ping query.
     /// Measures round-trip time for a minimal SELECT query.
+    /// CRITICAL FIX: Ensures database connection is open before executing queries.
     /// </summary>
     private async Task CollectNetworkMetrics(InfrastructureHealthDto health)
     {
@@ -1561,8 +1679,15 @@ public class MonitoringService : IMonitoringService
         {
             var startTime = DateTime.UtcNow;
 
+            // CRITICAL FIX: Ensure connection is open before executing commands
+            var connection = _readContext.Database.GetDbConnection();
+            if (connection.State != System.Data.ConnectionState.Open)
+            {
+                await _readContext.Database.OpenConnectionAsync();
+            }
+
             // Execute a simple ping query to measure latency
-            await using (var cmd = _readContext.Database.GetDbConnection().CreateCommand())
+            await using (var cmd = connection.CreateCommand())
             {
                 cmd.CommandText = "SELECT 1";
                 await cmd.ExecuteScalarAsync();

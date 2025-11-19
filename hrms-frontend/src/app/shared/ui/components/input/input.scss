@@ -3,8 +3,56 @@
 // Part of the Fortune 500-grade HRMS design system
 // Material Design-inspired floating label input with validation
 // PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP
+// Migrated to CSS Custom Properties - ZERO SCSS Dependencies
+// PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP
 
-@import '../../../../../styles/index';
+// ============================================================================
+// COMPONENT-SPECIFIC CSS VARIABLES
+// ============================================================================
+
+:root {
+  // Color tokens - Specific shades needed for input states
+  --input-color-primary-600: #1e88e5;
+  --input-color-error-500: #f44336;
+  --input-color-error-600: #e53935;
+  --input-color-neutral-800: #424242;
+
+  // Color alpha variants for focus rings
+  --input-focus-ring-primary: rgba(33, 150, 243, 0.12);
+  --input-focus-ring-error: rgba(244, 67, 54, 0.12);
+
+  // Alpha overlays for button states
+  --input-alpha-black-8: rgba(0, 0, 0, 0.08);
+  --input-alpha-black-12: rgba(0, 0, 0, 0.12);
+
+  // Text color - hint state
+  --input-color-text-hint: rgba(0, 0, 0, 0.38);
+  --input-color-text-hint-dark: rgba(255, 255, 255, 0.50);
+
+  // Border colors - dark mode
+  --input-color-border-default-dark: rgba(255, 255, 255, 0.12);
+  --input-color-border-medium-dark: rgba(255, 255, 255, 0.20);
+
+  // Typography tokens
+  --input-font-size-xs: 0.75rem;
+  --input-font-size-sm: 0.875rem;
+  --input-font-size-base: 1rem;
+  --input-font-weight-regular: 400;
+  --input-font-weight-medium: 500;
+  --input-line-height-normal: 1.5;
+
+  // Font family
+  --input-font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+
+  // Transition - full specification
+  --input-transition-all: all 250ms cubic-bezier(0.4, 0.0, 0.2, 1);
+  --input-transition-opacity: opacity 150ms cubic-bezier(0.4, 0.0, 0.2, 1);
+
+  // Focus ring
+  --input-focus-ring-width: 3px;
+  --input-focus-ring-offset: 2px;
+  --input-focus-ring-color: var(--color-primary);
+}
 
 // ============================================================================
 // CONTAINER
@@ -13,20 +61,20 @@
 .input-container {
   position: relative;
   width: 100%;
-  margin-bottom: $spacing-4;
+  margin-bottom: var(--spacing-4);
 
   &--error {
     .input-field {
-      border-color: $color-error-500;
+      border-color: var(--input-color-error-500);
 
       &:focus {
-        border-color: $color-error-600;
-        box-shadow: 0 0 0 3px color-alpha($color-error-500, 0.12);
+        border-color: var(--input-color-error-600);
+        box-shadow: 0 0 0 3px var(--input-focus-ring-error);
       }
     }
 
     .input-label {
-      color: $color-error-600;
+      color: var(--input-color-error-600);
     }
   }
 
@@ -52,17 +100,17 @@
 
 .input-label {
   position: absolute;
-  left: $spacing-4;
+  left: var(--spacing-4);
   top: 50%;
   transform: translateY(-50%);
-  color: $color-text-secondary;
-  font-size: $font-size-base;
-  font-weight: $font-weight-regular;
-  line-height: $line-height-normal;
-  background: $color-background-paper;
-  padding: 0 $spacing-1;
+  color: var(--color-text-secondary);
+  font-size: var(--input-font-size-base);
+  font-weight: var(--input-font-weight-regular);
+  line-height: var(--input-line-height-normal);
+  background: var(--color-background-paper);
+  padding: 0 var(--spacing-1);
   pointer-events: none;
-  transition: all $duration-normal $easing-standard;
+  transition: all var(--duration-normal) var(--easing-standard);
   z-index: 1;
 
   // Floating state
@@ -70,15 +118,15 @@
   .input-field--focused ~ &,
   .input-field:focus ~ & {
     top: 0;
-    font-size: $font-size-xs;
-    color: $color-primary-600;
-    font-weight: $font-weight-medium;
+    font-size: var(--input-font-size-xs);
+    color: var(--input-color-primary-600);
+    font-weight: var(--input-font-weight-medium);
   }
 
   &--required {
     .input-label__required-indicator {
-      color: $color-error-500;
-      margin-left: $spacing-1;
+      color: var(--input-color-error-500);
+      margin-left: var(--spacing-1);
     }
   }
 }
@@ -90,24 +138,24 @@
 .input-field {
   width: 100%;
   height: 56px;
-  padding: $spacing-4;
-  font-family: $font-family-base;
-  font-size: $font-size-base;
-  font-weight: $font-weight-regular;
-  line-height: $line-height-normal;
-  color: $color-text-primary;
-  background-color: $color-background-paper;
-  border: 2px solid $color-border-default;
+  padding: var(--spacing-4);
+  font-family: var(--input-font-family);
+  font-size: var(--input-font-size-base);
+  font-weight: var(--input-font-weight-regular);
+  line-height: var(--input-line-height-normal);
+  color: var(--color-text-primary);
+  background-color: var(--color-background-paper);
+  border: 2px solid var(--color-border);
   border-radius: 8px;
   outline: none;
-  transition: $transition-all;
+  transition: var(--input-transition-all);
   appearance: none;
 
   // Placeholder
   &::placeholder {
-    color: $color-text-hint;
+    color: var(--input-color-text-hint);
     opacity: 0;
-    transition: opacity $duration-fast $easing-standard;
+    transition: var(--input-transition-opacity);
   }
 
   &:focus::placeholder {
@@ -117,13 +165,13 @@
   // Focus state
   &:focus,
   &--focused {
-    border-color: $color-primary-500;
-    box-shadow: 0 0 0 3px color-alpha($color-primary-500, 0.12);
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px var(--input-focus-ring-primary);
   }
 
   // Hover state
   &:hover:not(:disabled):not(:focus):not(.input-field--error) {
-    border-color: $color-border-medium;
+    border-color: var(--color-border-medium);
   }
 
   // Filled state (has value)
@@ -135,40 +183,40 @@
 
   // Error state
   &--error {
-    border-color: $color-error-500;
+    border-color: var(--input-color-error-500);
 
     &:focus {
-      border-color: $color-error-600;
-      box-shadow: 0 0 0 3px color-alpha($color-error-500, 0.12);
+      border-color: var(--input-color-error-600);
+      box-shadow: 0 0 0 3px var(--input-focus-ring-error);
     }
   }
 
   // Disabled state
   &--disabled {
-    background-color: $color-neutral-100;
-    color: $color-text-disabled;
+    background-color: var(--color-neutral-100);
+    color: var(--color-text-disabled);
     cursor: not-allowed;
-    border-color: $color-border-light;
+    border-color: var(--color-border-light);
 
     &:hover {
-      border-color: $color-border-light;
+      border-color: var(--color-border-light);
     }
   }
 
   // Readonly state
   &--readonly {
-    background-color: $color-neutral-50;
+    background-color: var(--color-neutral-50);
     cursor: default;
 
     &:focus {
-      border-color: $color-border-default;
+      border-color: var(--color-border);
       box-shadow: none;
     }
   }
 
   // When clearable, add padding for clear button
   .input-container:has(.input-clear-button) & {
-    padding-right: calc($spacing-4 + 32px);
+    padding-right: calc(var(--spacing-4) + 32px);
   }
 }
 
@@ -178,7 +226,7 @@
 
 .input-clear-button {
   position: absolute;
-  right: $spacing-3;
+  right: var(--spacing-3);
   top: 50%;
   transform: translateY(-50%);
   display: flex;
@@ -190,22 +238,23 @@
   background: transparent;
   border: none;
   border-radius: 50%;
-  color: $color-text-secondary;
+  color: var(--color-text-secondary);
   cursor: pointer;
-  transition: $transition-all;
+  transition: var(--input-transition-all);
   z-index: 2;
 
   &:hover {
-    background-color: $color-alpha-black-8;
-    color: $color-text-primary;
+    background-color: var(--input-alpha-black-8);
+    color: var(--color-text-primary);
   }
 
   &:active {
-    background-color: $color-alpha-black-12;
+    background-color: var(--input-alpha-black-12);
   }
 
   &:focus-visible {
-    @include focus-ring;
+    outline: var(--input-focus-ring-width) solid var(--input-focus-ring-color);
+    outline-offset: var(--input-focus-ring-offset);
   }
 
   svg {
@@ -223,9 +272,9 @@
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-top: $spacing-2;
+  margin-top: var(--spacing-2);
   min-height: 20px;
-  gap: $spacing-2;
+  gap: var(--spacing-2);
 }
 
 // ============================================================================
@@ -235,17 +284,17 @@
 .input-error {
   display: flex;
   align-items: center;
-  gap: $spacing-1;
-  color: $color-error-600;
-  font-size: $font-size-sm;
-  font-weight: $font-weight-regular;
-  line-height: $line-height-normal;
+  gap: var(--spacing-1);
+  color: var(--input-color-error-600);
+  font-size: var(--input-font-size-sm);
+  font-weight: var(--input-font-weight-regular);
+  line-height: var(--input-line-height-normal);
   flex: 1;
 
   // Error icon (optional - using text only for now)
   &::before {
-    content: ' ';
-    font-size: $font-size-base;
+    content: 'ï¿½';
+    font-size: var(--input-font-size-base);
   }
 }
 
@@ -254,10 +303,10 @@
 // ============================================================================
 
 .input-hint {
-  color: $color-text-secondary;
-  font-size: $font-size-sm;
-  font-weight: $font-weight-regular;
-  line-height: $line-height-normal;
+  color: var(--color-text-secondary);
+  font-size: var(--input-font-size-sm);
+  font-weight: var(--input-font-weight-regular);
+  line-height: var(--input-line-height-normal);
   flex: 1;
 }
 
@@ -266,16 +315,16 @@
 // ============================================================================
 
 .input-char-count {
-  color: $color-text-secondary;
-  font-size: $font-size-sm;
-  font-weight: $font-weight-regular;
-  line-height: $line-height-normal;
+  color: var(--color-text-secondary);
+  font-size: var(--input-font-size-sm);
+  font-weight: var(--input-font-weight-regular);
+  line-height: var(--input-line-height-normal);
   white-space: nowrap;
   margin-left: auto;
 
   &--limit {
-    color: $color-error-600;
-    font-weight: $font-weight-medium;
+    color: var(--input-color-error-600);
+    font-weight: var(--input-font-weight-medium);
   }
 }
 
@@ -286,11 +335,11 @@
 @media (max-width: 768px) {
   .input-field {
     height: 52px;
-    font-size: $font-size-base;
+    font-size: var(--input-font-size-base);
   }
 
   .input-label {
-    font-size: $font-size-sm;
+    font-size: var(--input-font-size-sm);
 
     .input-field--filled ~ &,
     .input-field--focused ~ &,
@@ -329,26 +378,26 @@
 @media (prefers-color-scheme: dark) {
   .input-container {
     .input-field {
-      background-color: $color-neutral-800;
-      color: $color-text-primary-dark;
-      border-color: $color-border-default-dark;
+      background-color: var(--input-color-neutral-800);
+      color: var(--color-text-primary-dark);
+      border-color: var(--input-color-border-default-dark);
 
       &::placeholder {
-        color: $color-text-hint-dark;
+        color: var(--input-color-text-hint-dark);
       }
 
       &:hover {
-        border-color: $color-border-medium-dark;
+        border-color: var(--input-color-border-medium-dark);
       }
     }
 
     .input-label {
-      color: $color-text-secondary-dark;
-      background: $color-neutral-800;
+      color: var(--color-text-secondary-dark);
+      background: var(--input-color-neutral-800);
     }
 
     .input-hint {
-      color: $color-text-secondary-dark;
+      color: var(--color-text-secondary-dark);
     }
   }
 }

@@ -1,7 +1,7 @@
 export const environment = {
   production: false,
-  apiUrl: 'https://repulsive-toad-7vjj6xv99745hrvj-5090.app.github.dev/api',
-  appName: 'HRMS',
+  apiUrl: 'https://repulsive-toad-7vjj6xv99745hrvj-5090.app.github.dev',  // Codespaces URL for github.dev access (no /api suffix)
+  appName: 'MorisHR',
   version: '1.0.0',
   // SECURITY: Secret path must match backend appsettings.json Auth:SuperAdminSecretPath
   // Full endpoint: /api/auth/system-{secretPath}

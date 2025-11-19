@@ -1,12 +1,8 @@
 // ═══════════════════════════════════════════════════════════
-// PREMIUM TOOLTIP STYLES
-// Production-ready tooltip component styles
+// PREMIUM TOOLTIP STYLES - CSS Custom Properties Edition
+// Production-ready tooltip component styles using CSS variables
+// Zero SCSS dependencies - Runtime theming compatible
 // ═══════════════════════════════════════════════════════════
-
-@import '../../../../styles/colors';
-@import '../../../../styles/elevation';
-@import '../../../../styles/motion';
-@import '../../../../styles/spacing';
 
 // ───────────────────────────────────────────────────────────
 // Tooltip Container
@@ -16,14 +12,14 @@
   position: absolute;
   z-index: 10000;
   max-width: 320px;
-  padding: $spacing-2 $spacing-3;
-  background-color: $color-neutral-800;
-  color: $color-text-primary-dark;
+  padding: var(--spacing-2) var(--spacing-3);
+  background-color: var(--color-neutral-800);
+  color: var(--color-text-primary-dark);
   font-size: 12px;
   font-weight: 500;
   line-height: 1.4;
   border-radius: 4px;
-  box-shadow: $elevation-3;
+  box-shadow: var(--elevation-3);
   word-wrap: break-word;
   pointer-events: none;
   user-select: none;
@@ -31,8 +27,8 @@
   // Initial state (hidden)
   opacity: 0;
   transform: scale(0.8);
-  transition: opacity $duration-fast $easing-decelerate,
-              transform $duration-fast $easing-decelerate;
+  transition: opacity var(--duration-fast) var(--easing-decelerate),
+              transform var(--duration-fast) var(--easing-decelerate);
 
   // Visible state
   &--visible {
@@ -65,7 +61,7 @@
     left: 50%;
     margin-left: -5px;
     border-width: 5px 5px 0 5px;
-    border-color: $color-neutral-800 transparent transparent transparent;
+    border-color: var(--color-neutral-800) transparent transparent transparent;
   }
 
   &.app-tooltip--visible {
@@ -82,7 +78,7 @@
     left: 50%;
     margin-left: -5px;
     border-width: 0 5px 5px 5px;
-    border-color: transparent transparent $color-neutral-800 transparent;
+    border-color: transparent transparent var(--color-neutral-800) transparent;
   }
 
   &.app-tooltip--visible {
@@ -99,7 +95,7 @@
     left: 100%;
     margin-top: -5px;
     border-width: 5px 0 5px 5px;
-    border-color: transparent transparent transparent $color-neutral-800;
+    border-color: transparent transparent transparent var(--color-neutral-800);
   }
 
   &.app-tooltip--visible {
@@ -116,7 +112,7 @@
     right: 100%;
     margin-top: -5px;
     border-width: 5px 5px 5px 0;
-    border-color: transparent $color-neutral-800 transparent transparent;
+    border-color: transparent var(--color-neutral-800) transparent transparent;
   }
 
   &.app-tooltip--visible {
@@ -139,15 +135,15 @@
 // High contrast mode support
 @media (prefers-contrast: high) {
   .app-tooltip {
-    border: 2px solid $color-neutral-0;
-    background-color: $color-neutral-900;
+    border: 2px solid var(--color-neutral-0);
+    background-color: var(--color-neutral-900);
   }
 }
 
 // Reduced motion support
 @media (prefers-reduced-motion: reduce) {
   .app-tooltip {
-    transition: opacity $duration-fast $easing-standard;
+    transition: opacity var(--duration-fast) var(--easing-standard);
 
     &--visible {
       transform: scale(1) !important;
@@ -155,27 +151,27 @@
   }
 }
 
-// Dark mode support (if using CSS variables)
+// Dark mode support (using CSS variables for automatic theme switching)
 @media (prefers-color-scheme: dark) {
   .app-tooltip {
-    background-color: $color-neutral-700;
-    box-shadow: $elevation-4;
+    background-color: var(--color-neutral-700);
+    box-shadow: var(--elevation-4);
   }
 
   .app-tooltip--top .app-tooltip__arrow {
-    border-color: $color-neutral-700 transparent transparent transparent;
+    border-color: var(--color-neutral-700) transparent transparent transparent;
   }
 
   .app-tooltip--bottom .app-tooltip__arrow {
-    border-color: transparent transparent $color-neutral-700 transparent;
+    border-color: transparent transparent var(--color-neutral-700) transparent;
   }
 
   .app-tooltip--left .app-tooltip__arrow {
-    border-color: transparent transparent transparent $color-neutral-700;
+    border-color: transparent transparent transparent var(--color-neutral-700);
   }
 
   .app-tooltip--right .app-tooltip__arrow {
-    border-color: transparent $color-neutral-700 transparent transparent;
+    border-color: transparent var(--color-neutral-700) transparent transparent;
   }
 }
 
@@ -184,6 +180,6 @@
 // ───────────────────────────────────────────────────────────
 
 :focus-visible {
-  outline: 2px solid $color-primary-500;
+  outline: 2px solid var(--color-primary);
   outline-offset: 2px;
 }

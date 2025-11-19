@@ -23,6 +23,135 @@ namespace HRMS.Infrastructure.Data.Migrations.Master
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("HRMS.Core.Entities.Master.ActivationResendLog", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DeletedBy")
+                        .HasColumnType("text");
+
+                    b.Property<string>("DeviceInfo")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasComment("Parsed device info (Mobile/Desktop, browser, OS)");
+
+                    b.Property<bool>("EmailDelivered")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasComment("Was activation email delivered successfully?");
+
+                    b.Property<string>("EmailSendError")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
+                        .HasComment("SMTP error or bounce reason if delivery failed");
+
+                    b.Property<string>("FailureReason")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
+                        .HasComment("Failure reason if Success=false (rate limit, email error, validation failure, etc.)");
+
+                    b.Property<string>("Geolocation")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasComment("City, country for fraud detection");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime>("RequestedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasComment("When resend was requested (UTC) - used for sliding window rate limits");
+
+                    b.Property<string>("RequestedByEmail")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasComment("Email address used in request (must match tenant email)");
+
+                    b.Property<string>("RequestedFromIp")
+                        .HasMaxLength(45)
+                        .HasColumnType("character varying(45)")
+                        .HasComment("IP address of requester (IPv4 or IPv6) for security monitoring");
+
+                    b.Property<int>("ResendCountLastHour")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasComment("Number of resend attempts in last hour (real-time rate limit tracking)");
+
+                    b.Property<bool>("Success")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true)
+                        .HasComment("Was resend successful? (false if rate limited or email send failed)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasComment("Tenant ID (enables per-tenant rate limiting)");
+
+                    b.Property<DateTime>("TokenExpiry")
+                        .HasColumnType("timestamp with time zone")
+                        .HasComment("Token expiration timestamp (UTC) - typically 24 hours from RequestedAt");
+
+                    b.Property<string>("TokenGenerated")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasComment("New token generated (truncated for security - never full token!)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<string>("UserAgent")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasComment("User agent string for fraud detection");
+
+                    b.Property<bool>("WasRateLimited")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasComment("Was this request blocked by rate limiting?");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RequestedAt")
+                        .HasDatabaseName("IX_ActivationResendLogs_RequestedAt");
+
+                    b.HasIndex("RequestedFromIp")
+                        .HasDatabaseName("IX_ActivationResendLogs_RequestedFromIp");
+
+                    b.HasIndex("Success")
+                        .HasDatabaseName("IX_ActivationResendLogs_Success");
+
+                    b.HasIndex("TenantId")
+                        .HasDatabaseName("IX_ActivationResendLogs_TenantId");
+
+                    b.HasIndex("RequestedFromIp", "RequestedAt")
+                        .HasDatabaseName("IX_ActivationResendLogs_IP_RequestedAt");
+
+                    b.HasIndex("TenantId", "RequestedAt")
+                        .HasDatabaseName("IX_ActivationResendLogs_TenantId_RequestedAt");
+
+                    b.ToTable("ActivationResendLogs", "master", t =>
+                        {
+                            t.HasComment("Fortune 500 activation resend audit log for multi-tenant SaaS. Enables rate limiting (max 3 per hour), security monitoring, and GDPR compliance. IMMUTABLE logs with cascade delete on tenant deletion.");
+                        });
+                });
+
             modelBuilder.Entity("HRMS.Core.Entities.Master.AdminUser", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1844,6 +1973,17 @@ namespace HRMS.Infrastructure.Data.Migrations.Master
                         .IsUnique();
 
                     b.ToTable("Villages", "master");
+                });
+
+            modelBuilder.Entity("HRMS.Core.Entities.Master.ActivationResendLog", b =>
+                {
+                    b.HasOne("HRMS.Core.Entities.Master.Tenant", "Tenant")
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Tenant");
                 });
 
             modelBuilder.Entity("HRMS.Core.Entities.Master.FeatureFlag", b =>

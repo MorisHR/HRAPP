@@ -679,6 +679,17 @@ public class AuthService : IAuthService
                 "Sign in again to continue working.");
         }
 
+        // Ensure AdminUser is loaded (data integrity check)
+        if (token.AdminUser == null)
+        {
+            _logger.LogError("AdminUser not loaded for refresh token {TokenId}", token.Id);
+            throw new UnauthorizedException(
+                ErrorCodes.AUTH_SESSION_EXPIRED,
+                "Your session is invalid. Please sign in again.",
+                "AdminUser not found for refresh token",
+                "Sign in again to create a new session.");
+        }
+
         // Update last activity
         token.LastActivityAt = DateTime.UtcNow;
 
@@ -1302,9 +1313,28 @@ public class AuthService : IAuthService
                 return (false, "Invalid or expired password reset link");
             }
 
-            // Check token expiry
-            if (adminUser.PasswordResetTokenExpiry == null ||
-                adminUser.PasswordResetTokenExpiry.Value < DateTime.UtcNow)
+            // Check token expiry - handle null case first
+            if (adminUser.PasswordResetTokenExpiry == null)
+            {
+                _logger.LogWarning("Password reset attempted with null expiry for user {Email}", adminUser.Email);
+
+                await _auditLogService.LogSecurityEventAsync(
+                    AuditActionType.PASSWORD_RESET_FAILED,
+                    AuditSeverity.WARNING,
+                    adminUser.Id,
+                    description: "Password reset token has no expiry",
+                    additionalInfo: JsonSerializer.Serialize(new
+                    {
+                        userEmail = adminUser.Email,
+                        reason = "Token expiry is null"
+                    })
+                );
+
+                return (false, "Invalid password reset link. Please request a new one.");
+            }
+
+            // Now check if expired (we know it's not null at this point)
+            if (adminUser.PasswordResetTokenExpiry.Value < DateTime.UtcNow)
             {
                 _logger.LogWarning("Password reset attempted with expired token for user {Email}", adminUser.Email);
 

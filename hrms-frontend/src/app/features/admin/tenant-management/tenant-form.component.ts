@@ -1,16 +1,9 @@
-import { Component, inject, signal, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject, signal, computed, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router, RouterModule, ActivatedRoute } from '@angular/router';
-import { MatCardModule } from '@angular/material/card';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatButtonModule } from '@angular/material/button';
-import { MatSelectModule } from '@angular/material/select';
-import { MatIconModule } from '@angular/material/icon';
-import { MatToolbarModule } from '@angular/material/toolbar';
 import { UiModule } from '../../../shared/ui/ui.module';
-import { ToastService } from '../../../shared/ui';
+import { CardComponent, ButtonComponent, IconComponent, InputComponent, SelectComponent, ToastService, ProgressSpinner } from '../../../shared/ui';
 import { TenantService } from '../../../core/services/tenant.service';
 import { PricingTierService, type TierType, type PricingTier } from '../../../core/services/pricing-tier.service';
 import { IndustrySectorService } from '../../../core/services/industry-sector.service';
@@ -23,14 +16,13 @@ import { Observable } from 'rxjs';
     CommonModule,
     ReactiveFormsModule,
     RouterModule,
-    MatCardModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatButtonModule,
-    MatSelectModule,
-    MatIconModule,
-    MatToolbarModule,
     UiModule,
+    CardComponent,
+    ButtonComponent,
+    IconComponent,
+    InputComponent,
+    SelectComponent,
+    ProgressSpinner,
   ],
   templateUrl: './tenant-form.component.html',
   styleUrl: './tenant-form.component.scss',
@@ -61,6 +53,18 @@ export class TenantFormComponent implements OnInit {
 
   // FORTUNE 500: Load industry sectors with caching (1 request per session)
   sectors$ = this.sectorService.getSectors();
+
+  // Computed options for select dropdowns
+  sectorOptions = signal<Array<{ value: number | string | null; label: string }>>([
+    { value: null, label: 'Not specified' }
+  ]);
+
+  tierOptions = computed(() =>
+    this.pricingTiers.map(tier => ({
+      value: tier.id,
+      label: `${tier.name} - ${this.pricingService.formatPrice(tier.price)}/mo (${this.pricingService.formatStorage(tier.storageGB)} Storage, ${this.pricingService.formatApiCalls(tier.apiCallsMonth)} API calls/month)`
+    }))
+  );
 
   constructor() {
     this.tenantForm = this.fb.group({
@@ -105,6 +109,14 @@ export class TenantFormComponent implements OnInit {
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
+
+    // Load sector options
+    this.sectors$.subscribe(sectors => {
+      this.sectorOptions.set([
+        { value: null, label: 'Not specified' },
+        ...sectors.map(s => ({ value: s.id, label: `${s.code} - ${s.name}` }))
+      ]);
+    });
 
     if (id) {
       // Edit mode

@@ -1,6 +1,6 @@
-import { Component, Input, Output, EventEmitter, HostListener, ElementRef, ViewChild } from '@angular/core';
+import { Component, Input, Output, EventEmitter, HostListener, ElementRef, ViewChild, forwardRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 
 export interface SelectOption {
   value: any;
@@ -12,9 +12,14 @@ export interface SelectOption {
   selector: 'app-select',
   imports: [CommonModule, FormsModule],
   templateUrl: './select.html',
-  styleUrl: './select.scss'
+  styleUrl: './select.scss',
+  providers: [{
+    provide: NG_VALUE_ACCESSOR,
+    useExisting: forwardRef(() => SelectComponent),
+    multi: true
+  }]
 })
-export class SelectComponent {
+export class SelectComponent implements ControlValueAccessor {
   @Input() label: string = '';
   @Input() placeholder: string = 'Select an option';
   @Input() options: SelectOption[] = [];
@@ -29,6 +34,26 @@ export class SelectComponent {
 
   @Output() valueChange = new EventEmitter<any>();
   @Output() blur = new EventEmitter<FocusEvent>();
+
+  // ControlValueAccessor implementation
+  private onChange: (value: any) => void = () => {};
+  private onTouched: () => void = () => {};
+
+  writeValue(value: any): void {
+    this.value = value;
+  }
+
+  registerOnChange(fn: (value: any) => void): void {
+    this.onChange = fn;
+  }
+
+  registerOnTouched(fn: () => void): void {
+    this.onTouched = fn;
+  }
+
+  setDisabledState(isDisabled: boolean): void {
+    this.disabled = isDisabled;
+  }
 
   @ViewChild('searchInput') searchInput?: ElementRef<HTMLInputElement>;
 
@@ -119,9 +144,13 @@ export class SelectComponent {
       }
 
       this.value = currentValue;
+      this.onChange(this.value);
+      this.onTouched();
       this.valueChange.emit(this.value);
     } else {
       this.value = option.value;
+      this.onChange(this.value);
+      this.onTouched();
       this.valueChange.emit(this.value);
       this.isOpen = false;
     }
@@ -143,6 +172,8 @@ export class SelectComponent {
       this.value = null;
     }
 
+    this.onChange(this.value);
+    this.onTouched();
     this.valueChange.emit(this.value);
   }
 

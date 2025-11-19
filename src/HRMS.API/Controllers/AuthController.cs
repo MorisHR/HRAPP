@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Antiforgery;
 using HRMS.Application.DTOs;
 using HRMS.Core.Interfaces;
 using HRMS.Infrastructure.Services;
@@ -11,7 +12,7 @@ namespace HRMS.API.Controllers;
 /// <summary>
 /// Authentication API for Super Admin and Tenant Employee login
 /// Implements production-grade JWT token refresh with HttpOnly cookies
-/// FORTRESS-GRADE SECURITY: Rate limiting, subdomain validation, password complexity
+/// FORTRESS-GRADE SECURITY: Rate limiting, subdomain validation, password complexity, CSRF protection
 /// </summary>
 [ApiController]
 [Route("api/[controller]")]
@@ -20,6 +21,7 @@ public class AuthController : ControllerBase
     private readonly IAuthService _authService;
     private readonly TenantAuthService _tenantAuthService;
     private readonly IRateLimitService _rateLimitService;
+    private readonly IAntiforgery _antiforgery;
     private readonly ILogger<AuthController> _logger;
     private readonly string _secretPath;
 
@@ -27,12 +29,14 @@ public class AuthController : ControllerBase
         IAuthService authService,
         TenantAuthService tenantAuthService,
         IRateLimitService rateLimitService,
+        IAntiforgery antiforgery,
         ILogger<AuthController> logger,
         IConfiguration configuration)
     {
         _authService = authService;
         _tenantAuthService = tenantAuthService;
         _rateLimitService = rateLimitService;
+        _antiforgery = antiforgery;
         _logger = logger;
         _secretPath = configuration["Auth:SuperAdminSecretPath"]
             ?? throw new InvalidOperationException("Auth:SuperAdminSecretPath configuration not set");
@@ -126,6 +130,46 @@ public class AuthController : ControllerBase
             {
                 success = false,
                 message = "An error occurred during login"
+            });
+        }
+    }
+
+    // ============================================
+    // CSRF PROTECTION (FORTUNE 500 COMPLIANCE)
+    // ============================================
+
+    /// <summary>
+    /// Get CSRF token for state-changing operations
+    /// SECURITY: Returns antiforgery token to prevent CSRF attacks
+    /// This endpoint is called by the frontend on app initialization
+    /// </summary>
+    [HttpGet("csrf-token")]
+    [AllowAnonymous]
+    [IgnoreAntiforgeryToken]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    public IActionResult GetCsrfToken()
+    {
+        try
+        {
+            // Generate and return CSRF token
+            var tokens = _antiforgery.GetAndStoreTokens(HttpContext);
+
+            _logger.LogDebug("CSRF token generated for IP: {IpAddress}", GetIpAddress());
+
+            return Ok(new
+            {
+                success = true,
+                token = tokens.RequestToken,
+                message = "CSRF token generated successfully"
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error generating CSRF token");
+            return StatusCode(500, new
+            {
+                success = false,
+                message = "Failed to generate CSRF token"
             });
         }
     }
@@ -1026,6 +1070,270 @@ public class AuthController : ControllerBase
             {
                 success = false,
                 message = "An error occurred. Please try again later."
+            });
+        }
+    }
+
+    // ============================================
+    // CHANGE PASSWORD ENDPOINTS (Authenticated)
+    // ============================================
+
+    /// <summary>
+    /// Change password for authenticated SuperAdmin users
+    /// Requires authentication - user must be logged in
+    /// FORTUNE 500 SECURITY FEATURES:
+    /// - Current password verification (prevents session hijacking)
+    /// - Password complexity enforcement (12+ chars, all types required)
+    /// - Password history check (no reuse of last 5 passwords)
+    /// - Password expiry tracking (90 days)
+    /// - Comprehensive audit logging
+    /// - Rate limiting (5 attempts per 15 minutes)
+    /// </summary>
+    [HttpPost("change-password")]
+    [Authorize] // Requires valid JWT token
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
+    public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request)
+    {
+        var ipAddress = GetIpAddress();
+
+        try
+        {
+            // Get user ID from JWT claims
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
+            {
+                return Unauthorized(new
+                {
+                    success = false,
+                    message = "Invalid authentication token"
+                });
+            }
+
+            // ==============================================
+            // FORTRESS-GRADE: RATE LIMITING
+            // ==============================================
+            // Prevent brute force attacks on password change
+            // Fortune 500 standard: 5 attempts per 15 minutes per user
+            var rateLimitKey = $"{userId}:change-password";
+            var rateLimitResult = await _rateLimitService.CheckRateLimitAsync(
+                rateLimitKey,
+                limit: 5,
+                window: TimeSpan.FromMinutes(15)
+            );
+
+            if (!rateLimitResult.IsAllowed)
+            {
+                _logger.LogWarning(
+                    "RATE_LIMIT_EXCEEDED: Password change blocked for user {UserId}. " +
+                    "Attempts: {Current}/{Limit}",
+                    userId,
+                    rateLimitResult.CurrentCount,
+                    rateLimitResult.Limit);
+
+                return StatusCode(429, new
+                {
+                    success = false,
+                    message = $"Too many password change attempts. Please try again in {rateLimitResult.RetryAfterSeconds / 60} minutes.",
+                    retryAfterSeconds = rateLimitResult.RetryAfterSeconds
+                });
+            }
+
+            // ==============================================
+            // VALIDATION
+            // ==============================================
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    message = "Invalid request data",
+                    errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage))
+                });
+            }
+
+            if (request.NewPassword != request.ConfirmPassword)
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    message = "New password and confirmation do not match"
+                });
+            }
+
+            // ==============================================
+            // CHANGE PASSWORD
+            // ==============================================
+            var (success, message) = await _authService.ChangePasswordAsync(
+                userId,
+                request.CurrentPassword,
+                request.NewPassword);
+
+            if (success)
+            {
+                _logger.LogInformation(
+                    "PASSWORD_CHANGE_SUCCESS: User {UserId} changed password from IP {IpAddress}",
+                    userId,
+                    ipAddress);
+
+                return Ok(new { success, message });
+            }
+            else
+            {
+                _logger.LogWarning(
+                    "PASSWORD_CHANGE_FAILED: {Message} for user {UserId} from IP {IpAddress}",
+                    message,
+                    userId,
+                    ipAddress);
+
+                return BadRequest(new { success, message });
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error changing password from IP {IpAddress}", ipAddress);
+            return StatusCode(500, new
+            {
+                success = false,
+                message = "An error occurred while changing password"
+            });
+        }
+    }
+
+    /// <summary>
+    /// Change password for authenticated Tenant Employee users
+    /// Requires authentication - user must be logged in
+    /// MULTI-TENANT: Ensures proper tenant context isolation
+    /// FORTUNE 500 SECURITY FEATURES:
+    /// - Current password verification (prevents session hijacking)
+    /// - Password complexity enforcement (12+ chars, all types required)
+    /// - Password history check (no reuse of last 5 passwords)
+    /// - Comprehensive audit logging with tenant context
+    /// - Rate limiting (5 attempts per 15 minutes)
+    /// </summary>
+    [HttpPost("tenant/change-password")]
+    [Authorize] // Requires valid JWT token
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
+    public async Task<IActionResult> TenantChangePassword([FromBody] ChangePasswordRequest request)
+    {
+        var ipAddress = GetIpAddress();
+
+        try
+        {
+            // Get employee ID from JWT claims
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var employeeId))
+            {
+                return Unauthorized(new
+                {
+                    success = false,
+                    message = "Invalid authentication token"
+                });
+            }
+
+            // Get tenant ID from JWT claims for proper multi-tenant isolation
+            var tenantIdClaim = User.FindFirst("TenantId")?.Value;
+            if (string.IsNullOrEmpty(tenantIdClaim) || !Guid.TryParse(tenantIdClaim, out var tenantId))
+            {
+                return Unauthorized(new
+                {
+                    success = false,
+                    message = "Invalid tenant context"
+                });
+            }
+
+            // ==============================================
+            // FORTRESS-GRADE: RATE LIMITING
+            // ==============================================
+            var rateLimitKey = $"{employeeId}:tenant:change-password";
+            var rateLimitResult = await _rateLimitService.CheckRateLimitAsync(
+                rateLimitKey,
+                limit: 5,
+                window: TimeSpan.FromMinutes(15)
+            );
+
+            if (!rateLimitResult.IsAllowed)
+            {
+                _logger.LogWarning(
+                    "RATE_LIMIT_EXCEEDED: Tenant password change blocked for employee {EmployeeId}. " +
+                    "Attempts: {Current}/{Limit}",
+                    employeeId,
+                    rateLimitResult.CurrentCount,
+                    rateLimitResult.Limit);
+
+                return StatusCode(429, new
+                {
+                    success = false,
+                    message = $"Too many password change attempts. Please try again in {rateLimitResult.RetryAfterSeconds / 60} minutes.",
+                    retryAfterSeconds = rateLimitResult.RetryAfterSeconds
+                });
+            }
+
+            // ==============================================
+            // VALIDATION
+            // ==============================================
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    message = "Invalid request data",
+                    errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage))
+                });
+            }
+
+            if (request.NewPassword != request.ConfirmPassword)
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    message = "New password and confirmation do not match"
+                });
+            }
+
+            // ==============================================
+            // CHANGE PASSWORD (MULTI-TENANT)
+            // ==============================================
+            var (success, message) = await _tenantAuthService.ChangeEmployeePasswordAsync(
+                employeeId,
+                tenantId,
+                request.CurrentPassword,
+                request.NewPassword);
+
+            if (success)
+            {
+                _logger.LogInformation(
+                    "TENANT_PASSWORD_CHANGE_SUCCESS: Employee {EmployeeId} in tenant {TenantId} changed password from IP {IpAddress}",
+                    employeeId,
+                    tenantId,
+                    ipAddress);
+
+                return Ok(new { success, message });
+            }
+            else
+            {
+                _logger.LogWarning(
+                    "TENANT_PASSWORD_CHANGE_FAILED: {Message} for employee {EmployeeId} in tenant {TenantId} from IP {IpAddress}",
+                    message,
+                    employeeId,
+                    tenantId,
+                    ipAddress);
+
+                return BadRequest(new { success, message });
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error changing tenant employee password from IP {IpAddress}", ipAddress);
+            return StatusCode(500, new
+            {
+                success = false,
+                message = "An error occurred while changing password"
             });
         }
     }

@@ -28,16 +28,19 @@ public class GDPRComplianceService : IGDPRComplianceService
             .Where(a => a.UserId == userId)
             .ToListAsync(cancellationToken);
 
+        // FIXED: Add OrderBy to ensure deterministic results
+        var mostRecentLog = auditLogs.OrderByDescending(a => a.PerformedAt).FirstOrDefault();
+
         var report = new RightToAccessReport
         {
             UserId = userId,
-            UserEmail = auditLogs.FirstOrDefault()?.UserEmail,
+            UserEmail = mostRecentLog?.UserEmail,
             ReportGeneratedAt = DateTime.UtcNow,
             TotalAuditLogEntries = auditLogs.Count,
             PersonalData = new List<PersonalDataItem>
             {
-                new PersonalDataItem { DataType = "Email", DataValue = auditLogs.FirstOrDefault()?.UserEmail ?? "", Source = "AuditLog", CollectedAt = DateTime.UtcNow },
-                new PersonalDataItem { DataType = "IP Address", DataValue = auditLogs.FirstOrDefault()?.IpAddress ?? "", Source = "AuditLog", CollectedAt = DateTime.UtcNow }
+                new PersonalDataItem { DataType = "Email", DataValue = mostRecentLog?.UserEmail ?? "", Source = "AuditLog", CollectedAt = DateTime.UtcNow },
+                new PersonalDataItem { DataType = "IP Address", DataValue = mostRecentLog?.IpAddress ?? "", Source = "AuditLog", CollectedAt = DateTime.UtcNow }
             },
             ProcessingActivities = auditLogs.Select(a => new DataProcessingActivity
             {

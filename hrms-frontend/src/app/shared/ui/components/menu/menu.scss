@@ -1,15 +1,9 @@
 // ============================================================================
-// PREMIUM MENU COMPONENT - HRMS Design System
+// PREMIUM MENU COMPONENT - Fortune 500 Grade CSS Custom Properties Migration
 // ============================================================================
-// Production-ready dropdown menu with advanced positioning, keyboard nav,
-// and accessibility features
+// Pure CSS implementation using CSS custom properties only
+// No SCSS imports, variables, functions, or mixins
 // ============================================================================
-
-@import '../../../../../styles/colors';
-@import '../../../../../styles/spacing';
-@import '../../../../../styles/elevation';
-@import '../../../../../styles/motion';
-@import '../../../../../styles/typography';
 
 // ============================================================================
 // BACKDROP
@@ -35,12 +29,12 @@
   z-index: 1000;
   min-width: 180px;
   max-width: 320px;
-  background: $color-background-paper;
-  border: 1px solid $color-border-light;
+  background: var(--color-background-paper);
+  border: 1px solid var(--color-border-light);
   border-radius: 8px;
-  box-shadow: $elevation-3;
+  box-shadow: var(--elevation-3);
   overflow: hidden;
-  animation: menuSlideIn $duration-fast $easing-decelerate;
+  animation: menuSlideIn var(--duration-fast) var(--easing-decelerate);
   transform-origin: top left;
 
   @media (prefers-reduced-motion: reduce) {
@@ -64,7 +58,7 @@
 // ============================================================================
 
 .menu-items {
-  padding: $spacing-1 0;
+  padding: var(--spacing-1) 0;
   max-height: 60vh;
   overflow-y: auto;
   overflow-x: hidden;
@@ -79,11 +73,11 @@
   }
 
   &::-webkit-scrollbar-thumb {
-    background: $color-neutral-300;
+    background: var(--color-neutral-300);
     border-radius: 4px;
 
     &:hover {
-      background: $color-neutral-400;
+      background: var(--color-neutral-400);
     }
   }
 }
@@ -95,47 +89,47 @@
 .menu-item {
   display: flex;
   align-items: center;
-  gap: $spacing-3;
+  gap: var(--spacing-3);
   width: 100%;
-  padding: $spacing-2 $spacing-4;
+  padding: var(--spacing-2) var(--spacing-4);
   border: none;
   background: transparent;
-  color: $color-text-primary;
+  color: var(--color-text-primary);
   font-size: 14px;
   font-weight: 400;
   line-height: 1.5;
   text-align: left;
   cursor: pointer;
-  transition: background-color $duration-fast $easing-standard,
-              color $duration-fast $easing-standard;
+  transition: background-color var(--duration-fast) var(--easing-standard),
+              color var(--duration-fast) var(--easing-standard);
   outline: none;
   position: relative;
 
   // Hover state
   &:hover:not(&--disabled) {
-    background: $color-alpha-black-4;
+    background: var(--color-alpha-black-4);
   }
 
   // Focused state (keyboard navigation)
   &--focused:not(&--disabled) {
-    background: $color-alpha-black-8;
+    background: var(--color-alpha-black-8);
   }
 
   // Active state
   &:active:not(&--disabled) {
-    background: $color-alpha-black-12;
+    background: var(--color-alpha-black-12);
   }
 
   // Disabled state
   &--disabled {
-    color: $color-text-disabled;
+    color: var(--color-text-disabled);
     cursor: not-allowed;
     pointer-events: none;
   }
 
   // Item with submenu
   &--has-submenu {
-    padding-right: $spacing-6;
+    padding-right: var(--spacing-6);
   }
 }
 
@@ -150,7 +144,7 @@
   flex-shrink: 0;
   width: 20px;
   height: 20px;
-  color: $color-text-secondary;
+  color: var(--color-text-secondary);
   font-size: 16px;
 
   i {
@@ -159,7 +153,7 @@
   }
 
   .menu-item:hover:not(.menu-item--disabled) & {
-    color: $color-text-primary;
+    color: var(--color-text-primary);
   }
 }
 
@@ -177,17 +171,17 @@
   flex-shrink: 0;
   width: 16px;
   height: 16px;
-  color: $color-text-secondary;
+  color: var(--color-text-secondary);
   margin-left: auto;
   position: absolute;
-  right: $spacing-3;
+  right: var(--spacing-3);
 
   svg {
     display: block;
   }
 
   .menu-item:hover:not(.menu-item--disabled) & {
-    color: $color-text-primary;
+    color: var(--color-text-primary);
   }
 }
 
@@ -197,8 +191,8 @@
 
 .menu-divider {
   height: 1px;
-  margin: $spacing-1 0;
-  background: $color-border-light;
+  margin: var(--spacing-1) 0;
+  background: var(--color-border-light);
 }
 
 // ============================================================================
@@ -212,61 +206,17 @@
   }
 
   .menu-item {
-    padding: $spacing-2 $spacing-3;
+    padding: var(--spacing-2) var(--spacing-3);
     font-size: 13px;
   }
 }
 
 // ============================================================================
-// DARK MODE SUPPORT (if needed in future)
+// DARK MODE SUPPORT
 // ============================================================================
-
-@media (prefers-color-scheme: dark) {
-  .menu-panel {
-    background: $color-background-paper-dark;
-    border-color: $color-border-default-dark;
-  }
-
-  .menu-item {
-    color: $color-text-primary-dark;
-
-    &:hover:not(&--disabled) {
-      background: $color-alpha-white-4;
-    }
-
-    &--focused:not(&--disabled) {
-      background: $color-alpha-white-8;
-    }
-
-    &:active:not(&--disabled) {
-      background: $color-alpha-white-12;
-    }
-
-    &--disabled {
-      color: $color-text-disabled-dark;
-    }
-  }
-
-  .menu-item__icon {
-    color: $color-text-secondary-dark;
-
-    .menu-item:hover:not(.menu-item--disabled) & {
-      color: $color-text-primary-dark;
-    }
-  }
-
-  .menu-item__submenu-indicator {
-    color: $color-text-secondary-dark;
-
-    .menu-item:hover:not(.menu-item--disabled) & {
-      color: $color-text-primary-dark;
-    }
-  }
-
-  .menu-divider {
-    background: $color-border-light-dark;
-  }
-}
+// Dark mode is automatically handled through CSS custom properties in
+// hrms-frontend/src/styles/_css-variables.scss
+// The .dark-theme class overrides the CSS variables for dark mode
 
 // ============================================================================
 // ACCESSIBILITY ENHANCEMENTS
@@ -279,13 +229,13 @@
   }
 
   .menu-item--focused:not(.menu-item--disabled) {
-    outline: 2px solid $color-primary-500;
+    outline: 2px solid var(--color-primary);
     outline-offset: -2px;
   }
 }
 
 // Focus visible for keyboard users
 .menu-item:focus-visible:not(.menu-item--disabled) {
-  outline: 2px solid $color-primary-500;
+  outline: 2px solid var(--color-primary);
   outline-offset: -2px;
 }

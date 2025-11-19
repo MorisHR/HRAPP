@@ -4,9 +4,9 @@
 // Central import point for all design system partials
 // ═══════════════════════════════════════════════════════════
 
-@import 'typography';
-@import 'colors';
-@import 'spacing';
-@import 'elevation';
-@import 'motion';
-@import 'focus';
+@forward 'typography';
+@forward 'colors';
+@forward 'spacing';
+@forward 'elevation';
+@forward 'motion';
+@forward 'focus';

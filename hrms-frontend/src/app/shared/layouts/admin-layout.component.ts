@@ -162,30 +162,57 @@ interface NavItem {
       padding-bottom: 64px;
 
       a {
+        margin: 4px 8px;
+        padding: 12px;
+        border-radius: 10px;
         display: flex;
         align-items: center;
         gap: 12px;
         text-decoration: none;
-        color: inherit;
-        transition: background-color 0.2s;
+        color: #525252;
+        font-weight: 500;
+        position: relative;
+        border: 2px solid transparent;
+        transition: all 250ms cubic-bezier(0.4, 0.0, 0.2, 1);
+
+        &:hover {
+          background-color: rgba(15, 98, 254, 0.04);
+          color: #161616;
+          transform: translateX(2px);
+
+          .item-icon {
+            color: #0F62FE;
+          }
+        }
 
         .item-icon {
           font-size: 20px;
           width: 20px;
           height: 20px;
+          color: #6F6F6F;
+          transition: color 250ms cubic-bezier(0.4, 0.0, 0.2, 1);
         }
 
         .item-label {
           flex: 1;
+          transition: color 250ms cubic-bezier(0.4, 0.0, 0.2, 1);
         }
       }
 
       .active-link {
-        background-color: rgba(63, 81, 181, 0.1);
-        color: #3f51b5;
+        background: rgba(15, 98, 254, 0.02);
+        color: #0F62FE;
+        font-weight: 600;
+        border-left: 4px solid #0F62FE;
+        padding-left: 10px;
 
         .item-icon {
-          color: #3f51b5;
+          color: #0F62FE;
+          font-weight: 600;
+        }
+
+        .item-label {
+          color: #0F62FE;
         }
       }
     }

@@ -255,7 +255,7 @@ public class ReportService : IReportService
 
         var attendances = await _context.Attendances
             .Include(a => a.Employee)
-            .ThenInclude(e => e.Department)
+            .ThenInclude(e => e!.Department)
             .Where(a => a.Date >= startDate && a.Date <= endDate && a.OvertimeHours > 0)
             .ToListAsync();
 
@@ -263,7 +263,8 @@ public class ReportService : IReportService
             .GroupBy(a => a.EmployeeId)
             .Select(g =>
             {
-                var employee = g.First().Employee;
+                // FIXED: Add OrderBy to ensure deterministic results
+                var employee = g.OrderBy(a => a.Date).First().Employee;
                 var regularOvertimeHours = g.Where(a => !a.IsSunday && !a.IsPublicHoliday).Sum(a => a.OvertimeHours);
                 var sundayOvertimeHours = g.Where(a => a.IsSunday).Sum(a => a.OvertimeHours);
                 var publicHolidayOvertimeHours = g.Where(a => a.IsPublicHoliday).Sum(a => a.OvertimeHours);
@@ -277,7 +278,7 @@ public class ReportService : IReportService
                     EmployeeId = employee?.Id ?? Guid.Empty,
                     EmployeeName = employee != null ? $"{employee.FirstName} {employee.LastName}" : "Unknown",
                     EmployeeCode = employee?.EmployeeCode ?? "Unknown",
-                    Department = employee.Department?.Name ?? "",
+                    Department = employee?.Department?.Name ?? "",
                     RegularOvertimeHours = regularOvertimeHours,
                     SundayOvertimeHours = sundayOvertimeHours,
                     PublicHolidayOvertimeHours = publicHolidayOvertimeHours,

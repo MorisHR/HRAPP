@@ -1,5 +1,6 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { environment } from '../../../environments/environment';
+import { EnvironmentDetectionService } from './environment-detection.service';
 
 /**
  * Service for handling subdomain-based multi-tenant routing
@@ -9,6 +10,7 @@ import { environment } from '../../../environments/environment';
   providedIn: 'root'
 })
 export class SubdomainService {
+  private envDetection = inject(EnvironmentDetectionService);
 
   /**
    * Extracts the subdomain from the current window location
@@ -70,6 +72,11 @@ export class SubdomainService {
    * Checks if the current URL is on a tenant subdomain
    */
   isOnTenantSubdomain(): boolean {
+    // First check if the environment supports subdomains (e.g., not Codespaces)
+    if (!this.envDetection.supportsSubdomainRouting()) {
+      return false;
+    }
+
     const subdomain = this.getSubdomainFromUrl();
     const reservedSubdomains = ['www', 'api', 'admin', 'cdn', 'static', 'assets'];
     return subdomain !== null && !reservedSubdomains.includes(subdomain);

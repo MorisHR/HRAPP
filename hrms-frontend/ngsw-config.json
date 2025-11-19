@@ -22,8 +22,56 @@
       "updateMode": "prefetch",
       "resources": {
         "files": [
-          "/**/*.(svg|cur|jpg|jpeg|png|apng|webp|avif|gif|otf|ttf|woff|woff2)"
+          "/**/*.(svg|cur|jpg|jpeg|png|apng|webp|avif|gif|otf|ttf|woff|woff2)",
+          "/assets/i18n/*.json"
         ]
+      }
+    }
+  ],
+  "dataGroups": [
+    {
+      "name": "api-fresh",
+      "urls": [
+        "/api/auth/**",
+        "/api/employees/*/attendance/today",
+        "/api/monitoring/**",
+        "/api/attendance/check-in",
+        "/api/attendance/check-out"
+      ],
+      "cacheConfig": {
+        "strategy": "freshness",
+        "maxSize": 50,
+        "maxAge": "5m",
+        "timeout": "10s"
+      }
+    },
+    {
+      "name": "api-performance",
+      "urls": [
+        "/api/employees",
+        "/api/departments",
+        "/api/locations",
+        "/api/leave/**",
+        "/api/payroll/**",
+        "/api/reports/**"
+      ],
+      "cacheConfig": {
+        "strategy": "performance",
+        "maxSize": 100,
+        "maxAge": "1h"
+      }
+    },
+    {
+      "name": "static-data",
+      "urls": [
+        "/api/setup/industries",
+        "/api/setup/countries",
+        "/api/setup/districts"
+      ],
+      "cacheConfig": {
+        "strategy": "performance",
+        "maxSize": 20,
+        "maxAge": "7d"
       }
     }
   ]

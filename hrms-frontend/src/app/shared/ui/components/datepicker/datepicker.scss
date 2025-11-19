@@ -1,10 +1,9 @@
-// PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP
-// PREMIUM DATEPICKER COMPONENT
-// Part of the Fortune 500-grade HRMS design system
-// Production-ready date picker with calendar popup and animations
-// PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP
-
-@import '../../../../../styles/index';
+// ============================================================================
+// DATEPICKER COMPONENT - Fortune 500 Grade CSS Custom Properties Migration
+// ============================================================================
+// Pure CSS implementation using CSS custom properties only
+// No SCSS imports, variables, functions, or mixins
+// ============================================================================
 
 // ============================================================================
 // CONTAINER
@@ -13,22 +12,22 @@
 .datepicker-container {
   display: flex;
   flex-direction: column;
-  gap: $spacing-1;
+  gap: var(--spacing-1);
   width: 100%;
   position: relative;
 
   &--error {
     .datepicker-input {
-      border-color: $color-error-500;
+      border-color: var(--color-error);
 
       &:hover:not(:disabled) {
-        border-color: $color-error-600;
+        border-color: var(--color-error-hover);
       }
 
       &:focus,
       &--focused {
-        border-color: $color-error-600;
-        box-shadow: 0 0 0 3px rgba($color-error-500, 0.12);
+        border-color: var(--color-error-hover);
+        box-shadow: 0 0 0 3px var(--color-error-alpha-12);
       }
     }
   }
@@ -47,12 +46,12 @@
   display: block;
   font-size: 14px;
   font-weight: 500;
-  color: $color-text-primary;
-  margin-bottom: $spacing-1;
+  color: var(--color-text-primary);
+  margin-bottom: var(--spacing-1);
 
   &__required {
-    color: $color-error-500;
-    margin-left: $spacing-1;
+    color: var(--color-error);
+    margin-left: var(--spacing-1);
   }
 }
 
@@ -74,66 +73,67 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: $spacing-2;
-  padding: $spacing-3 $spacing-4;
-  background: $color-background-paper;
-  border: 2px solid $color-border-default;
+  gap: var(--spacing-2);
+  padding: var(--spacing-3) var(--spacing-4);
+  background: var(--color-background-paper);
+  border: 2px solid var(--color-border);
   border-radius: 8px;
   cursor: pointer;
-  transition: $transition-all;
+  transition: var(--transition-all);
   font-size: 14px;
   text-align: left;
   min-height: 44px;
-  font-family: $font-family-base;
+  font-family: var(--font-family-base);
 
   &:hover:not(:disabled) {
-    border-color: $color-primary-500;
-    background: $color-neutral-50;
+    border-color: var(--color-primary);
+    background: var(--color-neutral-50);
   }
 
   &:focus,
   &--focused {
-    @include focus-ring;
-    border-color: $color-primary-500;
+    outline: var(--focus-ring-width) solid var(--focus-ring-color);
+    outline-offset: var(--focus-ring-offset);
+    border-color: var(--color-primary);
   }
 
   &--disabled {
     cursor: not-allowed;
-    background: $color-neutral-100;
-    color: $color-text-disabled;
-    border-color: $color-border-light;
+    background: var(--color-neutral-100);
+    color: var(--color-text-disabled);
+    border-color: var(--color-border-light);
   }
 
   &--error {
-    border-color: $color-error-500;
+    border-color: var(--color-error);
   }
 
   // Value Display
   &__value {
     flex: 1;
-    color: $color-text-primary;
+    color: var(--color-text-primary);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 
     &--placeholder {
-      color: $color-text-hint;
+      color: var(--color-text-hint);
     }
   }
 
   // Calendar Icon
   &__icon {
-    color: $color-text-secondary;
+    color: var(--color-text-secondary);
     flex-shrink: 0;
-    transition: $transition-all;
+    transition: var(--transition-all);
   }
 
   &:hover &__icon {
-    color: $color-primary-500;
+    color: var(--color-primary);
   }
 
   &--focused &__icon {
-    color: $color-primary-600;
+    color: var(--color-primary-hover);
   }
 }
 
@@ -146,13 +146,13 @@
   top: calc(100% + 4px);
   left: 0;
   z-index: 1000;
-  background: $color-background-paper;
-  border: 1px solid $color-border-default;
+  background: var(--color-background-paper);
+  border: 1px solid var(--color-border);
   border-radius: 12px;
-  box-shadow: $elevation-3;
-  padding: $spacing-4;
+  box-shadow: var(--elevation-3);
+  padding: var(--spacing-4);
   min-width: 320px;
-  animation: slideDown $duration-normal $easing-decelerate;
+  animation: slideDown var(--duration-normal) var(--easing-decelerate);
 
   // Prevent text selection during interaction
   user-select: none;
@@ -166,15 +166,15 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: $spacing-2;
-  margin-bottom: $spacing-4;
-  padding-bottom: $spacing-3;
-  border-bottom: 1px solid $color-border-light;
+  gap: var(--spacing-2);
+  margin-bottom: var(--spacing-4);
+  padding-bottom: var(--spacing-3);
+  border-bottom: 1px solid var(--color-border-light);
 }
 
 .datepicker-header-selectors {
   display: flex;
-  gap: $spacing-2;
+  gap: var(--spacing-2);
   flex: 1;
   justify-content: center;
 }
@@ -189,21 +189,22 @@
   background: transparent;
   border: none;
   border-radius: 6px;
-  color: $color-text-secondary;
+  color: var(--color-text-secondary);
   cursor: pointer;
-  transition: $transition-all;
+  transition: var(--transition-all);
 
   &:hover {
-    background: $color-primary-50;
-    color: $color-primary-600;
+    background: var(--color-primary-50);
+    color: var(--color-primary-hover);
   }
 
   &:active {
-    background: $color-primary-100;
+    background: var(--color-primary-100);
   }
 
   &:focus-visible {
-    @include focus-ring;
+    outline: var(--focus-ring-width) solid var(--focus-ring-color);
+    outline-offset: var(--focus-ring-offset);
   }
 
   svg {
@@ -212,25 +213,25 @@
 }
 
 .datepicker-select {
-  padding: $spacing-2 $spacing-3;
-  border: 1px solid $color-border-default;
+  padding: var(--spacing-2) var(--spacing-3);
+  border: 1px solid var(--color-border);
   border-radius: 6px;
-  background: $color-background-paper;
+  background: var(--color-background-paper);
   font-size: 14px;
   font-weight: 500;
-  color: $color-text-primary;
+  color: var(--color-text-primary);
   cursor: pointer;
-  transition: $transition-all;
-  font-family: $font-family-base;
+  transition: var(--transition-all);
+  font-family: var(--font-family-base);
 
   &:hover {
-    border-color: $color-primary-500;
+    border-color: var(--color-primary);
   }
 
   &:focus {
     outline: none;
-    border-color: $color-primary-500;
-    box-shadow: 0 0 0 3px rgba($color-primary-500, 0.1);
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px var(--color-primary-alpha-10);
   }
 }
 
@@ -241,18 +242,18 @@
 .datepicker-weekdays {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: $spacing-1;
-  margin-bottom: $spacing-2;
+  gap: var(--spacing-1);
+  margin-bottom: var(--spacing-2);
 }
 
 .datepicker-weekday {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: $spacing-2;
+  padding: var(--spacing-2);
   font-size: 12px;
   font-weight: 600;
-  color: $color-text-secondary;
+  color: var(--color-text-secondary);
   text-transform: uppercase;
 }
 
@@ -263,8 +264,8 @@
 .datepicker-calendar {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: $spacing-1;
-  margin-bottom: $spacing-3;
+  gap: var(--spacing-1);
+  margin-bottom: var(--spacing-3);
 }
 
 .datepicker-day {
@@ -279,19 +280,19 @@
   border-radius: 8px;
   font-size: 14px;
   font-weight: 400;
-  color: $color-text-disabled;
+  color: var(--color-text-disabled);
   cursor: pointer;
-  transition: $transition-all;
+  transition: var(--transition-all);
   position: relative;
 
   // Current month dates
   &--current-month {
-    color: $color-text-primary;
+    color: var(--color-text-primary);
     font-weight: 500;
 
     &:hover:not(:disabled):not(.datepicker-day--selected) {
-      background: $color-primary-50;
-      color: $color-primary-700;
+      background: var(--color-primary-50);
+      color: var(--color-primary-active);
     }
   }
 
@@ -308,35 +309,35 @@
       width: 4px;
       height: 4px;
       border-radius: 50%;
-      background: $color-primary-500;
+      background: var(--color-primary);
     }
 
     &.datepicker-day--selected::after {
-      background: $color-background-paper;
+      background: var(--color-background-paper);
     }
   }
 
   // Selected date
   &--selected {
-    background: $color-primary-500;
-    color: $color-background-paper;
+    background: var(--color-primary);
+    color: var(--color-background-paper);
     font-weight: 600;
 
     &:hover:not(:disabled) {
-      background: $color-primary-600;
+      background: var(--color-primary-hover);
     }
   }
 
   // Weekend dates
   &--weekend {
     &.datepicker-day--current-month {
-      color: $color-primary-600;
+      color: var(--color-primary-hover);
     }
   }
 
   // Disabled dates
   &--disabled {
-    color: $color-text-disabled;
+    color: var(--color-text-disabled);
     cursor: not-allowed;
     opacity: 0.4;
 
@@ -347,13 +348,14 @@
 
   // Focused state (keyboard navigation)
   &--focused:not(:disabled):not(.datepicker-day--selected) {
-    outline: 2px solid $color-primary-500;
+    outline: 2px solid var(--color-primary);
     outline-offset: -2px;
-    background: $color-primary-50;
+    background: var(--color-primary-50);
   }
 
   &:focus-visible {
-    @include focus-ring;
+    outline: var(--focus-ring-width) solid var(--focus-ring-color);
+    outline-offset: var(--focus-ring-offset);
   }
 
   &:active:not(:disabled) {
@@ -367,50 +369,51 @@
 
 .datepicker-footer {
   display: flex;
-  gap: $spacing-2;
-  padding-top: $spacing-3;
-  border-top: 1px solid $color-border-light;
+  gap: var(--spacing-2);
+  padding-top: var(--spacing-3);
+  border-top: 1px solid var(--color-border-light);
 }
 
 .datepicker-footer-button {
   flex: 1;
-  padding: $spacing-2 $spacing-3;
-  background: $color-primary-500;
-  color: $color-background-paper;
+  padding: var(--spacing-2) var(--spacing-3);
+  background: var(--color-primary);
+  color: var(--color-background-paper);
   border: none;
   border-radius: 6px;
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
-  transition: $transition-all;
-  font-family: $font-family-base;
+  transition: var(--transition-all);
+  font-family: var(--font-family-base);
 
   &:hover {
-    background: $color-primary-600;
+    background: var(--color-primary-hover);
   }
 
   &:active {
-    background: $color-primary-700;
+    background: var(--color-primary-active);
     transform: scale(0.98);
   }
 
   &:focus-visible {
-    @include focus-ring;
+    outline: var(--focus-ring-width) solid var(--focus-ring-color);
+    outline-offset: var(--focus-ring-offset);
   }
 
   &--secondary {
     background: transparent;
-    color: $color-text-secondary;
-    border: 1px solid $color-border-default;
+    color: var(--color-text-secondary);
+    border: 1px solid var(--color-border);
 
     &:hover {
-      background: $color-neutral-50;
-      border-color: $color-border-medium;
-      color: $color-text-primary;
+      background: var(--color-neutral-50);
+      border-color: var(--color-border-medium);
+      color: var(--color-text-primary);
     }
 
     &:active {
-      background: $color-neutral-100;
+      background: var(--color-neutral-100);
     }
   }
 }
@@ -422,10 +425,10 @@
 .datepicker-error {
   display: flex;
   align-items: center;
-  gap: $spacing-2;
+  gap: var(--spacing-2);
   font-size: 12px;
-  color: $color-error-600;
-  margin-top: $spacing-1;
+  color: var(--color-error-hover);
+  margin-top: var(--spacing-1);
 
   svg {
     flex-shrink: 0;
@@ -454,7 +457,7 @@
 @media (max-width: 768px) {
   .datepicker-popup {
     min-width: 280px;
-    padding: $spacing-3;
+    padding: var(--spacing-3);
   }
 
   .datepicker-day {
@@ -465,7 +468,7 @@
 
   .datepicker-select {
     font-size: 13px;
-    padding: $spacing-1 $spacing-2;
+    padding: var(--spacing-1) var(--spacing-2);
   }
 }
 
@@ -522,50 +525,27 @@
   }
 }
 
-// Dark mode support (future enhancement)
+// ============================================================================
+// DARK THEME SUPPORT
+// ============================================================================
+
+// Dark mode support using CSS custom properties
+// The dark theme is handled by the global CSS variables in _css-variables.scss
+// This media query provides fallback support for browsers that support prefers-color-scheme
+// but don't have the .dark-theme class applied
+
 @media (prefers-color-scheme: dark) {
   .datepicker-input {
-    background: $color-background-paper-dark;
-    border-color: $color-border-default-dark;
-    color: $color-text-primary-dark;
-
     &:hover:not(:disabled) {
-      background: lighten($color-background-paper-dark, 5%);
+      background: var(--color-background-paper-hover);
     }
-
-    &__value {
-      &--placeholder {
-        color: $color-text-hint-dark;
-      }
-    }
-  }
-
-  .datepicker-popup {
-    background: $color-background-paper-dark;
-    border-color: $color-border-default-dark;
-  }
-
-  .datepicker-select {
-    background: $color-background-paper-dark;
-    border-color: $color-border-default-dark;
-    color: $color-text-primary-dark;
   }
 
   .datepicker-day {
-    color: $color-text-disabled-dark;
-
-    &--current-month {
-      color: $color-text-primary-dark;
-    }
-
     &--selected {
-      background: $color-primary-600;
-      color: $color-background-paper;
+      background: var(--color-primary-hover);
+      color: var(--color-background-paper);
     }
-  }
-
-  .datepicker-label {
-    color: $color-text-primary-dark;
   }
 }
 

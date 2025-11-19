@@ -2,10 +2,10 @@
   <!-- Header -->
   <div class="dashboard-header">
     <h1>Subscription Management</h1>
-    <button mat-raised-button color="primary" (click)="refresh()">
-      <app-icon name="refresh"></app-icon>
+    <app-button variant="primary" (clicked)="refresh()">
+      <app-icon name="refresh-cw"></app-icon>
       Refresh
-    </button>
+    </app-button>
   </div>
 
   <!-- Loading State -->
@@ -18,88 +18,88 @@
 
   <!-- Error State -->
   @if (error()) {
-    <mat-card class="error-card">
-      <mat-card-content>
-        <mat-icon color="warn">error</mat-icon>
+    <app-card class="error-card">
+      <div class="card-content">
+        <app-icon name="alert-circle" class="error-icon"></app-icon>
         <p>{{ error() }}</p>
-        <button mat-button color="primary" (click)="refresh()">Retry</button>
-      </mat-card-content>
-    </mat-card>
+        <app-button variant="ghost" (clicked)="refresh()">Retry</app-button>
+      </div>
+    </app-card>
   }
 
   <!-- Dashboard Content -->
   @if (!loading() && !error() && analytics()) {
     <!-- Revenue Analytics Cards -->
     <div class="analytics-cards">
-      <mat-card class="metric-card">
-        <mat-card-header>
-          <mat-icon class="metric-icon arr">trending_up</mat-icon>
-          <div>
-            <mat-card-subtitle>Annual Recurring Revenue</mat-card-subtitle>
-            <mat-card-title>{{ formatCurrency(analytics()!.arr) }}</mat-card-title>
+      <app-card class="metric-card">
+        <div class="card-header">
+          <app-icon name="trending-up" class="metric-icon arr"></app-icon>
+          <div class="metric-info">
+            <span class="metric-subtitle">Annual Recurring Revenue</span>
+            <h3 class="metric-title">{{ formatCurrency(analytics()!.arr) }}</h3>
           </div>
-        </mat-card-header>
-      </mat-card>
+        </div>
+      </app-card>
 
-      <mat-card class="metric-card">
-        <mat-card-header>
-          <mat-icon class="metric-icon mrr">attach_money</mat-icon>
-          <div>
-            <mat-card-subtitle>Monthly Recurring Revenue</mat-card-subtitle>
-            <mat-card-title>{{ formatCurrency(analytics()!.mrr) }}</mat-card-title>
+      <app-card class="metric-card">
+        <div class="card-header">
+          <app-icon name="dollar-sign" class="metric-icon mrr"></app-icon>
+          <div class="metric-info">
+            <span class="metric-subtitle">Monthly Recurring Revenue</span>
+            <h3 class="metric-title">{{ formatCurrency(analytics()!.mrr) }}</h3>
           </div>
-        </mat-card-header>
-      </mat-card>
+        </div>
+      </app-card>
 
-      <mat-card class="metric-card">
-        <mat-card-header>
-          <mat-icon class="metric-icon churn">timeline</mat-icon>
-          <div>
-            <mat-card-subtitle>Churn Rate</mat-card-subtitle>
-            <mat-card-title>{{ analytics()!.churnRate.toFixed(2) }}%</mat-card-title>
+      <app-card class="metric-card">
+        <div class="card-header">
+          <app-icon name="activity" class="metric-icon churn"></app-icon>
+          <div class="metric-info">
+            <span class="metric-subtitle">Churn Rate</span>
+            <h3 class="metric-title">{{ analytics()!.churnRate.toFixed(2) }}%</h3>
           </div>
-        </mat-card-header>
-      </mat-card>
+        </div>
+      </app-card>
 
-      <mat-card class="metric-card">
-        <mat-card-header>
-          <mat-icon class="metric-icon ltv">monetization_on</mat-icon>
-          <div>
-            <mat-card-subtitle>Customer LTV</mat-card-subtitle>
-            <mat-card-title>{{ formatCurrency(analytics()!.ltv) }}</mat-card-title>
+      <app-card class="metric-card">
+        <div class="card-header">
+          <app-icon name="dollar-sign" class="metric-icon ltv"></app-icon>
+          <div class="metric-info">
+            <span class="metric-subtitle">Customer LTV</span>
+            <h3 class="metric-title">{{ formatCurrency(analytics()!.ltv) }}</h3>
           </div>
-        </mat-card-header>
-      </mat-card>
+        </div>
+      </app-card>
 
-      <mat-card class="metric-card">
-        <mat-card-header>
-          <mat-icon class="metric-icon active">group</mat-icon>
-          <div>
-            <mat-card-subtitle>Active Subscriptions</mat-card-subtitle>
-            <mat-card-title>{{ analytics()!.totalActiveSubscriptions }}</mat-card-title>
+      <app-card class="metric-card">
+        <div class="card-header">
+          <app-icon name="users" class="metric-icon active"></app-icon>
+          <div class="metric-info">
+            <span class="metric-subtitle">Active Subscriptions</span>
+            <h3 class="metric-title">{{ analytics()!.totalActiveSubscriptions }}</h3>
           </div>
-        </mat-card-header>
-      </mat-card>
+        </div>
+      </app-card>
 
-      <mat-card class="metric-card">
-        <mat-card-header>
-          <mat-icon class="metric-icon revenue">account_balance</mat-icon>
-          <div>
-            <mat-card-subtitle>Total Revenue</mat-card-subtitle>
-            <mat-card-title>{{ formatCurrency(analytics()!.totalRevenue) }}</mat-card-title>
+      <app-card class="metric-card">
+        <div class="card-header">
+          <app-icon name="wallet" class="metric-icon revenue"></app-icon>
+          <div class="metric-info">
+            <span class="metric-subtitle">Total Revenue</span>
+            <h3 class="metric-title">{{ formatCurrency(analytics()!.totalRevenue) }}</h3>
           </div>
-        </mat-card-header>
-      </mat-card>
+        </div>
+      </app-card>
     </div>
 
     <!-- Charts Row -->
     <div class="charts-row">
       <!-- Revenue Trend Chart -->
-      <mat-card class="chart-card">
-        <mat-card-header>
-          <mat-card-title>Monthly Revenue Trend</mat-card-title>
-        </mat-card-header>
-        <mat-card-content>
+      <app-card class="chart-card">
+        <div class="card-header">
+          <h3 class="card-title">Monthly Revenue Trend</h3>
+        </div>
+        <div class="card-content">
           @if (revenueChartData()) {
             <div class="chart-container">
               <canvas
@@ -110,15 +110,15 @@
               </canvas>
             </div>
           }
-        </mat-card-content>
-      </mat-card>
+        </div>
+      </app-card>
 
       <!-- Tier Distribution Chart -->
-      <mat-card class="chart-card">
-        <mat-card-header>
-          <mat-card-title>Subscription Tier Distribution</mat-card-title>
-        </mat-card-header>
-        <mat-card-content>
+      <app-card class="chart-card">
+        <div class="card-header">
+          <h3 class="card-title">Subscription Tier Distribution</h3>
+        </div>
+        <div class="card-content">
           @if (tierChartData()) {
             <div class="chart-container">
               <canvas
@@ -129,12 +129,12 @@
               </canvas>
             </div>
           }
-        </mat-card-content>
-      </mat-card>
+        </div>
+      </app-card>
     </div>
 
     <!-- Tabs for Different Views -->
-    <mat-card class="tabs-card">
+    <app-card class="tabs-card">
       <app-tabs
         [tabs]="tabs()"
         [activeTab]="activeTab"
@@ -190,26 +190,27 @@
                 <!-- Custom template for actions column -->
                 <ng-template appTableColumn="actions" let-row>
                   <div class="action-buttons">
-                    <button
-                      mat-icon-button
-                      color="primary"
+                    <app-button
+                      variant="ghost"
+                      size="small"
                       appTooltip="Record Payment"
-                      (click)="recordPayment(row.id)">
+                      (clicked)="recordPayment(row.id)">
                       <app-icon name="payment"></app-icon>
-                    </button>
-                    <button
-                      mat-icon-button
-                      color="accent"
+                    </app-button>
+                    <app-button
+                      variant="ghost"
+                      size="small"
                       appTooltip="Send Reminder"
-                      (click)="sendReminder(row.id)">
+                      (clicked)="sendReminder(row.id)">
                       <app-icon name="email"></app-icon>
-                    </button>
-                    <button
-                      mat-icon-button
+                    </app-button>
+                    <app-button
+                      variant="ghost"
+                      size="small"
                       appTooltip="View Details"
-                      (click)="viewPaymentDetails(row)">
+                      (clicked)="viewPaymentDetails(row)">
                       <app-icon name="visibility"></app-icon>
-                    </button>
+                    </app-button>
                   </div>
                 </ng-template>
               </app-table>
@@ -267,26 +268,27 @@
                 <!-- Custom template for actions column -->
                 <ng-template appTableColumn="actions" let-row>
                   <div class="action-buttons">
-                    <button
-                      mat-icon-button
-                      color="primary"
+                    <app-button
+                      variant="ghost"
+                      size="small"
                       appTooltip="Record Payment"
-                      (click)="recordPayment(row.id)">
+                      (clicked)="recordPayment(row.id)">
                       <app-icon name="payment"></app-icon>
-                    </button>
-                    <button
-                      mat-icon-button
-                      color="accent"
+                    </app-button>
+                    <app-button
+                      variant="ghost"
+                      size="small"
                       appTooltip="Send Reminder"
-                      (click)="sendReminder(row.id)">
+                      (clicked)="sendReminder(row.id)">
                       <app-icon name="email"></app-icon>
-                    </button>
-                    <button
-                      mat-icon-button
+                    </app-button>
+                    <app-button
+                      variant="ghost"
+                      size="small"
                       appTooltip="View Details"
-                      (click)="viewPaymentDetails(row)">
+                      (clicked)="viewPaymentDetails(row)">
                       <app-icon name="visibility"></app-icon>
-                    </button>
+                    </app-button>
                   </div>
                 </ng-template>
               </app-table>
@@ -354,23 +356,25 @@
             } @else {
               <div class="suspended-list">
                 @for (tenant of overview()!.recentlySuspendedTenants; track tenant.tenantId) {
-                  <mat-card class="suspended-card">
-                    <mat-card-header>
-                      <mat-icon mat-card-avatar color="warn">block</mat-icon>
-                      <mat-card-title>{{ tenant.tenantName }}</mat-card-title>
-                      <mat-card-subtitle>Suspended {{ tenant.daysSuspended }} days ago</mat-card-subtitle>
-                    </mat-card-header>
-                    <mat-card-content>
+                  <app-card class="suspended-card">
+                    <div class="card-header">
+                      <app-icon name="alert-octagon" class="suspended-icon"></app-icon>
+                      <div class="suspended-info">
+                        <h4 class="suspended-title">{{ tenant.tenantName }}</h4>
+                        <span class="suspended-subtitle">Suspended {{ tenant.daysSuspended }} days ago</span>
+                      </div>
+                    </div>
+                    <div class="card-content">
                       <p><strong>Overdue Amount:</strong> {{ formatCurrency(tenant.overdueAmount) }}</p>
                       <p><strong>Suspended Date:</strong> {{ formatDate(tenant.suspendedDate) }}</p>
-                    </mat-card-content>
-                  </mat-card>
+                    </div>
+                  </app-card>
                 }
               </div>
             }
           }
         </div>
       </app-tabs>
-    </mat-card>
+    </app-card>
   }
 </div>

@@ -320,8 +320,8 @@ export interface PaymentDetailDialogData {
                 position: relative;
 
                 &.current {
-                  border-color: #3f51b5;
-                  background-color: rgba(63, 81, 181, 0.05);
+                  border-color: var(--color-neutral-900);
+                  background-color: var(--color-neutral-100);
                 }
 
                 .history-header {

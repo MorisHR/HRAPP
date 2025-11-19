@@ -1,10 +1,9 @@
 // ============================================================================
-// PREMIUM PAGINATOR COMPONENT
-// Part of the Fortune 500-grade HRMS design system
-// Production-ready pagination with full accessibility
+// PREMIUM PAGINATOR COMPONENT - Fortune 500 Grade CSS Custom Properties Migration
 // ============================================================================
-
-@import '../../../../../styles/index';
+// Pure CSS implementation using CSS custom properties only
+// No SCSS imports, variables, functions, or mixins
+// ============================================================================
 
 // ----------------------------------------------------------------------------
 // CONTAINER
@@ -14,20 +13,20 @@
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: $spacing-6;
-  padding: $spacing-4 $spacing-6;
-  background: $color-background-paper;
-  border-top: 1px solid $color-border-light;
+  gap: var(--spacing-6);
+  padding: var(--spacing-4) var(--spacing-6);
+  background: var(--color-background-paper);
+  border-top: 1px solid var(--color-border-light);
   font-size: 14px;
-  color: $color-text-secondary;
+  color: var(--color-text-secondary);
   min-height: 56px;
 
   // Responsive: stack on mobile
   @media (max-width: 768px) {
     flex-wrap: wrap;
     justify-content: center;
-    gap: $spacing-4;
-    padding: $spacing-4;
+    gap: var(--spacing-4);
+    padding: var(--spacing-4);
   }
 }
 
@@ -38,7 +37,7 @@
 .paginator__page-size {
   display: flex;
   align-items: center;
-  gap: $spacing-3;
+  gap: var(--spacing-3);
 
   @media (max-width: 768px) {
     width: 100%;
@@ -49,48 +48,48 @@
 .paginator__label {
   font-size: 14px;
   font-weight: 500;
-  color: $color-text-secondary;
+  color: var(--color-text-secondary);
   white-space: nowrap;
 }
 
 .paginator__select {
-  padding: $spacing-2 $spacing-6 $spacing-2 $spacing-3;
-  background: $color-background-paper;
-  border: 2px solid $color-border-default;
+  padding: var(--spacing-2) var(--spacing-6) var(--spacing-2) var(--spacing-3);
+  background: var(--color-background-paper);
+  border: 2px solid var(--color-border);
   border-radius: 6px;
   font-size: 14px;
   font-weight: 500;
-  color: $color-text-primary;
+  color: var(--color-text-primary);
   cursor: pointer;
-  transition: $transition-all;
+  transition: var(--transition-all);
   min-width: 70px;
 
   // Custom arrow
   appearance: none;
   background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%23666' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
-  background-position: right $spacing-2 center;
+  background-position: right var(--spacing-2) center;
 
   &:hover {
-    border-color: $color-primary-500;
-    background-color: $color-neutral-50;
+    border-color: var(--color-primary);
+    background-color: var(--color-neutral-50);
   }
 
   &:focus {
     outline: none;
-    border-color: $color-primary-500;
-    box-shadow: 0 0 0 3px rgba($color-primary-500, 0.1);
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.1);
   }
 
   &:active {
-    background-color: $color-neutral-100;
+    background-color: var(--color-neutral-100);
   }
 
   // Options styling
   option {
-    padding: $spacing-2;
-    background: $color-background-paper;
-    color: $color-text-primary;
+    padding: var(--spacing-2);
+    background: var(--color-background-paper);
+    color: var(--color-text-primary);
   }
 }
 
@@ -101,7 +100,7 @@
 .paginator__range {
   font-size: 14px;
   font-weight: 500;
-  color: $color-text-primary;
+  color: var(--color-text-primary);
   white-space: nowrap;
   min-width: 100px;
   text-align: center;
@@ -119,7 +118,7 @@
 .paginator__nav {
   display: flex;
   align-items: center;
-  gap: $spacing-1;
+  gap: var(--spacing-1);
 }
 
 .paginator__button {
@@ -129,36 +128,36 @@
   width: 40px;
   height: 40px;
   padding: 0;
-  background: $color-background-paper;
-  border: 2px solid $color-border-default;
+  background: var(--color-background-paper);
+  border: 2px solid var(--color-border);
   border-radius: 6px;
-  color: $color-text-primary;
+  color: var(--color-text-primary);
   cursor: pointer;
-  transition: $transition-all;
+  transition: var(--transition-all);
   flex-shrink: 0;
 
   &:hover:not(:disabled) {
-    background: $color-primary-50;
-    border-color: $color-primary-500;
-    color: $color-primary-700;
+    background: var(--color-primary-light);
+    border-color: var(--color-primary);
+    color: var(--color-primary-active);
   }
 
   &:focus {
     outline: none;
-    border-color: $color-primary-500;
-    box-shadow: 0 0 0 3px rgba($color-primary-500, 0.1);
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.1);
   }
 
   &:active:not(:disabled) {
-    background: $color-primary-100;
+    background: var(--color-neutral-100);
     transform: scale(0.95);
   }
 
   &:disabled {
     cursor: not-allowed;
-    background: $color-neutral-100;
-    border-color: $color-border-light;
-    color: $color-text-disabled;
+    background: var(--color-neutral-100);
+    border-color: var(--color-border-light);
+    color: var(--color-text-disabled);
     opacity: 0.5;
   }
 
@@ -189,12 +188,12 @@
 // ----------------------------------------------------------------------------
 
 .paginator__button:focus-visible {
-  outline: 2px solid $color-primary-500;
+  outline: 2px solid var(--color-primary);
   outline-offset: 2px;
 }
 
 .paginator__select:focus-visible {
-  outline: 2px solid $color-primary-500;
+  outline: 2px solid var(--color-primary);
   outline-offset: 2px;
 }
 
@@ -260,63 +259,63 @@
 }
 
 // ----------------------------------------------------------------------------
-// DARK MODE SUPPORT (for future implementation)
+// DARK MODE SUPPORT
 // ----------------------------------------------------------------------------
 
-@media (prefers-color-scheme: dark) {
+.dark-theme {
   .paginator {
-    background: $color-background-paper-dark;
-    border-top-color: $color-border-default-dark;
-    color: $color-text-secondary-dark;
+    background: var(--color-background-paper);
+    border-top-color: var(--color-border);
+    color: var(--color-text-secondary);
   }
 
   .paginator__label {
-    color: $color-text-secondary-dark;
+    color: var(--color-text-secondary);
   }
 
   .paginator__select {
-    background: $color-background-paper-dark;
-    border-color: $color-border-default-dark;
-    color: $color-text-primary-dark;
+    background: var(--color-background-paper);
+    border-color: var(--color-border);
+    color: var(--color-text-primary);
 
     // Update custom arrow for dark mode
     background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%23999' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
 
     &:hover {
-      background-color: lighten($color-background-paper-dark, 5%);
+      background-color: rgba(255, 255, 255, 0.05);
     }
 
     &:active {
-      background-color: lighten($color-background-paper-dark, 10%);
+      background-color: rgba(255, 255, 255, 0.1);
     }
 
     option {
-      background: $color-background-paper-dark;
-      color: $color-text-primary-dark;
+      background: var(--color-background-paper);
+      color: var(--color-text-primary);
     }
   }
 
   .paginator__range {
-    color: $color-text-primary-dark;
+    color: var(--color-text-primary);
   }
 
   .paginator__button {
-    background: $color-background-paper-dark;
-    border-color: $color-border-default-dark;
-    color: $color-text-primary-dark;
+    background: var(--color-background-paper);
+    border-color: var(--color-border);
+    color: var(--color-text-primary);
 
     &:hover:not(:disabled) {
-      background: rgba($color-primary-500, 0.15);
+      background: rgba(25, 118, 210, 0.15);
     }
 
     &:active:not(:disabled) {
-      background: rgba($color-primary-500, 0.25);
+      background: rgba(25, 118, 210, 0.25);
     }
 
     &:disabled {
-      background: lighten($color-background-paper-dark, 3%);
-      border-color: $color-border-default-dark;
-      color: $color-text-disabled-dark;
+      background: rgba(255, 255, 255, 0.03);
+      border-color: var(--color-border);
+      color: var(--color-text-disabled);
     }
   }
 }

@@ -1220,6 +1220,9 @@ namespace HRMS.Infrastructure.Data.Migrations.Tenant
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
+                    b.Property<DateTime?>("PasswordExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("PasswordHash")
                         .HasColumnType("text");
 

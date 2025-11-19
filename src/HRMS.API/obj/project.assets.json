@@ -3094,6 +3094,7 @@
           "MimeKit": "4.14.0",
           "Npgsql.EntityFrameworkCore.PostgreSQL": "9.0.4",
           "Otp.NET": "1.4.0",
+          "Polly": "8.5.0",
           "QRCoder": "1.7.0",
           "QuestPDF": "2025.7.3",
           "StackExchange.Redis": "2.7.10",

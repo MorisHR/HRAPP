@@ -1,5 +1,6 @@
 using System.Threading.Channels;
 using HRMS.Core.Entities.Master;
+using HRMS.Core.Interfaces;
 using HRMS.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
@@ -14,7 +15,7 @@ namespace HRMS.Infrastructure.Services;
 /// Replaces fire-and-forget Task.Run with guaranteed delivery queue
 /// Prevents audit logs from being lost during application shutdown
 /// </summary>
-public class AuditLogQueueService : BackgroundService
+public class AuditLogQueueService : BackgroundService, IAuditLogQueueService
 {
     private readonly Channel<AuditLog> _channel;
     private readonly IServiceProvider _serviceProvider;
@@ -81,26 +82,40 @@ public class AuditLogQueueService : BackgroundService
 
     /// <summary>
     /// Process a single audit log - save to database
+    /// PERFORMANCE FIX: Reuses pre-configured DbContextOptions from DI
     /// </summary>
     private async Task ProcessAuditLogAsync(AuditLog auditLog, CancellationToken cancellationToken)
     {
         using var scope = _serviceProvider.CreateScope();
-        var configuration = scope.ServiceProvider.GetRequiredService<IConfiguration>();
 
-        // Get connection string
-        var connectionString = configuration.GetConnectionString("DefaultConnection");
-        if (string.IsNullOrEmpty(connectionString))
+        // PERFORMANCE FIX: Get pre-configured DbContextOptions from DI (already cached and optimized)
+        var optionsAccessor = scope.ServiceProvider.GetService<DbContextOptions<MasterDbContext>>();
+
+        // Fallback: Build options from scratch if not available in DI (backward compatibility)
+        DbContextOptions<MasterDbContext> options;
+        if (optionsAccessor != null)
         {
-            _logger.LogError("Cannot save audit log: Connection string 'DefaultConnection' not found");
-            return;
+            // Use pre-configured options (fast path)
+            options = optionsAccessor;
+        }
+        else
+        {
+            // Fallback: Build from configuration (slow path)
+            var configuration = scope.ServiceProvider.GetRequiredService<IConfiguration>();
+            var connectionString = configuration.GetConnectionString("DefaultConnection");
+            if (string.IsNullOrEmpty(connectionString))
+            {
+                _logger.LogError("Cannot save audit log: Connection string 'DefaultConnection' not found");
+                return;
+            }
+
+            var optionsBuilder = new DbContextOptionsBuilder<MasterDbContext>();
+            optionsBuilder.UseNpgsql(connectionString);
+            options = optionsBuilder.Options;
         }
 
-        // Build DbContext options WITHOUT interceptors (prevent circular dependency)
-        var optionsBuilder = new DbContextOptionsBuilder<MasterDbContext>();
-        optionsBuilder.UseNpgsql(connectionString);
-
-        // Create fresh DbContext instance
-        using var auditContext = new MasterDbContext(optionsBuilder.Options);
+        // Create fresh DbContext instance (without interceptors to prevent circular dependency)
+        using var auditContext = new MasterDbContext(options);
 
         // Ensure PerformedAt is set
         if (auditLog.PerformedAt == default)

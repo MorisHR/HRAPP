@@ -521,26 +521,42 @@ public class AuditLoggingSaveChangesInterceptor : SaveChangesInterceptor
     /// <summary>
     /// Save audit log to database using a fresh DbContext instance WITHOUT interceptors
     /// This prevents circular dependency and infinite loops
+    /// PERFORMANCE FIX: Reuses pre-configured DbContextOptions from DI instead of building from scratch
     /// </summary>
     private async Task SaveAuditLogAsync(AuditLog auditLog, CancellationToken cancellationToken)
     {
-        // Create a transient service scope
+        // PERFORMANCE FIX: Create a transient service scope and get pre-configured options
+        // This avoids 5-15ms overhead of building DbContext from scratch
         using var scope = _serviceProvider.CreateScope();
 
-        // Get connection string from configuration
-        var connectionString = _configuration.GetConnectionString("DefaultConnection");
-        if (string.IsNullOrEmpty(connectionString))
+        // PERFORMANCE FIX: Get pre-configured DbContextOptions from DI (already cached and optimized)
+        // This reuses the EF Core model, service provider, and configuration
+        var optionsAccessor = scope.ServiceProvider.GetService<DbContextOptions<MasterDbContext>>();
+
+        // Fallback: Build options from scratch if not available in DI (backward compatibility)
+        DbContextOptions<MasterDbContext> options;
+        if (optionsAccessor != null)
         {
-            _logger.LogError("Cannot save audit log: Connection string 'DefaultConnection' not found");
-            return;
+            // Use pre-configured options (fast path)
+            options = optionsAccessor;
+        }
+        else
+        {
+            // Fallback: Build from configuration (slow path, but maintains compatibility)
+            var connectionString = _configuration.GetConnectionString("DefaultConnection");
+            if (string.IsNullOrEmpty(connectionString))
+            {
+                _logger.LogError("Cannot save audit log: Connection string 'DefaultConnection' not found");
+                return;
+            }
+
+            var optionsBuilder = new DbContextOptionsBuilder<MasterDbContext>();
+            optionsBuilder.UseNpgsql(connectionString);
+            options = optionsBuilder.Options;
         }
 
-        // Build DbContext options WITHOUT interceptors (critical to prevent circular dependency)
-        var optionsBuilder = new DbContextOptionsBuilder<MasterDbContext>();
-        optionsBuilder.UseNpgsql(connectionString);
-
-        // Create fresh DbContext instance
-        using var auditContext = new MasterDbContext(optionsBuilder.Options);
+        // Create fresh DbContext instance (without interceptors to prevent circular dependency)
+        using var auditContext = new MasterDbContext(options);
 
         // Enrich audit log with HTTP context information
         EnrichAuditLog(auditLog);
@@ -624,9 +640,27 @@ public class AuditLoggingSaveChangesInterceptor : SaveChangesInterceptor
     /// <summary>
     /// Generate SHA256 checksum for tamper detection
     /// </summary>
+    /// <summary>
+    /// Truncate DateTime to microsecond precision to match PostgreSQL timestamp storage
+    /// CRITICAL FIX: PostgreSQL stores timestamps with microsecond precision (6 decimal places),
+    /// while .NET DateTime has 100-nanosecond tick precision (7 decimal places).
+    /// This mismatch causes checksum validation failures after data is round-tripped through the database.
+    /// </summary>
+    /// <param name="dateTime">DateTime to truncate</param>
+    /// <returns>DateTime truncated to microsecond precision</returns>
+    private static DateTime TruncateToMicroseconds(DateTime dateTime)
+    {
+        // Convert to microseconds and back to remove sub-microsecond precision
+        // 1 microsecond = 10 ticks (100 nanoseconds per tick)
+        var microseconds = dateTime.Ticks / 10;
+        return new DateTime(microseconds * 10, dateTime.Kind);
+    }
+
     private string GenerateChecksum(AuditLog log)
     {
-        var checksumInput = $"{log.ActionType}|{log.EntityType}|{log.EntityId}|{log.PerformedAt:O}|{log.UserId}";
+        // CRITICAL FIX: Truncate to microseconds to match PostgreSQL precision
+        var performedAt = TruncateToMicroseconds(log.PerformedAt);
+        var checksumInput = $"{log.ActionType}|{log.EntityType}|{log.EntityId}|{performedAt:O}|{log.UserId}";
         using var sha256 = SHA256.Create();
         var hashBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(checksumInput));
         return Convert.ToBase64String(hashBytes);

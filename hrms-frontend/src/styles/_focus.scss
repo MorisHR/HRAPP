@@ -4,7 +4,7 @@
 // Accessibility-focused visible focus indicators
 // ============================================================================
 
-@import 'colors';
+@use 'colors' as *;
 
 $focus-ring-width: 3px;
 $focus-ring-offset: 2px;

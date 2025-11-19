@@ -1,23 +1,24 @@
 <div class="tenant-list-container">
-  <mat-toolbar color="primary">
-    <button mat-icon-button routerLink="/admin/dashboard">
-      <app-icon name="arrow_back"></app-icon>
-    </button>
+  <div class="toolbar">
+    <app-button variant="ghost" size="small" routerLink="/admin/dashboard">
+      <app-icon name="arrow-left"></app-icon>
+    </app-button>
     <span>Tenant Management</span>
     <span class="toolbar-spacer"></span>
-    <button mat-raised-button routerLink="/admin/tenants/new">
-      <app-icon name="add"></app-icon>
+    <app-button variant="primary" routerLink="/admin/tenants/new">
+      <app-icon name="plus"></app-icon>
       Create Tenant
-    </button>
-  </mat-toolbar>
+    </app-button>
+  </div>
 
   <div class="content">
     <!-- Search Filter -->
-    <mat-form-field appearance="outline" class="search-field">
-      <mat-label>Search tenants</mat-label>
-      <input matInput (keyup)="applyFilter($event)" placeholder="Search by name, domain...">
-      <mat-icon matPrefix>search</mat-icon>
-    </mat-form-field>
+    <app-input
+      class="search-field"
+      label="Search tenants"
+      placeholder="Search by name, domain..."
+      (input)="applyFilter($event)">
+    </app-input>
 
     <!-- Table -->
     <div class="table-container">
@@ -35,9 +36,9 @@
 
         <!-- Actions Column Template -->
         <ng-template appTableColumn="actions" let-row>
-          <button mat-icon-button #tenantMenuTrigger>
-            <mat-icon>more_vert</mat-icon>
-          </button>
+          <app-button variant="ghost" size="small" #tenantMenuTrigger>
+            <app-icon name="more-vertical"></app-icon>
+          </app-button>
           <app-menu
             [trigger]="tenantMenuTrigger"
             [items]="getTenantMenuItems(row)"

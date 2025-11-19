@@ -77,6 +77,28 @@ export class IconRegistryService {
       calendar: '<path d="M17 12h-5v5h5v-5zM16 1v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-1V1h-2zm3 18H5V8h14v11z"/>',
       more_vert: '<path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>',
       more_horiz: '<path d="M6 10c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm12 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm-6 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>',
+
+      // Business & Finance
+      people: '<path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>',
+      event_busy: '<path d="M9.31 17l2.44-2.44L14.19 17l1.06-1.06-2.44-2.44 2.44-2.44L14.19 10l-2.44 2.44L9.31 10l-1.06 1.06 2.44 2.44-2.44 2.44L9.31 17zM19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11z"/>',
+      pending_actions: '<path d="M17 12c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zm1.65 7.35L16.5 17.2V14h1v2.79l1.85 1.85-.7.71zM18 3h-3.18C14.4 1.84 13.3 1 12 1s-2.4.84-2.82 2H6c-1.1 0-2 .9-2 2v15c0 1.1.9 2 2 2h6.11c-.59-.57-1.07-1.25-1.42-2H6V5h2v3h8V5h2v5.08c.71.1 1.38.31 2 .6V5c0-1.1-.9-2-2-2zm-6 2c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1z"/>',
+      payments: '<path d="M19 14V6c0-1.1-.9-2-2-2H3c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zm-9-1c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm13-6v11c0 1.1-.9 2-2 2H4v-2h17V7h2z"/>',
+      corporate_fare: '<path d="M12 7V3H2v18h20V7H12zM6 19H4v-2h2v2zm0-4H4v-2h2v2zm0-4H4V9h2v2zm0-4H4V5h2v2zm4 12H8v-2h2v2zm0-4H8v-2h2v2zm0-4H8V9h2v2zm0-4H8V5h2v2zm10 12h-8v-2h2v-2h-2v-2h2v-2h-2V9h8v10zm-2-8h-2v2h2v-2zm0 4h-2v2h2v-2z"/>',
+      account_balance: '<path d="M4 10v7h3v-7H4zm6 0v7h3v-7h-3zM2 22h19v-3H2v3zm14-12v7h3v-7h-3zm-4.5-9L2 6v2h19V6l-9.5-5z"/>',
+      trending_up: '<path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"/>',
+      trending_down: '<path d="M16 18l2.29-2.29-4.88-4.88-4 4L2 7.41 3.41 6l6 6 4-4 6.3 6.29L22 12v6z"/>',
+      trending_flat: '<path d="M22 12l-4-4v3H3v2h15v3z"/>',
+      pie_chart: '<path d="M11 2v20c-5.07-.5-9-4.79-9-10s3.93-9.5 9-10zm2.03 0v8.99H22c-.47-4.74-4.24-8.52-8.97-8.99zm0 11.01V22c4.74-.47 8.5-4.25 8.97-8.99h-8.97z"/>',
+      summarize: '<path d="M15 3H5c-1.1 0-1.99.9-1.99 2L3 19c0 1.1.89 2 1.99 2H19c1.1 0 2-.9 2-2V9l-6-6zm-2 16H7v-2h6v2zm0-4H7v-2h6v2zm-2-6V3.5L18.5 11H11z"/>',
+
+      // Calendar & Events
+      flight: '<path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/>',
+      timeline: '<path d="M23 8c0 1.1-.9 2-2 2-.18 0-.35-.02-.51-.07l-3.56 3.55c.05.16.07.34.07.52 0 1.1-.9 2-2 2s-2-.9-2-2c0-.18.02-.36.07-.52l-2.55-2.55c-.16.05-.34.07-.52.07s-.36-.02-.52-.07l-4.55 4.56c.05.16.07.33.07.51 0 1.1-.9 2-2 2s-2-.9-2-2 .9-2 2-2c.18 0 .35.02.51.07l4.56-4.55C8.02 9.36 8 9.18 8 9c0-1.1.9-2 2-2s2 .9 2 2c0 .18-.02.36-.07.52l2.55 2.55c.16-.05.34-.07.52-.07s.36.02.52.07l3.55-3.56C19.02 8.35 19 8.18 19 8c0-1.1.9-2 2-2s2 .9 2 2z"/>',
+      cake: '<path d="M12 6c1.11 0 2-.9 2-2 0-.38-.1-.73-.29-1.03L12 0l-1.71 2.97c-.19.3-.29.65-.29 1.03 0 1.1.9 2 2 2zm4.6 9.99l-1.07-1.07-1.08 1.07c-1.3 1.30-3.58 1.31-4.89 0l-1.07-1.07-1.09 1.07C6.75 16.64 5.88 17 4.96 17c-.73 0-1.4-.23-1.96-.61V21c0 .55.45 1 1 1h16c.55 0 1-.45 1-1v-4.61c-.56.38-1.23.61-1.96.61-.92 0-1.79-.36-2.44-1.01zM18 9h-5V7h-2v2H6c-1.66 0-3 1.34-3 3v1.54c0 1.08.88 1.96 1.96 1.96.52 0 1.02-.20 1.38-.57l2.14-2.13 2.13 2.13c.74.74 2.03.74 2.77 0l2.14-2.13 2.13 2.13c.37.37.86.57 1.38.57 1.08 0 1.96-.88 1.96-1.96V12C21 10.34 19.66 9 18 9z"/>',
+
+      // Actions & Status
+      approval: '<path d="M4 14h4v-4H4v4zm0 5h4v-4H4v4zM4 9h4V5H4v4zm5 5h12v-4H9v4zm0 5h12v-4H9v4zM9 5v4h12V5H9z"/>',
+      cloud_done: '<path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM10 17l-3.5-3.5 1.41-1.41L10 14.17 15.18 9l1.41 1.41L10 17z"/>',
     },
 
     heroicons: {
@@ -122,15 +144,90 @@ export class IconRegistryService {
 
   /**
    * Register a custom icon
+   *
+   * SECURITY: Validates SVG path to prevent XSS attacks
+   * - Blocks <script> tags
+   * - Blocks event handlers (onclick, onerror, etc.)
+   * - Blocks javascript: URLs
+   * - Only allows SVG path elements and safe attributes
+   *
    * @param name Icon name
-   * @param path SVG path
+   * @param path SVG path (must be valid SVG path elements only)
    * @param library Icon library
+   * @throws Error if path contains potentially malicious content
    */
   registerIcon(name: string, path: string, library: IconLibrary = 'material'): void {
+    // SECURITY: Validate icon name (prevent prototype pollution)
+    if (!name || typeof name !== 'string' || name.includes('__proto__') || name.includes('constructor')) {
+      throw new Error('Invalid icon name');
+    }
+
+    // SECURITY: Validate SVG path content
+    this.validateSvgPath(path);
+
     if (!this.icons[library]) {
       this.icons[library] = {};
     }
     this.icons[library][name] = path;
+  }
+
+  /**
+   * Validate SVG path for security vulnerabilities
+   *
+   * SECURITY CHECKS:
+   * 1. Block <script> tags
+   * 2. Block event handlers (onclick, onload, onerror, etc.)
+   * 3. Block javascript: protocol
+   * 4. Block data: URLs with script content
+   * 5. Block <iframe>, <object>, <embed> tags
+   *
+   * @param path SVG path content to validate
+   * @throws Error if path contains malicious content
+   */
+  private validateSvgPath(path: string): void {
+    if (!path || typeof path !== 'string') {
+      throw new Error('Invalid SVG path: must be a non-empty string');
+    }
+
+    // Convert to lowercase for case-insensitive matching
+    const lowerPath = path.toLowerCase();
+
+    // SECURITY: Block script tags
+    if (lowerPath.includes('<script')) {
+      throw new Error('SVG path cannot contain <script> tags');
+    }
+
+    // SECURITY: Block event handlers (comprehensive list)
+    const eventHandlers = [
+      'onclick', 'onload', 'onerror', 'onmouseover', 'onmouseout',
+      'onmouseenter', 'onmouseleave', 'onfocus', 'onblur', 'oninput',
+      'onchange', 'onsubmit', 'onkeydown', 'onkeyup', 'onkeypress',
+      'onanimationstart', 'onanimationend', 'ontransitionend'
+    ];
+
+    for (const handler of eventHandlers) {
+      if (lowerPath.includes(handler)) {
+        throw new Error(`SVG path cannot contain event handler: ${handler}`);
+      }
+    }
+
+    // SECURITY: Block javascript: protocol
+    if (lowerPath.includes('javascript:')) {
+      throw new Error('SVG path cannot contain javascript: protocol');
+    }
+
+    // SECURITY: Block dangerous tags
+    const dangerousTags = ['<iframe', '<object', '<embed', '<style', '<link'];
+    for (const tag of dangerousTags) {
+      if (lowerPath.includes(tag)) {
+        throw new Error(`SVG path cannot contain dangerous tag: ${tag}`);
+      }
+    }
+
+    // SECURITY: Block data URLs with script
+    if (lowerPath.includes('data:') && (lowerPath.includes('script') || lowerPath.includes('base64'))) {
+      throw new Error('SVG path cannot contain potentially malicious data URLs');
+    }
   }
 
   /**

@@ -438,6 +438,18 @@ public class Employee : BaseEntity
     public DateTime? LastPasswordChangeDate { get; set; }
 
     /// <summary>
+    /// Password expiration date for password rotation policies
+    /// FORTUNE 500 COMPLIANCE: Enforces 90-day password rotation (NIST 800-63B, PCI-DSS 8.2.4)
+    /// Calculated as: LastPasswordChangeDate + 90 days
+    /// Null = password never expires (not recommended for production)
+    /// Background jobs should:
+    /// - Alert users at 30, 14, 7 days before expiry
+    /// - Force password change on expiry (set MustChangePassword = true)
+    /// - Lock account if not changed within grace period
+    /// </summary>
+    public DateTime? PasswordExpiresAt { get; set; }
+
+    /// <summary>
     /// Password history: JSON array of last 5 password hashes
     /// FORTUNE 500 COMPLIANCE: Prevents password reuse (PCI-DSS, NIST 800-63B)
     /// Format: ["hash1", "hash2", "hash3", "hash4", "hash5"]

@@ -1142,7 +1142,8 @@ public class AttendanceService : IAttendanceService
 
         var employeeSummaries = employeeGroups.Select(group =>
         {
-            var employee = group.First().Employee!;
+            // FIXED: Add OrderBy to ensure deterministic results
+            var employee = group.OrderBy(a => a.Date).First().Employee!;
             var workingDays = GetWorkingDaysBetween(fromDate, toDate);
             var presentDays = group.Count(a => a.Status == AttendanceStatus.Present || a.Status == AttendanceStatus.Late);
 

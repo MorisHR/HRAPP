@@ -365,7 +365,7 @@ import { Divider } from '../../shared/ui';
       margin: 0;
       font-size: 28px;
       font-weight: 600;
-      color: #1a237e;
+      color: #000000;
       line-height: 1;
     }
 
@@ -391,7 +391,7 @@ import { Divider } from '../../shared/ui';
     }
 
     .nav-link:hover {
-      color: #1a237e;
+      color: #000000;
     }
 
     .nav-link::after {
@@ -401,7 +401,7 @@ import { Divider } from '../../shared/ui';
       height: 2px;
       bottom: 0;
       left: 0;
-      background-color: #1a237e;
+      background-color: #000000;
       transition: width 0.3s ease;
     }
 
@@ -430,7 +430,7 @@ import { Divider } from '../../shared/ui';
     }
 
     .hero-title .highlight {
-      color: #1a237e;
+      color: #000000;
     }
 
     .hero-subtitle {
@@ -465,8 +465,8 @@ import { Divider } from '../../shared/ui';
 
     .cta-secondary {
       background: #ffffff;
-      border: 2px solid #1a237e;
-      color: #1a237e;
+      border: 2px solid #000000;
+      color: #000000;
     }
 
     .cta-secondary:hover {
@@ -527,7 +527,7 @@ import { Divider } from '../../shared/ui';
       font-size: 48px;
       width: 48px;
       height: 48px;
-      color: #1a237e;
+      color: #000000;
       margin-bottom: 16px;
     }
 
@@ -603,7 +603,7 @@ import { Divider } from '../../shared/ui';
     .compliance-card {
       padding: 48px;
       text-align: center;
-      background: linear-gradient(135deg, #1a237e 0%, #3949ab 100%);
+      background: linear-gradient(135deg, #000000 0%, #333333 100%);
       color: #ffffff !important;
       box-shadow: 0 8px 24px rgba(26, 35, 126, 0.3);
     }
@@ -657,7 +657,7 @@ import { Divider } from '../../shared/ui';
     }
 
     .pricing-card.featured {
-      border: 2px solid #1a237e;
+      border: 2px solid #000000;
       transform: scale(1.05);
     }
 
@@ -670,7 +670,7 @@ import { Divider } from '../../shared/ui';
       top: -12px;
       left: 50%;
       transform: translateX(-50%);
-      background: #1a237e;
+      background: #000000;
       color: #ffffff;
       padding: 4px 16px;
       border-radius: 12px;
@@ -746,7 +746,7 @@ import { Divider } from '../../shared/ui';
     /* CTA Section */
     .cta {
       padding: 80px 0;
-      background: linear-gradient(135deg, #1a237e 0%, #3949ab 100%);
+      background: linear-gradient(135deg, #000000 0%, #333333 100%);
       color: #ffffff;
     }
 
@@ -787,7 +787,7 @@ import { Divider } from '../../shared/ui';
     /* Primary CTA button - solid white background */
     .cta-actions .mat-mdc-raised-button {
       background-color: #ffffff !important;
-      color: #1a237e !important;
+      color: #000000 !important;
     }
 
     .cta-actions .mat-mdc-raised-button:hover {

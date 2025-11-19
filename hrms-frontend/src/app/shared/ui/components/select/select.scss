@@ -2,9 +2,8 @@
 // PREMIUM SELECT COMPONENT
 // Part of the Fortune 500-grade HRMS design system
 // Production-ready dropdown/select with all features
+// MIGRATED TO CSS CUSTOM PROPERTIES - NO SCSS DEPENDENCIES
 // PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP
-
-@import '../../../../../styles/index';
 
 // ----------------------------------------------------------------------------
 // CONTAINER
@@ -13,7 +12,7 @@
 .select-container {
   display: flex;
   flex-direction: column;
-  gap: $spacing-1;
+  gap: var(--spacing-1);
   width: 100%;
 }
 
@@ -25,12 +24,12 @@
   display: block;
   font-size: 14px;
   font-weight: 500;
-  color: $color-text-primary;
-  margin-bottom: $spacing-1;
+  color: var(--color-text-primary);
+  margin-bottom: var(--spacing-1);
 
   &__required {
-    color: $color-error-500;
-    margin-left: $spacing-1;
+    color: var(--color-error);
+    margin-left: var(--spacing-1);
   }
 }
 
@@ -48,45 +47,47 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: $spacing-2;
-    padding: $spacing-3 $spacing-4;
-    background: $color-background-paper;
-    border: 2px solid $color-border-default;
+    gap: var(--spacing-2);
+    padding: var(--spacing-3) var(--spacing-4);
+    background: var(--color-background-paper);
+    border: 2px solid var(--color-border);
     border-radius: 8px;
     cursor: pointer;
-    transition: $transition-all;
+    transition: all var(--duration-normal) var(--easing-standard);
     font-size: 14px;
     text-align: left;
     min-height: 44px;
 
     &:hover:not(:disabled) {
-      border-color: $color-primary-500;
-      background: $color-neutral-50;
+      border-color: var(--color-primary);
+      background: var(--color-neutral-50);
     }
 
     &:focus {
-      @include focus-ring;
-      border-color: $color-primary-500;
+      outline: 3px solid var(--color-primary);
+      outline-offset: 2px;
+      border-color: var(--color-primary);
     }
 
     &:disabled {
       cursor: not-allowed;
-      background: $color-neutral-100;
-      color: $color-text-disabled;
-      border-color: $color-border-light;
+      background: var(--color-neutral-100);
+      color: var(--color-text-disabled);
+      border-color: var(--color-border-light);
     }
   }
 
   // Value Display
   &__value {
     flex: 1;
-    color: $color-text-primary;
+    color: var(--color-text-primary);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 
     &--placeholder {
-      color: $color-text-hint;
+      color: var(--color-text-secondary);
+      opacity: 0.6;
     }
   }
 
@@ -94,7 +95,7 @@
   &__actions {
     display: flex;
     align-items: center;
-    gap: $spacing-1;
+    gap: var(--spacing-1);
     flex-shrink: 0;
   }
 
@@ -103,28 +104,29 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: $spacing-1;
+    padding: var(--spacing-1);
     background: none;
     border: none;
-    color: $color-text-secondary;
+    color: var(--color-text-secondary);
     cursor: pointer;
     border-radius: 4px;
-    transition: $transition-all;
+    transition: all var(--duration-normal) var(--easing-standard);
 
     &:hover {
-      color: $color-error-500;
-      background: $color-error-50;
+      color: var(--color-error);
+      background: rgba(239, 68, 68, 0.1);
     }
 
     &:focus {
-      @include focus-ring;
+      outline: 3px solid var(--color-primary);
+      outline-offset: 2px;
     }
   }
 
   // Chevron Icon
   &__chevron {
-    color: $color-text-secondary;
-    transition: transform $duration-normal $easing-standard;
+    color: var(--color-text-secondary);
+    transition: transform var(--duration-normal) var(--easing-standard);
     flex-shrink: 0;
   }
 
@@ -137,51 +139,52 @@
     top: calc(100% + 4px);
     left: 0;
     right: 0;
-    z-index: 1000;
-    background: $color-background-paper;
-    border: 1px solid $color-border-default;
+    z-index: var(--z-dropdown);
+    background: var(--color-background-paper);
+    border: 1px solid var(--color-border);
     border-radius: 8px;
-    box-shadow: $elevation-3;
+    box-shadow: var(--elevation-3);
     max-height: 320px;
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    animation: slideDown $duration-normal $easing-decelerate;
+    animation: slideDown var(--duration-normal) var(--easing-decelerate);
   }
 
   // Search Input
   &__search {
     position: relative;
-    padding: $spacing-3;
-    border-bottom: 1px solid $color-border-light;
+    padding: var(--spacing-3);
+    border-bottom: 1px solid var(--color-border-light);
     flex-shrink: 0;
   }
 
   &__search-icon {
     position: absolute;
-    left: $spacing-4;
+    left: var(--spacing-4);
     top: 50%;
     transform: translateY(-50%);
-    color: $color-text-secondary;
+    color: var(--color-text-secondary);
     pointer-events: none;
   }
 
   &__search-input {
     width: 100%;
-    padding: $spacing-2 $spacing-3 $spacing-2 $spacing-8;
-    border: 1px solid $color-border-default;
+    padding: var(--spacing-2) var(--spacing-3) var(--spacing-2) var(--spacing-8);
+    border: 1px solid var(--color-border);
     border-radius: 6px;
     font-size: 14px;
-    transition: $transition-all;
+    transition: all var(--duration-normal) var(--easing-standard);
 
     &:focus {
       outline: none;
-      border-color: $color-primary-500;
-      box-shadow: 0 0 0 3px rgba($color-primary-500, 0.1);
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
     }
 
     &::placeholder {
-      color: $color-text-hint;
+      color: var(--color-text-secondary);
+      opacity: 0.6;
     }
   }
 
@@ -189,7 +192,7 @@
   &__options {
     list-style: none;
     margin: 0;
-    padding: $spacing-2 0;
+    padding: var(--spacing-2) 0;
     overflow-y: auto;
     max-height: 240px;
 
@@ -199,15 +202,15 @@
     }
 
     &::-webkit-scrollbar-track {
-      background: $color-neutral-100;
+      background: var(--color-neutral-100);
     }
 
     &::-webkit-scrollbar-thumb {
-      background: $color-neutral-400;
+      background: var(--color-neutral-400);
       border-radius: 4px;
 
       &:hover {
-        background: $color-neutral-500;
+        background: var(--color-neutral-500);
       }
     }
   }
@@ -216,36 +219,36 @@
   &__option {
     display: flex;
     align-items: center;
-    gap: $spacing-3;
-    padding: $spacing-3 $spacing-4;
+    gap: var(--spacing-3);
+    padding: var(--spacing-3) var(--spacing-4);
     cursor: pointer;
-    transition: $transition-all;
-    color: $color-text-primary;
+    transition: all var(--duration-normal) var(--easing-standard);
+    color: var(--color-text-primary);
     font-size: 14px;
 
     &:hover:not(&--disabled) {
-      background: $color-primary-50;
+      background: rgba(79, 70, 229, 0.05);
     }
 
     &--selected {
-      background: $color-primary-50;
-      color: $color-primary-700;
+      background: rgba(79, 70, 229, 0.05);
+      color: var(--color-primary-active);
       font-weight: 500;
 
       &:hover {
-        background: $color-primary-100;
+        background: rgba(79, 70, 229, 0.1);
       }
     }
 
     &--disabled {
       cursor: not-allowed;
-      color: $color-text-disabled;
+      color: var(--color-text-disabled);
       background: transparent;
     }
 
     &--focused:not(&--disabled) {
-      background: $color-primary-50;
-      outline: 2px solid $color-primary-200;
+      background: rgba(79, 70, 229, 0.05);
+      outline: 2px solid rgba(79, 70, 229, 0.3);
       outline-offset: -2px;
     }
   }
@@ -255,7 +258,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    color: $color-primary-500;
+    color: var(--color-primary);
     flex-shrink: 0;
 
     svg {
@@ -273,15 +276,15 @@
 
   // Checkmark Icon (for single select)
   &__checkmark {
-    color: $color-primary-500;
+    color: var(--color-primary);
     flex-shrink: 0;
   }
 
   // Empty State
   &__empty {
-    padding: $spacing-6 $spacing-4;
+    padding: var(--spacing-6) var(--spacing-4);
     text-align: center;
-    color: $color-text-secondary;
+    color: var(--color-text-secondary);
     font-size: 14px;
   }
 
@@ -292,8 +295,8 @@
   // Open State
   &--open {
     .select__trigger {
-      border-color: $color-primary-500;
-      box-shadow: 0 0 0 3px rgba($color-primary-500, 0.1);
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
     }
 
     .select__chevron {
@@ -305,23 +308,24 @@
   &--disabled {
     .select__trigger {
       cursor: not-allowed;
-      background: $color-neutral-100;
-      color: $color-text-disabled;
-      border-color: $color-border-light;
+      background: var(--color-neutral-100);
+      color: var(--color-text-disabled);
+      border-color: var(--color-border-light);
     }
   }
 
   // Error State
   &--error {
     .select__trigger {
-      border-color: $color-error-500;
+      border-color: var(--color-error);
 
       &:hover:not(:disabled) {
-        border-color: $color-error-600;
+        border-color: var(--color-error);
+        filter: brightness(0.9);
       }
 
       &:focus {
-        box-shadow: 0 0 0 3px rgba($color-error-500, 0.1);
+        box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
       }
     }
   }
@@ -329,7 +333,7 @@
   // Has Value State
   &--has-value {
     .select__value {
-      color: $color-text-primary;
+      color: var(--color-text-primary);
     }
   }
 }
@@ -340,8 +344,8 @@
 
 .select-hint {
   font-size: 12px;
-  color: $color-text-secondary;
-  margin-top: $spacing-1;
+  color: var(--color-text-secondary);
+  margin-top: var(--spacing-1);
 }
 
 // ----------------------------------------------------------------------------
@@ -351,10 +355,10 @@
 .select-error {
   display: flex;
   align-items: center;
-  gap: $spacing-2;
+  gap: var(--spacing-2);
   font-size: 12px;
-  color: $color-error-600;
-  margin-top: $spacing-1;
+  color: var(--color-error);
+  margin-top: var(--spacing-1);
 
   svg {
     flex-shrink: 0;
@@ -432,38 +436,38 @@
   }
 }
 
-// Dark mode support (for future implementation)
+// Dark mode support
 @media (prefers-color-scheme: dark) {
   .select {
     &__trigger {
-      background: $color-background-paper-dark;
-      border-color: $color-border-default-dark;
-      color: $color-text-primary-dark;
+      background: var(--color-background-paper);
+      border-color: var(--color-border);
+      color: var(--color-text-primary);
 
       &:hover:not(:disabled) {
-        background: lighten($color-background-paper-dark, 5%);
+        background: rgba(255, 255, 255, 0.05);
       }
     }
 
     &__dropdown {
-      background: $color-background-paper-dark;
-      border-color: $color-border-default-dark;
+      background: var(--color-background-paper);
+      border-color: var(--color-border);
     }
 
     &__option {
-      color: $color-text-primary-dark;
+      color: var(--color-text-primary);
 
       &:hover:not(&--disabled) {
-        background: rgba($color-primary-500, 0.1);
+        background: rgba(79, 70, 229, 0.15);
       }
     }
   }
 
   .select-label {
-    color: $color-text-primary-dark;
+    color: var(--color-text-primary);
   }
 
   .select-hint {
-    color: $color-text-secondary-dark;
+    color: var(--color-text-secondary);
   }
 }

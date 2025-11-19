@@ -32,8 +32,8 @@ mat-card-header {
   justify-content: space-between;
   align-items: center;
   padding: 32px 32px 24px;
-  background: linear-gradient(135deg, #1a237e 0%, #283593 100%);
-  border-bottom: 3px solid #3949ab;
+  background: linear-gradient(135deg, #000000 0%, #1a1a1a 100%);
+  border-bottom: 3px solid #333333;
   margin: 0;
   position: relative;
   overflow: hidden;
@@ -118,7 +118,7 @@ mat-card-content {
 
   app-progress-spinner {
     ::ng-deep circle {
-      stroke: #3949ab;
+      stroke: #333333;
       stroke-width: 4px;
     }
   }
@@ -215,14 +215,14 @@ mat-card-content {
   margin-bottom: 8px;
 
   mat-icon {
-    color: #3949ab;
+    color: #333333;
     font-size: 28px;
     height: 28px;
     width: 28px;
   }
 
   h3 {
-    color: #1a237e;
+    color: #000000;
     font-size: 20px;
     font-weight: 600;
     margin: 0;
@@ -329,7 +329,7 @@ mat-form-field {
     }
 
     .mat-form-field-outline-thick {
-      color: #3949ab;
+      color: #333333;
     }
 
     .mat-form-field-label {
@@ -338,7 +338,7 @@ mat-form-field {
     }
 
     .mat-focused .mat-form-field-label {
-      color: #3949ab;
+      color: #333333;
     }
 
     .mat-form-field-prefix mat-icon,
@@ -347,7 +347,7 @@ mat-form-field {
     }
 
     .mat-focused .mat-form-field-prefix mat-icon {
-      color: #3949ab;
+      color: #333333;
     }
 
     // Error state
@@ -428,11 +428,11 @@ mat-form-field {
         }
 
         .mat-radio-inner-circle {
-          background-color: #3949ab;
+          background-color: #333333;
         }
 
         .mat-radio-checked .mat-radio-outer-circle {
-          border-color: #3949ab;
+          border-color: #333333;
         }
       }
     }
@@ -457,7 +457,7 @@ mat-form-field {
     ::ng-deep {
       .mat-slide-toggle-label {
         strong {
-          color: #1a237e;
+          color: #000000;
           font-size: 15px;
         }
       }
@@ -475,7 +475,7 @@ mat-form-field {
       }
 
       .mat-checked .mat-slide-toggle-thumb {
-        background-color: #3949ab;
+        background-color: #333333;
       }
     }
   }
@@ -547,7 +547,7 @@ mat-form-field {
         transition: all 0.3s ease;
 
         &:hover {
-          color: #3949ab;
+          color: #333333;
           transform: scale(1.1);
         }
       }
@@ -644,7 +644,7 @@ app-divider {
   // Submit Button - Golden Primary
   .submit-button {
     background: linear-gradient(135deg, #ffc107 0%, #ffb300 100%);
-    color: #1a237e;
+    color: #000000;
     box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);
 
     &:hover:not(:disabled) {

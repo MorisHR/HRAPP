@@ -84,6 +84,9 @@ public class TenantDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
+#pragma warning disable CS0618 // Suppress obsolete HasCheckConstraint warnings (still functional, migration to ToTable pending)
+#pragma warning disable CS8620 // Suppress nullability mismatch in ValueConverter (encrypted converters handle nulls correctly)
+
         // Set the schema dynamically based on tenant
         modelBuilder.HasDefaultSchema(_tenantSchema);
 
@@ -115,38 +118,38 @@ public class TenantDbContext : DbContext
             {
                 // Bank details (highly sensitive)
                 entity.Property(e => e.BankAccountNumber)
-                    .HasConversion(new EncryptedStringConverter(_encryptionService))
+                    .HasConversion(new EncryptedStringConverter(_encryptionService!))
                     .HasMaxLength(500); // Increased for encrypted data
 
                 entity.Property(e => e.BankName)
-                    .HasConversion(new EncryptedStringConverter(_encryptionService))
+                    .HasConversion(new EncryptedStringConverter(_encryptionService!))
                     .HasMaxLength(500);
 
                 // Salary (financial PII)
                 entity.Property(e => e.BasicSalary)
-                    .HasConversion(new EncryptedDecimalConverter(_encryptionService))
+                    .HasConversion(new EncryptedDecimalConverter(_encryptionService!))
                     .HasColumnType("text"); // Store encrypted decimal as text
 
                 // Government IDs (identity theft risk)
                 entity.Property(e => e.TaxIdNumber)
-                    .HasConversion(new EncryptedStringConverter(_encryptionService))
+                    .HasConversion(new EncryptedStringConverter(_encryptionService!))
                     .HasMaxLength(500);
 
                 entity.Property(e => e.PassportNumber)
-                    .HasConversion(new EncryptedStringConverter(_encryptionService))
+                    .HasConversion(new EncryptedStringConverter(_encryptionService!))
                     .HasMaxLength(500);
 
                 entity.Property(e => e.NationalIdCard)
-                    .HasConversion(new EncryptedStringConverter(_encryptionService))
+                    .HasConversion(new EncryptedStringConverter(_encryptionService!))
                     .HasMaxLength(500);
 
                 // Address (physical security risk)
                 entity.Property(e => e.AddressLine1)
-                    .HasConversion(new EncryptedStringConverter(_encryptionService))
+                    .HasConversion(new EncryptedStringConverter(_encryptionService!))
                     .HasMaxLength(1000);
 
                 entity.Property(e => e.AddressLine2)
-                    .HasConversion(new EncryptedStringConverter(_encryptionService))
+                    .HasConversion(new EncryptedStringConverter(_encryptionService!))
                     .HasMaxLength(1000);
             }
 
@@ -297,16 +300,16 @@ public class TenantDbContext : DbContext
             {
                 // Contact phone numbers (sensitive PII)
                 entity.Property(e => e.PhoneNumber)
-                    .HasConversion(new EncryptedStringConverter(_encryptionService))
+                    .HasConversion(new EncryptedStringConverter(_encryptionService!))
                     .HasMaxLength(500);
 
                 entity.Property(e => e.AlternatePhoneNumber)
-                    .HasConversion(new EncryptedStringConverter(_encryptionService))
+                    .HasConversion(new EncryptedStringConverter(_encryptionService!))
                     .HasMaxLength(500);
 
                 // Contact address (physical security)
                 entity.Property(e => e.Address)
-                    .HasConversion(new EncryptedStringConverter(_encryptionService))
+                    .HasConversion(new EncryptedStringConverter(_encryptionService!))
                     .HasMaxLength(1000);
             }
 
@@ -676,19 +679,19 @@ public class TenantDbContext : DbContext
             {
                 // Core earnings (highly sensitive)
                 entity.Property(e => e.BasicSalary)
-                    .HasConversion(new EncryptedDecimalConverter(_encryptionService))
+                    .HasConversion(new EncryptedDecimalConverter(_encryptionService!))
                     .HasColumnType("text");
 
                 entity.Property(e => e.TotalGrossSalary)
-                    .HasConversion(new EncryptedDecimalConverter(_encryptionService))
+                    .HasConversion(new EncryptedDecimalConverter(_encryptionService!))
                     .HasColumnType("text");
 
                 entity.Property(e => e.TotalDeductions)
-                    .HasConversion(new EncryptedDecimalConverter(_encryptionService))
+                    .HasConversion(new EncryptedDecimalConverter(_encryptionService!))
                     .HasColumnType("text");
 
                 entity.Property(e => e.NetSalary)
-                    .HasConversion(new EncryptedDecimalConverter(_encryptionService))
+                    .HasConversion(new EncryptedDecimalConverter(_encryptionService!))
                     .HasColumnType("text");
             }
             else
@@ -1169,5 +1172,8 @@ public class TenantDbContext : DbContext
             // Soft delete query filter
             entity.HasQueryFilter(e => !e.IsDeleted);
         });
+
+#pragma warning restore CS8620
+#pragma warning restore CS0618
     }
 }

@@ -4,65 +4,60 @@
   <!-- Statistics Cards -->
   @if (statistics) {
     <div class="statistics-grid">
-      <mat-card>
-        <mat-card-header>
-          <mat-card-title>Total Anomalies</mat-card-title>
-        </mat-card-header>
-        <mat-card-content>
+      <app-card>
+        <div class="card-header">
+          <h3 class="card-title">Total Anomalies</h3>
+        </div>
+        <div class="card-content">
           <div class="stat-value">{{ statistics.totalAnomalies }}</div>
           <div class="stat-label">Last 30 Days</div>
-        </mat-card-content>
-      </mat-card>
-      <mat-card>
-        <mat-card-header>
-          <mat-card-title>New Anomalies</mat-card-title>
-        </mat-card-header>
-        <mat-card-content>
+        </div>
+      </app-card>
+      <app-card>
+        <div class="card-header">
+          <h3 class="card-title">New Anomalies</h3>
+        </div>
+        <div class="card-content">
           <div class="stat-value warn-text">{{ statistics.newAnomalies }}</div>
           <div class="stat-label">Requiring Investigation</div>
-        </mat-card-content>
-      </mat-card>
-      <mat-card>
-        <mat-card-header>
-          <mat-card-title>Critical Threats</mat-card-title>
-        </mat-card-header>
-        <mat-card-content>
+        </div>
+      </app-card>
+      <app-card>
+        <div class="card-header">
+          <h3 class="card-title">Critical Threats</h3>
+        </div>
+        <div class="card-content">
           <div class="stat-value error-text">{{ statistics.criticalAnomalies }}</div>
           <div class="stat-label">High Priority</div>
-        </mat-card-content>
-      </mat-card>
-      <mat-card>
-        <mat-card-header>
-          <mat-card-title>Average Risk Score</mat-card-title>
-        </mat-card-header>
-        <mat-card-content>
+        </div>
+      </app-card>
+      <app-card>
+        <div class="card-header">
+          <h3 class="card-title">Average Risk Score</h3>
+        </div>
+        <div class="card-content">
           <div class="stat-value">{{ statistics.averageRiskScore.toFixed(1) }}</div>
           <div class="stat-label">Out of 100</div>
-        </mat-card-content>
-      </mat-card>
+        </div>
+      </app-card>
     </div>
   }
 
   <!-- Anomalies Table -->
-  <mat-card class="anomalies-card">
-    <mat-card-header>
-      <mat-card-title>Detected Anomalies</mat-card-title>
+  <app-card class="anomalies-card">
+    <div class="card-header">
+      <h3 class="card-title">Detected Anomalies</h3>
       <div class="filters">
-        <mat-form-field appearance="outline">
-          <mat-label>Filter by Status</mat-label>
-          <mat-select [(ngModel)]="selectedStatus" (selectionChange)="onStatusFilterChange()">
-            <mat-option [value]="undefined">All Statuses</mat-option>
-            @for (status of statusOptions; track status) {
-              <mat-option [value]="status">
-                {{ status }}
-              </mat-option>
-            }
-          </mat-select>
-        </mat-form-field>
+        <app-select
+          label="Filter by Status"
+          [(ngModel)]="selectedStatus"
+          (ngModelChange)="onStatusFilterChange()"
+          [options]="statusSelectOptions">
+        </app-select>
       </div>
-    </mat-card-header>
+    </div>
 
-    <mat-card-content>
+    <div class="card-content">
       @if (loading) {
         <div class="loading-container">
           <app-progress-spinner size="medium" color="primary"></app-progress-spinner>
@@ -110,26 +105,26 @@
 
           <!-- Custom template for actions column -->
           <ng-template appTableColumn="actions" let-row>
-            <button mat-icon-button (click)="viewDetails(row)" appTooltip="View Details">
-              <app-icon name="visibility"></app-icon>
-            </button>
+            <app-button variant="ghost" size="small" (clicked)="viewDetails(row)" appTooltip="View Details">
+              <app-icon name="eye"></app-icon>
+            </app-button>
             @if (row.status === 'NEW') {
-              <button mat-icon-button (click)="startInvestigation(row)"
+              <app-button variant="ghost" size="small" (clicked)="startInvestigation(row)"
                 appTooltip="Start Investigation">
                 <app-icon name="search"></app-icon>
-              </button>
+              </app-button>
             }
             @if (row.status !== 'FALSE_POSITIVE' && row.status !== 'RESOLVED') {
-              <button mat-icon-button (click)="markAsFalsePositive(row)"
+              <app-button variant="ghost" size="small" (clicked)="markAsFalsePositive(row)"
                 appTooltip="Mark as False Positive">
-                <app-icon name="cancel"></app-icon>
-              </button>
+                <app-icon name="x-circle"></app-icon>
+              </app-button>
             }
             @if (row.status === 'INVESTIGATING') {
-              <button mat-icon-button (click)="resolveAnomaly(row)"
+              <app-button variant="ghost" size="small" (clicked)="resolveAnomaly(row)"
                 appTooltip="Resolve">
-                <app-icon name="check_circle"></app-icon>
-              </button>
+                <app-icon name="check-circle"></app-icon>
+              </app-button>
             }
           </ng-template>
         </app-table>
@@ -142,6 +137,6 @@
         (page)="onPageChange($event)"
         [showFirstLastButtons]="true">
       </app-paginator>
-    </mat-card-content>
-  </mat-card>
+    </div>
+  </app-card>
 </div>

@@ -1,15 +1,12 @@
 import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ToastService, TableComponent, TableColumn, TableColumnDirective, Tabs, Tab, TooltipDirective, Paginator, ExpansionPanel, ExpansionPanelGroup } from '../../../shared/ui';
+import { ToastService, TableComponent, TableColumn, TableColumnDirective, Tabs, Tab, TooltipDirective, Paginator, ExpansionPanel, ButtonComponent, IconComponent, CardComponent } from '../../../shared/ui';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
-import { UiModule } from '../../../shared/ui/ui.module';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { MatCardModule } from '@angular/material/card';
+import { UiModule } from '../../../shared/ui/ui.module';
 import { AuditLogService } from '../../../services/audit-log.service';
 import {
   AuditLog,
@@ -28,16 +25,15 @@ import {
     Paginator,
     MatDatepickerModule,
     MatNativeDateModule,
+    MatFormFieldModule,
+    MatInputModule,
     ExpansionPanel,
-    ExpansionPanelGroup,
     TooltipDirective,
     UiModule,
     Tabs,
-    MatButtonModule,
-    MatIconModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatCardModule,
+    ButtonComponent,
+    IconComponent,
+    CardComponent,
     TableComponent,
     TableColumnDirective
   ],

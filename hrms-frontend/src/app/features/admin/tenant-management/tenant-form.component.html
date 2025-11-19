@@ -1,128 +1,105 @@
 <div class="tenant-form-container">
-  <mat-toolbar color="primary">
-    <button mat-icon-button routerLink="/admin/tenants">
-      <app-icon name="arrow_back"></app-icon>
-    </button>
-    <span>Create New Tenant</span>
-  </mat-toolbar>
+  <div class="toolbar">
+    <app-button variant="ghost" size="small" routerLink="/admin/tenants">
+      <app-icon name="arrow-left"></app-icon>
+    </app-button>
+    <span>{{ isEditMode() ? 'Edit Tenant' : 'Create New Tenant' }}</span>
+  </div>
 
   <div class="form-content">
     <form [formGroup]="tenantForm" (ngSubmit)="onSubmit()">
 
       <!-- Company Information Section -->
-      <mat-card class="form-section">
-        <mat-card-header>
-          <mat-card-title>
-            <app-icon name="business"></app-icon>
+      <app-card class="form-section">
+        <div class="card-header">
+          <h3 class="card-title">
+            <app-icon name="building"></app-icon>
             Company Information
-          </mat-card-title>
-        </mat-card-header>
-        <mat-card-content>
+          </h3>
+        </div>
+        <div class="card-content">
           <div class="form-row">
-            <mat-form-field appearance="outline" class="full-width">
-              <mat-label>Company Name</mat-label>
-              <input matInput formControlName="companyName" placeholder="e.g., Acme Corporation">
-              <mat-icon matPrefix>business</mat-icon>
-              @if (tenantForm.get('companyName')?.invalid && tenantForm.get('companyName')?.touched) {
-                <mat-error>{{ getErrorMessage('companyName') }}</mat-error>
-              }
-            </mat-form-field>
+            <app-input
+              label="Company Name"
+              formControlName="companyName"
+              placeholder="e.g., Acme Corporation"
+              class="full-width"
+              [error]="tenantForm.get('companyName')?.invalid && tenantForm.get('companyName')?.touched ? getErrorMessage('companyName') : ''"
+            ></app-input>
           </div>
 
           <div class="form-row">
-            <mat-form-field appearance="outline" class="full-width">
-              <mat-label>Subdomain</mat-label>
-              <input matInput formControlName="subdomain" placeholder="e.g., acme">
-              <mat-icon matPrefix>link</mat-icon>
-              <mat-hint>Lowercase letters, numbers, and hyphens only. This will be: subdomain.hrms.com</mat-hint>
-              @if (tenantForm.get('subdomain')?.invalid && tenantForm.get('subdomain')?.touched) {
-                <mat-error>{{ getErrorMessage('subdomain') }}</mat-error>
-              }
-            </mat-form-field>
+            <app-input
+              label="Subdomain"
+              formControlName="subdomain"
+              placeholder="e.g., acme"
+              class="full-width"
+              hint="Lowercase letters, numbers, and hyphens only. This will be: subdomain.hrms.com"
+              [error]="tenantForm.get('subdomain')?.invalid && tenantForm.get('subdomain')?.touched ? getErrorMessage('subdomain') : ''"
+            ></app-input>
           </div>
 
           <div class="form-row">
-            <mat-form-field appearance="outline" class="half-width">
-              <mat-label>Contact Email</mat-label>
-              <input matInput type="email" formControlName="contactEmail" placeholder="contact@company.com">
-              <mat-icon matPrefix>email</mat-icon>
-              @if (tenantForm.get('contactEmail')?.invalid && tenantForm.get('contactEmail')?.touched) {
-                <mat-error>{{ getErrorMessage('contactEmail') }}</mat-error>
-              }
-            </mat-form-field>
+            <app-input
+              label="Contact Email"
+              type="email"
+              formControlName="contactEmail"
+              placeholder="contact@company.com"
+              class="half-width"
+              [error]="tenantForm.get('contactEmail')?.invalid && tenantForm.get('contactEmail')?.touched ? getErrorMessage('contactEmail') : ''"
+            ></app-input>
 
-            <mat-form-field appearance="outline" class="half-width">
-              <mat-label>Contact Phone</mat-label>
-              <input matInput type="tel" formControlName="contactPhone" placeholder="+1234567890">
-              <mat-icon matPrefix>phone</mat-icon>
-              @if (tenantForm.get('contactPhone')?.invalid && tenantForm.get('contactPhone')?.touched) {
-                <mat-error>{{ getErrorMessage('contactPhone') }}</mat-error>
-              }
-            </mat-form-field>
+            <app-input
+              label="Contact Phone"
+              type="tel"
+              formControlName="contactPhone"
+              placeholder="+1234567890"
+              class="half-width"
+              [error]="tenantForm.get('contactPhone')?.invalid && tenantForm.get('contactPhone')?.touched ? getErrorMessage('contactPhone') : ''"
+            ></app-input>
           </div>
-        </mat-card-content>
-      </mat-card>
+        </div>
+      </app-card>
 
       <!-- Industry Sector Section (FORTUNE 500 Pattern) -->
-      <mat-card class="form-section">
-        <mat-card-header>
-          <mat-card-title>
-            <app-icon name="business_center"></app-icon>
+      <app-card class="form-section">
+        <div class="card-header">
+          <h3 class="card-title">
+            <app-icon name="briefcase"></app-icon>
             Industry Sector
-          </mat-card-title>
-        </mat-card-header>
-        <mat-card-content>
+          </h3>
+        </div>
+        <div class="card-content">
           <div class="form-row">
-            <mat-form-field appearance="outline" class="full-width">
-              <mat-label>Select Industry Sector (Optional)</mat-label>
-              <mat-select formControlName="sectorId">
-                <mat-option [value]="null">Not specified</mat-option>
-                @for (sector of sectors$ | async; track sector.id) {
-                  <mat-option [value]="sector.id">
-                    {{ sector.code }} - {{ sector.name }}
-                  </mat-option>
-                }
-              </mat-select>
-              <mat-icon matPrefix>category</mat-icon>
-              <mat-hint>Select the primary industry sector for compliance and reporting</mat-hint>
-            </mat-form-field>
+            <app-select
+              label="Select Industry Sector (Optional)"
+              formControlName="sectorId"
+              class="full-width"
+              hint="Select the primary industry sector for compliance and reporting"
+              [options]="sectorOptions()"
+            ></app-select>
           </div>
-        </mat-card-content>
-      </mat-card>
+        </div>
+      </app-card>
 
       <!-- Employee Tier & Pricing Section -->
-      <mat-card class="form-section">
-        <mat-card-header>
-          <mat-card-title>
-            <app-icon name="credit_card"></app-icon>
+      <app-card class="form-section">
+        <div class="card-header">
+          <h3 class="card-title">
+            <app-icon name="credit-card"></app-icon>
             Subscription Plan
-          </mat-card-title>
-        </mat-card-header>
-        <mat-card-content>
+          </h3>
+        </div>
+        <div class="card-content">
           <div class="form-row">
-            <mat-form-field appearance="outline" class="full-width">
-              <mat-label>Select Employee Tier</mat-label>
-              <mat-select formControlName="employeeTier" required>
-                @for (tier of pricingTiers; track tier.id) {
-                  <mat-option [value]="tier.id">
-                    <div class="tier-option">
-                      <div class="tier-header">
-                        <span class="tier-name">{{ tier.name }}</span>
-                        <span class="tier-price">{{ pricingService.formatPrice(tier.price) }}/mo</span>
-                      </div>
-                      <div class="tier-limits">
-                        {{ pricingService.formatStorage(tier.storageGB) }} Storage •
-                        {{ pricingService.formatApiCalls(tier.apiCallsMonth) }} API calls/month
-                      </div>
-                    </div>
-                  </mat-option>
-                }
-              </mat-select>
-              <mat-icon matPrefix>groups</mat-icon>
-              @if (tenantForm.get('employeeTier')?.invalid && tenantForm.get('employeeTier')?.touched) {
-                <mat-error>Please select an employee tier</mat-error>
-              }
-            </mat-form-field>
+            <app-select
+              label="Select Employee Tier"
+              formControlName="employeeTier"
+              [required]="true"
+              class="full-width"
+              [options]="tierOptions()"
+              [error]="tenantForm.get('employeeTier')?.invalid && tenantForm.get('employeeTier')?.touched ? 'Please select an employee tier' : ''"
+            ></app-select>
           </div>
 
           <!-- Pricing Summary Card (appears after tier selection) -->
@@ -188,68 +165,77 @@
               </div>
             </div>
           }
-        </mat-card-content>
-      </mat-card>
+        </div>
+      </app-card>
 
       <!-- Admin User Section -->
-      <mat-card class="form-section">
-        <mat-card-header>
-          <mat-card-title>
-            <app-icon name="admin_panel_settings"></app-icon>
+      <app-card class="form-section">
+        <div class="card-header">
+          <h3 class="card-title">
+            <app-icon name="shield"></app-icon>
             Admin User Account
-          </mat-card-title>
-        </mat-card-header>
-        <mat-card-content>
+          </h3>
+        </div>
+        <div class="card-content">
           <div class="form-row">
-            <mat-form-field appearance="outline" class="full-width">
-              <mat-label>Admin User Name</mat-label>
-              <input matInput formControlName="adminUserName" placeholder="John Doe">
-              <mat-icon matPrefix>person</mat-icon>
-              @if (tenantForm.get('adminUserName')?.invalid && tenantForm.get('adminUserName')?.touched) {
-                <mat-error>{{ getErrorMessage('adminUserName') }}</mat-error>
-              }
-            </mat-form-field>
+            <app-input
+              label="Admin User Name"
+              formControlName="adminUserName"
+              placeholder="John Doe"
+              class="full-width"
+              [error]="tenantForm.get('adminUserName')?.invalid && tenantForm.get('adminUserName')?.touched ? getErrorMessage('adminUserName') : ''"
+            ></app-input>
           </div>
 
           <div class="form-row">
-            <mat-form-field appearance="outline" class="full-width">
-              <mat-label>Admin Email</mat-label>
-              <input matInput type="email" formControlName="adminEmail" placeholder="admin@company.com">
-              <mat-icon matPrefix>email</mat-icon>
-              @if (tenantForm.get('adminEmail')?.invalid && tenantForm.get('adminEmail')?.touched) {
-                <mat-error>{{ getErrorMessage('adminEmail') }}</mat-error>
-              }
-            </mat-form-field>
+            <app-input
+              label="Admin Email"
+              type="email"
+              formControlName="adminEmail"
+              placeholder="admin@company.com"
+              class="full-width"
+              [error]="tenantForm.get('adminEmail')?.invalid && tenantForm.get('adminEmail')?.touched ? getErrorMessage('adminEmail') : ''"
+            ></app-input>
           </div>
 
           <div class="form-row">
-            <mat-form-field appearance="outline" class="full-width">
-              <mat-label>Admin Password</mat-label>
-              <input matInput type="password" formControlName="adminPassword" placeholder="Enter secure password">
-              <mat-icon matPrefix>lock</mat-icon>
-              <mat-hint>Minimum 8 characters with uppercase, lowercase, number, and special character</mat-hint>
-              @if (tenantForm.get('adminPassword')?.invalid && tenantForm.get('adminPassword')?.touched) {
-                <mat-error>{{ getErrorMessage('adminPassword') }}</mat-error>
-              }
-            </mat-form-field>
+            <app-input
+              label="Admin Password"
+              type="password"
+              formControlName="adminPassword"
+              placeholder="Enter secure password"
+              class="full-width"
+              hint="Minimum 8 characters with uppercase, lowercase, number, and special character"
+              [error]="tenantForm.get('adminPassword')?.invalid && tenantForm.get('adminPassword')?.touched ? getErrorMessage('adminPassword') : ''"
+            ></app-input>
           </div>
-        </mat-card-content>
-      </mat-card>
+        </div>
+      </app-card>
 
       <!-- Actions -->
       <div class="form-actions">
-        <button mat-raised-button type="button" (click)="onCancel()" [disabled]="loading()">
+        <app-button
+          variant="ghost"
+          type="button"
+          (clicked)="onCancel()"
+          [disabled]="loading()">
           Cancel
-        </button>
+        </app-button>
         @if (loading()) {
-          <button mat-raised-button color="primary" type="submit" [disabled]="true">
+          <app-button
+            variant="primary"
+            type="submit"
+            [disabled]="true">
             <app-progress-spinner size="small" color="primary" class="button-spinner"></app-progress-spinner>
-            Creating...
-          </button>
+            {{ isEditMode() ? 'Updating...' : 'Creating...' }}
+          </app-button>
         } @else {
-          <button mat-raised-button color="primary" type="submit" [disabled]="tenantForm.invalid">
-            Create Tenant
-          </button>
+          <app-button
+            variant="primary"
+            type="submit"
+            [disabled]="tenantForm.invalid">
+            {{ isEditMode() ? 'Update Tenant' : 'Create Tenant' }}
+          </app-button>
         }
       </div>
     </form>

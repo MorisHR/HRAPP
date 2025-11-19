@@ -155,24 +155,42 @@ interface MenuItem {
 
       a {
         margin: 4px 8px;
-        border-radius: 8px;
-        transition: background-color 0.2s;
+        padding: 12px;
+        border-radius: 10px;
+        transition: all 250ms cubic-bezier(0.4, 0.0, 0.2, 1);
         display: flex;
         align-items: center;
         gap: 12px;
         text-decoration: none;
-        color: inherit;
+        color: #525252;
+        font-weight: 500;
+        position: relative;
+        border: 2px solid transparent;
 
         &:hover {
-          background-color: rgba(0, 0, 0, 0.04);
+          background-color: rgba(15, 98, 254, 0.04);
+          color: #161616;
+          transform: translateX(2px);
+
+          .item-icon {
+            color: #0F62FE;
+          }
         }
 
         &.active {
-          background-color: #000000;
-          color: #ffffff;
+          background: rgba(15, 98, 254, 0.02);
+          color: #0F62FE;
+          font-weight: 600;
+          border-left: 4px solid #0F62FE;
+          padding-left: 10px;
 
           .item-icon {
-            color: #ffffff;
+            color: #0F62FE;
+            font-weight: 600;
+          }
+
+          .item-label {
+            color: #0F62FE;
           }
         }
 
@@ -180,10 +198,13 @@ interface MenuItem {
           font-size: 20px;
           width: 20px;
           height: 20px;
+          color: #6F6F6F;
+          transition: color 250ms cubic-bezier(0.4, 0.0, 0.2, 1);
         }
 
         .item-label {
           flex: 1;
+          transition: color 250ms cubic-bezier(0.4, 0.0, 0.2, 1);
         }
       }
 
@@ -206,13 +227,23 @@ interface MenuItem {
 
         .submenu-item {
           margin: 2px 8px;
-          padding-left: 24px;
           font-size: 0.9rem;
 
+          a {
+            padding: 10px 12px 10px 24px;
+            font-size: 0.9rem;
+
+            &.active {
+              background: rgba(15, 98, 254, 0.02);
+              border-left: 4px solid #0F62FE;
+              padding-left: 22px;
+            }
+          }
+
           .item-icon {
-            font-size: 20px;
-            width: 20px;
-            height: 20px;
+            font-size: 18px;
+            width: 18px;
+            height: 18px;
           }
         }
 
@@ -221,13 +252,23 @@ interface MenuItem {
 
           .submenu-item-nested {
             margin: 2px 8px;
-            padding-left: 32px;
             font-size: 0.85rem;
 
+            a {
+              padding: 8px 12px 8px 32px;
+              font-size: 0.85rem;
+
+              &.active {
+                background: rgba(15, 98, 254, 0.02);
+                border-left: 4px solid #0F62FE;
+                padding-left: 30px;
+              }
+            }
+
             .item-icon {
-              font-size: 18px;
-              width: 18px;
-              height: 18px;
+              font-size: 16px;
+              width: 16px;
+              height: 16px;
             }
           }
         }

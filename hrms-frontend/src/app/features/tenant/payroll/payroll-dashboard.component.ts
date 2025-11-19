@@ -163,7 +163,7 @@ import { SalaryComponentsService } from '../../../core/services/salary-component
       gap: 12px;
       font-size: 32px;
       font-weight: 500;
-      color: #1a237e;
+      color: var(--color-neutral-900);
       margin: 0 0 8px 0;
     }
 
@@ -171,7 +171,7 @@ import { SalaryComponentsService } from '../../../core/services/salary-component
       font-size: 36px;
       width: 36px;
       height: 36px;
-      color: #3f51b5;
+      color: var(--color-neutral-900);
     }
 
     .subtitle {
@@ -246,7 +246,7 @@ import { SalaryComponentsService } from '../../../core/services/salary-component
       h2 {
         font-size: 24px;
         font-weight: 500;
-        color: #1a237e;
+        color: var(--color-neutral-900);
         margin: 0 0 16px 0;
       }
     }
@@ -282,7 +282,7 @@ import { SalaryComponentsService } from '../../../core/services/salary-component
           font-size: 48px;
           width: 48px;
           height: 48px;
-          color: #3f51b5;
+          color: var(--color-neutral-900);
           margin-bottom: 12px;
         }
 
@@ -328,7 +328,7 @@ import { SalaryComponentsService } from '../../../core/services/salary-component
       }
 
       h2 {
-        color: #1a237e;
+        color: var(--color-neutral-900);
         margin: 0 0 12px 0;
         font-size: 24px;
       }
@@ -360,7 +360,7 @@ import { SalaryComponentsService } from '../../../core/services/salary-component
           font-size: 24px;
           width: 24px;
           height: 24px;
-          color: #3f51b5;
+          color: var(--color-neutral-900);
         }
 
         span {

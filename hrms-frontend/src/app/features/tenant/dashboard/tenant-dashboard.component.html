@@ -1,297 +1,382 @@
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!-- FORTUNE 500 ENTERPRISE DASHBOARD -->
+<!-- Professional, data-driven, visual hierarchy -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+
 <div class="dashboard-content">
-      <div class="dashboard-header">
-        <h1>Welcome to HR Portal</h1>
-        @if (!loading() && !error() && stats()) {
-          <button mat-icon-button (click)="loadDashboardData()" matTooltip="Refresh">
-            <app-icon name="refresh"></app-icon>
-          </button>
-        }
-      </div>
+  <!-- Header -->
+  <div class="dashboard-header">
+    <div class="header-content">
+      <h1>Executive Dashboard</h1>
+      <p class="header-subtitle">Real-time HR analytics and insights</p>
+    </div>
+    @if (!loading() && !error() && stats()) {
+      <button mat-icon-button (click)="loadDashboardData()" matTooltip="Refresh">
+        <app-icon name="refresh"></app-icon>
+      </button>
+    }
+  </div>
 
-      <!-- Quick Filters -->
-      @if (!loading() && !error()) {
-        <div class="filter-controls">
-          <mat-form-field appearance="outline" class="filter-field">
-            <mat-label>Time Period</mat-label>
-            <mat-select [(value)]="selectedTimePeriod" (selectionChange)="onTimePeriodChange($event.value)">
-              @for (option of timePeriodOptions; track option.value) {
-                <mat-option [value]="option.value">{{ option.label }}</mat-option>
-              }
-            </mat-select>
-          </mat-form-field>
+  <!-- Quick Filters -->
+  @if (!loading() && !error()) {
+    <div class="filter-controls">
+      <mat-form-field appearance="outline" class="filter-field">
+        <mat-label>Time Period</mat-label>
+        <mat-select [(value)]="selectedTimePeriod" (selectionChange)="onTimePeriodChange($event.value)">
+          @for (option of timePeriodOptions; track option.value) {
+            <mat-option [value]="option.value">{{ option.label }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
 
-          <mat-form-field appearance="outline" class="filter-field">
-            <mat-label>Department</mat-label>
-            <mat-select [(value)]="selectedDepartment" (selectionChange)="onDepartmentChange($event.value)">
-              <mat-option value="all">All Departments</mat-option>
-              @for (dept of departments(); track dept) {
-                <mat-option [value]="dept">{{ dept }}</mat-option>
-              }
-            </mat-select>
-          </mat-form-field>
+      <mat-form-field appearance="outline" class="filter-field">
+        <mat-label>Department</mat-label>
+        <mat-select [(value)]="selectedDepartment" (selectionChange)="onDepartmentChange($event.value)">
+          <mat-option value="all">All Departments</mat-option>
+          @for (dept of departments(); track dept) {
+            <mat-option [value]="dept">{{ dept }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </div>
+  }
+
+  <!-- Error State -->
+  @if (error() && !loading()) {
+    <app-card class="error-card" [elevation]="2" padding="large">
+      <div class="error-content">
+        <app-icon name="error_outline"></app-icon>
+        <div class="error-text">
+          <h3>Failed to load dashboard data</h3>
+          <p>{{ error() }}</p>
         </div>
-      }
+        <button mat-raised-button color="primary" (click)="retry()">
+          <app-icon name="refresh"></app-icon>
+          Retry
+        </button>
+      </div>
+    </app-card>
+  }
 
-      <!-- Error State -->
-      @if (error() && !loading()) {
-        <app-card class="error-card" [elevation]="2" padding="large">
-          <div class="error-content">
-            <app-icon name="error_outline"></app-icon>
-            <div class="error-text">
-              <h3>Failed to load dashboard data</h3>
-              <p>{{ error() }}</p>
-            </div>
-            <button mat-raised-button color="primary" (click)="retry()">
-              <app-icon name="refresh"></app-icon>
-              Retry
-            </button>
+  <!-- Loading State -->
+  @if (loading()) {
+    <div class="hero-metrics-grid">
+      @for (metric of heroMetrics; track metric.title) {
+        <app-card class="metric-skeleton" [elevation]="1" padding="large">
+          <div class="skeleton-icon"></div>
+          <div class="skeleton-content">
+            <div class="skeleton-line skeleton-title"></div>
+            <div class="skeleton-line skeleton-value"></div>
+            <div class="skeleton-line skeleton-context"></div>
           </div>
         </app-card>
       }
+    </div>
+  }
 
-      <!-- Loading State (Skeleton) -->
-      @if (loading()) {
-        <div class="stats-grid">
-          @for (card of kpiCards; track card.title) {
-            <app-card class="stat-card skeleton" [elevation]="1" padding="large">
-              <div class="stat-icon">
-                <div class="skeleton-circle"></div>
-              </div>
-              <div class="stat-info">
-                <div class="skeleton-line skeleton-title"></div>
-                <div class="skeleton-line skeleton-subtitle"></div>
-              </div>
-            </app-card>
-          }
-        </div>
-      }
-
-      <!-- Stats Cards (Loaded) -->
-      @if (!loading() && !error() && stats()) {
-        <div class="stats-grid">
-          @for (card of kpiCards; track card.title) {
-            <app-card class="stat-card" [class.positive]="isPositiveGrowth(card, stats()!)" [class.negative]="isNegativeGrowth(card, stats()!)" [elevation]="2" [hoverable]="true" padding="large">
-              <div class="stat-icon">
-                <app-icon [name]="card.icon"></app-icon>
-              </div>
-              <div class="stat-info">
-                <h3>{{ card.getValue(stats()!) }}{{ card.suffix }}</h3>
-                <p>{{ card.title }}</p>
-              </div>
-            </app-card>
-          }
-        </div>
-      }
-
-      <!-- Alerts Widget -->
-      @if (!loading() && !error() && alerts().length > 0) {
-        <div class="alerts-section">
-          <div class="section-header">
-            <h2>
-              <app-icon name="notification_important"></app-icon>
-              Urgent Alerts
-            </h2>
-            <span class="alert-count">{{ alerts().length }}</span>
-          </div>
-
-          <div class="alerts-grid">
-            @for (alert of alerts(); track alert.id) {
-              <app-card class="alert-card" [class]="'severity-' + alert.severity" [elevation]="2" [hoverable]="true" padding="large">
-                <div class="alert-icon">
-                  <app-icon [name]="alert.icon"></app-icon>
-                </div>
-                <div class="alert-content">
-                  <h3>{{ alert.title }}</h3>
-                  <p>{{ alert.description }}</p>
-                </div>
-                <div class="alert-action">
-                  <button mat-icon-button [routerLink]="alert.actionUrl" matTooltip="View Details">
-                    <app-icon name="arrow_forward"></app-icon>
-                  </button>
-                </div>
-              </app-card>
-            }
-          </div>
-        </div>
-      }
-
-      <!-- Charts Section -->
-      @if (!loading() && !error()) {
-        <div class="charts-section">
-          <h2>Analytics & Insights</h2>
-          <div class="charts-grid">
-            <!-- Department Headcount Chart -->
-            <app-card class="chart-card" [elevation]="2" [hoverable]="true" padding="medium">
-              <div class="chart-header">
-                <h3>
-                  <app-icon name="corporate_fare"></app-icon>
-                  Department Headcount
-                </h3>
-              </div>
-              <div class="chart-container">
-                <canvas baseChart
-                  [data]="departmentChartData"
-                  [options]="departmentChartOptions"
-                  type="bar">
-                </canvas>
-              </div>
-            </app-card>
-
-            <!-- Employee Growth Chart -->
-            <app-card class="chart-card" [elevation]="2" [hoverable]="true" padding="medium">
-              <div class="chart-header">
-                <h3>
-                  <app-icon name="trending_up"></app-icon>
-                  Employee Growth (12 Months)
-                </h3>
-              </div>
-              <div class="chart-container">
-                <canvas baseChart
-                  [data]="growthChartData"
-                  [options]="growthChartOptions"
-                  type="line">
-                </canvas>
-              </div>
-            </app-card>
-
-            <!-- Employee Type Distribution Chart -->
-            <app-card class="chart-card" [elevation]="2" [hoverable]="true" padding="medium">
-              <div class="chart-header">
-                <h3>
-                  <app-icon name="pie_chart"></app-icon>
-                  Employee Type Distribution
-                </h3>
-              </div>
-              <div class="chart-container">
-                <canvas baseChart
-                  [data]="typeChartData"
-                  [options]="typeChartOptions"
-                  type="doughnut">
-                </canvas>
-              </div>
-            </app-card>
-          </div>
-        </div>
-      }
-
-      <!-- Quick Actions (Only show when not loading/error) -->
-      @if (!loading() && !error()) {
-        <div class="quick-actions">
-          <h2>Quick Actions</h2>
-          <div class="actions-grid">
-            <app-card class="action-card" [elevation]="2" [hoverable]="true" [clickable]="true" padding="large" routerLink="/tenant/employees/new">
-              <app-icon name="person_add"></app-icon>
-              <h3>Add Employee</h3>
-            </app-card>
-
-            <app-card class="action-card" [elevation]="2" [hoverable]="true" [clickable]="true" padding="large" routerLink="/tenant/leave">
-              <app-icon name="approval"></app-icon>
-              <h3>Approve Leaves</h3>
-            </app-card>
-
-            <app-card class="action-card" [elevation]="2" [hoverable]="true" [clickable]="true" padding="large" routerLink="/tenant/payroll">
-              <app-icon name="account_balance"></app-icon>
-              <h3>Process Payroll</h3>
-            </app-card>
-
-            <app-card class="action-card" [elevation]="2" [hoverable]="true" [clickable]="true" padding="large" routerLink="/tenant/reports">
-              <app-icon name="summarize"></app-icon>
-              <h3>View Reports</h3>
-            </app-card>
-          </div>
-        </div>
-      }
-
-      <!-- Activity Feed and Birthdays -->
-      @if (!loading() && !error()) {
-        <div class="widgets-section">
-          <div class="widgets-grid">
-            <!-- Recent Activity Feed -->
-            <div class="widget-container">
-              <app-card class="widget-card" [elevation]="2" [hoverable]="true" padding="none">
-                <div class="widget-header">
-                  <h3>
-                    <app-icon name="timeline"></app-icon>
-                    Recent Activity
-                  </h3>
-                </div>
-                <div class="widget-content">
-                  @if (activitiesLoading()) {
-                    <div class="widget-loading">
-                      <app-progress-spinner size="medium" color="primary"></app-progress-spinner>
-                    </div>
-                  } @else if (activities().length === 0) {
-                    <div class="widget-empty">
-                      <app-icon name="info"></app-icon>
-                      <p>No recent activity</p>
-                    </div>
-                  } @else {
-                    <div class="activity-list">
-                      @for (activity of activities(); track activity.id) {
-                        <div class="activity-item">
-                          <div class="activity-icon">
-                            <app-icon [name]="activity.icon"></app-icon>
-                          </div>
-                          <div class="activity-content">
-                            <h4>{{ activity.title }}</h4>
-                            <p>{{ activity.description }}</p>
-                            <span class="activity-time">{{ getTimeAgo(activity.timestamp) }}</span>
-                          </div>
-                        </div>
-                      }
-                    </div>
-                  }
-                </div>
-              </app-card>
-            </div>
-
-            <!-- Upcoming Birthdays -->
-            <div class="widget-container">
-              <app-card class="widget-card" [elevation]="2" [hoverable]="true" padding="none">
-                <div class="widget-header">
-                  <h3>
-                    <app-icon name="cake"></app-icon>
-                    Upcoming Birthdays
-                  </h3>
-                </div>
-                <div class="widget-content">
-                  @if (birthdaysLoading()) {
-                    <div class="widget-loading">
-                      <app-progress-spinner size="medium" color="primary"></app-progress-spinner>
-                    </div>
-                  } @else if (birthdays().length === 0) {
-                    <div class="widget-empty">
-                      <app-icon name="info"></app-icon>
-                      <p>No upcoming birthdays in the next 30 days</p>
-                    </div>
-                  } @else {
-                    <div class="birthday-list">
-                      @for (birthday of birthdays(); track birthday.employeeId) {
-                        <div class="birthday-item">
-                          <div class="birthday-icon">
-                            <app-icon name="cake"></app-icon>
-                          </div>
-                          <div class="birthday-content">
-                            <h4>{{ birthday.employeeName }}</h4>
-                            <p>{{ birthday.department }}</p>
-                            <span class="birthday-date">
-                              @if (birthday.daysUntil === 0) {
-                                <app-chip class="today-chip" color="primary">Today</app-chip>
-                              } @else if (birthday.daysUntil === 1) {
-                                Tomorrow
-                              } @else {
-                                In {{ birthday.daysUntil }} days
-                              }
-                            </span>
-                          </div>
-                        </div>
-                      }
-                    </div>
-                  }
-                </div>
-              </app-card>
-            </div>
-          </div>
-        </div>
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <!-- HERO METRICS SECTION (Top 3 KPIs) -->
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  @if (!loading() && !error() && stats()) {
+    <div class="hero-metrics-grid">
+      @for (metric of heroMetrics; track metric.title) {
+        <app-metric-card
+          [title]="metric.title"
+          [subtitle]="metric.subtitle"
+          [value]="metric.getValue(stats()!)"
+          [icon]="metric.icon"
+          [trend]="metric.getTrend ? metric.getTrend(stats()!) : undefined"
+          trendLabel="vs last month"
+          [context]="metric.context ? metric.context(stats()!) : undefined"
+          [sparklineData]="metric.getSparklineData ? metric.getSparklineData(stats()!) : undefined"
+          [size]="metric.size"
+          [theme]="metric.theme"
+          [clickable]="false">
+        </app-metric-card>
       }
     </div>
+
+    <!-- ═════════════════════════════════════════════════════════════ -->
+    <!-- CHARTS SECTION (Data Visualizations) -->
+    <!-- ═════════════════════════════════════════════════════════════ -->
+    <div class="charts-section">
+      <h2 class="section-title">Workforce Analytics</h2>
+
+      <div class="charts-grid">
+        <!-- Employee Growth Trend (Full width) -->
+        <div class="chart-full-width">
+          <app-card [elevation]="2" padding="medium" [hoverable]="true">
+            <div class="chart-header">
+              <div>
+                <h3>
+                  <app-icon name="trending_up"></app-icon>
+                  Employee Growth Trend
+                </h3>
+                <p class="chart-subtitle">Last 12 months</p>
+              </div>
+            </div>
+            <div class="chart-wrapper">
+              <app-line-chart
+                [labels]="growthChartLabels()"
+                [data]="growthChartSeries()"
+                [smooth]="true"
+                [showGrid]="true"
+                [showLegend]="false"
+                height="320px">
+              </app-line-chart>
+            </div>
+          </app-card>
+        </div>
+
+        <!-- Department Headcount -->
+        <app-card class="chart-card" [elevation]="2" padding="medium" [hoverable]="true">
+          <div class="chart-header">
+            <div>
+              <h3>
+                <app-icon name="corporate_fare"></app-icon>
+                Department Headcount
+              </h3>
+              <p class="chart-subtitle">Current distribution</p>
+            </div>
+          </div>
+          <div class="chart-wrapper">
+            <app-bar-chart
+              [labels]="departmentChartLabels()"
+              [data]="departmentChartData()"
+              [color]="'#0F62FE'"
+              height="280px">
+            </app-bar-chart>
+          </div>
+        </app-card>
+
+        <!-- Employee Type Distribution -->
+        <app-card class="chart-card" [elevation]="2" padding="medium" [hoverable]="true">
+          <div class="chart-header">
+            <div>
+              <h3>
+                <app-icon name="pie_chart"></app-icon>
+                Employee Type
+              </h3>
+              <p class="chart-subtitle">Employment status</p>
+            </div>
+          </div>
+          <div class="chart-wrapper">
+            <app-donut-chart
+              [data]="typeChartData()"
+              [showLegend]="true"
+              height="280px">
+            </app-donut-chart>
+          </div>
+        </app-card>
+      </div>
+    </div>
+
+    <!-- ═════════════════════════════════════════════════════════════ -->
+    <!-- PRIMARY METRICS SECTION (Important KPIs) -->
+    <!-- ═════════════════════════════════════════════════════════════ -->
+    <div class="primary-metrics-section">
+      <h2 class="section-title">Key Performance Indicators</h2>
+
+      <div class="primary-metrics-grid">
+        @for (metric of primaryMetrics; track metric.title) {
+          <app-metric-card
+            [title]="metric.title"
+            [subtitle]="metric.subtitle"
+            [value]="metric.getValue(stats()!)"
+            [icon]="metric.icon"
+            [trend]="metric.getTrend ? metric.getTrend(stats()!) : undefined"
+            trendLabel="vs last month"
+            [context]="metric.context ? metric.context(stats()!) : undefined"
+            [size]="metric.size"
+            [theme]="metric.theme">
+          </app-metric-card>
+        }
+      </div>
+    </div>
+
+    <!-- ═════════════════════════════════════════════════════════════ -->
+    <!-- SUPPORTING METRICS SECTION (Tertiary Data) -->
+    <!-- ═════════════════════════════════════════════════════════════ -->
+    <div class="supporting-metrics-section">
+      <h2 class="section-title">Additional Insights</h2>
+
+      <div class="supporting-metrics-grid">
+        @for (metric of supportingMetrics; track metric.title) {
+          <app-metric-card
+            [title]="metric.title"
+            [subtitle]="metric.subtitle"
+            [value]="metric.getValue(stats()!)"
+            [icon]="metric.icon"
+            [trend]="metric.getTrend ? metric.getTrend(stats()!) : undefined"
+            trendLabel="vs last month"
+            [size]="metric.size"
+            [theme]="metric.theme">
+          </app-metric-card>
+        }
+      </div>
+    </div>
+
+    <!-- ═════════════════════════════════════════════════════════════ -->
+    <!-- ALERTS SECTION (Critical Notifications) -->
+    <!-- ═════════════════════════════════════════════════════════════ -->
+    @if (alerts().length > 0) {
+      <div class="alerts-section">
+        <div class="section-header">
+          <h2 class="section-title">
+            <app-icon name="notification_important"></app-icon>
+            Urgent Alerts
+          </h2>
+          <span class="alert-badge">{{ alerts().length }}</span>
+        </div>
+
+        <div class="alerts-grid">
+          @for (alert of alerts(); track alert.id) {
+            <app-card
+              class="alert-card"
+              [class]="'alert-severity-' + alert.severity"
+              [elevation]="2"
+              [hoverable]="true"
+              padding="large">
+              <div class="alert-icon">
+                <app-icon [name]="alert.icon"></app-icon>
+              </div>
+              <div class="alert-content">
+                <h3>{{ alert.title }}</h3>
+                <p>{{ alert.description }}</p>
+              </div>
+              <div class="alert-action">
+                <button mat-icon-button [routerLink]="alert.actionUrl" matTooltip="View Details">
+                  <app-icon name="arrow_forward"></app-icon>
+                </button>
+              </div>
+            </app-card>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- ═════════════════════════════════════════════════════════════ -->
+    <!-- QUICK ACTIONS (Workflow Shortcuts) -->
+    <!-- ═════════════════════════════════════════════════════════════ -->
+    <div class="quick-actions-section">
+      <h2 class="section-title">Quick Actions</h2>
+
+      <div class="quick-actions-grid">
+        <app-card class="action-card" [elevation]="2" [hoverable]="true" [clickable]="true" padding="large" routerLink="/tenant/employees/new">
+          <app-icon name="person_add"></app-icon>
+          <h3>Add Employee</h3>
+          <p>Onboard new team member</p>
+        </app-card>
+
+        <app-card class="action-card" [elevation]="2" [hoverable]="true" [clickable]="true" padding="large" routerLink="/tenant/leave">
+          <app-icon name="approval"></app-icon>
+          <h3>Approve Leaves</h3>
+          <p>{{ stats()!.pendingLeaveRequests }} pending</p>
+        </app-card>
+
+        <app-card class="action-card" [elevation]="2" [hoverable]="true" [clickable]="true" padding="large" routerLink="/tenant/payroll">
+          <app-icon name="account_balance"></app-icon>
+          <h3>Process Payroll</h3>
+          <p>{{ stats()!.activePayrollCycles }} active cycles</p>
+        </app-card>
+
+        <app-card class="action-card" [elevation]="2" [hoverable]="true" [clickable]="true" padding="large" routerLink="/tenant/reports">
+          <app-icon name="summarize"></app-icon>
+          <h3>View Reports</h3>
+          <p>Analytics & insights</p>
+        </app-card>
+      </div>
+    </div>
+
+    <!-- ═════════════════════════════════════════════════════════════ -->
+    <!-- ACTIVITY FEED & BIRTHDAYS (Side Widgets) -->
+    <!-- ═════════════════════════════════════════════════════════════ -->
+    <div class="widgets-section">
+      <h2 class="section-title">Recent Activity & Events</h2>
+
+      <div class="widgets-grid">
+        <!-- Recent Activity Feed -->
+        <app-card class="widget-card" [elevation]="2" padding="none">
+          <div class="widget-header">
+            <h3>
+              <app-icon name="timeline"></app-icon>
+              Recent Activity
+            </h3>
+          </div>
+          <div class="widget-content">
+            @if (activitiesLoading()) {
+              <div class="widget-loading">
+                <app-progress-spinner size="medium" color="primary"></app-progress-spinner>
+              </div>
+            } @else if (activities().length === 0) {
+              <div class="widget-empty">
+                <app-icon name="info"></app-icon>
+                <p>No recent activity</p>
+              </div>
+            } @else {
+              <div class="activity-list">
+                @for (activity of activities(); track activity.id) {
+                  <div class="activity-item">
+                    <div class="activity-icon">
+                      <app-icon [name]="activity.icon"></app-icon>
+                    </div>
+                    <div class="activity-details">
+                      <h4>{{ activity.title }}</h4>
+                      <p>{{ activity.description }}</p>
+                      <span class="activity-time">{{ getTimeAgo(activity.timestamp) }}</span>
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        </app-card>
+
+        <!-- Upcoming Birthdays -->
+        <app-card class="widget-card" [elevation]="2" padding="none">
+          <div class="widget-header">
+            <h3>
+              <app-icon name="cake"></app-icon>
+              Upcoming Birthdays
+            </h3>
+          </div>
+          <div class="widget-content">
+            @if (birthdaysLoading()) {
+              <div class="widget-loading">
+                <app-progress-spinner size="medium" color="primary"></app-progress-spinner>
+              </div>
+            } @else if (birthdays().length === 0) {
+              <div class="widget-empty">
+                <app-icon name="info"></app-icon>
+                <p>No upcoming birthdays in the next 30 days</p>
+              </div>
+            } @else {
+              <div class="birthday-list">
+                @for (birthday of birthdays(); track birthday.employeeId) {
+                  <div class="birthday-item">
+                    <div class="birthday-icon">
+                      <app-icon name="cake"></app-icon>
+                    </div>
+                    <div class="birthday-details">
+                      <h4>{{ birthday.employeeName }}</h4>
+                      <p>{{ birthday.department }}</p>
+                      <span class="birthday-date">
+                        @if (birthday.daysUntil === 0) {
+                          <app-chip class="today-chip" color="primary">Today</app-chip>
+                        } @else if (birthday.daysUntil === 1) {
+                          Tomorrow
+                        } @else {
+                          In {{ birthday.daysUntil }} days
+                        }
+                      </span>
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        </app-card>
+      </div>
+    </div>
+  }
+</div>

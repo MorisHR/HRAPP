@@ -45,7 +45,10 @@
           <!-- ========== SECTION 1: PERSONAL INFORMATION ========== -->
           <app-expansion-panel [expanded]="personalInfoExpanded">
             <div panel-title>
-              <app-icon name="person"></app-icon>
+              <app-icon
+                [name]="getSectionIcon(personalInfoFields)"
+                [class]="getSectionIconClass(personalInfoFields)">
+              </app-icon>
               Personal Information - Basic employee details
             </div>
 
@@ -267,7 +270,10 @@
           <!-- ========== SECTION 2: EMPLOYMENT DETAILS ========== -->
           <app-expansion-panel>
             <div panel-title>
-              <app-icon name="work"></app-icon>
+              <app-icon
+                [name]="getSectionIcon(employmentFields)"
+                [class]="getSectionIconClass(employmentFields)">
+              </app-icon>
               Employment Details - Position and department information
             </div>
 

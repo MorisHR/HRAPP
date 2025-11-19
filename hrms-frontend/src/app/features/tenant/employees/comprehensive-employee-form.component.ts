@@ -752,4 +752,109 @@ export class ComprehensiveEmployeeFormComponent implements OnInit, OnDestroy {
     };
     return labels[fieldName] || fieldName;
   }
+
+  // ========================================
+  // SECTION VALIDATION & ICON STATE LOGIC
+  // ========================================
+
+  /**
+   * Get icon for a form section based on its validation state
+   * - Default (untouched): info_outline (gray)
+   * - Has errors (touched/dirty): warning (yellow)
+   * - Valid & complete: check_circle (green)
+   */
+  getSectionIcon(sectionFields: string[]): string {
+    const state = this.getSectionState(sectionFields);
+
+    if (state === 'valid') {
+      return 'check_circle';
+    } else if (state === 'error') {
+      return 'warning';
+    } else {
+      return 'info_outline';
+    }
+  }
+
+  /**
+   * Get CSS class for section icon color
+   */
+  getSectionIconClass(sectionFields: string[]): string {
+    const state = this.getSectionState(sectionFields);
+
+    if (state === 'valid') {
+      return 'section-icon--valid';
+    } else if (state === 'error') {
+      return 'section-icon--error';
+    } else {
+      return 'section-icon--default';
+    }
+  }
+
+  /**
+   * Determine section validation state
+   */
+  private getSectionState(sectionFields: string[]): 'default' | 'error' | 'valid' {
+    if (!this.employeeForm) {
+      return 'default';
+    }
+
+    // Check if any field in the section has been touched or is dirty
+    const anyTouched = sectionFields.some(field => {
+      const control = this.employeeForm.get(field);
+      return control && (control.touched || control.dirty);
+    });
+
+    if (!anyTouched) {
+      return 'default'; // User hasn't interacted with this section yet
+    }
+
+    // Check if section has errors
+    const hasErrors = sectionFields.some(field => {
+      const control = this.employeeForm.get(field);
+      return control && control.invalid;
+    });
+
+    if (hasErrors) {
+      return 'error'; // Section has validation errors
+    }
+
+    // Check if all required fields in section are filled
+    const allValid = sectionFields.every(field => {
+      const control = this.employeeForm.get(field);
+      return control && control.valid;
+    });
+
+    if (allValid) {
+      return 'valid'; // Section is complete and valid
+    }
+
+    return 'default';
+  }
+
+  // Section field mappings for validation
+  readonly personalInfoFields = [
+    'firstName', 'lastName', 'dateOfBirth', 'gender', 'nationality',
+    'nic', 'phoneNumber', 'email', 'district', 'addressLine1', 'country'
+  ];
+
+  readonly employmentFields = [
+    'employeeCode', 'employeeType', 'department', 'designation',
+    'industrySector', 'joinDate', 'employmentContractType', 'employmentStatus'
+  ];
+
+  readonly compensationFields = [
+    'baseSalary', 'paymentFrequency'
+  ];
+
+  readonly complianceFields = [
+    'npsNumber', 'taxDeductionAccountNumber'
+  ];
+
+  readonly leaveFields = [
+    'annualLeaveDays', 'sickLeaveDays', 'casualLeaveDays'
+  ];
+
+  readonly emergencyFields = [
+    'emergencyContactName', 'emergencyContactRelation', 'emergencyContactPhone'
+  ];
 }

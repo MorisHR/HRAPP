@@ -1,5 +1,6 @@
 using HRMS.Core.Entities.Master;
 using HRMS.Core.Enums;
+using HRMS.Core.Constants;
 using HRMS.Application.Interfaces;
 using System.Diagnostics;
 using System.Security.Claims;
@@ -95,7 +96,7 @@ public class AuditLoggingMiddleware
     /// Log audit with a new dependency injection scope to avoid disposed DbContext issues
     /// Creates a new scope so the background task has its own DbContext instance
     /// </summary>
-    private Task LogAuditWithNewScopeAsync(
+    private async Task LogAuditWithNewScopeAsync(
         HttpContext context,
         long durationMs,
         Exception? exception)
@@ -114,6 +115,15 @@ public class AuditLoggingMiddleware
         // Extract tenant information
         var tenantId = GetTenantId(context);
         var tenantName = context.Items["TenantSubdomain"]?.ToString();
+
+        // CRITICAL SECURITY FIX: SuperAdmin actions should NEVER have TenantId
+        // Even if context has TenantId (from subdomain), clear it for SuperAdmin
+        bool isSuperAdmin = UserRoles.IsSystemLevelRole(userRole);
+        if (isSuperAdmin)
+        {
+            tenantId = null;
+            tenantName = null;
+        }
 
         // Determine action type based on HTTP method and path
         var actionType = DetermineActionType(request.Method, request.Path);
@@ -178,53 +188,29 @@ public class AuditLoggingMiddleware
             AdditionalMetadata = additionalMetadata
         };
 
-        // Fire and forget with new scope (prevents DbContext disposal issues)
-        // Use the application-level scope factory instead of request-scoped services
-        _ = Task.Run(async () =>
+        // CRITICAL P0 FIX: Removed fire-and-forget Task.Run - AuditLogService.LogAsync already uses queue
+        // This fixes ThreadPool exhaustion and connection pool leaks
+        // The queue service handles async processing reliably without blocking the request
+        try
         {
-            try
-            {
-                // Create a new scope with its own DbContext from the application-level factory
-                using var scope = _scopeFactory.CreateScope();
-                var scopedAuditLogService = scope.ServiceProvider.GetRequiredService<IAuditLogService>();
+            // Create a new scope to avoid using disposed request-scoped services
+            using var scope = _scopeFactory.CreateScope();
+            var scopedAuditLogService = scope.ServiceProvider.GetRequiredService<IAuditLogService>();
 
-                // Log the audit entry with the scoped service
-                await scopedAuditLogService.LogAsync(auditLog);
+            // Log the audit entry (this internally queues it via AuditLogQueueService)
+            // This is fast (<1ms) and doesn't block the request
+            await scopedAuditLogService.LogAsync(auditLog);
 
-                // FORTUNE 500 ENHANCEMENT: Run anomaly detection after audit log is saved
-                // This is done asynchronously to avoid blocking the audit logging pipeline
-                var anomalyService = scope.ServiceProvider.GetService<IAnomalyDetectionService>();
-                if (anomalyService != null)
-                {
-                    _ = Task.Run(async () =>
-                    {
-                        try
-                        {
-                            var anomalies = await anomalyService.DetectAnomaliesAsync(auditLog);
-                            if (anomalies.Any())
-                            {
-                                _logger.LogWarning("Detected {Count} anomalies for audit log {AuditLogId}",
-                                    anomalies.Count, auditLog.Id);
-                            }
-                        }
-                        catch (Exception anomEx)
-                        {
-                            _logger.LogError(anomEx, "Failed to run anomaly detection for audit log {AuditLogId}",
-                                auditLog.Id);
-                            // Don't fail the request if anomaly detection fails
-                        }
-                    });
-                }
-            }
-            catch (Exception ex)
-            {
-                // Log audit logging failure but don't throw
-                _logger.LogError(ex, "Failed to write audit log for {Method} {Path}",
-                    httpMethod, requestPath);
-            }
-        });
-
-        return Task.CompletedTask;
+            // CRITICAL P0 FIX: Removed nested fire-and-forget Task.Run for anomaly detection
+            // Anomaly detection should be handled by the background queue processor or a separate background service
+            // TODO: Move anomaly detection to a background service that processes audit logs from the queue
+        }
+        catch (Exception ex)
+        {
+            // Log audit logging failure but don't throw
+            _logger.LogError(ex, "Failed to queue audit log for {Method} {Path}",
+                httpMethod, requestPath);
+        }
     }
 
     private Guid? GetUserId(ClaimsPrincipal user)

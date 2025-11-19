@@ -36,6 +36,11 @@ export const routes: Routes = [
         loadComponent: () => import('./features/auth/superadmin/superadmin-login.component').then(m => m.SuperAdminLoginComponent)
       },
       {
+        path: 'superadmin/:secretPath',
+        // NO GUARD - Allow logout to navigate here
+        loadComponent: () => import('./features/auth/superadmin/superadmin-login.component').then(m => m.SuperAdminLoginComponent)
+      },
+      {
         path: 'activate',
         loadComponent: () => import('./features/auth/activate/activate.component').then(m => m.ActivateComponent)
       },

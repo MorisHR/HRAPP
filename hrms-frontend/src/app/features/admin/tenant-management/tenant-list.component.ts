@@ -1,13 +1,6 @@
 import { Component, signal, inject, OnInit, computed, ChangeDetectionStrategy } from '@angular/core';
-
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { Chip, ChipColor } from '@app/shared/ui';
-import { MatToolbarModule } from '@angular/material/toolbar';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
 import { Router, RouterModule } from '@angular/router';
-import { MenuComponent, MenuItem } from '../../../shared/ui';
+import { Chip, ChipColor, ButtonComponent, IconComponent, InputComponent, MenuComponent, MenuItem } from '@app/shared/ui';
 import { UiModule } from '../../../shared/ui/ui.module';
 import { TenantService } from '../../../core/services/tenant.service';
 import { Tenant, TenantStatus } from '../../../core/models/tenant.model';
@@ -18,12 +11,10 @@ import { TableComponent, TableColumn } from '../../../shared/ui/components/table
   standalone: true,
   imports: [
     TableComponent,
-    MatButtonModule,
-    MatIconModule,
+    ButtonComponent,
+    IconComponent,
+    InputComponent,
     Chip,
-    MatToolbarModule,
-    MatFormFieldModule,
-    MatInputModule,
     MenuComponent,
     UiModule,
     RouterModule

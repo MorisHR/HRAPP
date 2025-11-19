@@ -1,14 +1,12 @@
 // ============================================================================
-// PRODUCTION-READY TABS COMPONENT - HRMS Design System
+// TABS COMPONENT - Fortune 500 Grade CSS Custom Properties Migration
+// ============================================================================
+// Pure CSS implementation using CSS custom properties only
+// No SCSS imports, variables, functions, or mixins
 // ============================================================================
 // Replace mat-tab with custom implementation
 // Supports: default, pills, underline variants + keyboard navigation
 // ============================================================================
-
-@import '../../../../../styles/colors';
-@import '../../../../../styles/spacing';
-@import '../../../../../styles/motion';
-@import '../../../../../styles/focus';
 
 // ----------------------------------------------------------------------------
 // BASE STYLES
@@ -22,11 +20,11 @@
 
 .tabs__header {
   display: flex;
-  gap: $spacing-1;
+  gap: var(--spacing-1);
   overflow-x: auto;
   overflow-y: hidden;
   scrollbar-width: thin;
-  scrollbar-color: $color-neutral-400 $color-neutral-100;
+  scrollbar-color: var(--color-neutral-400) var(--color-neutral-100);
 
   // Hide scrollbar on webkit browsers but keep functionality
   &::-webkit-scrollbar {
@@ -34,15 +32,15 @@
   }
 
   &::-webkit-scrollbar-track {
-    background: $color-neutral-100;
+    background: var(--color-neutral-100);
   }
 
   &::-webkit-scrollbar-thumb {
-    background: $color-neutral-400;
+    background: var(--color-neutral-400);
     border-radius: 2px;
 
     &:hover {
-      background: $color-neutral-500;
+      background: var(--color-neutral-500);
     }
   }
 
@@ -59,40 +57,41 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: $spacing-2;
-  padding: $spacing-3 $spacing-4;
+  gap: var(--spacing-2);
+  padding: var(--spacing-3) var(--spacing-4);
   border: none;
   background: transparent;
-  color: $color-text-secondary;
+  color: var(--color-text-secondary);
   font-size: 14px;
   font-weight: 500;
   line-height: 1.5;
   white-space: nowrap;
   cursor: pointer;
-  transition: all $duration-normal $easing-standard;
+  transition: all var(--duration-normal) var(--easing-standard);
   flex-shrink: 0;
 
   // Focus styles for accessibility
   &:focus-visible {
-    @include focus-ring;
+    outline: var(--focus-ring-width) solid var(--focus-ring-color);
+    outline-offset: var(--focus-ring-offset);
     z-index: 1;
   }
 
   // Hover state
   &:hover:not(&--disabled):not(&--active) {
-    color: $color-text-primary;
-    background-color: $color-alpha-black-4;
+    color: var(--color-text-primary);
+    background-color: var(--color-alpha-black-4);
   }
 
   // Active state
   &--active {
-    color: $color-primary-600;
+    color: var(--color-primary-hover);
     font-weight: 600;
   }
 
   // Disabled state
   &--disabled {
-    color: $color-text-disabled;
+    color: var(--color-text-disabled);
     cursor: not-allowed;
     opacity: 0.5;
   }
@@ -118,7 +117,7 @@
 }
 
 .tabs__content {
-  padding-top: $spacing-4;
+  padding-top: var(--spacing-4);
 }
 
 // ----------------------------------------------------------------------------
@@ -127,28 +126,28 @@
 
 .tabs--default {
   .tabs__header {
-    border-bottom: 1px solid $color-border-default;
-    padding-bottom: $spacing-1;
+    border-bottom: 1px solid var(--color-border);
+    padding-bottom: var(--spacing-1);
   }
 
   .tabs__button {
     border-radius: 4px 4px 0 0;
 
     &--active {
-      background-color: $color-alpha-black-4;
+      background-color: var(--color-alpha-black-4);
     }
 
     // Active indicator - bottom border
     &::after {
       content: '';
       position: absolute;
-      bottom: -$spacing-1;
+      bottom: calc(-1 * var(--spacing-1));
       left: 0;
       right: 0;
       height: 2px;
-      background-color: $color-primary-600;
+      background-color: var(--color-primary-hover);
       transform: scaleX(0);
-      transition: transform $duration-normal $easing-standard;
+      transition: transform var(--duration-normal) var(--easing-standard);
     }
 
     &--active::after {
@@ -163,23 +162,23 @@
 
 .tabs--pills {
   .tabs__header {
-    gap: $spacing-2;
-    padding: $spacing-1;
-    background-color: $color-neutral-100;
+    gap: var(--spacing-2);
+    padding: var(--spacing-1);
+    background-color: var(--color-neutral-100);
     border-radius: 8px;
   }
 
   .tabs__button {
     border-radius: 6px;
-    padding: $spacing-2 $spacing-4;
+    padding: var(--spacing-2) var(--spacing-4);
 
     &:hover:not(&--disabled):not(&--active) {
-      background-color: $color-alpha-black-8;
+      background-color: var(--color-alpha-black-8);
     }
 
     &--active {
-      background-color: $color-background-paper;
-      color: $color-primary-600;
+      background-color: var(--color-background-paper);
+      color: var(--color-primary-hover);
       box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1),
                   0 1px 2px rgba(0, 0, 0, 0.06);
     }
@@ -192,12 +191,12 @@
 
 .tabs--underline {
   .tabs__header {
-    gap: $spacing-6;
-    border-bottom: 1px solid $color-border-default;
+    gap: var(--spacing-6);
+    border-bottom: 1px solid var(--color-border);
   }
 
   .tabs__button {
-    padding: $spacing-3 $spacing-2;
+    padding: var(--spacing-3) var(--spacing-2);
     position: relative;
 
     // Underline indicator
@@ -208,10 +207,10 @@
       left: 0;
       right: 0;
       height: 2px;
-      background-color: $color-primary-600;
+      background-color: var(--color-primary-hover);
       transform: scaleX(0);
       transform-origin: center;
-      transition: transform $duration-normal $easing-standard;
+      transition: transform var(--duration-normal) var(--easing-standard);
     }
 
     &--active::after {
@@ -219,11 +218,11 @@
     }
 
     &:hover:not(&--disabled):not(&--active) {
-      color: $color-text-primary;
+      color: var(--color-text-primary);
 
       &::after {
         transform: scaleX(0.5);
-        background-color: $color-neutral-400;
+        background-color: var(--color-neutral-400);
       }
     }
   }
@@ -235,7 +234,7 @@
 
 @media (max-width: 768px) {
   .tabs__button {
-    padding: $spacing-2 $spacing-3;
+    padding: var(--spacing-2) var(--spacing-3);
     font-size: 13px;
   }
 
@@ -246,26 +245,26 @@
   }
 
   .tabs--pills .tabs__button {
-    padding: $spacing-2 $spacing-3;
+    padding: var(--spacing-2) var(--spacing-3);
   }
 
   .tabs__content {
-    padding-top: $spacing-3;
+    padding-top: var(--spacing-3);
   }
 }
 
 @media (max-width: 480px) {
   .tabs__header {
-    gap: $spacing-1;
+    gap: var(--spacing-1);
   }
 
   .tabs__button {
-    padding: $spacing-2;
+    padding: var(--spacing-2);
     font-size: 12px;
   }
 
   .tabs--underline .tabs__header {
-    gap: $spacing-4;
+    gap: var(--spacing-4);
   }
 }
 
@@ -286,7 +285,7 @@
 }
 
 .tabs__content {
-  animation: fadeIn $duration-normal $easing-decelerate;
+  animation: fadeIn var(--duration-normal) var(--easing-decelerate);
 }
 
 // ----------------------------------------------------------------------------
@@ -313,44 +312,45 @@
   }
 }
 
-// Dark mode support (optional - can be enabled later)
-@media (prefers-color-scheme: dark) {
+// Dark mode support
+.dark-theme,
+html.dark-theme {
   .tabs__button {
-    color: $color-text-secondary-dark;
+    color: var(--color-text-secondary);
 
     &:hover:not(&--disabled):not(&--active) {
-      color: $color-text-primary-dark;
-      background-color: $color-alpha-white-4;
+      color: var(--color-text-primary);
+      background-color: var(--color-alpha-white-4);
     }
 
     &--active {
-      color: $color-primary-400;
+      color: var(--color-primary);
     }
 
     &--disabled {
-      color: $color-text-disabled-dark;
+      color: var(--color-text-disabled);
     }
   }
 
   .tabs--default .tabs__header {
-    border-bottom-color: $color-border-default-dark;
+    border-bottom-color: var(--color-border);
   }
 
   .tabs--pills .tabs__header {
-    background-color: $color-background-paper-dark;
+    background-color: var(--color-background-paper);
   }
 
   .tabs--pills .tabs__button {
     &:hover:not(&--disabled):not(&--active) {
-      background-color: $color-alpha-white-8;
+      background-color: var(--color-alpha-white-8);
     }
 
     &--active {
-      background-color: $color-background-elevated-dark;
+      background-color: var(--color-surface);
     }
   }
 
   .tabs--underline .tabs__header {
-    border-bottom-color: $color-border-default-dark;
+    border-bottom-color: var(--color-border);
   }
 }

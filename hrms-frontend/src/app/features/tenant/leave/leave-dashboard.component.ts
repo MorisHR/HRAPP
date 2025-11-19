@@ -92,7 +92,7 @@ import { MatIconModule } from '@angular/material/icon';
       gap: 12px;
       font-size: 32px;
       font-weight: 500;
-      color: #1a237e;
+      color: var(--color-neutral-900);
       margin: 0 0 8px 0;
     }
 
@@ -100,7 +100,7 @@ import { MatIconModule } from '@angular/material/icon';
       font-size: 36px;
       width: 36px;
       height: 36px;
-      color: #3f51b5;
+      color: var(--color-neutral-900);
     }
 
     .subtitle {
@@ -167,7 +167,7 @@ import { MatIconModule } from '@angular/material/icon';
     }
 
     .coming-soon-card h2 {
-      color: #1a237e;
+      color: var(--color-neutral-900);
       margin: 0 0 16px 0;
       font-size: 28px;
     }

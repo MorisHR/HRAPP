@@ -153,8 +153,8 @@ export class AuthService {
 
     // Determine endpoint based on user type
     const endpoint = credentials.subdomain
-      ? `${this.apiUrl}/auth/tenant/login`
-      : `${this.apiUrl}/auth/login`;
+      ? `${this.apiUrl}/api/auth/tenant/login`
+      : `${this.apiUrl}/api/auth/login`;
 
     return this.http.post<any>(endpoint, credentials).pipe(
       map(apiResponse => {
@@ -250,7 +250,7 @@ export class AuthService {
 
     // Revoke backend token (fire-and-forget)
     this.http.post(
-      `${this.apiUrl}/auth/revoke`,
+      `${this.apiUrl}/api/auth/revoke`,
       {},
       { withCredentials: true }
     ).subscribe({
@@ -285,7 +285,7 @@ export class AuthService {
     // Call backend to revoke refresh token (fire-and-forget)
     // This runs async AFTER state is cleared
     this.http.post(
-      `${this.apiUrl}/auth/revoke`,
+      `${this.apiUrl}/api/auth/revoke`,
       {},
       { withCredentials: true } // Send refresh token cookie
     ).subscribe({
@@ -328,8 +328,8 @@ export class AuthService {
     const user = this.userSignal();
     const isTenantUser = user && user.role !== UserRole.SuperAdmin;
     const endpoint = isTenantUser
-      ? `${this.apiUrl}/auth/tenant/refresh`
-      : `${this.apiUrl}/auth/refresh`;
+      ? `${this.apiUrl}/api/auth/tenant/refresh`
+      : `${this.apiUrl}/api/auth/refresh`;
 
     console.log(`🔄 Refreshing token for ${isTenantUser ? 'tenant user' : 'SuperAdmin'} using endpoint: ${endpoint}`);
 
@@ -369,7 +369,7 @@ export class AuthService {
     const secretPath = environment.superAdminSecretPath;
 
     return this.http.post<any>(
-      `${this.apiUrl}/auth/system-${secretPath}`,
+      `${this.apiUrl}/api/auth/system-${secretPath}`,
       credentials,
       { withCredentials: true }
     ).pipe(
@@ -393,7 +393,7 @@ export class AuthService {
     backupCodes: string[];
   }): Observable<LoginResponse> {
     console.log('🔵 [AUTH SERVICE] completeMfaSetup() called');
-    console.log('📋 [AUTH SERVICE] API URL:', `${this.apiUrl}/auth/mfa/complete-setup`);
+    console.log('📋 [AUTH SERVICE] API URL:', `${this.apiUrl}/api/auth/mfa/complete-setup`);
     console.log('📋 [AUTH SERVICE] Request payload:', {
       userId: request.userId,
       totpCode: request.totpCode,
@@ -402,7 +402,7 @@ export class AuthService {
     });
 
     return this.http.post<any>(
-      `${this.apiUrl}/auth/mfa/complete-setup`,
+      `${this.apiUrl}/api/auth/mfa/complete-setup`,
       request,
       { withCredentials: true }
     ).pipe(
@@ -448,7 +448,7 @@ export class AuthService {
    */
   verifyMfa(request: { userId: string; code: string }): Observable<LoginResponse> {
     return this.http.post<any>(
-      `${this.apiUrl}/auth/mfa/verify`,
+      `${this.apiUrl}/api/auth/mfa/verify`,
       request,
       { withCredentials: true }
     ).pipe(
@@ -575,7 +575,7 @@ export class AuthService {
    * Public endpoint - no authentication required
    */
   forgotPassword(email: string): Observable<any> {
-    return this.http.post(`${this.apiUrl}/auth/forgot-password`, { email });
+    return this.http.post(`${this.apiUrl}/api/auth/forgot-password`, { email });
   }
 
   /**
@@ -583,7 +583,7 @@ export class AuthService {
    * Public endpoint - no authentication required
    */
   resetPassword(data: { token: string; newPassword: string; confirmPassword: string }): Observable<any> {
-    return this.http.post(`${this.apiUrl}/auth/reset-password`, data);
+    return this.http.post(`${this.apiUrl}/api/auth/reset-password`, data);
   }
 
   /**
@@ -604,6 +604,6 @@ export class AuthService {
     confirmPassword: string;
     subdomain: string;
   }): Observable<any> {
-    return this.http.post(`${this.apiUrl}/auth/employee/set-password`, data);
+    return this.http.post(`${this.apiUrl}/api/auth/employee/set-password`, data);
   }
 }

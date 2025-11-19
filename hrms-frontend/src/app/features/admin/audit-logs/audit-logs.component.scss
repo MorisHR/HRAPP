@@ -186,8 +186,12 @@
   font-weight: 500;
   color: white;
 
+  // Fortune 500 Color Coding: Left border for key categories
   &.category-authentication {
-    background: #8b5cf6;
+    background: #f0f4ff;
+    color: #1e40af;
+    border-left: 4px solid #3b82f6;
+    padding-left: 10px;
   }
 
   &.category-authorization {
@@ -195,7 +199,10 @@
   }
 
   &.category-data-change {
-    background: #3b82f6;
+    background: #f5f3ff;
+    color: #6b21a8;
+    border-left: 4px solid #8b5cf6;
+    padding-left: 10px;
   }
 
   &.category-tenant-lifecycle {
@@ -235,12 +242,23 @@
     height: 16px;
   }
 
+  // Fortune 500 Color Coding: Light backgrounds for INFO and WARNING
   &.severity-info {
-    background: #3b82f6;
+    background: #eff6ff;
+    color: #1e40af;
+
+    mat-icon {
+      color: #3b82f6;
+    }
   }
 
   &.severity-warning {
-    background: #f59e0b;
+    background: #fef3c7;
+    color: #92400e;
+
+    mat-icon {
+      color: #f59e0b;
+    }
   }
 
   &.severity-critical {

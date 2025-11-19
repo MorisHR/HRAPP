@@ -37,8 +37,8 @@ mat-card-header {
   justify-content: space-between;
   align-items: center;
   padding: 32px 32px 24px;
-  background: linear-gradient(135deg, #1a237e 0%, #283593 100%);
-  border-bottom: 3px solid #3949ab;
+  background: linear-gradient(135deg, #000000 0%, #1a1a1a 100%);
+  border-bottom: 3px solid #333333;
   margin: 0;
   position: relative;
   overflow: hidden;
@@ -106,7 +106,7 @@ mat-card-header {
 
       &.add-button {
         background: linear-gradient(135deg, #ffc107 0%, #ffb300 100%);
-        color: #1a237e;
+        color: #000000;
         box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);
 
         &:hover {
@@ -139,7 +139,7 @@ mat-card-content {
 
   app-progress-spinner {
     ::ng-deep circle {
-      stroke: #3949ab;
+      stroke: #333333;
       stroke-width: 4px;
     }
   }
@@ -214,13 +214,13 @@ mat-card-content {
   // Header Styling
   .mat-header-cell {
     background: linear-gradient(180deg, #f8f9fa 0%, #e9ecef 100%);
-    color: #1a237e;
+    color: #000000;
     font-size: 13px;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 1px;
     padding: 20px 24px;
-    border-bottom: 3px solid #3949ab;
+    border-bottom: 3px solid #333333;
     position: sticky;
     top: 0;
     z-index: 10;
@@ -245,7 +245,7 @@ mat-card-content {
       transform: scale(1.01);
 
       .mat-cell {
-        color: #1a237e;
+        color: #000000;
       }
     }
 
@@ -271,10 +271,10 @@ mat-card-content {
   align-items: center;
   gap: 12px;
   font-weight: 600;
-  color: #1a237e;
+  color: #000000;
 
   .device-icon {
-    color: #3949ab;
+    color: #333333;
     font-size: 24px;
     height: 24px;
     width: 24px;
@@ -290,7 +290,7 @@ mat-card-content {
   gap: 4px;
 
   strong {
-    color: #1a237e;
+    color: #000000;
     font-size: 15px;
     font-weight: 600;
   }
@@ -341,7 +341,7 @@ mat-card-content {
     font-family: 'Courier New', monospace;
     font-size: 13px;
     font-weight: 600;
-    color: #1a237e;
+    color: #000000;
     background: #e8eaf6;
     padding: 4px 10px;
     border-radius: 6px;
@@ -643,7 +643,7 @@ mat-card-content {
     font-size: 16px;
     font-weight: 600;
     background: linear-gradient(135deg, #ffc107 0%, #ffb300 100%);
-    color: #1a237e;
+    color: #000000;
     box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);
 
     mat-icon {
@@ -703,7 +703,7 @@ mat-card-content {
       .stat-value {
         font-size: 28px;
         font-weight: 700;
-        color: #1a237e;
+        color: #000000;
       }
     }
 
@@ -883,11 +883,11 @@ mat-card-content {
   }
 
   &::-webkit-scrollbar-thumb {
-    background: linear-gradient(135deg, #3949ab 0%, #5c6bc0 100%);
+    background: linear-gradient(135deg, #333333 0%, #5c6bc0 100%);
     border-radius: 4px;
 
     &:hover {
-      background: linear-gradient(135deg, #283593 0%, #3949ab 100%);
+      background: linear-gradient(135deg, #1a1a1a 0%, #333333 100%);
     }
   }
 }

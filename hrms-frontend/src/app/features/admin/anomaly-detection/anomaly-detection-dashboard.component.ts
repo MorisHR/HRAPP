@@ -1,12 +1,7 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { MatCardModule } from '@angular/material/card';
 import { PageEvent } from '@angular/material/paginator';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { Chip, ChipColor, Paginator } from '@app/shared/ui';
-import { MatSelectModule } from '@angular/material/select';
-import { MatFormFieldModule } from '@angular/material/form-field';
+import { Chip, ChipColor, Paginator, CardComponent, ButtonComponent, IconComponent, SelectComponent } from '@app/shared/ui';
 import { DialogService } from '../../../shared/ui';
 import { UiModule } from '../../../shared/ui/ui.module';
 import { TableComponent, TableColumn, TableColumnDirective, TooltipDirective } from '../../../shared/ui';
@@ -21,13 +16,12 @@ import { NotificationService } from '../../../services/notification.service';
   imports: [
     CommonModule,
     FormsModule,
-    MatCardModule,
+    CardComponent,
     Paginator,
-    MatButtonModule,
-    MatIconModule,
+    ButtonComponent,
+    IconComponent,
     Chip,
-    MatSelectModule,
-    MatFormFieldModule,
+    SelectComponent,
     UiModule,
     TableComponent,
     TableColumnDirective,
@@ -56,6 +50,12 @@ export class AnomalyDetectionDashboardComponent implements OnInit {
   ];
 
   statusOptions = Object.values(AnomalyStatus);
+
+  // Select options for dropdown
+  statusSelectOptions = [
+    { value: undefined, label: 'All Statuses' },
+    ...Object.values(AnomalyStatus).map(status => ({ value: status, label: status }))
+  ];
 
   private dialogService = DialogService;
 

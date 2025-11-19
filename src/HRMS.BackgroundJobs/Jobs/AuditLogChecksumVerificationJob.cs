@@ -142,13 +142,33 @@ public class AuditLogChecksumVerificationJob
     }
 
     /// <summary>
+    /// Truncate DateTime to microsecond precision to match PostgreSQL timestamp storage
+    /// CRITICAL FIX: PostgreSQL stores timestamps with microsecond precision (6 decimal places),
+    /// while .NET DateTime has 100-nanosecond tick precision (7 decimal places).
+    /// This mismatch causes checksum validation failures after data is round-tripped through the database.
+    /// </summary>
+    /// <param name="dateTime">DateTime to truncate</param>
+    /// <returns>DateTime truncated to microsecond precision</returns>
+    private static DateTime TruncateToMicroseconds(DateTime dateTime)
+    {
+        // Convert to microseconds and back to remove sub-microsecond precision
+        // 1 microsecond = 10 ticks (100 nanoseconds per tick)
+        var microseconds = dateTime.Ticks / 10;
+        return new DateTime(microseconds * 10, dateTime.Kind);
+    }
+
+    /// <summary>
     /// Generate SHA256 checksum for tamper detection
+    /// CRITICAL FIX: Uses microsecond-truncated PerformedAt to match PostgreSQL timestamp precision
+    /// This prevents false positive tampering alerts caused by sub-microsecond precision loss
     /// </summary>
     private string GenerateChecksum(Core.Entities.Master.AuditLog log)
     {
         try
         {
-            var data = $"{log.Id}|{log.ActionType}|{log.UserId}|{log.EntityType}|{log.EntityId}|{log.PerformedAt:O}";
+            // CRITICAL FIX: Truncate to microseconds to match PostgreSQL precision
+            var performedAt = TruncateToMicroseconds(log.PerformedAt);
+            var data = $"{log.Id}|{log.ActionType}|{log.UserId}|{log.EntityType}|{log.EntityId}|{performedAt:O}";
             var bytes = Encoding.UTF8.GetBytes(data);
             var hash = SHA256.HashData(bytes);
             return Convert.ToHexString(hash).ToLower();

@@ -99,18 +99,26 @@ export class IconComponent implements OnInit {
 
   /**
    * Render icon with the given SVG path
+   *
+   * SECURITY: Using bypassSecurityTrustHtml is safe here because:
+   * 1. SVG structure is controlled by createSvg() method
+   * 2. Icon paths come from hardcoded IconRegistryService
+   * 3. No user input is rendered
+   * 4. All paths are validated in IconRegistryService.registerIcon()
    */
   private renderIcon(path: string): void {
     const svg = this.createSvg(path);
-    this.svgContent = this.sanitizer.sanitize(1, svg) || '';
+    this.svgContent = this.sanitizer.bypassSecurityTrustHtml(svg);
   }
 
   /**
    * Render fallback icon for missing icons
+   *
+   * SECURITY: Fallback icon is a hardcoded constant - safe to bypass sanitization
    */
   private renderFallback(): void {
     const svg = this.createSvg(this.fallbackIcon);
-    this.svgContent = this.sanitizer.sanitize(1, svg) || '';
+    this.svgContent = this.sanitizer.bypassSecurityTrustHtml(svg);
   }
 
   /**

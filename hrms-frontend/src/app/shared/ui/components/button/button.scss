@@ -1,4 +1,9 @@
-@import '../../../../../styles/index';
+// ============================================================================
+// BUTTON COMPONENT - Fortune 500 Grade CSS Custom Properties Migration
+// ============================================================================
+// Pure CSS implementation using CSS custom properties only
+// No SCSS imports, variables, functions, or mixins
+// ============================================================================
 
 .btn {
   position: relative;
@@ -6,126 +11,137 @@
   align-items: center;
   justify-content: center;
   border: none;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
-  font-family: $font-family-base;
-  font-weight: $font-weight-medium;
-  letter-spacing: $letter-spacing-wide;
+  font-family: var(--font-family-base);
+  font-weight: var(--font-weight-medium);
+  letter-spacing: var(--letter-spacing-wide);
   text-transform: uppercase;
-  transition: $transition-all;
+  transition: var(--transition-all);
   user-select: none;
   outline: none;
 
+  // Focus state - Accessibility compliant
   &:focus-visible {
-    @include focus-ring;
+    outline: var(--focus-ring-width) solid var(--focus-ring-color);
+    outline-offset: var(--focus-ring-offset);
   }
 
-  // Sizes
+  // ----------------------------------------------------------------------------
+  // SIZES
+  // ----------------------------------------------------------------------------
+
   &--small {
     height: 32px;
-    padding: 0 $spacing-3;
-    font-size: $font-size-xs;
+    padding: 0 var(--spacing-3);
+    font-size: var(--font-size-xs);
   }
 
   &--medium {
     height: 40px;
-    padding: 0 $spacing-4;
-    font-size: $font-size-sm;
+    padding: 0 var(--spacing-4);
+    font-size: var(--font-size-sm);
   }
 
   &--large {
     height: 48px;
-    padding: 0 $spacing-6;
-    font-size: $font-size-base;
+    padding: 0 var(--spacing-6);
+    font-size: var(--font-size-base);
   }
 
-  // Variants
+  // ----------------------------------------------------------------------------
+  // VARIANTS - Color Themes
+  // ----------------------------------------------------------------------------
+
   &--primary {
-    background-color: $color-primary-500;
+    background-color: var(--color-primary);
     color: white;
 
     &:hover:not(.btn--disabled):not(.btn--loading) {
-      background-color: $color-primary-600;
-      box-shadow: $elevation-2;
+      background-color: var(--color-primary-hover);
+      box-shadow: var(--elevation-2);
     }
 
     &:active:not(.btn--disabled):not(.btn--loading) {
-      background-color: $color-primary-700;
+      background-color: var(--color-primary-active);
     }
   }
 
   &--secondary {
-    background-color: $color-secondary-500;
+    background-color: var(--color-secondary);
     color: white;
 
     &:hover:not(.btn--disabled):not(.btn--loading) {
-      background-color: $color-secondary-600;
-      box-shadow: $elevation-2;
+      background-color: var(--color-secondary-hover);
+      box-shadow: var(--elevation-2);
     }
 
     &:active:not(.btn--disabled):not(.btn--loading) {
-      background-color: $color-secondary-700;
+      background-color: var(--color-secondary-active);
     }
   }
 
   &--success {
-    background-color: $color-success-500;
+    background-color: var(--color-success);
     color: white;
 
     &:hover:not(.btn--disabled):not(.btn--loading) {
-      background-color: $color-success-600;
-      box-shadow: $elevation-2;
+      background-color: var(--color-success-hover);
+      box-shadow: var(--elevation-2);
     }
 
     &:active:not(.btn--disabled):not(.btn--loading) {
-      background-color: $color-success-700;
+      background-color: var(--color-success-active);
     }
   }
 
   &--warning {
-    background-color: $color-warning-500;
-    color: $color-text-primary;
+    background-color: var(--color-warning);
+    color: var(--color-text-primary);
 
     &:hover:not(.btn--disabled):not(.btn--loading) {
-      background-color: $color-warning-600;
-      box-shadow: $elevation-2;
+      background-color: var(--color-warning-hover);
+      box-shadow: var(--elevation-2);
     }
 
     &:active:not(.btn--disabled):not(.btn--loading) {
-      background-color: $color-warning-700;
+      background-color: var(--color-warning-active);
     }
   }
 
   &--error {
-    background-color: $color-error-500;
+    background-color: var(--color-error);
     color: white;
 
     &:hover:not(.btn--disabled):not(.btn--loading) {
-      background-color: $color-error-600;
-      box-shadow: $elevation-2;
+      background-color: var(--color-error-hover);
+      box-shadow: var(--elevation-2);
     }
 
     &:active:not(.btn--disabled):not(.btn--loading) {
-      background-color: $color-error-700;
+      background-color: var(--color-error-active);
     }
   }
 
   &--ghost {
     background-color: transparent;
-    color: $color-primary-500;
-    border: 1px solid $color-border-default;
+    color: var(--color-primary);
+    border: 1px solid var(--color-border);
 
     &:hover:not(.btn--disabled):not(.btn--loading) {
-      background-color: $color-alpha-black-4;
-      border-color: $color-primary-500;
+      background-color: var(--color-alpha-black-4);
+      border-color: var(--color-primary);
     }
 
     &:active:not(.btn--disabled):not(.btn--loading) {
-      background-color: $color-alpha-black-8;
+      background-color: var(--color-alpha-black-8);
     }
   }
 
-  // States
+  // ----------------------------------------------------------------------------
+  // STATES - Disabled, Loading, Full-width
+  // ----------------------------------------------------------------------------
+
   &--disabled {
     opacity: 0.6;
     cursor: not-allowed;
@@ -141,19 +157,25 @@
     width: 100%;
   }
 
-  // Content
+  // ----------------------------------------------------------------------------
+  // CONTENT - Inner content wrapper
+  // ----------------------------------------------------------------------------
+
   &__content {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: $spacing-2;
+    gap: var(--spacing-2);
 
     &--hidden {
       visibility: hidden;
     }
   }
 
-  // Spinner
+  // ----------------------------------------------------------------------------
+  // SPINNER - Loading animation
+  // ----------------------------------------------------------------------------
+
   &__spinner {
     position: absolute;
     width: 16px;
@@ -164,6 +186,10 @@
     animation: spin 0.6s linear infinite;
   }
 }
+
+// ----------------------------------------------------------------------------
+// ANIMATIONS
+// ----------------------------------------------------------------------------
 
 @keyframes spin {
   to {

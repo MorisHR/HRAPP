@@ -323,7 +323,7 @@ import { ReportsService, DashboardSummaryDto } from '../../../core/services/repo
       gap: 12px;
       font-size: 32px;
       font-weight: 500;
-      color: #1a237e;
+      color: var(--color-neutral-900);
       margin: 0 0 8px 0;
     }
 
@@ -331,7 +331,7 @@ import { ReportsService, DashboardSummaryDto } from '../../../core/services/repo
       font-size: 36px;
       width: 36px;
       height: 36px;
-      color: #3f51b5;
+      color: var(--color-neutral-900);
     }
 
     .subtitle {
@@ -437,7 +437,7 @@ import { ReportsService, DashboardSummaryDto } from '../../../core/services/repo
     .section-title {
       font-size: 24px;
       font-weight: 500;
-      color: #1a237e;
+      color: var(--color-neutral-900);
       margin: 0 0 24px 0;
     }
 

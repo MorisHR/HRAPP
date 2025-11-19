@@ -1005,14 +1005,33 @@ public class EmployeeService : IEmployeeService
 
     private EmployeeListDto MapToListDto(Employee employee)
     {
+        // PRODUCTION FIX: Map all frontend-compatible fields
+        var departmentName = employee.Department?.Name ?? "N/A";
+
         return new EmployeeListDto
         {
             Id = employee.Id,
             EmployeeCode = employee.EmployeeCode,
+
+            // Name fields - both formats for compatibility
+            FirstName = employee.FirstName,
+            LastName = employee.LastName,
             FullName = employee.FullName,
+
             Email = employee.Email,
+            Phone = employee.PhoneNumber ?? string.Empty,
+
+            // Department - both field names
+            Department = departmentName,
+            DepartmentName = departmentName,
+
+            // Job title/designation - both field names
+            Designation = employee.Designation ?? employee.JobTitle,
             JobTitle = employee.JobTitle,
-            DepartmentName = employee.Department?.Name ?? "N/A",
+
+            // Status - map from EmploymentStatus to match frontend enum
+            Status = employee.EmploymentStatus ?? "Active",
+
             EmployeeType = employee.EmployeeType,
             IsExpatriate = employee.IsExpatriate,
             CountryOfOrigin = employee.CountryOfOrigin,

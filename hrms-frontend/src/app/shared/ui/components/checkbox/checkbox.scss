@@ -3,9 +3,8 @@
 // Part of the Fortune 500-grade HRMS design system
 // ============================================================================
 // Production-ready checkbox with design tokens and accessibility
+// Migrated to CSS custom properties - Zero SCSS dependencies
 // ============================================================================
-
-@import '../../../../../styles/index';
 
 // ----------------------------------------------------------------------------
 // CHECKBOX WRAPPER - Container element
@@ -38,9 +37,10 @@
   height: 0;
   pointer-events: none;
 
-  // Focus state - show outline on custom checkbox
+  // Focus state - show outline on custom checkbox (replaces focus-ring mixin)
   &:focus-visible ~ .checkbox__box {
-    @include focus-ring;
+    outline: 3px solid var(--color-primary);
+    outline-offset: 2px;
   }
 }
 
@@ -56,40 +56,40 @@
   width: 20px;
   height: 20px;
   flex-shrink: 0;
-  border: 2px solid $color-neutral-400;
+  border: 2px solid var(--color-neutral-400);
   border-radius: 4px;
-  background-color: $color-background-paper;
-  transition: all $duration-fast $easing-standard;
+  background-color: var(--color-background-paper);
+  transition: all var(--duration-fast) var(--easing-standard);
 
-  // Hover state - only when not disabled
+  // Hover state - only when not disabled (replaces color-alpha function)
   .checkbox-wrapper:not(.checkbox--disabled):hover & {
-    border-color: $color-primary-500;
-    background-color: color-alpha($color-primary-500, 0.04);
+    border-color: var(--color-primary);
+    background-color: rgba(33, 150, 243, 0.04);
   }
 
   // Checked state
   .checkbox--checked & {
-    border-color: $color-primary-500;
-    background-color: $color-primary-500;
+    border-color: var(--color-primary);
+    background-color: var(--color-primary);
   }
 
   // Indeterminate state
   .checkbox--indeterminate & {
-    border-color: $color-primary-500;
-    background-color: $color-primary-500;
+    border-color: var(--color-primary);
+    background-color: var(--color-primary);
   }
 
   // Disabled state
   .checkbox--disabled & {
-    border-color: $color-neutral-300;
-    background-color: $color-neutral-100;
+    border-color: var(--color-neutral-300);
+    background-color: var(--color-neutral-100);
   }
 
   // Disabled + Checked state
   .checkbox--disabled.checkbox--checked &,
   .checkbox--disabled.checkbox--indeterminate & {
-    background-color: $color-neutral-400;
-    border-color: $color-neutral-400;
+    background-color: var(--color-neutral-400);
+    border-color: var(--color-neutral-400);
   }
 }
 
@@ -101,10 +101,10 @@
   position: absolute;
   width: 14px;
   height: 14px;
-  color: $color-neutral-0;
+  color: var(--color-neutral-0);
   opacity: 0;
   transform: scale(0.5);
-  transition: all $duration-fast $easing-decelerate;
+  transition: all var(--duration-fast) var(--easing-decelerate);
 
   // Checked state
   .checkbox--checked & {
@@ -114,7 +114,7 @@
 
   // Disabled state
   .checkbox--disabled.checkbox--checked & {
-    color: $color-neutral-200;
+    color: var(--color-neutral-200);
   }
 }
 
@@ -126,10 +126,10 @@
   position: absolute;
   width: 14px;
   height: 14px;
-  color: $color-neutral-0;
+  color: var(--color-neutral-0);
   opacity: 0;
   transform: scale(0.5);
-  transition: all $duration-fast $easing-decelerate;
+  transition: all var(--duration-fast) var(--easing-decelerate);
 
   // Indeterminate state
   .checkbox--indeterminate & {
@@ -139,7 +139,7 @@
 
   // Disabled state
   .checkbox--disabled.checkbox--indeterminate & {
-    color: $color-neutral-200;
+    color: var(--color-neutral-200);
   }
 }
 
@@ -148,15 +148,15 @@
 // ----------------------------------------------------------------------------
 
 .checkbox__label {
-  color: $color-text-primary;
+  color: var(--color-text-primary);
   font-size: 14px;
   font-weight: 400;
   line-height: 20px;
-  transition: color $duration-fast $easing-standard;
+  transition: color var(--duration-fast) var(--easing-standard);
 
   // Disabled state
   .checkbox--disabled & {
-    color: $color-text-disabled;
+    color: var(--color-text-disabled);
   }
 }
 
@@ -165,7 +165,7 @@
 // ----------------------------------------------------------------------------
 
 .checkbox__required-indicator {
-  color: $color-error-500;
+  color: var(--color-error);
   margin-left: 2px;
   font-weight: 500;
 }
@@ -223,18 +223,18 @@
   }
 }
 
-// Dark mode support (future-proofing)
+// Dark mode support (uses CSS variables that auto-update)
 @media (prefers-color-scheme: dark) {
   .checkbox__box {
-    background-color: $color-background-paper-dark;
-    border-color: $color-border-default-dark;
+    background-color: var(--color-background-paper);
+    border-color: var(--color-border);
   }
 
   .checkbox__label {
-    color: $color-text-primary-dark;
+    color: var(--color-text-primary);
   }
 
   .checkbox--disabled .checkbox__label {
-    color: $color-text-disabled-dark;
+    color: var(--color-text-disabled);
   }
 }

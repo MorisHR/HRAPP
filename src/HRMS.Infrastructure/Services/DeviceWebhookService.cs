@@ -363,6 +363,8 @@ public class DeviceWebhookService : IDeviceWebhookService
 
     /// <summary>
     /// Get tenant schema name from tenant ID
+    /// SECURITY: Fixed SQL injection vulnerability (CVSS 9.8) - Nov 19, 2025
+    /// Changed from string interpolation to parameterized query
     /// </summary>
     private async Task<string> GetTenantSchemaAsync(Guid tenantId)
     {
@@ -370,8 +372,13 @@ public class DeviceWebhookService : IDeviceWebhookService
         var masterDbContext = CreateTenantDbContext(connectionString!, "master");
         await using (masterDbContext)
         {
+            // SECURITY FIX: Use parameterized query to prevent SQL injection
+            // Original vulnerable code: $"SELECT \"SchemaName\" WHERE \"Id\" = '{tenantId}'"
+            // Attack vector: tenantId could contain "1' OR '1'='1' --"
             var schema = await masterDbContext.Database.SqlQueryRaw<string>(
-                $"SELECT \"SchemaName\" FROM master.\"Tenants\" WHERE \"Id\" = '{tenantId}' AND \"IsDeleted\" = false")
+                @"SELECT ""SchemaName"" FROM master.""Tenants""
+                  WHERE ""Id"" = {0} AND ""IsDeleted"" = false",
+                tenantId)
                 .FirstOrDefaultAsync();
 
             if (string.IsNullOrEmpty(schema))

@@ -1,0 +1,296 @@
+// ═══════════════════════════════════════════════════════════
+// FORTUNE 500 DESIGN SYSTEM
+// Enterprise-grade design tokens for premium HRMS
+// ═══════════════════════════════════════════════════════════
+
+// ────────────────────────────────────────────────────────────
+// COLOR SYSTEM - Professional & Sophisticated
+// ────────────────────────────────────────────────────────────
+
+// Primary Brand Colors
+$brand-primary: #0F62FE;        // IBM Blue - Professional, trustworthy
+$brand-primary-light: #4589FF;
+$brand-primary-dark: #0043CE;
+$brand-primary-50: #EDF5FF;
+$brand-primary-100: #D0E2FF;
+$brand-primary-900: #001D6C;
+
+// Secondary Brand
+$brand-secondary: #8A3FFC;      // Purple - Innovation, premium
+$brand-secondary-light: #A56EFF;
+$brand-secondary-dark: #6929C4;
+
+// Accent Colors
+$accent-teal: #009D9A;          // Teal - Growth, success
+$accent-coral: #FF7EB6;         // Coral - Attention, warmth
+$accent-gold: #F1C21B;          // Gold - Premium, warning
+
+// Semantic Colors - Context Aware
+$success-green: #24A148;
+$success-bg: #DEFBE6;
+$success-border: #9EF0BB;
+
+$warning-amber: #F1C21B;
+$warning-bg: #FFF6D0;
+$warning-border: #FFE58A;
+
+$error-red: #DA1E28;
+$error-bg: #FFE5E5;
+$error-border: #FFB3B8;
+
+$info-blue: #0F62FE;
+$info-bg: #EDF5FF;
+$info-border: #BAE6FF;
+
+// Neutral Palette - Professional Gray Scale
+$neutral-0: #FFFFFF;
+$neutral-50: #F4F4F4;
+$neutral-100: #E0E0E0;
+$neutral-200: #C6C6C6;
+$neutral-300: #A8A8A8;
+$neutral-400: #8D8D8D;
+$neutral-500: #6F6F6F;
+$neutral-600: #525252;
+$neutral-700: #393939;
+$neutral-800: #262626;
+$neutral-900: #161616;
+
+// Text Colors - Optimized Contrast
+$text-primary: #161616;         // 100% opacity
+$text-secondary: #525252;       // 70% opacity
+$text-tertiary: #8D8D8D;        // 50% opacity
+$text-disabled: #C6C6C6;        // 25% opacity
+$text-inverse: #FFFFFF;
+
+// Background Colors
+$bg-page: #F4F4F4;              // Page background
+$bg-card: #FFFFFF;              // Card/container background
+$bg-elevated: #FFFFFF;          // Elevated surfaces
+$bg-hover: #E0E0E0;             // Hover states
+$bg-active: #C6C6C6;            // Active states
+$bg-selected: #EDF5FF;          // Selected states
+
+// Border Colors
+$border-subtle: #E0E0E0;
+$border-strong: #8D8D8D;
+$border-inverse: #FFFFFF;
+
+// ────────────────────────────────────────────────────────────
+// TYPOGRAPHY SYSTEM - Professional Scale
+// ────────────────────────────────────────────────────────────
+
+// Font Families
+$font-family-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+$font-family-mono: 'IBM Plex Mono', 'SF Mono', Monaco, 'Cascadia Code', monospace;
+
+// Font Weights
+$font-weight-light: 300;
+$font-weight-regular: 400;
+$font-weight-medium: 500;
+$font-weight-semibold: 600;
+$font-weight-bold: 700;
+
+// Font Sizes - Type Scale (Major Third - 1.25)
+$font-size-xs: 0.75rem;         // 12px
+$font-size-sm: 0.875rem;        // 14px
+$font-size-base: 1rem;          // 16px
+$font-size-md: 1.125rem;        // 18px
+$font-size-lg: 1.25rem;         // 20px
+$font-size-xl: 1.5rem;          // 24px
+$font-size-2xl: 1.875rem;       // 30px
+$font-size-3xl: 2.25rem;        // 36px
+$font-size-4xl: 3rem;           // 48px
+$font-size-5xl: 3.75rem;        // 60px
+
+// Line Heights
+$line-height-tight: 1.25;
+$line-height-normal: 1.5;
+$line-height-relaxed: 1.75;
+
+// Letter Spacing
+$letter-spacing-tight: -0.02em;
+$letter-spacing-normal: 0;
+$letter-spacing-wide: 0.05em;
+
+// ────────────────────────────────────────────────────────────
+// SPACING SYSTEM - 8px Grid
+// ────────────────────────────────────────────────────────────
+
+$spacing-0: 0;
+$spacing-1: 0.25rem;    // 4px
+$spacing-2: 0.5rem;     // 8px
+$spacing-3: 0.75rem;    // 12px
+$spacing-4: 1rem;       // 16px
+$spacing-5: 1.25rem;    // 20px
+$spacing-6: 1.5rem;     // 24px
+$spacing-8: 2rem;       // 32px
+$spacing-10: 2.5rem;    // 40px
+$spacing-12: 3rem;      // 48px
+$spacing-16: 4rem;      // 64px
+$spacing-20: 5rem;      // 80px
+$spacing-24: 6rem;      // 96px
+
+// Layout Spacing
+$layout-gutter: $spacing-6;       // 24px
+$layout-margin: $spacing-8;       // 32px
+$container-padding: $spacing-6;   // 24px
+
+// ────────────────────────────────────────────────────────────
+// ELEVATION SYSTEM - Depth & Shadow
+// ────────────────────────────────────────────────────────────
+
+$elevation-0: none;
+$elevation-1: 0 1px 2px rgba(0, 0, 0, 0.05);
+$elevation-2: 0 2px 4px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.03);
+$elevation-3: 0 4px 8px rgba(0, 0, 0, 0.08), 0 2px 4px rgba(0, 0, 0, 0.04);
+$elevation-4: 0 8px 16px rgba(0, 0, 0, 0.10), 0 4px 8px rgba(0, 0, 0, 0.05);
+$elevation-5: 0 16px 32px rgba(0, 0, 0, 0.12), 0 8px 16px rgba(0, 0, 0, 0.06);
+
+// Interactive Shadows
+$shadow-hover: 0 4px 12px rgba(0, 0, 0, 0.10);
+$shadow-focus: 0 0 0 4px rgba(15, 98, 254, 0.15);
+$shadow-active: 0 2px 4px rgba(0, 0, 0, 0.08);
+
+// ────────────────────────────────────────────────────────────
+// BORDER RADIUS - Consistent Roundness
+// ────────────────────────────────────────────────────────────
+
+$radius-none: 0;
+$radius-sm: 0.25rem;    // 4px
+$radius-base: 0.5rem;   // 8px
+$radius-md: 0.75rem;    // 12px
+$radius-lg: 1rem;       // 16px
+$radius-xl: 1.5rem;     // 24px
+$radius-full: 9999px;   // Pill shape
+
+// ────────────────────────────────────────────────────────────
+// TRANSITIONS - Smooth Interactions
+// ────────────────────────────────────────────────────────────
+
+$duration-fast: 150ms;
+$duration-base: 250ms;
+$duration-slow: 350ms;
+
+$easing-standard: cubic-bezier(0.4, 0.0, 0.2, 1);
+$easing-decelerate: cubic-bezier(0.0, 0.0, 0.2, 1);
+$easing-accelerate: cubic-bezier(0.4, 0.0, 1, 1);
+$easing-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+
+// ────────────────────────────────────────────────────────────
+// Z-INDEX LAYERS - Stacking Context
+// ────────────────────────────────────────────────────────────
+
+$z-base: 0;
+$z-dropdown: 1000;
+$z-sticky: 1100;
+$z-fixed: 1200;
+$z-modal-backdrop: 1300;
+$z-modal: 1400;
+$z-popover: 1500;
+$z-tooltip: 1600;
+
+// ────────────────────────────────────────────────────────────
+// BREAKPOINTS - Responsive Design
+// ────────────────────────────────────────────────────────────
+
+$breakpoint-xs: 0;
+$breakpoint-sm: 640px;
+$breakpoint-md: 768px;
+$breakpoint-lg: 1024px;
+$breakpoint-xl: 1280px;
+$breakpoint-2xl: 1536px;
+
+// ────────────────────────────────────────────────────────────
+// COMPONENT TOKENS
+// ────────────────────────────────────────────────────────────
+
+// Buttons
+$button-height-sm: 32px;
+$button-height-base: 40px;
+$button-height-lg: 48px;
+$button-padding-x: $spacing-4;
+$button-padding-y: $spacing-2;
+
+// Inputs
+$input-height: 40px;
+$input-padding-x: $spacing-4;
+$input-padding-y: $spacing-2;
+$input-border-width: 1px;
+
+// Cards
+$card-padding: $spacing-6;
+$card-radius: $radius-lg;
+$card-shadow: $elevation-2;
+
+// Tables
+$table-row-height: 48px;
+$table-cell-padding: $spacing-4;
+
+// ────────────────────────────────────────────────────────────
+// DATA VISUALIZATION COLORS
+// ────────────────────────────────────────────────────────────
+
+$chart-blue: #0F62FE;
+$chart-purple: #8A3FFC;
+$chart-teal: #009D9A;
+$chart-coral: #FF7EB6;
+$chart-gold: #F1C21B;
+$chart-green: #24A148;
+$chart-orange: #FF832B;
+$chart-red: #DA1E28;
+
+$chart-colors: (
+  $chart-blue,
+  $chart-purple,
+  $chart-teal,
+  $chart-coral,
+  $chart-gold,
+  $chart-green,
+  $chart-orange,
+  $chart-red
+);
+
+// ────────────────────────────────────────────────────────────
+// GRADIENTS - Premium Visual Elements
+// ────────────────────────────────────────────────────────────
+
+$gradient-primary: linear-gradient(135deg, $brand-primary 0%, $brand-primary-dark 100%);
+$gradient-secondary: linear-gradient(135deg, $brand-secondary 0%, $brand-secondary-dark 100%);
+$gradient-success: linear-gradient(135deg, $success-green 0%, #1C7F37 100%);
+$gradient-premium: linear-gradient(135deg, #667EEA 0%, #764BA2 100%);
+$gradient-sunset: linear-gradient(135deg, #FF6B6B 0%, #FFE66D 100%);
+
+// ────────────────────────────────────────────────────────────
+// UTILITY CLASSES GENERATOR
+// ────────────────────────────────────────────────────────────
+
+// Export design tokens as CSS custom properties
+:root {
+  // Colors
+  --color-primary: #{$brand-primary};
+  --color-primary-light: #{$brand-primary-light};
+  --color-primary-dark: #{$brand-primary-dark};
+
+  --color-secondary: #{$brand-secondary};
+  --color-success: #{$success-green};
+  --color-warning: #{$warning-amber};
+  --color-error: #{$error-red};
+  --color-info: #{$info-blue};
+
+  // Text
+  --text-primary: #{$text-primary};
+  --text-secondary: #{$text-secondary};
+  --text-tertiary: #{$text-tertiary};
+
+  // Backgrounds
+  --bg-page: #{$bg-page};
+  --bg-card: #{$bg-card};
+
+  // Spacing
+  --spacing-unit: 8px;
+
+  // Transitions
+  --transition-fast: #{$duration-fast} #{$easing-standard};
+  --transition-base: #{$duration-base} #{$easing-standard};
+  --transition-slow: #{$duration-slow} #{$easing-standard};
+}

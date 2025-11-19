@@ -6,8 +6,10 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using HRMS.Application.Interfaces;
+using HRMS.Core.Constants;
 using HRMS.Core.Entities.Master;
 using HRMS.Core.Enums;
+using HRMS.Core.Interfaces;
 using HRMS.Infrastructure.Data;
 
 namespace HRMS.Infrastructure.Services;
@@ -24,19 +26,22 @@ public class AuditLogService : IAuditLogService
     private readonly ILogger<AuditLogService> _logger;
     private readonly ISecurityAlertingService? _securityAlertingService;
     private readonly AuditLogQueueService _queueService;
+    private readonly ISecurityAlertQueueService? _securityAlertQueueService;
 
     public AuditLogService(
         MasterDbContext context,
         IHttpContextAccessor httpContextAccessor,
         ILogger<AuditLogService> logger,
         AuditLogQueueService queueService,
-        ISecurityAlertingService? securityAlertingService = null)
+        ISecurityAlertingService? securityAlertingService = null,
+        ISecurityAlertQueueService? securityAlertQueueService = null)
     {
         _context = context;
         _httpContextAccessor = httpContextAccessor;
         _logger = logger;
         _queueService = queueService;
         _securityAlertingService = securityAlertingService;
+        _securityAlertQueueService = securityAlertQueueService;
     }
 
     // ============================================
@@ -77,40 +82,30 @@ public class AuditLogService : IAuditLogService
                     log.ActionType, log.UserEmail, log.EntityType, log.EntityId);
             }
 
-            // PHASE 2: Security alerting (fire-and-forget, runs in background)
-            // This doesn't block the request either
-            if (_securityAlertingService != null)
+            // CRITICAL P0 FIX COMPLETE: Security alerting now uses queue service instead of fire-and-forget Task.Run
+            // This prevents ThreadPool exhaustion and ensures alerts are processed reliably
+            if (_securityAlertQueueService != null)
             {
-                _ = Task.Run(async () =>
+                var securityAlertQueued = await _securityAlertQueueService.QueueSecurityAlertCheckAsync(log);
+
+                if (!securityAlertQueued)
                 {
-                    try
-                    {
-                        var (shouldAlert, alertType, riskScore) = await _securityAlertingService.ShouldTriggerAlertAsync(log);
-
-                        if (shouldAlert && alertType.HasValue)
-                        {
-                            _logger.LogWarning(
-                                "Security alert triggered: {AlertType} for audit log {AuditLogId} (Risk Score: {RiskScore})",
-                                alertType.Value, log.Id, riskScore);
-
-                            // Create security alert based on type
-                            await _securityAlertingService.CreateAlertFromAuditLogAsync(
-                                log,
-                                alertType.Value,
-                                $"Security Alert: {alertType.Value}",
-                                $"Suspicious activity detected: {log.ActionType} by {log.UserEmail ?? "Unknown User"}",
-                                riskScore,
-                                $"Review audit log {log.Id} for details. Investigate user activity and take appropriate action.",
-                                sendNotifications: true
-                            );
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        // Don't fail audit logging if alerting fails
-                        _logger.LogError(ex, "Failed to trigger security alert for audit log {AuditLogId}", log.Id);
-                    }
-                });
+                    _logger.LogWarning(
+                        "Failed to queue security alert check for audit log {AuditLogId}. Alert may be delayed or lost.",
+                        log.Id);
+                }
+                else
+                {
+                    _logger.LogDebug(
+                        "Security alert check queued for audit log {AuditLogId}",
+                        log.Id);
+                }
+            }
+            else
+            {
+                _logger.LogDebug(
+                    "Security alert queue service not available - skipping security alert check for audit log {AuditLogId}",
+                    log.Id);
             }
 
             return log;
@@ -934,19 +929,40 @@ public class AuditLogService : IAuditLogService
                 log.UserRole = user.FindFirst(ClaimTypes.Role)?.Value;
             }
 
-            if (string.IsNullOrWhiteSpace(log.TenantName))
+            // CRITICAL SECURITY FIX: Check if user is SuperAdmin
+            // SuperAdmin actions should NEVER have a TenantId, regardless of subdomain/context
+            var userRole = log.UserRole ?? user.FindFirst(ClaimTypes.Role)?.Value;
+            bool isSuperAdmin = UserRoles.IsSystemLevelRole(userRole);
+
+            if (string.IsNullOrWhiteSpace(log.TenantName) && !isSuperAdmin)
             {
                 log.TenantName = user.FindFirst("TenantName")?.Value;
             }
 
-            // Extract tenant ID from claims if not set
-            if (log.TenantId == null)
+            // Extract tenant ID from claims ONLY if:
+            // 1. TenantId is not already set
+            // 2. User is NOT SuperAdmin (SuperAdmin actions are system-wide, not tenant-scoped)
+            if (log.TenantId == null && !isSuperAdmin)
             {
                 var tenantIdClaim = user.FindFirst("TenantId");
                 if (tenantIdClaim != null && Guid.TryParse(tenantIdClaim.Value, out var tenantId))
                 {
                     log.TenantId = tenantId;
                 }
+            }
+
+            // CRITICAL SECURITY FIX: Force TenantId to NULL for SuperAdmin
+            // Even if TenantId was set earlier (e.g., from subdomain context), clear it
+            // This prevents SuperAdmin audit logs from appearing in tenant-scoped queries
+            if (isSuperAdmin && log.TenantId != null)
+            {
+                _logger.LogWarning(
+                    "SECURITY: Correcting audit log - SuperAdmin action had TenantId={TenantId}, forcing to NULL. " +
+                    "User: {UserEmail}, Action: {ActionType}, Path: {RequestPath}",
+                    log.TenantId, log.UserEmail, log.ActionType, log.RequestPath);
+
+                log.TenantId = null;
+                log.TenantName = null;
             }
         }
 
@@ -997,13 +1013,33 @@ public class AuditLogService : IAuditLogService
     }
 
     /// <summary>
+    /// Truncate DateTime to microsecond precision to match PostgreSQL timestamp storage
+    /// CRITICAL FIX: PostgreSQL stores timestamps with microsecond precision (6 decimal places),
+    /// while .NET DateTime has 100-nanosecond tick precision (7 decimal places).
+    /// This mismatch causes checksum validation failures after data is round-tripped through the database.
+    /// </summary>
+    /// <param name="dateTime">DateTime to truncate</param>
+    /// <returns>DateTime truncated to microsecond precision</returns>
+    private static DateTime TruncateToMicroseconds(DateTime dateTime)
+    {
+        // Convert to microseconds and back to remove sub-microsecond precision
+        // 1 microsecond = 10 ticks (100 nanoseconds per tick)
+        var microseconds = dateTime.Ticks / 10;
+        return new DateTime(microseconds * 10, dateTime.Kind);
+    }
+
+    /// <summary>
     /// Generate SHA256 checksum for tamper detection
+    /// CRITICAL FIX: Uses microsecond-truncated PerformedAt to match PostgreSQL timestamp precision
+    /// This prevents false positive tampering alerts caused by sub-microsecond precision loss
     /// </summary>
     private string GenerateChecksum(AuditLog log)
     {
         try
         {
-            var data = $"{log.Id}|{log.ActionType}|{log.UserId}|{log.EntityType}|{log.EntityId}|{log.PerformedAt:O}";
+            // CRITICAL FIX: Truncate to microseconds to match PostgreSQL precision
+            var performedAt = TruncateToMicroseconds(log.PerformedAt);
+            var data = $"{log.Id}|{log.ActionType}|{log.UserId}|{log.EntityType}|{log.EntityId}|{performedAt:O}";
             var bytes = Encoding.UTF8.GetBytes(data);
             var hash = SHA256.HashData(bytes);
             return Convert.ToHexString(hash).ToLower();

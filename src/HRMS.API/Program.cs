@@ -416,9 +416,29 @@ builder.Services.AddHostedService<HRMS.API.Services.TokenCleanupService>();
 Log.Information("Token cleanup background service registered (runs hourly)");
 
 // PERFORMANCE FIX: Audit log queue service for reliable delivery
+// CRITICAL P0 FIX: Register queue service as both IAuditLogQueueService and IHostedService
+// This prevents ThreadPool exhaustion from fire-and-forget Task.Run
 builder.Services.AddSingleton<HRMS.Infrastructure.Services.AuditLogQueueService>();
+builder.Services.AddSingleton<HRMS.Core.Interfaces.IAuditLogQueueService>(provider =>
+    provider.GetRequiredService<HRMS.Infrastructure.Services.AuditLogQueueService>());
 builder.Services.AddHostedService(provider => provider.GetRequiredService<HRMS.Infrastructure.Services.AuditLogQueueService>());
 Log.Information("Audit log queue service registered for guaranteed delivery");
+
+// PERFORMANCE FIX: Security alert queue service for reliable delivery
+// Replaces fire-and-forget Task.Run in AuditLogService (P0 Bug #5 fix)
+builder.Services.AddSingleton<HRMS.Infrastructure.Services.SecurityAlertQueueService>();
+builder.Services.AddSingleton<HRMS.Core.Interfaces.ISecurityAlertQueueService>(provider =>
+    provider.GetRequiredService<HRMS.Infrastructure.Services.SecurityAlertQueueService>());
+builder.Services.AddHostedService(provider => provider.GetRequiredService<HRMS.Infrastructure.Services.SecurityAlertQueueService>());
+Log.Information("Security alert queue service registered for guaranteed delivery");
+
+// PERFORMANCE FIX: Anomaly detection queue service for reliable delivery
+// Replaces fire-and-forget Task.Run in AuditLoggingMiddleware (P0 Bug #5 fix)
+builder.Services.AddSingleton<HRMS.Infrastructure.Services.AnomalyDetectionQueueService>();
+builder.Services.AddSingleton<HRMS.Core.Interfaces.IAnomalyDetectionQueueService>(provider =>
+    provider.GetRequiredService<HRMS.Infrastructure.Services.AnomalyDetectionQueueService>());
+builder.Services.AddHostedService(provider => provider.GetRequiredService<HRMS.Infrastructure.Services.AnomalyDetectionQueueService>());
+Log.Information("Anomaly detection queue service registered for guaranteed delivery");
 
 // ======================
 // SIGNALR REAL-TIME NOTIFICATIONS
@@ -476,6 +496,11 @@ builder.Services.AddScoped<DatabaseMaintenanceJobs>(sp =>
     return new DatabaseMaintenanceJobs(connectionString!, logger);
 });
 Log.Information("Database maintenance jobs registered: MV refresh, token cleanup, vacuum, partitions, health checks");
+
+// DATABASE BACKUP: Daily automated backups
+builder.Services.AddScoped<IDatabaseBackupService, DatabaseBackupService>();
+builder.Services.AddScoped<DatabaseBackupJob>();
+Log.Information("Database backup service registered: daily backups with 30-day retention");
 
 // ======================
 // JWT AUTHENTICATION (PRODUCTION-GRADE)
@@ -757,6 +782,20 @@ builder.Services.AddFluentValidationClientsideAdapters();
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 
 // ======================
+// CSRF PROTECTION (FORTUNE 500 COMPLIANCE)
+// ======================
+builder.Services.AddAntiforgery(options =>
+{
+    options.HeaderName = "X-XSRF-TOKEN";
+    options.Cookie.Name = "XSRF-TOKEN";
+    options.Cookie.HttpOnly = false; // Must be readable by JavaScript
+    options.Cookie.SecurePolicy = CookieSecurePolicy.Always; // HTTPS only
+    options.Cookie.SameSite = SameSiteMode.Strict;
+    options.Cookie.IsEssential = true; // GDPR compliance
+});
+Log.Information("CSRF protection configured: Antiforgery tokens with strict SameSite policy");
+
+// ======================
 // CONTROLLERS WITH OPTIMIZED JSON (COST OPTIMIZATION - 30% smaller payloads)
 // ======================
 builder.Services.AddControllers(options =>
@@ -1004,6 +1043,12 @@ app.UseWhen(
 app.UseAuthentication();
 app.UseAuthorization();
 
+// FORTUNE 500 SECURITY: CSRF Protection
+// Validates antiforgery tokens on all state-changing requests (POST, PUT, DELETE, PATCH)
+// CRITICAL: Must come AFTER authorization so user context is available
+app.UseAntiforgeryTokenValidation();
+Log.Information("CSRF protection middleware enabled: Antiforgery token validation active");
+
 // SECURITY FIX: Tenant Context Validation (blocks requests without valid tenant)
 // CRITICAL: Must come AFTER authentication so context.User is populated
 app.UseTenantContextValidation();
@@ -1101,6 +1146,16 @@ recurringJobManager.AddOrUpdate<AuditLogChecksumVerificationJob>(
         TimeZone = mauritiusTimeZone
     });
 
+// DATABASE BACKUP: Daily automated database backup
+recurringJobManager.AddOrUpdate<DatabaseBackupJob>(
+    "database-backup",
+    job => job.ExecuteAsync(),
+    "0 2 * * *",  // 2:00 AM daily
+    new RecurringJobOptions
+    {
+        TimeZone = mauritiusTimeZone
+    });
+
 // FORTUNE 500: Subscription notification and auto-renewal job
 recurringJobManager.AddOrUpdate<SubscriptionNotificationJob>(
     "subscription-notifications",
@@ -1184,7 +1239,7 @@ recurringJobManager.AddOrUpdate<MonitoringJobs>(
         TimeZone = mauritiusTimeZone
     });
 
-Log.Information("Recurring jobs configured: document-expiry-alerts, absent-marking, leave-accrual, delete-expired-drafts, audit-log-archival, audit-log-checksum-verification, subscription-notifications, abandoned-tenant-cleanup, activation-reminders, monitoring-performance-snapshot, monitoring-dashboard-refresh, monitoring-alert-checks, monitoring-data-cleanup, monitoring-slow-query-analysis");
+Log.Information("Recurring jobs configured: document-expiry-alerts, absent-marking, leave-accrual, delete-expired-drafts, audit-log-archival, audit-log-checksum-verification, database-backup, subscription-notifications, abandoned-tenant-cleanup, activation-reminders, monitoring-performance-snapshot, monitoring-dashboard-refresh, monitoring-alert-checks, monitoring-data-cleanup, monitoring-slow-query-analysis");
 
 // ======================
 // HEALTH CHECK ENDPOINTS (Production-Grade)

@@ -6,14 +6,14 @@
       <p class="subtitle">Complete audit trail across all tenants</p>
     </div>
     <div class="header-actions">
-      <button mat-raised-button (click)="refreshData()" [disabled]="loading">
-        <app-icon name="refresh"></app-icon>
+      <app-button variant="ghost" (clicked)="refreshData()" [disabled]="loading">
+        <app-icon name="refresh-cw"></app-icon>
         Refresh
-      </button>
-      <button mat-raised-button color="primary" (click)="exportLogs()" [disabled]="loading">
+      </app-button>
+      <app-button variant="primary" (clicked)="exportLogs()" [disabled]="loading">
         <app-icon name="download"></app-icon>
         Export CSV
-      </button>
+      </app-button>
     </div>
   </div>
 
@@ -65,8 +65,8 @@
             </div>
 
             <div class="filter-actions">
-              <button mat-button (click)="clearFilters()">Clear All</button>
-              <button mat-raised-button color="primary" (click)="loadAuditLogs()">Apply Filters</button>
+              <app-button variant="ghost" (clicked)="clearFilters()">Clear All</app-button>
+              <app-button variant="primary" (clicked)="loadAuditLogs()">Apply Filters</app-button>
             </div>
           </div>
         </app-expansion-panel>
@@ -135,16 +135,15 @@
 
               <!-- Custom template for success column -->
               <ng-template appTableColumn="success" let-row>
-                <mat-icon [class.success]="row.success" [class.failed]="!row.success">
-                  {{ row.success ? 'check_circle' : 'error' }}
-                </mat-icon>
+                <app-icon [attr.name]="row.success ? 'check-circle' : 'x-circle'" [class.success]="row.success" [class.failed]="!row.success">
+                </app-icon>
               </ng-template>
 
               <!-- Custom template for actions column -->
               <ng-template appTableColumn="actions" let-row>
-                <button mat-icon-button (click)="viewDetails(row)" appTooltip="View Details">
-                  <app-icon name="visibility"></app-icon>
-                </button>
+                <app-button variant="ghost" size="small" (clicked)="viewDetails(row)" appTooltip="View Details">
+                  <app-icon name="eye"></app-icon>
+                </app-button>
               </ng-template>
             </app-table>
 
@@ -185,53 +184,53 @@
         <div class="statistics-container">
           <div class="stats-grid">
             <!-- Summary Cards -->
-            <mat-card class="stat-card">
-              <mat-card-header>
+            <app-card class="stat-card">
+              <div class="card-header">
                 <app-icon name="analytics"></app-icon>
-                <mat-card-title>Total Actions</mat-card-title>
-              </mat-card-header>
-              <mat-card-content>
+                <h3 class="card-title">Total Actions</h3>
+              </div>
+              <div class="card-content">
                 <div class="stat-value">{{ statistics.totalActions | number }}</div>
                 <div class="stat-label">All time</div>
-              </mat-card-content>
-            </mat-card>
-            <mat-card class="stat-card">
-              <mat-card-header>
+              </div>
+            </app-card>
+            <app-card class="stat-card">
+              <div class="card-header">
                 <app-icon name="today"></app-icon>
-                <mat-card-title>Today</mat-card-title>
-              </mat-card-header>
-              <mat-card-content>
+                <h3 class="card-title">Today</h3>
+              </div>
+              <div class="card-content">
                 <div class="stat-value">{{ statistics.actionsToday | number }}</div>
                 <div class="stat-label">Actions</div>
-              </mat-card-content>
-            </mat-card>
-            <mat-card class="stat-card warning">
-              <mat-card-header>
+              </div>
+            </app-card>
+            <app-card class="stat-card warning">
+              <div class="card-header">
                 <app-icon name="lock"></app-icon>
-                <mat-card-title>Failed Logins</mat-card-title>
-              </mat-card-header>
-              <mat-card-content>
+                <h3 class="card-title">Failed Logins</h3>
+              </div>
+              <div class="card-content">
                 <div class="stat-value">{{ statistics.failedLogins | number }}</div>
                 <div class="stat-label">Security alerts</div>
-              </mat-card-content>
-            </mat-card>
-            <mat-card class="stat-card critical">
-              <mat-card-header>
+              </div>
+            </app-card>
+            <app-card class="stat-card critical">
+              <div class="card-header">
                 <app-icon name="error"></app-icon>
-                <mat-card-title>Critical Events</mat-card-title>
-              </mat-card-header>
-              <mat-card-content>
+                <h3 class="card-title">Critical Events</h3>
+              </div>
+              <div class="card-content">
                 <div class="stat-value">{{ statistics.criticalEvents | number }}</div>
                 <div class="stat-label">Requires attention</div>
-              </mat-card-content>
-            </mat-card>
+              </div>
+            </app-card>
           </div>
           <!-- Most Active Users -->
-          <mat-card class="activity-card">
-            <mat-card-header>
-              <mat-card-title>Most Active Users</mat-card-title>
-            </mat-card-header>
-            <mat-card-content>
+          <app-card class="activity-card">
+            <div class="card-header">
+              <h3 class="card-title">Most Active Users</h3>
+            </div>
+            <div class="card-content">
               @if (statistics.mostActiveUsers.length > 0) {
                 <div class="user-list">
                   @for (user of statistics.mostActiveUsers; track user) {
@@ -251,8 +250,8 @@
                   No activity data available
                 </div>
               }
-            </mat-card-content>
-          </mat-card>
+            </div>
+          </app-card>
         </div>
       }
 
