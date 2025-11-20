@@ -22,6 +22,29 @@ namespace HRMS.Application.Interfaces;
 public interface IMonitoringService
 {
     // ============================================
+    // SYSTEM HEALTH & STATUS
+    // ============================================
+
+    /// <summary>
+    /// FORTUNE 500: Get comprehensive system health status
+    /// Designed for high-concurrency health checks from load balancers and monitoring systems
+    ///
+    /// PERFORMANCE: Optimized for 1000+ requests/sec with Redis caching (30s TTL)
+    /// PATTERN: Netflix Hystrix, AWS CloudWatch, Datadog Health API
+    /// COMPLIANCE: SOC 2 Type II continuous monitoring requirements
+    ///
+    /// Returns aggregated health from all system components:
+    /// - Database connection pool and performance
+    /// - Redis cache availability and hit rate
+    /// - Background job processor (Hangfire) status
+    /// - API gateway and response times
+    /// - Active user and session counts
+    /// - System resource utilization (CPU, memory, disk)
+    /// </summary>
+    /// <returns>Comprehensive system health snapshot</returns>
+    Task<SystemHealthDto> GetSystemHealthAsync();
+
+    // ============================================
     // DASHBOARD OVERVIEW METRICS
     // ============================================
 

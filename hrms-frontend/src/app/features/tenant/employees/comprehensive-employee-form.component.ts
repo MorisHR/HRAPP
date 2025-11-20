@@ -1,5 +1,5 @@
 import { Component, signal, inject, OnInit, OnDestroy } from '@angular/core';
-
+import { DatePipe, UpperCasePipe, TitleCasePipe } from '@angular/common';
 import { Router, ActivatedRoute, RouterModule } from '@angular/router';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Subject, debounceTime, takeUntil } from 'rxjs';
@@ -79,12 +79,18 @@ import { Chip, ExpansionPanel, ExpansionPanelGroup } from '../../../shared/ui';
     MatIconModule,
     MatProgressBarModule,
     UiModule,
-    Chip
+    Chip,
+    DatePipe,
+    UpperCasePipe,
+    TitleCasePipe
   ],
   templateUrl: './comprehensive-employee-form.component.html',
   styleUrls: ['./comprehensive-employee-form.component.scss']
 })
 export class ComprehensiveEmployeeFormComponent implements OnInit, OnDestroy {
+  // Expose Math for template usage
+  protected readonly Math = Math;
+
   private fb = inject(FormBuilder);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
@@ -1259,13 +1265,9 @@ export class ComprehensiveEmployeeFormComponent implements OnInit, OnDestroy {
       ];
 
       const baseSalary = parseFloat(this.employeeForm.get('baseSalary')?.value || '0');
-      const contractualHours = 45; // Standard Mauritius working hours
-
       const result = this.advancedIntelligenceEngine.analyzeOvertimeCompliance(
         mockWeeklyHours,
-        mockWorkPattern,
-        contractualHours,
-        false
+        mockWorkPattern
       );
 
       this.overtimeCompliance.set(result);
@@ -1532,41 +1534,47 @@ export class ComprehensiveEmployeeFormComponent implements OnInit, OnDestroy {
 
       // Mock minimal data for demonstration purposes only
       const mockData: WorkforceAnalytics = {
-        totalEmployees: 100,
+        snapshotDate: new Date(),
+        totalHeadcount: 100,
+        headcountTrend: [],
+        growthRate: 5.0,
         turnoverAnalysis: {
-          totalTurnoverRate: 8.5,
-          voluntaryTurnoverRate: 6.0,
-          involuntaryTurnoverRate: 2.5,
-          newHireCount: 15,
-          terminationCount: 8,
-          netGrowthRate: 7.0,
-          healthStatus: 'healthy',
-          recommendations: ['Turnover rate is excellent. Continue current retention strategies.']
+          turnoverRate: 8.5,
+          voluntaryTurnover: 6.0,
+          involuntaryTurnover: 2.5,
+          totalTurnover: 8.5,
+          averageTenure: 24,
+          atRiskEmployees: 5,
+          topReasons: ['Career progression', 'Compensation', 'Work-life balance']
         },
         diversityMetrics: {
           genderDistribution: {
             male: 55,
             female: 43,
-            other: 2,
-            malePercentage: 55,
-            femalePercentage: 43,
-            otherPercentage: 2
+            other: 2
           },
-          averageAge: 32,
-          averageTenure: 4.5,
-          diversityScore: 88,
-          recommendations: ['Gender diversity is reasonably balanced. Continue inclusive hiring practices.']
+          nationalityDistribution: {},
+          ageDistribution: {},
+          genderBalanceScore: 88,
+          diversityIndex: 88,
+          complianceStatus: 'compliant'
         },
         compensationAnalysis: {
-          totalPayroll: 4000000,
           averageSalary: 40000,
           medianSalary: 38000,
-          salaryRange: { lowest: 25000, highest: 80000, spread: 55000 },
-          payrollPercentageOfRevenue: 0,
-          recommendations: ['Compensation structure appears balanced with reasonable salary ranges.']
+          salaryRange: { min: 25000, max: 80000 },
+          salaryDistribution: [],
+          genderPayGap: 2.5,
+          payEquityScore: 85
         },
-        employeeSegments: [],
-        generatedDate: new Date()
+        departmentBreakdown: [],
+        ageDemographics: [],
+        tenureAnalysis: [],
+        totalPayrollCost: 4000000,
+        averageCostPerEmployee: 40000,
+        payrollTrend: [],
+        insights: [],
+        complianceMetrics: []
       };
 
       // Only set for demo purposes - in production, this would be a separate dashboard component

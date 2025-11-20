@@ -291,24 +291,41 @@
 
                 <!-- Work Permit Recommendation -->
                 @if (workPermitRecommendation()) {
-                  <div class="insight-card work-permit" [class]="'priority-' + workPermitRecommendation()!.priority">
+                  <div class="insight-card work-permit">
                     <div class="insight-header">
                       <app-icon name="work"></app-icon>
                       <strong>Work Permit Recommendation</strong>
                       <app-chip
-                        [label]="workPermitRecommendation()!.priority + ' priority'"
-                        [color]="workPermitRecommendation()!.priority === 'high' ? 'error' : workPermitRecommendation()!.priority === 'medium' ? 'warning' : 'primary'"
+                        [label]="workPermitRecommendation()!.eligible ? 'Eligible' : 'Not Eligible'"
+                        [color]="workPermitRecommendation()!.eligible ? 'primary' : 'error'"
                         [variant]="'filled'">
                       </app-chip>
                     </div>
-                    <p><strong>Recommended Type:</strong> {{ workPermitRecommendation()!.recommendedType }}</p>
-                    <p><strong>Reason:</strong> {{ workPermitRecommendation()!.reason }}</p>
-                    <ul class="requirements-list">
-                      @for (req of workPermitRecommendation()!.requirements; track req) {
-                        <li>{{ req }}</li>
-                      }
-                    </ul>
-                    <p class="processing-time"><app-icon name="schedule"></app-icon> Processing time: {{ workPermitRecommendation()!.estimatedProcessingTime }}</p>
+                    <p><strong>Permit Type:</strong> {{ workPermitRecommendation()!.permitType }}</p>
+                    <p><strong>Eligibility:</strong> {{ workPermitRecommendation()!.eligible ? 'Eligible' : 'Not Eligible' }}</p>
+                    @if (workPermitRecommendation()!.reasons.length > 0) {
+                      <div class="reasons-section">
+                        <strong>Reasons:</strong>
+                        <ul>
+                          @for (reason of workPermitRecommendation()!.reasons; track reason) {
+                            <li>{{ reason }}</li>
+                          }
+                        </ul>
+                      </div>
+                    }
+                    @if (workPermitRecommendation()!.requiredDocuments.length > 0) {
+                      <div class="requirements-section">
+                        <strong>Required Documents:</strong>
+                        <ul class="requirements-list">
+                          @for (req of workPermitRecommendation()!.requiredDocuments; track req) {
+                            <li>{{ req }}</li>
+                          }
+                        </ul>
+                      </div>
+                    }
+                    <p class="processing-time"><app-icon name="schedule"></app-icon> Processing time: {{ workPermitRecommendation()!.processingTime }}</p>
+                    <p><strong>Application Fee:</strong> MUR {{ workPermitRecommendation()!.applicationFee }}</p>
+                    <p><strong>Validity Period:</strong> {{ workPermitRecommendation()!.validityPeriod }}</p>
                   </div>
                 }
 
@@ -327,9 +344,9 @@
                             [color]="alert.severity === 'critical' ? 'error' : alert.severity === 'warning' ? 'warning' : 'primary'"
                             [variant]="'filled'">
                           </app-chip>
-                          <span><strong>{{ alert.documentType }}:</strong> {{ alert.message }}</span>
+                          <span><strong>{{ alert.documentType }}:</strong> {{ alert.documentName }} - {{ alert.actionRequired }}</span>
                         </div>
-                        <span class="days-remaining">{{ alert.daysUntilExpiry }} days</span>
+                        <span class="days-remaining">{{ alert.daysRemaining }} days remaining</span>
                       </div>
                     }
                   </div>
@@ -344,21 +361,33 @@
                     </div>
                     <div class="tax-summary">
                       <div class="tax-row">
-                        <span>Annual Salary:</span>
-                        <strong>{{ formatCurrency(taxCalculation()!.annualSalary) }}</strong>
+                        <span>Mauritius Tax:</span>
+                        <strong>{{ formatCurrency(taxCalculation()!.mauritiusTax) }}</strong>
                       </div>
+                      @if (taxCalculation()!.homeCountryTax > 0) {
+                        <div class="tax-row">
+                          <span>Home Country Tax:</span>
+                          <strong>{{ formatCurrency(taxCalculation()!.homeCountryTax) }}</strong>
+                        </div>
+                      }
                       <div class="tax-row">
-                        <span>Tax Rate:</span>
+                        <span>Effective Tax Rate:</span>
                         <strong>{{ (taxCalculation()!.effectiveRate * 100).toFixed(2) }}%</strong>
                       </div>
                       <div class="tax-row primary">
-                        <span>Annual Tax:</span>
+                        <span>Total Annual Tax:</span>
                         <strong>{{ formatCurrency(taxCalculation()!.totalTax) }}</strong>
                       </div>
                       <div class="tax-row">
-                        <span>Monthly Tax:</span>
+                        <span>Monthly Tax (est.):</span>
                         <strong>{{ formatCurrency(taxCalculation()!.totalTax / 12) }}</strong>
                       </div>
+                      @if (taxCalculation()!.savingsVsNoTreaty > 0) {
+                        <div class="tax-row success">
+                          <span>Savings vs No Treaty:</span>
+                          <strong>{{ formatCurrency(taxCalculation()!.savingsVsNoTreaty) }}</strong>
+                        </div>
+                      }
                     </div>
                     @if (taxCalculation()!.treatyBenefit && taxCalculation()!.treatyBenefit > 0) {
                       <div class="treaty-benefit">
@@ -370,28 +399,52 @@
                 }
 
                 <!-- Sector Compliance -->
-                @if (sectorCompliance() && !sectorCompliance()!.isCompliant) {
-                  <div class="insight-card sector-compliance warning">
+                @if (sectorCompliance()) {
+                  <div class="insight-card sector-compliance" [class.warning]="!sectorCompliance()!.valid">
                     <div class="insight-header">
-                      <app-icon name="report_problem"></app-icon>
-                      <strong>Sector Compliance Issues</strong>
+                      <app-icon [name]="sectorCompliance()!.valid ? 'check_circle' : 'report_problem'"></app-icon>
+                      <strong>Sector Compliance</strong>
+                      <app-chip
+                        [label]="sectorCompliance()!.valid ? 'Compliant' : 'Issues Found'"
+                        [color]="sectorCompliance()!.valid ? 'primary' : 'error'"
+                        [variant]="'filled'">
+                      </app-chip>
                     </div>
-                    <ul class="violations-list">
-                      @for (violation of sectorCompliance()!.violations; track violation) {
-                        <li>
-                          <app-icon name="error"></app-icon>
-                          {{ violation }}
-                        </li>
-                      }
-                    </ul>
-                    <div class="recommendations">
-                      <strong>Recommendations:</strong>
-                      <ul>
-                        @for (rec of sectorCompliance()!.recommendations; track rec) {
-                          <li>{{ rec }}</li>
-                        }
-                      </ul>
+                    <div class="compliance-score">
+                      <strong>Compliance Score:</strong> {{ sectorCompliance()!.score }}/100
                     </div>
+                    @if (sectorCompliance()!.warnings && sectorCompliance()!.warnings.length > 0) {
+                      <div class="warnings-section">
+                        <strong>Warnings & Issues:</strong>
+                        <ul class="violations-list">
+                          @for (warning of sectorCompliance()!.warnings; track warning.message) {
+                            <li [class]="'severity-' + warning.severity">
+                              <app-icon [name]="warning.severity === 'error' ? 'error' : warning.severity === 'warning' ? 'warning' : 'info'"></app-icon>
+                              <span>{{ warning.message }}</span>
+                              @if (warning.resolution) {
+                                <div class="resolution">{{ warning.resolution }}</div>
+                              }
+                            </li>
+                          }
+                        </ul>
+                      </div>
+                    }
+                    @if (sectorCompliance()!.benefits && sectorCompliance()!.benefits.length > 0) {
+                      <div class="benefits-section">
+                        <strong>Benefits:</strong>
+                        <ul>
+                          @for (benefit of sectorCompliance()!.benefits; track benefit) {
+                            <li>{{ benefit }}</li>
+                          }
+                        </ul>
+                      </div>
+                    }
+                    @if (sectorCompliance()!.estimatedTaxSavings > 0) {
+                      <div class="tax-savings">
+                        <app-icon name="savings"></app-icon>
+                        <span>Estimated Tax Savings: {{ formatCurrency(sectorCompliance()!.estimatedTaxSavings) }}</span>
+                      </div>
+                    }
                   </div>
                 }
 
@@ -612,24 +665,29 @@
 
                 <!-- 1. OVERTIME COMPLIANCE MONITOR -->
                 @if (overtimeCompliance()) {
-                  <div class="insight-card overtime-compliance" [class]="'risk-' + overtimeCompliance()!.riskLevel">
+                  <div class="insight-card overtime-compliance" [class]="'risk-' + overtimeCompliance()!.overallRisk">
                     <div class="insight-header">
                       <app-icon name="schedule"></app-icon>
                       <strong>Overtime Compliance</strong>
                       <app-chip
                         [label]="overtimeCompliance()!.isCompliant ? 'Compliant' : 'Non-Compliant'"
-                        [variant]="overtimeCompliance()!.isCompliant ? 'success' : 'error'">
+                        [color]="overtimeCompliance()!.isCompliant ? 'primary' : 'error'"
+                        [variant]="'filled'">
                       </app-chip>
                     </div>
 
                     <div class="compliance-summary">
                       <div class="summary-row">
                         <span>Weekly Hours:</span>
-                        <strong>{{ overtimeCompliance()!.weeklyHours }}h / {{ overtimeCompliance()!.maxLegalHours }}h</strong>
+                        <strong>{{ overtimeCompliance()!.weeklyHours }}h / {{ overtimeCompliance()!.weeklyLimit }}h</strong>
                       </div>
                       <div class="summary-row">
-                        <span>Overtime:</span>
-                        <strong>{{ overtimeCompliance()!.overtimeHours }}h</strong>
+                        <span>Weekly Overtime:</span>
+                        <strong>{{ overtimeCompliance()!.weeklyOvertime }}h</strong>
+                      </div>
+                      <div class="summary-row">
+                        <span>Fortnight Hours:</span>
+                        <strong>{{ overtimeCompliance()!.fortnightHours }}h / {{ overtimeCompliance()!.fortnightLimit }}h</strong>
                       </div>
                       @if (overtimeCompliance()!.violations.length > 0) {
                         <div class="violations-section">
@@ -643,7 +701,7 @@
                         <div class="violations-section">
                           <strong class="error-text">⚠️ {{ overtimeCompliance()!.restPeriodViolations.length }} Rest Period Violation(s)</strong>
                           @for (violation of overtimeCompliance()!.restPeriodViolations; track violation.date) {
-                            <div class="violation-item">• {{ violation.restHours }}h rest (requires {{ violation.requiredRestHours }}h)</div>
+                            <div class="violation-item">• {{ violation.actualRest }}h rest (requires {{ violation.requiredRest }}h)</div>
                           }
                         </div>
                       }
@@ -664,47 +722,53 @@
 
                 <!-- 2. SALARY ANOMALY DETECTOR -->
                 @if (salaryAnomalies()) {
-                  <div class="insight-card salary-anomalies" [class]="'risk-' + salaryAnomalies()!.overallRiskLevel">
+                  <div class="insight-card salary-anomalies" [class]="'risk-' + salaryAnomalies()!.riskLevel">
                     <div class="insight-header">
                       <app-icon name="account_balance_wallet"></app-icon>
                       <strong>Salary Analysis</strong>
                       <app-chip
                         [label]="salaryAnomalies()!.hasAnomalies ? 'Anomalies Detected' : 'No Issues'"
-                        [variant]="salaryAnomalies()!.hasAnomalies ? 'warning' : 'success'">
+                        [color]="salaryAnomalies()!.hasAnomalies ? 'warning' : 'primary'"
+                        [variant]="'filled'">
                       </app-chip>
                     </div>
 
                     <div class="salary-summary">
-                      <!-- Gender Pay Gap -->
+                      <!-- Statistical Analysis -->
                       <div class="summary-section">
-                        <strong>Gender Pay Gap:</strong>
+                        <strong>Statistical Analysis:</strong>
                         <div class="summary-row">
-                          <span>Gap Percentage:</span>
-                          <strong [class.error-text]="!salaryAnomalies()!.genderPayGapAnalysis.isCompliant">
-                            {{ salaryAnomalies()!.genderPayGapAnalysis.gapPercentage }}%
+                          <span>Employee Salary:</span>
+                          <strong>{{ formatCurrency(salaryAnomalies()!.employeeSalary) }}</strong>
+                        </div>
+                        <div class="summary-row">
+                          <span>Department Average:</span>
+                          <strong>{{ formatCurrency(salaryAnomalies()!.departmentAverage) }}</strong>
+                        </div>
+                        <div class="summary-row">
+                          <span>Role Average:</span>
+                          <strong>{{ formatCurrency(salaryAnomalies()!.roleAverage) }}</strong>
+                        </div>
+                        <div class="summary-row">
+                          <span>Company Average:</span>
+                          <strong>{{ formatCurrency(salaryAnomalies()!.companyAverage) }}</strong>
+                        </div>
+                        <div class="summary-row">
+                          <span>Deviation from Average:</span>
+                          <strong [class.error-text]="Math.abs(salaryAnomalies()!.deviationFromAverage) > 20">
+                            {{ salaryAnomalies()!.deviationFromAverage.toFixed(1) }}%
                           </strong>
                         </div>
                         <div class="summary-row">
-                          <span>Compliance:</span>
-                          <strong [class.success-text]="salaryAnomalies()!.genderPayGapAnalysis.isCompliant"
-                                  [class.error-text]="!salaryAnomalies()!.genderPayGapAnalysis.isCompliant">
-                            {{ salaryAnomalies()!.genderPayGapAnalysis.isCompliant ? 'Compliant' : 'Non-Compliant' }}
+                          <span>Standard Deviations:</span>
+                          <strong [class.error-text]="Math.abs(salaryAnomalies()!.standardDeviations) > 2">
+                            {{ salaryAnomalies()!.standardDeviations.toFixed(2) }}σ
                           </strong>
                         </div>
-                      </div>
-
-                      <!-- Market Rate Comparison -->
-                      <div class="summary-section">
-                        <strong>Market Rate:</strong>
                         <div class="summary-row">
-                          <span>Position:</span>
-                          <strong>{{ salaryAnomalies()!.marketRateComparison.positionInRange | titlecase }}</strong>
-                        </div>
-                        <div class="summary-row">
-                          <span>Competitiveness:</span>
-                          <strong [class.success-text]="salaryAnomalies()!.marketRateComparison.isCompetitive"
-                                  [class.warning-text]="!salaryAnomalies()!.marketRateComparison.isCompetitive">
-                            {{ salaryAnomalies()!.marketRateComparison.isCompetitive ? 'Competitive' : 'Below Market' }}
+                          <span>Risk Level:</span>
+                          <strong [class]="'risk-' + salaryAnomalies()!.riskLevel">
+                            {{ salaryAnomalies()!.riskLevel | uppercase }}
                           </strong>
                         </div>
                       </div>
@@ -714,9 +778,9 @@
                         <div class="anomalies-section">
                           <strong>Detected Anomalies:</strong>
                           @for (anomaly of salaryAnomalies()!.anomalies; track anomaly.type) {
-                            <div class="anomaly-item" [class.high-severity]="anomaly.severity === 'high'">
+                            <div class="anomaly-item" [class.high-severity]="anomaly.severity === 'critical'">
                               <span class="anomaly-type">{{ anomaly.description }}</span>
-                              <span class="anomaly-diff">{{ anomaly.percentageDifference > 0 ? '+' : '' }}{{ anomaly.percentageDifference }}%</span>
+                              <span class="anomaly-impact">{{ anomaly.impact }}</span>
                             </div>
                           }
                         </div>
@@ -744,19 +808,20 @@
                       <strong>Retention Risk Assessment</strong>
                       <app-chip
                         [label]="retentionRisk()!.riskLevel + ' risk'"
-                        [variant]="retentionRisk()!.riskLevel === 'high' ? 'error' : retentionRisk()!.riskLevel === 'medium' ? 'warning' : 'success'">
+                        [variant]="'filled'"
+                        [color]="retentionRisk()!.riskLevel === 'high' || retentionRisk()!.riskLevel === 'critical' ? 'error' : retentionRisk()!.riskLevel === 'medium' ? 'warning' : 'success'">
                       </app-chip>
                     </div>
 
                     <div class="risk-summary">
                       <div class="risk-score-display">
                         <div class="score-circle" [class]="'risk-' + retentionRisk()!.riskLevel">
-                          <span class="score-value">{{ retentionRisk()!.riskScore }}</span>
+                          <span class="score-value">{{ retentionRisk()!.overallScore }}</span>
                           <span class="score-label">Risk Score</span>
                         </div>
                         <div class="flight-risk">
-                          <strong>Flight Risk:</strong>
-                          <span>{{ retentionRisk()!.flightRiskPercentage }}%</span>
+                          <strong>Turnover Probability:</strong>
+                          <span>{{ retentionRisk()!.turnoverProbability }}%</span>
                         </div>
                       </div>
 
@@ -765,13 +830,13 @@
                         <strong class="cost-value">MUR {{ retentionRisk()!.replacementCost.toLocaleString() }}</strong>
                       </div>
 
-                      @if (retentionRisk()!.riskFactors.length > 0) {
+                      @if (retentionRisk()!.factors.length > 0) {
                         <div class="risk-factors-section">
                           <strong>Risk Factors:</strong>
-                          @for (factor of retentionRisk()!.riskFactors; track factor.factor) {
-                            <div class="risk-factor-item" [class]="'impact-' + factor.impact">
+                          @for (factor of retentionRisk()!.factors; track factor.factor) {
+                            <div class="risk-factor-item" [class]="'status-' + factor.status">
                               <span class="factor-name">{{ factor.description }}</span>
-                              <span class="factor-weight">Weight: {{ factor.weight }}%</span>
+                              <span class="factor-weight">Weight: {{ (factor.weight * 100).toFixed(0) }}%</span>
                             </div>
                           }
                         </div>
@@ -798,20 +863,21 @@
 
                 <!-- 4. PERFORMANCE REVIEW SCHEDULER -->
                 @if (performanceReviews()) {
-                  <div class="insight-card performance-reviews" [class]="'status-' + performanceReviews()!.complianceStatus">
+                  <div class="insight-card performance-reviews" [class]="'status-' + performanceReviews()!.reviewStatus">
                     <div class="insight-header">
                       <app-icon name="assessment"></app-icon>
                       <strong>Performance Review Schedule</strong>
                       <app-chip
-                        [label]="performanceReviews()!.complianceStatus"
-                        [variant]="performanceReviews()!.complianceStatus === 'compliant' ? 'success' : performanceReviews()!.complianceStatus === 'warning' ? 'warning' : 'error'">
+                        [label]="performanceReviews()!.reviewStatus"
+                        [variant]="'filled'"
+                        [color]="performanceReviews()!.reviewStatus === 'on_track' ? 'success' : performanceReviews()!.reviewStatus === 'due_soon' ? 'warning' : 'error'">
                       </app-chip>
                     </div>
 
                     <div class="reviews-summary">
                       <div class="summary-row">
-                        <span>Review Cycle:</span>
-                        <strong>{{ performanceReviews()!.reviewCycle | titlecase }}</strong>
+                        <span>Review Completion Rate:</span>
+                        <strong>{{ performanceReviews()!.reviewCompletionRate }}%</strong>
                       </div>
 
                       @if (performanceReviews()!.nextReview) {
@@ -821,26 +887,27 @@
                         </div>
                       }
 
-                      @if (performanceReviews()!.hasOverdueReviews) {
+                      @if (performanceReviews()!.overdueReviews.length > 0) {
                         <div class="overdue-section">
                           <strong class="error-text">⚠️ {{ performanceReviews()!.overdueReviews.length }} Overdue Review(s)</strong>
-                          @for (review of performanceReviews()!.overdueReviews; track review.reviewNumber) {
+                          @for (review of performanceReviews()!.overdueReviews; track review.id) {
                             <div class="overdue-item">
-                              • Review #{{ review.reviewNumber }}: {{ review.daysOverdue }} days overdue
+                              • {{ review.type | titlecase }}: {{ review.daysOverdue }} days overdue
                             </div>
                           }
                         </div>
                       }
 
                       <div class="reviews-timeline">
-                        <strong>Review History:</strong>
-                        @for (review of performanceReviews()!.reviews.slice(0, 5); track review.reviewNumber) {
+                        <strong>Upcoming Reviews:</strong>
+                        @for (review of performanceReviews()!.upcomingReviews.slice(0, 5); track review.id) {
                           <div class="timeline-item" [class]="'status-' + review.status">
-                            <span class="review-number">#{{ review.reviewNumber }}</span>
+                            <span class="review-type">{{ review.type | titlecase }}</span>
                             <span class="review-date">{{ review.dueDate | date }}</span>
                             <app-chip
                               [label]="review.status"
-                              [variant]="review.status === 'completed' ? 'success' : review.status === 'overdue' ? 'error' : 'default'">
+                              [variant]="'filled'"
+                              [color]="review.status === 'completed' ? 'success' : review.status === 'overdue' ? 'error' : 'primary'">
                             </app-chip>
                           </div>
                         }
@@ -862,36 +929,43 @@
 
                 <!-- 5. TRAINING NEEDS ANALYZER -->
                 @if (trainingNeeds()) {
-                  <div class="insight-card training-needs" [class]="'compliance-' + trainingNeeds()!.complianceStatus">
+                  <div class="insight-card training-needs" [class]="'risk-' + trainingNeeds()!.riskLevel">
                     <div class="insight-header">
                       <app-icon name="school"></app-icon>
                       <strong>Training Needs Analysis</strong>
                       <app-chip
-                        [label]="trainingNeeds()!.complianceStatus"
-                        [variant]="trainingNeeds()!.complianceStatus === 'compliant' ? 'success' : 'error'">
+                        [label]="trainingNeeds()!.riskLevel + ' risk'"
+                        [variant]="'filled'"
+                        [color]="trainingNeeds()!.riskLevel === 'low' ? 'success' : trainingNeeds()!.riskLevel === 'medium' ? 'warning' : 'error'">
                       </app-chip>
                     </div>
 
                     <div class="training-summary">
                       <div class="summary-row">
-                        <span>Estimated Budget:</span>
-                        <strong>MUR {{ trainingNeeds()!.trainingBudgetEstimate.toLocaleString() }}</strong>
+                        <span>Compliance Rate:</span>
+                        <strong>{{ trainingNeeds()!.overallComplianceRate }}%</strong>
                       </div>
                       <div class="summary-row">
-                        <span>Estimated Hours:</span>
-                        <strong>{{ trainingNeeds()!.estimatedTrainingHours }}h</strong>
+                        <span>Recommended Budget:</span>
+                        <strong>MUR {{ trainingNeeds()!.recommendedTrainingBudget.toLocaleString() }}</strong>
+                      </div>
+                      <div class="summary-row">
+                        <span>Estimated Cost:</span>
+                        <strong>MUR {{ trainingNeeds()!.estimatedCost.toLocaleString() }}</strong>
                       </div>
 
                       <!-- Mandatory Training Status -->
                       <div class="mandatory-training-section">
                         <strong>Mandatory Training:</strong>
                         @for (training of trainingNeeds()!.mandatoryTraining; track training.trainingName) {
-                          <div class="training-item" [class.completed]="training.isCompleted" [class.expired]="training.isExpired">
-                            <app-icon [name]="training.isCompleted && !training.isExpired ? 'check_circle' : 'cancel'"></app-icon>
+                          <div class="training-item" [class.completed]="training.completed" [class.overdue]="training.status === 'overdue'">
+                            <app-icon [name]="training.completed && training.status === 'compliant' ? 'check_circle' : 'cancel'"></app-icon>
                             <span class="training-name">{{ training.trainingName }}</span>
-                            @if (training.isExpired) {
-                              <span class="status-badge expired">Expired</span>
-                            } @else if (!training.isCompleted) {
+                            @if (training.status === 'overdue') {
+                              <span class="status-badge overdue">Overdue</span>
+                            } @else if (training.status === 'due_soon') {
+                              <span class="status-badge due-soon">Due Soon</span>
+                            } @else if (!training.completed) {
                               <span class="status-badge pending">Pending</span>
                             } @else {
                               <span class="status-badge completed">Completed</span>
@@ -904,9 +978,9 @@
                       @if (trainingNeeds()!.skillGaps.length > 0) {
                         <div class="skill-gaps-section">
                           <strong>Skill Gaps Identified:</strong>
-                          @for (gap of trainingNeeds()!.skillGaps; track gap.skillName) {
-                            <div class="skill-gap-item" [class]="'priority-' + gap.priority">
-                              <span class="skill-name">{{ gap.skillName }}</span>
+                          @for (gap of trainingNeeds()!.skillGaps; track gap.skill) {
+                            <div class="skill-gap-item" [class]="'severity-' + gap.gapSeverity">
+                              <span class="skill-name">{{ gap.skill }}</span>
                               <span class="skill-level">{{ gap.currentLevel }} → {{ gap.requiredLevel }}</span>
                               <span class="training-rec">{{ gap.recommendedTraining }}</span>
                             </div>
@@ -930,13 +1004,14 @@
 
                 <!-- 6. CAREER PROGRESSION ANALYZER -->
                 @if (careerProgression()) {
-                  <div class="insight-card career-progression" [class.promotion-ready]="careerProgression()!.isPromotionReady">
+                  <div class="insight-card career-progression" [class.promotion-ready]="careerProgression()!.readinessLevel === 'ready' || careerProgression()!.readinessLevel === 'overdue'">
                     <div class="insight-header">
                       <app-icon name="trending_up"></app-icon>
                       <strong>Career Progression</strong>
                       <app-chip
-                        [label]="careerProgression()!.isPromotionReady ? 'Promotion Ready' : 'In Development'"
-                        [variant]="careerProgression()!.isPromotionReady ? 'success' : 'default'">
+                        [label]="careerProgression()!.readinessLevel === 'ready' || careerProgression()!.readinessLevel === 'overdue' ? 'Promotion Ready' : 'In Development'"
+                        [variant]="'filled'"
+                        [color]="careerProgression()!.readinessLevel === 'ready' || careerProgression()!.readinessLevel === 'overdue' ? 'success' : 'primary'">
                       </app-chip>
                     </div>
 
@@ -944,7 +1019,7 @@
                       <div class="level-progression">
                         <span class="current-level">{{ careerProgression()!.currentLevel | titlecase }}</span>
                         <app-icon name="arrow_forward"></app-icon>
-                        <span class="next-level">{{ careerProgression()!.nextLevel | titlecase }}</span>
+                        <span class="next-level">{{ careerProgression()!.nextLevel || 'Senior Role' | titlecase }}</span>
                       </div>
 
                       <div class="readiness-score">
@@ -954,10 +1029,10 @@
                         <span class="score-label">{{ careerProgression()!.promotionReadinessScore }}% Ready</span>
                       </div>
 
-                      @if (careerProgression()!.estimatedMonthsToPromotion > 0) {
+                      @if (careerProgression()!.timelineToPromotion) {
                         <div class="summary-row">
-                          <span>Estimated Time to Promotion:</span>
-                          <strong>{{ careerProgression()!.estimatedMonthsToPromotion }} months</strong>
+                          <span>Timeline to Promotion:</span>
+                          <strong>{{ careerProgression()!.timelineToPromotion }}</strong>
                         </div>
                       }
 
@@ -965,21 +1040,21 @@
                       <div class="qualifications-section">
                         <strong>Promotion Qualifications:</strong>
                         @for (qual of careerProgression()!.qualifications; track qual.criterion) {
-                          <div class="qualification-item" [class.met]="qual.isMet">
-                            <app-icon [name]="qual.isMet ? 'check_circle' : 'radio_button_unchecked'"></app-icon>
+                          <div class="qualification-item" [class.met]="qual.met">
+                            <app-icon [name]="qual.met ? 'check_circle' : 'radio_button_unchecked'"></app-icon>
                             <span class="qual-criterion">{{ qual.criterion }}</span>
-                            <span class="qual-status">{{ qual.currentValue }} / {{ qual.requiredValue }}</span>
+                            <span class="qual-status">{{ qual.details }}</span>
                           </div>
                         }
                       </div>
                     </div>
 
-                    @if (careerProgression()!.developmentRecommendations.length > 0) {
+                    @if (careerProgression()!.actionPlan.length > 0) {
                       <div class="recommendations-section">
                         <strong>Development Plan:</strong>
                         <ul class="recommendations-list">
-                          @for (rec of careerProgression()!.developmentRecommendations; track rec) {
-                            <li>{{ rec }}</li>
+                          @for (action of careerProgression()!.actionPlan; track action.action) {
+                            <li><strong>[{{ action.priority | uppercase }}]</strong> {{ action.description }}</li>
                           }
                         </ul>
                       </div>
@@ -989,20 +1064,21 @@
 
                 <!-- 7. VISA/WORK PERMIT RENEWAL FORECASTER -->
                 @if (visaRenewal()) {
-                  <div class="insight-card visa-renewal" [class]="'urgency-' + visaRenewal()!.urgencyLevel">
+                  <div class="insight-card visa-renewal" [class]="'urgency-' + visaRenewal()!.urgency">
                     <div class="insight-header">
                       <app-icon name="flight_takeoff"></app-icon>
                       <strong>Visa Renewal Forecast</strong>
                       <app-chip
-                        [label]="visaRenewal()!.urgencyLevel + ' urgency'"
-                        [variant]="visaRenewal()!.urgencyLevel === 'critical' || visaRenewal()!.urgencyLevel === 'high' ? 'error' : visaRenewal()!.urgencyLevel === 'medium' ? 'warning' : 'success'">
+                        [label]="visaRenewal()!.urgency + ' urgency'"
+                        [variant]="'filled'"
+                        [color]="visaRenewal()!.urgency === 'critical' || visaRenewal()!.urgency === 'high' ? 'error' : visaRenewal()!.urgency === 'medium' ? 'warning' : 'success'">
                       </app-chip>
                     </div>
 
                     <div class="visa-summary">
                       <div class="summary-row">
                         <span>Permit Type:</span>
-                        <strong>{{ visaRenewal()!.permitType.replace('_', ' ') | titlecase }}</strong>
+                        <strong>{{ visaRenewal()!.currentPermitType.replace('_', ' ') | titlecase }}</strong>
                       </div>
                       <div class="summary-row highlight">
                         <span>Days Until Expiry:</span>
@@ -1012,28 +1088,28 @@
                       </div>
                       <div class="summary-row">
                         <span>Processing Time:</span>
-                        <strong>{{ visaRenewal()!.estimatedProcessingDays }} days</strong>
+                        <strong>{{ visaRenewal()!.processingTime }}</strong>
                       </div>
                       <div class="summary-row">
-                        <span>Recommended Start:</span>
-                        <strong>{{ visaRenewal()!.recommendedStartDate | date }}</strong>
+                        <span>Status:</span>
+                        <strong>{{ visaRenewal()!.status | titlecase }}</strong>
                       </div>
 
                       <!-- Renewal Timeline -->
                       <div class="timeline-section">
                         <strong>Renewal Milestones:</strong>
-                        @for (milestone of visaRenewal()!.renewalTimeline; track milestone.milestone) {
+                        @for (milestone of visaRenewal()!.timeline; track milestone.id) {
                           <div class="timeline-item"
-                               [class.completed]="milestone.isCompleted"
-                               [class.urgent]="milestone.priority === 'urgent' && !milestone.isCompleted">
+                               [class.completed]="milestone.status === 'completed'"
+                               [class.urgent]="milestone.isOverdue">
                             <div class="milestone-status">
-                              <app-icon [name]="milestone.isCompleted ? 'check_circle' : 'schedule'"></app-icon>
+                              <app-icon [name]="milestone.status === 'completed' ? 'check_circle' : 'schedule'"></app-icon>
                             </div>
                             <div class="milestone-content">
-                              <span class="milestone-name">{{ milestone.milestone }}</span>
+                              <span class="milestone-name">{{ milestone.name }}</span>
                               <span class="milestone-date">{{ milestone.dueDate | date }}</span>
-                              @if (!milestone.isCompleted && milestone.daysUntil !== null) {
-                                <span class="days-until">{{ milestone.daysUntil > 0 ? milestone.daysUntil + ' days' : 'Overdue' }}</span>
+                              @if (milestone.status !== 'completed' && milestone.daysUntilDue !== null) {
+                                <span class="days-until">{{ milestone.daysUntilDue > 0 ? milestone.daysUntilDue + ' days' : 'Overdue' }}</span>
                               }
                             </div>
                           </div>
@@ -1044,8 +1120,8 @@
                       <div class="documents-section">
                         <strong>Required Documents ({{ visaRenewal()!.requiredDocuments.length }}):</strong>
                         @for (doc of visaRenewal()!.requiredDocuments; track doc.documentName) {
-                          <div class="document-item" [class.submitted]="doc.isSubmitted">
-                            <app-icon [name]="doc.isSubmitted ? 'check_box' : 'check_box_outline_blank'"></app-icon>
+                          <div class="document-item" [class.submitted]="doc.status === 'valid'">
+                            <app-icon [name]="doc.status === 'valid' ? 'check_box' : 'check_box_outline_blank'"></app-icon>
                             <span>{{ doc.documentName }}</span>
                           </div>
                         }

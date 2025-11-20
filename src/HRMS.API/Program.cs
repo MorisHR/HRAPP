@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using HRMS.Infrastructure.Data;
 using HRMS.Infrastructure.Services;
 using HRMS.Infrastructure.Middleware;
+using HRMS.Infrastructure.Caching;
 using HRMS.Core.Interfaces;
 using HRMS.Application.Interfaces;
 using HRMS.API.Middleware;
@@ -249,6 +250,9 @@ builder.Services.AddScoped<TenantDbContext>(serviceProvider =>
 // Falls back gracefully to in-memory cache if Redis is unavailable
 builder.Services.AddSingleton<IRedisCacheService, RedisCacheService>();
 Log.Information("Redis cache service registered: distributed caching for multi-instance deployments");
+
+// Register distributed cache service wrapper
+builder.Services.AddSingleton<IDistributedCacheService, DistributedCacheService>();
 
 // ======================
 // MULTI-TENANCY SERVICES

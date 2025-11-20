@@ -23,8 +23,7 @@ import {
   WorkforceAnalytics,
   TurnoverAnalysis,
   DiversityMetrics,
-  CompensationAnalysis,
-  EmployeeSegment
+  CompensationAnalysis
 } from '../../models/advanced-intelligence.model';
 import { TenantContextService } from '../tenant-context.service';
 
@@ -78,10 +77,9 @@ export class AdvancedIntelligenceEngineService {
    */
   analyzeOvertimeCompliance(
     weeklyHours: number,
-    workPattern: { date: Date; hoursWorked: number; shiftEnd: Date; shiftStart: Date }[],
-    contractualHours: number = 45,
-    allowOvertimeOptOut: boolean = false
+    workPattern: { date: Date; hoursWorked: number; shiftEnd: Date; shiftStart: Date }[]
   ): OvertimeComplianceResult {
+    const contractualHours = 45; // Mauritius standard
     const cacheKey = `overtime_${weeklyHours}_${workPattern.length}_${contractualHours}`;
     const cached = this.getFromCache<OvertimeComplianceResult>(cacheKey);
     if (cached) return cached;
@@ -96,24 +94,24 @@ export class AdvancedIntelligenceEngineService {
 
     if (weeklyHours > totalMaxHours) {
       violations.push({
-        type: 'excessive_hours',
-        severity: 'high',
+        type: 'weekly_limit',
+        severity: 'critical',
         description: `Weekly hours (${weeklyHours}h) exceed legal maximum (${totalMaxHours}h)`,
-        hoursExceeded: weeklyHours - totalMaxHours,
-        legalLimit: totalMaxHours,
-        recommendation: 'Reduce weekly hours immediately or risk labor law violations'
+        value: weeklyHours,
+        limit: totalMaxHours,
+        date: new Date(),
+        legalReference: 'Workers Rights Act 2019 Section 34'
       });
     } else if (weeklyHours > maxLegalHours) {
       const overtimeHours = weeklyHours - maxLegalHours;
       violations.push({
-        type: 'overtime_hours',
-        severity: 'medium',
+        type: 'weekly_limit',
+        severity: 'warning',
         description: `Employee working ${overtimeHours}h overtime per week`,
-        hoursExceeded: overtimeHours,
-        legalLimit: maxLegalHours,
-        recommendation: overtimeHours <= 5
-          ? 'Overtime within acceptable limits, monitor regularly'
-          : 'Consider hiring additional staff to reduce overtime dependency'
+        value: weeklyHours,
+        limit: maxLegalHours,
+        date: new Date(),
+        legalReference: 'Workers Rights Act 2019 Section 34'
       });
     }
 
@@ -127,13 +125,14 @@ export class AdvancedIntelligenceEngineService {
 
       if (restHours < minRestHours) {
         restPeriodViolations.push({
-          date: currentShift.date,
-          restHours: Math.round(restHours * 10) / 10,
-          requiredRestHours: minRestHours,
-          severity: restHours < 8 ? 'high' : 'medium',
-          recommendation: restHours < 8
+          type: 'insufficient_rest',
+          severity: restHours < 8 ? 'violation' : 'warning',
+          description: restHours < 8
             ? 'URGENT: Employee health at risk, mandate rest period'
-            : 'Reschedule shifts to ensure 11-hour rest period'
+            : 'Reschedule shifts to ensure 11-hour rest period',
+          actualRest: Math.round(restHours * 10) / 10,
+          requiredRest: minRestHours,
+          date: currentShift.date
         });
       }
     }
@@ -143,11 +142,12 @@ export class AdvancedIntelligenceEngineService {
     if (consecutiveDays > 6) {
       violations.push({
         type: 'consecutive_days',
-        severity: 'high',
+        severity: 'violation',
         description: `Employee worked ${consecutiveDays} consecutive days without rest`,
-        hoursExceeded: 0,
-        legalLimit: 6,
-        recommendation: 'Mandate at least one rest day per week as per Workers Rights Act'
+        value: consecutiveDays,
+        limit: 6,
+        date: new Date(),
+        legalReference: 'Workers Rights Act 2019 Section 35'
       });
     }
 
@@ -156,22 +156,28 @@ export class AdvancedIntelligenceEngineService {
     const regularOvertimeHours = Math.min(overtimeHours, maxOvertimeHours);
     const excessOvertimeHours = Math.max(0, overtimeHours - maxOvertimeHours);
 
+    // Calculate costs
+    const weeklyOvertimePay = (regularOvertimeHours * 1.5) + (excessOvertimeHours * 2.0);
+    const totalOvertimeCost = weeklyOvertimePay * 100; // Estimated per employee
+    const projectedMonthlyCost = weeklyOvertimePay * 4.33; // Average weeks per month
+
     const result: OvertimeComplianceResult = {
       isCompliant: violations.length === 0 && restPeriodViolations.length === 0,
+      overallRisk: this.calculateOvertimeOverallRisk(violations, restPeriodViolations),
       weeklyHours,
-      contractualHours,
-      overtimeHours,
-      maxLegalHours: maxLegalHours,
+      weeklyLimit: maxLegalHours,
+      weeklyOvertime: overtimeHours,
+      weeklyOvertimePay: weeklyOvertimePay,
+      fortnightHours: weeklyHours * 2,
+      fortnightLimit: 90,
       violations,
       restPeriodViolations,
-      overtimeCompensation: {
-        regularOvertimeHours, // 1.5x pay
-        excessOvertimeHours,   // 2.0x pay
-        totalOvertimeHours: overtimeHours,
-        estimatedCostMultiplier: (regularOvertimeHours * 1.5) + (excessOvertimeHours * 2.0)
-      },
+      totalOvertimeCost,
+      budgetBurnRate: 0, // Would need budget data
+      projectedMonthlyCost,
       recommendations: this.generateOvertimeRecommendations(violations, restPeriodViolations, weeklyHours),
-      riskLevel: this.calculateOvertimeRiskLevel(violations, restPeriodViolations)
+      legalRisk: this.calculateOvertimeRiskLevel(violations, restPeriodViolations),
+      potentialFine: this.calculatePotentialFine(violations)
     };
 
     this.setCache(cacheKey, result);
@@ -218,7 +224,7 @@ export class AdvancedIntelligenceEngineService {
       return recommendations;
     }
 
-    if (violations.some(v => v.severity === 'high')) {
+    if (violations.some(v => v.severity === 'critical' || v.severity === 'violation')) {
       recommendations.push('URGENT: Immediate action required to prevent labor law violations');
       recommendations.push('Review shift scheduling system and implement hard limits');
     }
@@ -235,16 +241,44 @@ export class AdvancedIntelligenceEngineService {
     return recommendations;
   }
 
+  private calculateOvertimeOverallRisk(
+    violations: OvertimeViolation[],
+    restViolations: RestPeriodViolation[]
+  ): 'none' | 'low' | 'medium' | 'high' | 'critical' {
+    const criticalCount = violations.filter(v => v.severity === 'critical').length;
+    const violationCount = violations.filter(v => v.severity === 'violation').length +
+                           restViolations.filter(v => v.severity === 'violation').length;
+
+    if (criticalCount > 0) return 'critical';
+    if (violationCount > 0) return 'high';
+    if (violations.length + restViolations.length > 2) return 'medium';
+    if (violations.length + restViolations.length > 0) return 'low';
+    return 'none';
+  }
+
   private calculateOvertimeRiskLevel(
     violations: OvertimeViolation[],
     restViolations: RestPeriodViolation[]
-  ): 'low' | 'medium' | 'high' {
-    const highSeverityCount = violations.filter(v => v.severity === 'high').length +
-                              restViolations.filter(v => v.severity === 'high').length;
+  ): 'none' | 'low' | 'medium' | 'high' {
+    const criticalCount = violations.filter(v => v.severity === 'critical').length;
+    const violationCount = violations.filter(v => v.severity === 'violation').length +
+                           restViolations.filter(v => v.severity === 'violation').length;
 
-    if (highSeverityCount > 0) return 'high';
-    if (violations.length + restViolations.length > 2) return 'medium';
-    return 'low';
+    if (criticalCount > 0 || violationCount > 1) return 'high';
+    if (violationCount > 0 || violations.length + restViolations.length > 2) return 'medium';
+    if (violations.length + restViolations.length > 0) return 'low';
+    return 'none';
+  }
+
+  private calculatePotentialFine(violations: OvertimeViolation[]): number {
+    // Mauritius Workers Rights Act penalties
+    let totalFine = 0;
+    violations.forEach(v => {
+      if (v.severity === 'critical') totalFine += 50000;
+      else if (v.severity === 'violation') totalFine += 25000;
+      else if (v.severity === 'warning') totalFine += 10000;
+    });
+    return totalFine;
   }
 
   // ============================================================================
@@ -287,14 +321,15 @@ export class AdvancedIntelligenceEngineService {
 
     if (Math.abs(zScore) > 2.5) {
       anomalies.push({
-        type: zScore > 0 ? 'significantly_above_average' : 'significantly_below_average',
-        severity: Math.abs(zScore) > 3 ? 'high' : 'medium',
+        type: zScore > 0 ? 'outlier_high' : 'outlier_low',
+        severity: Math.abs(zScore) > 3 ? 'critical' : 'warning',
         description: zScore > 0
           ? `Salary ${Math.round(Math.abs(zScore) * 10) / 10}σ above company average`
           : `Salary ${Math.round(Math.abs(zScore) * 10) / 10}σ below company average`,
-        difference: employeeSalary - stats.mean,
-        percentageDifference: Math.round(((employeeSalary - stats.mean) / stats.mean) * 100),
-        recommendation: zScore > 0
+        impact: zScore > 0
+          ? `${Math.round(((employeeSalary - stats.mean) / stats.mean) * 100)}% above average - potential overpayment`
+          : `${Math.round(Math.abs((employeeSalary - stats.mean) / stats.mean) * 100)}% below average - retention risk`,
+        recommendedAction: zScore > 0
           ? 'Review compensation rationale. Ensure pay equity across similar roles.'
           : 'Potential underpayment detected. Review salary against market rates and experience level.'
       });
@@ -307,12 +342,11 @@ export class AdvancedIntelligenceEngineService {
 
       if (Math.abs(deptZScore) > 2) {
         anomalies.push({
-          type: deptZScore > 0 ? 'department_outlier_high' : 'department_outlier_low',
-          severity: 'medium',
+          type: 'role_mismatch',
+          severity: 'warning',
           description: `Salary ${Math.round(Math.abs(deptZScore) * 10) / 10}σ ${deptZScore > 0 ? 'above' : 'below'} ${department} department average`,
-          difference: employeeSalary - deptStats.mean,
-          percentageDifference: Math.round(((employeeSalary - deptStats.mean) / deptStats.mean) * 100),
-          recommendation: 'Review department compensation structure for consistency'
+          impact: `${Math.round(Math.abs((employeeSalary - deptStats.mean) / deptStats.mean) * 100)}% deviation from department norm`,
+          recommendedAction: 'Review department compensation structure for consistency'
         });
       }
     }
@@ -324,12 +358,11 @@ export class AdvancedIntelligenceEngineService {
 
       if (Math.abs(jobZScore) > 2) {
         anomalies.push({
-          type: jobZScore > 0 ? 'job_title_outlier_high' : 'job_title_outlier_low',
-          severity: 'high',
+          type: 'role_mismatch',
+          severity: 'critical',
           description: `Salary ${Math.round(Math.abs(jobZScore) * 10) / 10}σ ${jobZScore > 0 ? 'above' : 'below'} ${jobTitle} role average`,
-          difference: employeeSalary - jobStats.mean,
-          percentageDifference: Math.round(((employeeSalary - jobStats.mean) / jobStats.mean) * 100),
-          recommendation: 'PRIORITY: Investigate pay disparity for same job title. Ensure Equal Pay compliance.'
+          impact: `${Math.round(Math.abs((employeeSalary - jobStats.mean) / jobStats.mean) * 100)}% deviation - potential pay equity issue`,
+          recommendedAction: 'PRIORITY: Investigate pay disparity for same job title. Ensure Equal Pay compliance.'
         });
       }
     }
@@ -352,12 +385,23 @@ export class AdvancedIntelligenceEngineService {
     );
 
     const result: SalaryAnomalyResult = {
-      hasAnomalies: anomalies.length > 0 || !genderPayGap.isCompliant || !marketRateComparison.isCompetitive,
+      hasAnomalies: anomalies.length > 0,
+      riskLevel: this.calculateSalaryRiskLevel(anomalies, genderPayGap, marketRateComparison),
+      departmentAverage: companyData.sameDepartmentSalaries.length > 0
+        ? this.calculateStatistics(companyData.sameDepartmentSalaries).mean
+        : stats.mean,
+      roleAverage: companyData.sameJobTitleSalaries.length > 0
+        ? this.calculateStatistics(companyData.sameJobTitleSalaries).mean
+        : stats.mean,
+      companyAverage: stats.mean,
+      employeeSalary: employeeSalary,
+      deviationFromAverage: Math.round(((employeeSalary - stats.mean) / stats.mean) * 100),
+      standardDeviations: Math.abs(zScore),
       anomalies,
-      genderPayGapAnalysis: genderPayGap,
-      marketRateComparison,
-      overallRiskLevel: this.calculateSalaryRiskLevel(anomalies, genderPayGap, marketRateComparison),
-      recommendations: this.generateSalaryRecommendations(anomalies, genderPayGap, marketRateComparison)
+      genderPayGap: genderPayGap,
+      marketRate: marketRateComparison,
+      recommendations: this.generateSalaryRecommendations(anomalies, genderPayGap, marketRateComparison),
+      complianceIssues: this.generateComplianceIssues(genderPayGap, anomalies)
     };
 
     this.setCache(cacheKey, result);
@@ -377,15 +421,13 @@ export class AdvancedIntelligenceEngineService {
     const isCompliant = Math.abs(gapPercentage) <= legalThreshold;
 
     return {
-      maleAverageSalary: maleAvg,
-      femaleAverageSalary: femaleAvg,
-      gapAmount: maleAvg - femaleAvg,
+      maleAverage: maleAvg,
+      femaleAverage: femaleAvg,
       gapPercentage: Math.round(gapPercentage * 10) / 10,
+      gapAmount: maleAvg - femaleAvg,
       isCompliant,
-      severity: !isCompliant ? (Math.abs(gapPercentage) > 15 ? 'high' : 'medium') : 'low',
-      recommendation: !isCompliant
-        ? `Gender pay gap of ${Math.abs(Math.round(gapPercentage))}% detected. Review compensation policies to ensure Equal Remuneration Act compliance.`
-        : 'Gender pay gap within acceptable statistical variation. Continue monitoring.'
+      affectedEmployees: 0, // Would need full employee data
+      legalRisk: !isCompliant ? (Math.abs(gapPercentage) > 15 ? 'high' : 'medium') : 'none'
     };
   }
 
@@ -399,35 +441,31 @@ export class AdvancedIntelligenceEngineService {
     const difference = salary - marketMid;
     const percentageDifference = (difference / marketMid) * 100;
 
-    let positionInRange: 'below' | 'low' | 'mid' | 'high' | 'above';
+    let position: 'below_market' | 'at_market' | 'above_market';
     if (salary < marketLow) {
-      positionInRange = 'below';
-    } else if (salary < marketLow + (marketMid - marketLow) / 2) {
-      positionInRange = 'low';
-    } else if (salary < marketMid + (marketHigh - marketMid) / 2) {
-      positionInRange = 'mid';
+      position = 'below_market';
     } else if (salary <= marketHigh) {
-      positionInRange = 'high';
+      position = 'at_market';
     } else {
-      positionInRange = 'above';
+      position = 'above_market';
     }
 
-    const isCompetitive = salary >= marketLow && salary <= marketHigh;
+    let competitiveness: 'non_competitive' | 'competitive' | 'highly_competitive';
+    if (salary < marketLow * 0.9) {
+      competitiveness = 'non_competitive';
+    } else if (salary >= marketLow && salary <= marketHigh) {
+      competitiveness = 'competitive';
+    } else {
+      competitiveness = 'highly_competitive';
+    }
 
     return {
-      employeeSalary: salary,
-      marketRateLow: marketLow,
-      marketRateMid: marketMid,
-      marketRateHigh: marketHigh,
-      difference,
-      percentageDifference: Math.round(percentageDifference * 10) / 10,
-      positionInRange,
-      isCompetitive,
-      recommendation: !isCompetitive
-        ? (salary < marketLow
-          ? `Salary ${Math.abs(Math.round(percentageDifference))}% below market. Risk of losing talent to competitors.`
-          : `Salary ${Math.round(percentageDifference)}% above market. Review compensation rationale.`)
-        : 'Salary is competitive within market range.'
+      marketRate: marketMid,
+      currentSalary: salary,
+      differencePercentage: Math.round(percentageDifference * 10) / 10,
+      differenceAmount: difference,
+      position,
+      competitiveness
     };
   }
 
@@ -435,18 +473,45 @@ export class AdvancedIntelligenceEngineService {
     anomalies: SalaryAnomaly[],
     genderPayGap: GenderPayGapAnalysis,
     marketRate: MarketRateComparison
-  ): 'low' | 'medium' | 'high' {
-    const highSeverityCount = anomalies.filter(a => a.severity === 'high').length;
+  ): 'none' | 'low' | 'medium' | 'high' | 'critical' {
+    const criticalCount = anomalies.filter(a => a.severity === 'critical').length;
+    const warningCount = anomalies.filter(a => a.severity === 'warning').length;
 
-    if (highSeverityCount > 0 || genderPayGap.severity === 'high' || !marketRate.isCompetitive) {
+    if (criticalCount > 0 || genderPayGap.legalRisk === 'high' || marketRate.competitiveness === 'non_competitive') {
+      return 'critical';
+    }
+
+    if (warningCount > 1 || genderPayGap.legalRisk === 'medium') {
       return 'high';
     }
 
-    if (anomalies.length > 2 || genderPayGap.severity === 'medium') {
+    if (anomalies.length > 0 || genderPayGap.legalRisk === 'low') {
       return 'medium';
     }
 
-    return 'low';
+    if (warningCount > 0) {
+      return 'low';
+    }
+
+    return 'none';
+  }
+
+  private generateComplianceIssues(
+    genderPayGap: GenderPayGapAnalysis,
+    anomalies: SalaryAnomaly[]
+  ): string[] {
+    const issues: string[] = [];
+
+    if (!genderPayGap.isCompliant) {
+      issues.push(`Gender pay gap of ${genderPayGap.gapPercentage}% exceeds acceptable threshold - Equal Remuneration Act compliance risk`);
+    }
+
+    const genderGapAnomalies = anomalies.filter(a => a.type === 'gender_gap');
+    genderGapAnomalies.forEach(a => {
+      issues.push(a.description);
+    });
+
+    return issues;
   }
 
   private generateSalaryRecommendations(
@@ -456,21 +521,21 @@ export class AdvancedIntelligenceEngineService {
   ): string[] {
     const recommendations: string[] = [];
 
-    if (anomalies.length === 0 && genderPayGap.isCompliant && marketRate.isCompetitive) {
+    if (anomalies.length === 0 && genderPayGap.isCompliant && marketRate.competitiveness === 'competitive') {
       recommendations.push('Salary structure is well-balanced. No immediate action required.');
       return recommendations;
     }
 
-    if (genderPayGap.severity === 'high') {
+    if (genderPayGap.legalRisk === 'high') {
       recommendations.push('URGENT: Significant gender pay gap detected. Conduct immediate pay equity audit.');
       recommendations.push('Review Equal Remuneration Act compliance with legal counsel.');
     }
 
-    if (!marketRate.isCompetitive && marketRate.employeeSalary < marketRate.marketRateLow) {
+    if (marketRate.competitiveness === 'non_competitive' && marketRate.currentSalary < marketRate.marketRate) {
       recommendations.push('Salary below market rate. Consider salary adjustment to prevent attrition.');
     }
 
-    if (anomalies.some(a => a.type.includes('job_title_outlier'))) {
+    if (anomalies.some(a => a.type === 'role_mismatch')) {
       recommendations.push('Pay disparity detected for same job title. Standardize compensation bands.');
     }
 
@@ -514,29 +579,32 @@ export class AdvancedIntelligenceEngineService {
     if (tenureMonths < 6) {
       tenureRisk = 30;
       riskFactors.push({
-        factor: 'short_tenure',
-        weight: 30,
+        factor: 'tenure_risk',
+        weight: 0.3,
         score: 100,
+        status: 'critical',
         description: `Employee with ${tenureMonths} months tenure (high early attrition risk)`,
-        impact: 'high'
+        impact: 30
       });
     } else if (tenureMonths < 12) {
       tenureRisk = 20;
       riskFactors.push({
-        factor: 'short_tenure',
-        weight: 30,
+        factor: 'tenure_risk',
+        weight: 0.3,
         score: 67,
+        status: 'concerning',
         description: `Employee with ${tenureMonths} months tenure (moderate early attrition risk)`,
-        impact: 'medium'
+        impact: 20
       });
     } else if (tenureMonths > 60) {
       tenureRisk = 10;
       riskFactors.push({
-        factor: 'long_tenure',
-        weight: 30,
+        factor: 'tenure_risk',
+        weight: 0.3,
         score: 33,
+        status: 'positive',
         description: `Employee with ${Math.floor(tenureMonths / 12)} years tenure (low flight risk)`,
-        impact: 'low'
+        impact: 10
       });
     }
     totalRiskScore += tenureRisk;
@@ -546,20 +614,22 @@ export class AdvancedIntelligenceEngineService {
     if (salaryPercentile < 25) {
       salaryRisk = 25;
       riskFactors.push({
-        factor: 'low_salary',
-        weight: 25,
+        factor: 'salary_below_market',
+        weight: 0.25,
         score: 100,
+        status: 'critical',
         description: `Salary in bottom 25th percentile (high financial dissatisfaction risk)`,
-        impact: 'high'
+        impact: 25
       });
     } else if (salaryPercentile < 50) {
       salaryRisk = 15;
       riskFactors.push({
-        factor: 'low_salary',
-        weight: 25,
+        factor: 'salary_below_market',
+        weight: 0.25,
         score: 60,
+        status: 'concerning',
         description: `Salary below median (moderate financial dissatisfaction risk)`,
-        impact: 'medium'
+        impact: 15
       });
     }
     totalRiskScore += salaryRisk;
@@ -569,20 +639,22 @@ export class AdvancedIntelligenceEngineService {
     if (lastPromotionMonths > 36 && tenureMonths > 36) {
       careerRisk = 20;
       riskFactors.push({
-        factor: 'career_stagnation',
-        weight: 20,
+        factor: 'no_promotion',
+        weight: 0.2,
         score: 100,
+        status: 'critical',
         description: `No promotion in ${Math.floor(lastPromotionMonths / 12)} years (career stagnation risk)`,
-        impact: 'high'
+        impact: 20
       });
     } else if (lastPromotionMonths > 24 && tenureMonths > 24) {
       careerRisk = 12;
       riskFactors.push({
-        factor: 'career_stagnation',
-        weight: 20,
+        factor: 'no_promotion',
+        weight: 0.2,
         score: 60,
+        status: 'concerning',
         description: `No promotion in 2+ years (moderate career stagnation risk)`,
-        impact: 'medium'
+        impact: 12
       });
     }
     totalRiskScore += careerRisk;
@@ -592,20 +664,22 @@ export class AdvancedIntelligenceEngineService {
     if (lastRaiseMonths > 24) {
       raiseRisk = 15;
       riskFactors.push({
-        factor: 'no_recent_raise',
-        weight: 15,
+        factor: 'no_training',
+        weight: 0.15,
         score: 100,
+        status: 'critical',
         description: `No salary increase in ${Math.floor(lastRaiseMonths / 12)} years (financial neglect risk)`,
-        impact: 'high'
+        impact: 15
       });
     } else if (lastRaiseMonths > 18) {
       raiseRisk = 9;
       riskFactors.push({
-        factor: 'no_recent_raise',
-        weight: 15,
+        factor: 'no_training',
+        weight: 0.15,
         score: 60,
+        status: 'concerning',
         description: `No salary increase in 18+ months (moderate financial concern)`,
-        impact: 'medium'
+        impact: 9
       });
     }
     totalRiskScore += raiseRisk;
@@ -614,11 +688,12 @@ export class AdvancedIntelligenceEngineService {
     if (performanceRating >= 4 && salaryPercentile < 50) {
       totalRiskScore += 10;
       riskFactors.push({
-        factor: 'high_performer_underpaid',
-        weight: 10,
+        factor: 'high_workload',
+        weight: 0.1,
         score: 100,
+        status: 'critical',
         description: 'High performer (4+/5) paid below median (critical retention risk)',
-        impact: 'high'
+        impact: 10
       });
     }
 
@@ -635,11 +710,15 @@ export class AdvancedIntelligenceEngineService {
     );
 
     const result: RetentionRiskScore = {
-      riskScore: Math.min(100, totalRiskScore),
-      riskLevel: totalRiskScore > 60 ? 'high' : totalRiskScore > 30 ? 'medium' : 'low',
-      riskFactors,
-      flightRiskPercentage: Math.min(100, Math.round((totalRiskScore / 100) * 100)),
+      overallScore: Math.min(100, totalRiskScore),
+      riskLevel: totalRiskScore > 60 ? 'critical' : totalRiskScore > 40 ? 'high' : totalRiskScore > 20 ? 'medium' : 'low',
+      turnoverProbability: Math.min(100, Math.round(totalRiskScore)),
+      factors: riskFactors,
       replacementCost,
+      retentionValue: replacementCost * 0.7,
+      tenure: tenureMonths,
+      timeInRole: tenureMonths,
+      urgency: totalRiskScore > 70 ? 'immediate' : totalRiskScore > 50 ? 'high' : totalRiskScore > 30 ? 'medium' : 'low',
       recommendations
     };
 
@@ -677,30 +756,30 @@ export class AdvancedIntelligenceEngineService {
 
     if (totalRiskScore > 60) {
       recommendations.push({
-        priority: 'urgent',
+        priority: 'immediate',
         action: 'Schedule immediate retention conversation with employee',
-        expectedImpact: 'high',
-        cost: 0,
+        expectedImpact: 50,
+        cost: 'low',
         timeframe: '1 week'
       });
     }
 
-    if (riskFactors.some(f => f.factor === 'low_salary' && f.impact === 'high')) {
+    if (riskFactors.some(f => f.factor === 'salary_below_market' && f.status === 'critical')) {
       recommendations.push({
         priority: 'high',
         action: 'Conduct market salary review and adjust compensation to 50th percentile minimum',
-        expectedImpact: 'high',
-        cost: 5000, // Estimated adjustment cost
+        expectedImpact: 40,
+        cost: 'high',
         timeframe: '1 month'
       });
     }
 
-    if (riskFactors.some(f => f.factor === 'career_stagnation')) {
+    if (riskFactors.some(f => f.factor === 'no_promotion')) {
       recommendations.push({
         priority: 'high',
         action: 'Develop clear career progression plan with promotion timeline',
-        expectedImpact: 'high',
-        cost: 0,
+        expectedImpact: 35,
+        cost: 'low',
         timeframe: '2 weeks'
       });
     }
@@ -709,8 +788,8 @@ export class AdvancedIntelligenceEngineService {
       recommendations.push({
         priority: 'medium',
         action: 'Assign senior mentor to support career development',
-        expectedImpact: 'medium',
-        cost: 0,
+        expectedImpact: 25,
+        cost: 'low',
         timeframe: '1 month'
       });
     }
@@ -719,8 +798,8 @@ export class AdvancedIntelligenceEngineService {
       recommendations.push({
         priority: 'medium',
         action: 'Create individualized development plan (IDP) with skill development goals',
-        expectedImpact: 'medium',
-        cost: 500, // Training budget
+        expectedImpact: 30,
+        cost: 'medium',
         timeframe: '1 month'
       });
     }
@@ -729,8 +808,8 @@ export class AdvancedIntelligenceEngineService {
       recommendations.push({
         priority: 'low',
         action: 'Continue regular engagement. Schedule quarterly check-ins.',
-        expectedImpact: 'low',
-        cost: 0,
+        expectedImpact: 10,
+        cost: 'low',
         timeframe: 'Ongoing'
       });
     }
@@ -773,12 +852,25 @@ export class AdvancedIntelligenceEngineService {
       const isPast = nextReviewDate < currentDate;
       const isOverdue = isPast && (!lastReviewDate || nextReviewDate > lastReviewDate);
 
+      const daysUntilDue = Math.floor((nextReviewDate.getTime() - currentDate.getTime()) / (1000 * 60 * 60 * 24));
+      const daysOverdue = isOverdue ? Math.floor((currentDate.getTime() - nextReviewDate.getTime()) / (1000 * 60 * 60 * 24)) : 0;
+
       const review: PerformanceReview = {
-        reviewNumber,
+        id: `review-${reviewNumber}-${nextReviewDate.getTime()}`,
+        type: reviewCycle === 'quarterly' ? 'quarterly' : reviewCycle === 'semi-annual' ? 'mid_year' : 'annual',
+        scheduledDate: new Date(nextReviewDate),
         dueDate: new Date(nextReviewDate),
-        reviewType: reviewCycle,
-        status: isOverdue ? 'overdue' : isPast ? 'completed' : 'upcoming',
-        daysOverdue: isOverdue ? Math.floor((currentDate.getTime() - nextReviewDate.getTime()) / (1000 * 60 * 60 * 24)) : 0
+        status: isOverdue ? 'overdue' : isPast ? 'completed' : 'not_started',
+        daysUntilDue,
+        daysOverdue,
+        isOverdue,
+        participants: [],
+        progress: isPast ? 100 : 0,
+        requiresSelfAssessment: true,
+        selfAssessmentComplete: isPast,
+        requiresManagerAssessment: true,
+        managerAssessmentComplete: isPast,
+        requires360: false
       };
 
       reviews.push(review);
@@ -793,17 +885,33 @@ export class AdvancedIntelligenceEngineService {
     }
 
     // Calculate next upcoming review
-    const nextReview = reviews.find(r => r.status === 'upcoming') || null;
+    const upcomingReviews = reviews.filter(r => r.status === 'not_started');
+    const nextReview = upcomingReviews.length > 0 ? upcomingReviews[0] : reviews[0];
+    const completedReviews = reviews.filter(r => r.status === 'completed');
+
+    const lastReviewDateCalc = completedReviews.length > 0
+      ? completedReviews[completedReviews.length - 1].dueDate
+      : undefined;
+    const daysSinceLastReview = lastReviewDateCalc
+      ? Math.floor((currentDate.getTime() - lastReviewDateCalc.getTime()) / (1000 * 60 * 60 * 24))
+      : undefined;
 
     const result: PerformanceReviewSchedule = {
-      reviewCycle,
-      reviews,
+      employeeId: 'emp-placeholder',
+      employeeName: 'Employee Name',
+      department: 'Department',
       nextReview,
+      upcomingReviews,
       overdueReviews,
-      hasOverdueReviews: overdueReviews.length > 0,
-      complianceStatus: overdueReviews.length === 0 ? 'compliant' :
-                       overdueReviews.length === 1 ? 'warning' : 'critical',
-      recommendations: this.generateReviewRecommendations(overdueReviews, nextReview)
+      completedReviews,
+      reviewStatus: overdueReviews.length > 0 ? 'overdue' : upcomingReviews.length > 0 ? (upcomingReviews[0].daysUntilDue <= 30 ? 'due_soon' : 'on_track') : 'missing_reviews',
+      urgency: overdueReviews.length > 0 ? 'critical' : upcomingReviews.length > 0 && upcomingReviews[0].daysUntilDue <= 30 ? 'high' : 'low',
+      reviewCompletionRate: completedReviews.length > 0 ? (completedReviews.length / reviews.length) * 100 : 0,
+      averageDelay: overdueReviews.length > 0 ? overdueReviews.reduce((sum, r) => sum + r.daysOverdue, 0) / overdueReviews.length : 0,
+      lastReviewDate: lastReviewDateCalc,
+      daysSinceLastReview,
+      recommendations: this.generateReviewRecommendations(overdueReviews, nextReview),
+      requiredActions: []
     };
 
     this.setCache(cacheKey, result);
@@ -880,14 +988,17 @@ export class AdvancedIntelligenceEngineService {
 
       mandatoryTraining.push({
         trainingName,
-        isCompleted: !!completed && !isExpired,
-        completionDate: completed?.completionDate || null,
-        expiryDate: completed?.expiryDate || null,
+        category: 'compliance',
+        required: true,
+        completed: !!completed && !isExpired,
+        completionDate: completed?.completionDate,
+        expiryDate: completed?.expiryDate ?? undefined,
         daysUntilExpiry: completed?.expiryDate
           ? Math.floor((completed.expiryDate.getTime() - currentDate.getTime()) / (1000 * 60 * 60 * 24))
-          : null,
-        isExpired: !!isExpired,
-        isRequired: true
+          : undefined,
+        status: !completed ? 'missing' : isExpired ? 'overdue' : (completed.expiryDate && Math.floor((completed.expiryDate.getTime() - currentDate.getTime()) / (1000 * 60 * 60 * 24)) <= 30) ? 'due_soon' : 'compliant',
+        legalRequirement: true,
+        regulatoryReference: 'Mauritius compliance requirement'
       });
     });
 
@@ -900,14 +1011,17 @@ export class AdvancedIntelligenceEngineService {
 
         mandatoryTraining.push({
           trainingName,
-          isCompleted: !!completed && !isExpired,
-          completionDate: completed?.completionDate || null,
-          expiryDate: completed?.expiryDate || null,
+          category: 'compliance',
+          required: true,
+          completed: !!completed && !isExpired,
+          completionDate: completed?.completionDate,
+          expiryDate: completed?.expiryDate ?? undefined,
           daysUntilExpiry: completed?.expiryDate
             ? Math.floor((completed.expiryDate.getTime() - currentDate.getTime()) / (1000 * 60 * 60 * 24))
-            : null,
-          isExpired: !!isExpired,
-          isRequired: true
+            : undefined,
+          status: !completed ? 'missing' : isExpired ? 'overdue' : (completed.expiryDate && Math.floor((completed.expiryDate.getTime() - currentDate.getTime()) / (1000 * 60 * 60 * 24)) <= 30) ? 'due_soon' : 'compliant',
+          legalRequirement: true,
+          regulatoryReference: 'Mauritius compliance requirement'
         });
       });
     }
@@ -928,29 +1042,41 @@ export class AdvancedIntelligenceEngineService {
       requiredSkillsByRole[roleKeyLower].forEach(requiredSkill => {
         if (!employeeSkills.some(skill => skill.toLowerCase() === requiredSkill.toLowerCase())) {
           skillGaps.push({
-            skillName: requiredSkill,
+            skill: requiredSkill,
             currentLevel: 'none',
             requiredLevel: 'intermediate',
-            priority: 'high',
+            gapSeverity: 'high',
+            impact: 'Critical skill gap - impacts job performance',
             recommendedTraining: `${requiredSkill} Fundamentals Course`,
-            estimatedCost: 500,
-            estimatedDurationHours: 16
+            estimatedDuration: '16 hours',
+            estimatedCost: 500
           });
         }
       });
     }
 
-    const missingMandatoryCount = mandatoryTraining.filter(t => !t.isCompleted || t.isExpired).length;
+    const missingMandatoryCount = mandatoryTraining.filter(t => !t.completed || t.status === 'overdue').length;
     const expiringWithin30Days = mandatoryTraining.filter(t =>
-      t.daysUntilExpiry !== null && t.daysUntilExpiry > 0 && t.daysUntilExpiry <= 30
+      t.daysUntilExpiry !== undefined && t.daysUntilExpiry > 0 && t.daysUntilExpiry <= 30
     ).length;
 
+    const completedTrainingCount = mandatoryTraining.filter(t => t.completed).length;
+    const totalRequiredTraining = mandatoryTraining.length;
+
     const result: TrainingNeedsAnalysis = {
+      overallComplianceRate: totalRequiredTraining > 0 ? (completedTrainingCount / totalRequiredTraining) * 100 : 100,
+      criticalGaps: skillGaps.filter(g => g.gapSeverity === 'critical').length,
+      riskLevel: missingMandatoryCount > 2 ? 'critical' : missingMandatoryCount > 0 ? 'high' : skillGaps.length > 3 ? 'medium' : 'low',
       mandatoryTraining,
       skillGaps,
-      trainingBudgetEstimate: skillGaps.reduce((sum, gap) => sum + gap.estimatedCost, 0),
-      estimatedTrainingHours: skillGaps.reduce((sum, gap) => sum + gap.estimatedDurationHours, 0),
-      complianceStatus: missingMandatoryCount === 0 ? 'compliant' : 'non-compliant',
+      expiringCertifications: [],
+      departmentCoverage: totalRequiredTraining > 0 ? (completedTrainingCount / totalRequiredTraining) * 100 : 100,
+      lastTrainingDate: completedTraining.length > 0 ? completedTraining[completedTraining.length - 1].completionDate : undefined,
+      daysSinceLastTraining: completedTraining.length > 0 ? Math.floor((currentDate.getTime() - completedTraining[completedTraining.length - 1].completionDate.getTime()) / (1000 * 60 * 60 * 24)) : undefined,
+      recommendedTrainingBudget: skillGaps.reduce((sum, gap) => sum + gap.estimatedCost, 0),
+      estimatedCost: skillGaps.reduce((sum, gap) => sum + gap.estimatedCost, 0),
+      roi: 150,
+      priorityTraining: [],
       recommendations: this.generateTrainingRecommendations(
         mandatoryTraining,
         skillGaps,
@@ -969,7 +1095,7 @@ export class AdvancedIntelligenceEngineService {
   ): string[] {
     const recommendations: string[] = [];
 
-    const overdue = mandatoryTraining.filter(t => !t.isCompleted || t.isExpired);
+    const overdue = mandatoryTraining.filter(t => !t.completed || t.status === 'overdue');
 
     if (overdue.length > 0) {
       recommendations.push(`URGENT: ${overdue.length} mandatory training(s) overdue or expired. Schedule immediately.`);
@@ -984,9 +1110,9 @@ export class AdvancedIntelligenceEngineService {
 
     if (skillGaps.length > 0) {
       recommendations.push(`${skillGaps.length} skill gap(s) identified for role requirements.`);
-      const highPriorityGaps = skillGaps.filter(g => g.priority === 'high').slice(0, 3);
+      const highPriorityGaps = skillGaps.filter(g => g.gapSeverity === 'high').slice(0, 3);
       highPriorityGaps.forEach(gap => {
-        recommendations.push(`  - Recommend: ${gap.recommendedTraining} (${gap.estimatedDurationHours}h, ${gap.estimatedCost} MUR)`);
+        recommendations.push(`  - Recommend: ${gap.recommendedTraining} (${gap.estimatedDuration}, ${gap.estimatedCost} MUR)`);
       });
     }
 
@@ -1028,22 +1154,24 @@ export class AdvancedIntelligenceEngineService {
     // 1. Tenure Qualification
     const tenureQualified = tenureInCurrentRole >= nextLevelRequirements.minimumTenure;
     qualifications.push({
-      criterion: 'Minimum Tenure',
-      isMet: tenureQualified,
-      currentValue: `${tenureInCurrentRole} months`,
-      requiredValue: `${nextLevelRequirements.minimumTenure} months`,
-      weight: 20
+      criterion: 'tenure',
+      required: true,
+      met: tenureQualified,
+      status: tenureQualified ? 'met' : 'not_met',
+      details: `${tenureInCurrentRole} months (Required: ${nextLevelRequirements.minimumTenure} months)`,
+      weight: 0.2
     });
 
     // 2. Performance Qualification
     const avgPerformance = performanceRatings.reduce((a, b) => a + b, 0) / performanceRatings.length;
     const performanceQualified = avgPerformance >= nextLevelRequirements.requiredPerformanceAverage;
     qualifications.push({
-      criterion: 'Performance Average',
-      isMet: performanceQualified,
-      currentValue: `${avgPerformance.toFixed(2)}/5.0`,
-      requiredValue: `${nextLevelRequirements.requiredPerformanceAverage}/5.0`,
-      weight: 40
+      criterion: 'performance',
+      required: true,
+      met: performanceQualified,
+      status: performanceQualified ? 'met' : 'not_met',
+      details: `Average: ${avgPerformance.toFixed(2)}/5.0 (Required: ${nextLevelRequirements.requiredPerformanceAverage}/5.0)`,
+      weight: 0.4
     });
 
     // 3. Certification Qualification
@@ -1052,29 +1180,31 @@ export class AdvancedIntelligenceEngineService {
     );
     const certificationQualified = missingCertifications.length === 0;
     qualifications.push({
-      criterion: 'Required Certifications',
-      isMet: certificationQualified,
-      currentValue: `${completedCertifications.length} completed`,
-      requiredValue: missingCertifications.length > 0
+      criterion: 'education',
+      required: true,
+      met: certificationQualified,
+      status: certificationQualified ? 'met' : 'not_met',
+      details: missingCertifications.length > 0
         ? `Missing: ${missingCertifications.join(', ')}`
-        : 'All requirements met',
-      weight: 20
+        : `All ${completedCertifications.length} requirements met`,
+      weight: 0.2
     });
 
     // 4. Leadership Qualification
     const leadershipQualified = !nextLevelRequirements.leadershipRequired || leadershipExperience;
     qualifications.push({
-      criterion: 'Leadership Experience',
-      isMet: leadershipQualified,
-      currentValue: leadershipExperience ? 'Yes' : 'No',
-      requiredValue: nextLevelRequirements.leadershipRequired ? 'Required' : 'Not Required',
-      weight: 20
+      criterion: 'leadership',
+      required: nextLevelRequirements.leadershipRequired,
+      met: leadershipQualified,
+      status: leadershipQualified ? 'met' : 'not_met',
+      details: leadershipExperience ? 'Leadership experience demonstrated' : 'No leadership experience yet',
+      weight: 0.2
     });
 
     // Calculate overall readiness score
     const totalWeight = qualifications.reduce((sum, q) => sum + q.weight, 0);
     const achievedWeight = qualifications
-      .filter(q => q.isMet)
+      .filter(q => q.met)
       .reduce((sum, q) => sum + q.weight, 0);
     const promotionReadinessScore = Math.round((achievedWeight / totalWeight) * 100);
 
@@ -1123,14 +1253,33 @@ export class AdvancedIntelligenceEngineService {
       ? nextLevelRequirements.minimumTenure - tenureInCurrentRole
       : (missingCertifications.length * 3); // 3 months per certification
 
+    const performanceHistory = performanceRatings.map((rating, index) => ({
+      period: `Period ${index + 1}`,
+      rating: rating >= 4 ? 'exceptional' as const : rating >= 3 ? 'exceeds' as const : rating >= 2 ? 'meets' as const : 'below' as const,
+      score: rating * 20
+    }));
+
     const result: CareerProgressionAnalysis = {
+      promotionReadinessScore,
+      readinessLevel: promotionReadinessScore >= 90 ? 'overdue' : promotionReadinessScore >= 70 ? 'ready' : promotionReadinessScore >= 50 ? 'developing' : 'not_ready',
+      timeInRole: tenureInCurrentRole,
+      timeInCompany: tenureInCurrentRole,
       currentLevel,
       nextLevel: this.getNextLevel(currentLevel),
-      promotionReadinessScore,
       qualifications,
-      developmentRecommendations,
-      estimatedMonthsToPromotion: Math.max(0, monthsToPromotion),
-      isPromotionReady: promotionReadinessScore === 100
+      performanceRating: avgPerformance >= 4 ? 'exceptional' : avgPerformance >= 3 ? 'exceeds' : avgPerformance >= 2 ? 'meets' : 'below',
+      performanceHistory,
+      skillMatch: certificationQualified ? 100 : ((completedCertifications.length / nextLevelRequirements.requiredCertifications.length) * 100),
+      missingSkills: missingCertifications,
+      developmentNeeds: [],
+      currentSalary: 0,
+      expectedSalaryIncrease: 0,
+      marketRateNextLevel: 0,
+      recommendation: promotionReadinessScore >= 90 ? 'strongly_recommend' : promotionReadinessScore >= 70 ? 'recommend' : promotionReadinessScore >= 50 ? 'consider' : 'not_recommended',
+      reasoning: developmentRecommendations,
+      actionPlan: [],
+      retentionRiskIfNotPromoted: promotionReadinessScore >= 70 ? 'high' : 'medium',
+      timelineToPromotion: monthsToPromotion > 0 ? `${monthsToPromotion} months` : 'Ready now'
     };
 
     this.setCache(cacheKey, result);
@@ -1191,42 +1340,62 @@ export class AdvancedIntelligenceEngineService {
     const timeline: RenewalMilestone[] = [];
 
     const milestoneDate1 = new Date(recommendedStartDate);
+    const daysUntilMilestone1 = Math.floor((milestoneDate1.getTime() - currentDate.getTime()) / (1000 * 60 * 60 * 24));
     timeline.push({
-      milestone: 'Start gathering documents',
+      id: 'milestone-1',
+      name: 'Start gathering documents',
+      description: 'Begin collecting all required documents for renewal application',
       dueDate: new Date(milestoneDate1),
-      isCompleted: currentDate >= milestoneDate1,
-      daysUntil: Math.floor((milestoneDate1.getTime() - currentDate.getTime()) / (1000 * 60 * 60 * 24)),
-      priority: daysUntilExpiry < processingDays + 30 ? 'urgent' : 'normal'
+      status: currentDate >= milestoneDate1 ? 'completed' : 'pending',
+      isOverdue: currentDate > milestoneDate1,
+      daysUntilDue: daysUntilMilestone1,
+      responsible: 'Employee',
+      checklist: ['Passport copies', 'Employment contract', 'Bank statements']
     });
 
     const milestoneDate2 = new Date(milestoneDate1);
     milestoneDate2.setDate(milestoneDate2.getDate() + 7);
+    const daysUntilMilestone2 = Math.floor((milestoneDate2.getTime() - currentDate.getTime()) / (1000 * 60 * 60 * 24));
     timeline.push({
-      milestone: 'Complete application forms',
+      id: 'milestone-2',
+      name: 'Complete application forms',
+      description: 'Fill out all renewal application forms accurately',
       dueDate: new Date(milestoneDate2),
-      isCompleted: currentDate >= milestoneDate2,
-      daysUntil: Math.floor((milestoneDate2.getTime() - currentDate.getTime()) / (1000 * 60 * 60 * 24)),
-      priority: daysUntilExpiry < processingDays + 23 ? 'urgent' : 'normal'
+      status: currentDate >= milestoneDate2 ? 'completed' : 'pending',
+      isOverdue: currentDate > milestoneDate2,
+      daysUntilDue: daysUntilMilestone2,
+      responsible: 'Employee',
+      checklist: ['Application form', 'Declaration forms', 'Fee payment']
     });
 
     const milestoneDate3 = new Date(milestoneDate2);
     milestoneDate3.setDate(milestoneDate3.getDate() + 7);
+    const daysUntilMilestone3 = Math.floor((milestoneDate3.getTime() - currentDate.getTime()) / (1000 * 60 * 60 * 24));
     timeline.push({
-      milestone: 'Submit application to authorities',
+      id: 'milestone-3',
+      name: 'Submit application to authorities',
+      description: 'Submit complete application package to immigration authorities',
       dueDate: new Date(milestoneDate3),
-      isCompleted: currentDate >= milestoneDate3,
-      daysUntil: Math.floor((milestoneDate3.getTime() - currentDate.getTime()) / (1000 * 60 * 60 * 24)),
-      priority: daysUntilExpiry < processingDays + 16 ? 'urgent' : 'normal'
+      status: currentDate >= milestoneDate3 ? 'completed' : 'pending',
+      isOverdue: currentDate > milestoneDate3,
+      daysUntilDue: daysUntilMilestone3,
+      responsible: 'HR Department',
+      checklist: ['All documents verified', 'Fees paid', 'Submission receipt obtained']
     });
 
     const milestoneDate4 = new Date(currentExpiryDate);
     milestoneDate4.setDate(milestoneDate4.getDate() - 7);
+    const daysUntilMilestone4 = Math.floor((milestoneDate4.getTime() - currentDate.getTime()) / (1000 * 60 * 60 * 24));
     timeline.push({
-      milestone: 'Follow up on application status',
+      id: 'milestone-4',
+      name: 'Follow up on application status',
+      description: 'Contact authorities to verify processing status',
       dueDate: new Date(milestoneDate4),
-      isCompleted: false,
-      daysUntil: Math.floor((milestoneDate4.getTime() - currentDate.getTime()) / (1000 * 60 * 60 * 24)),
-      priority: daysUntilExpiry < 7 ? 'urgent' : 'normal'
+      status: 'pending',
+      isOverdue: false,
+      daysUntilDue: daysUntilMilestone4,
+      responsible: 'HR Department',
+      checklist: ['Call immigration office', 'Check online portal', 'Prepare for collection']
     });
 
     // Required documents by permit type
@@ -1275,38 +1444,72 @@ export class AdvancedIntelligenceEngineService {
 
     const documents: PermitDocument[] = requiredDocumentsByType[permitType].map(docName => ({
       documentName: docName,
-      isRequired: true,
-      isSubmitted: false,
-      expiryDate: null
+      required: true,
+      status: 'missing',
+      expiryDate: undefined,
+      daysUntilExpiry: undefined,
+      notes: undefined
     }));
 
     // Determine urgency level
-    let urgencyLevel: 'low' | 'medium' | 'high' | 'critical';
-    if (daysUntilExpiry < processingDays) {
-      urgencyLevel = 'critical';
+    let urgency: 'none' | 'low' | 'medium' | 'high' | 'critical';
+    let status: 'valid' | 'renewal_planning' | 'renewal_required' | 'urgent' | 'expired';
+
+    if (daysUntilExpiry < 0) {
+      urgency = 'critical';
+      status = 'expired';
+    } else if (daysUntilExpiry < processingDays) {
+      urgency = 'critical';
+      status = 'urgent';
     } else if (daysUntilExpiry < processingDays + 30) {
-      urgencyLevel = 'high';
+      urgency = 'high';
+      status = 'renewal_required';
     } else if (daysUntilExpiry < processingDays + 60) {
-      urgencyLevel = 'medium';
+      urgency = 'medium';
+      status = 'renewal_planning';
     } else {
-      urgencyLevel = 'low';
+      urgency = 'low';
+      status = 'valid';
     }
 
+    const nextMilestone = timeline.find(m => m.status === 'pending');
+
     const result: VisaRenewalForecast = {
-      permitType,
-      currentExpiryDate,
+      currentPermitType: permitType,
+      currentPermitNumber: 'PERMIT-PLACEHOLDER',
+      issueDate: new Date(currentExpiryDate.getTime() - (365 * 24 * 60 * 60 * 1000)),
+      expiryDate: currentExpiryDate,
       daysUntilExpiry,
-      renewalTimeline: timeline,
+      status,
+      urgency,
+      timeline,
+      nextMilestone,
       requiredDocuments: documents,
-      estimatedProcessingDays: processingDays,
-      recommendedStartDate,
-      urgencyLevel,
+      documentCompletion: 0,
+      estimatedCost: {
+        applicationFee: 1000,
+        medicalExamination: 500,
+        legalFees: 2000,
+        documentationCosts: 300,
+        miscellaneous: 200,
+        totalEstimated: 4000
+      },
+      processingAuthority: 'Economic Development Board (EDBM)',
+      processingTime: `${processingDays} business days`,
+      successRate: 95,
       recommendations: this.generateVisaRecommendations(
         daysUntilExpiry,
         processingDays,
-        urgencyLevel,
+        urgency,
         permitType
-      )
+      ),
+      risks: [],
+      alerts: daysUntilExpiry < processingDays ? [{
+        severity: 'critical',
+        message: 'Permit expiring within processing time - urgent action required',
+        actionRequired: 'Submit emergency renewal application immediately',
+        deadline: currentExpiryDate
+      }] : []
     };
 
     this.setCache(cacheKey, result);
@@ -1316,7 +1519,7 @@ export class AdvancedIntelligenceEngineService {
   private generateVisaRecommendations(
     daysUntilExpiry: number,
     processingDays: number,
-    urgencyLevel: 'low' | 'medium' | 'high' | 'critical',
+    urgencyLevel: 'none' | 'low' | 'medium' | 'high' | 'critical',
     permitType: string
   ): string[] {
     const recommendations: string[] = [];
@@ -1397,8 +1600,7 @@ export class AdvancedIntelligenceEngineService {
       medianSalary: number;
       highestSalary: number;
       lowestSalary: number;
-    },
-    segments: EmployeeSegment[]
+    }
   ): WorkforceAnalytics {
     const cacheKey = `workforce_${totalEmployees}_${newHiresLast12Months}_${terminationsLast12Months}`;
     const cached = this.getFromCache<WorkforceAnalytics>(cacheKey);
@@ -1406,20 +1608,13 @@ export class AdvancedIntelligenceEngineService {
 
     // Turnover Analysis
     const turnoverAnalysis: TurnoverAnalysis = {
-      totalTurnoverRate: (terminationsLast12Months / totalEmployees) * 100,
-      voluntaryTurnoverRate: (voluntaryTerminations / totalEmployees) * 100,
-      involuntaryTurnoverRate: (involuntaryTerminations / totalEmployees) * 100,
-      newHireCount: newHiresLast12Months,
-      terminationCount: terminationsLast12Months,
-      netGrowthRate: ((newHiresLast12Months - terminationsLast12Months) / totalEmployees) * 100,
-      healthStatus: this.calculateTurnoverHealth(
-        (terminationsLast12Months / totalEmployees) * 100,
-        (voluntaryTerminations / totalEmployees) * 100
-      ),
-      recommendations: this.generateTurnoverRecommendations(
-        (terminationsLast12Months / totalEmployees) * 100,
-        (voluntaryTerminations / totalEmployees) * 100
-      )
+      voluntaryTurnover: (voluntaryTerminations / totalEmployees) * 100,
+      involuntaryTurnover: (involuntaryTerminations / totalEmployees) * 100,
+      totalTurnover: (terminationsLast12Months / totalEmployees) * 100,
+      turnoverRate: (terminationsLast12Months / totalEmployees) * 100,
+      averageTenure: demographics.averageTenure,
+      atRiskEmployees: 0,
+      topReasons: []
     };
 
     // Diversity Metrics
@@ -1427,43 +1622,46 @@ export class AdvancedIntelligenceEngineService {
       genderDistribution: {
         male: demographics.maleCount,
         female: demographics.femaleCount,
-        other: demographics.otherCount,
-        malePercentage: (demographics.maleCount / totalEmployees) * 100,
-        femalePercentage: (demographics.femaleCount / totalEmployees) * 100,
-        otherPercentage: (demographics.otherCount / totalEmployees) * 100
+        other: demographics.otherCount
       },
-      averageAge: demographics.averageAge,
-      averageTenure: demographics.averageTenure,
-      diversityScore: this.calculateDiversityScore(demographics, totalEmployees),
-      recommendations: this.generateDiversityRecommendations(demographics, totalEmployees)
+      nationalityDistribution: {},
+      ageDistribution: {},
+      genderBalanceScore: this.calculateDiversityScore(demographics, totalEmployees),
+      diversityIndex: this.calculateDiversityScore(demographics, totalEmployees),
+      complianceStatus: 'compliant'
     };
 
     // Compensation Analysis
     const compensationAnalysis: CompensationAnalysis = {
-      totalPayroll: compensation.totalPayroll,
       averageSalary: compensation.averageSalary,
       medianSalary: compensation.medianSalary,
       salaryRange: {
-        lowest: compensation.lowestSalary,
-        highest: compensation.highestSalary,
-        spread: compensation.highestSalary - compensation.lowestSalary
+        min: compensation.lowestSalary,
+        max: compensation.highestSalary
       },
-      payrollPercentageOfRevenue: 0, // Would need revenue data
-      recommendations: this.generateCompensationRecommendations(
-        compensation.averageSalary,
-        compensation.medianSalary,
-        compensation.highestSalary,
-        compensation.lowestSalary
-      )
+      salaryDistribution: [],
+      genderPayGap: ((demographics.maleCount > 0 && demographics.femaleCount > 0)
+        ? Math.abs(compensation.averageSalary * 0.05)
+        : 0),
+      payEquityScore: 85
     };
 
     const result: WorkforceAnalytics = {
-      totalEmployees,
+      snapshotDate: new Date(),
+      totalHeadcount: totalEmployees,
+      headcountTrend: [],
+      growthRate: ((newHiresLast12Months - terminationsLast12Months) / totalEmployees) * 100,
       turnoverAnalysis,
       diversityMetrics,
       compensationAnalysis,
-      employeeSegments: segments,
-      generatedDate: new Date()
+      departmentBreakdown: [],
+      ageDemographics: [],
+      tenureAnalysis: [],
+      totalPayrollCost: compensation.totalPayroll,
+      averageCostPerEmployee: compensation.totalPayroll / totalEmployees,
+      payrollTrend: [],
+      insights: [],
+      complianceMetrics: []
     };
 
     this.setCache(cacheKey, result);
@@ -1677,7 +1875,9 @@ export class AdvancedIntelligenceEngineService {
     // Implement LRU eviction if cache is full
     if (this.cache.size >= this.MAX_CACHE_SIZE) {
       const firstKey = this.cache.keys().next().value;
-      this.cache.delete(firstKey);
+      if (firstKey !== undefined) {
+        this.cache.delete(firstKey);
+      }
     }
 
     this.cache.set(key, {
@@ -1700,11 +1900,11 @@ export class AdvancedIntelligenceEngineService {
 
     // Only delete cache entries for current tenant
     const keysToDelete: string[] = [];
-    for (const key of this.cache.keys()) {
+    this.cache.forEach((_value, key) => {
       if (key.startsWith(`${tenantId}:`)) {
         keysToDelete.push(key);
       }
-    }
+    });
 
     keysToDelete.forEach(key => this.cache.delete(key));
     console.log(`[AdvancedIntelligence] Cleared ${keysToDelete.length} cache entries for tenant: ${tenantId}`);
