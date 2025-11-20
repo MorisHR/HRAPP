@@ -1,0 +1,105 @@
+<app-card [elevation]="2" padding="large" class="critical-alerts-card">
+  <div class="alerts-header">
+    <h3>Critical Alerts</h3>
+    <div class="header-actions">
+      <button
+        app-icon-button
+        (click)="refresh()"
+        [disabled]="loading()"
+        class="refresh-button"
+      >
+        <app-icon [name]="loading() ? 'sync' : 'refresh'" [class.spinning]="loading()"></app-icon>
+      </button>
+    </div>
+  </div>
+
+  @if (loading() && alerts().length === 0) {
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p>Loading alerts...</p>
+    </div>
+  } @else if (error()) {
+    <div class="error-state">
+      <app-icon name="error" class="error-icon"></app-icon>
+      <p>{{ error() }}</p>
+      <app-button (clicked)="refresh()">Retry</app-button>
+    </div>
+  } @else if (alerts().length === 0) {
+    <div class="empty-state">
+      <app-icon name="check_circle" class="success-icon"></app-icon>
+      <h4>All Clear!</h4>
+      <p>No critical alerts at this time</p>
+    </div>
+  } @else {
+    <div class="alerts-list">
+      @for (alert of alerts(); track alert.id) {
+        <div class="alert-item" [class]="'severity-' + alert.severity" [class.acknowledged]="alert.acknowledged">
+          <div class="alert-severity-badge" [class]="'severity-' + alert.severity">
+            <app-icon [name]="getSeverityIcon(alert.severity)"></app-icon>
+          </div>
+
+          <div class="alert-content">
+            <div class="alert-header-row">
+              <div class="alert-title-group">
+                <h4 class="alert-title">{{ alert.title }}</h4>
+                @if (alert.acknowledged) {
+                  <span class="acknowledged-badge">
+                    <app-icon name="done"></app-icon>
+                    Acknowledged
+                  </span>
+                }
+              </div>
+              <span class="alert-time">{{ getRelativeTime(alert.timestamp) }}</span>
+            </div>
+
+            <p class="alert-description">{{ alert.description }}</p>
+
+            <div class="alert-meta">
+              <span class="meta-item">
+                <app-icon name="source"></app-icon>
+                {{ alert.source }}
+              </span>
+              @if (alert.assignedTo) {
+                <span class="meta-item">
+                  <app-icon name="person"></app-icon>
+                  {{ alert.assignedTo }}
+                </span>
+              }
+            </div>
+
+            <div class="alert-actions">
+              @for (action of alert.actions; track action.action) {
+                <app-button
+                  [variant]="action.primary ? 'primary' : 'secondary'"
+                  size="small"
+                >
+                  {{ action.label }}
+                </app-button>
+              }
+              @if (!alert.acknowledged) {
+                <app-button
+                  variant="ghost"
+                  size="small"
+                  (clicked)="acknowledgeAlert(alert)"
+                >
+                  Acknowledge
+                </app-button>
+              }
+              <app-button
+                variant="ghost"
+                size="small"
+                (clicked)="resolveAlert(alert)"
+                class="resolve-button"
+              >
+                <app-icon name="check"></app-icon>
+                Resolve
+              </app-button>
+            </div>
+          </div>
+
+          <div class="alert-severity-indicator" [class]="'severity-' + alert.severity"></div>
+        </div>
+      }
+    </div>
+  }
+</app-card>

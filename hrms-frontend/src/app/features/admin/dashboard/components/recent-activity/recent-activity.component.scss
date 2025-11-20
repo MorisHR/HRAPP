@@ -1,0 +1,302 @@
+// ═══════════════════════════════════════════════════════════════
+// RECENT ACTIVITY COMPONENT
+// Real-time activity feed
+// ═══════════════════════════════════════════════════════════════
+
+.recent-activity-card {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.activity-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-lg);
+
+  h3 {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    margin: 0;
+  }
+
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+
+    .refresh-button {
+      app-icon.spinning {
+        animation: spin 1s linear infinite;
+      }
+    }
+
+    .view-all-link {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-xs);
+      font-size: 14px;
+      font-weight: 500;
+
+      app-icon {
+        font-size: 18px;
+      }
+    }
+  }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+// ───────────────────────────────────────────────────────────────
+// LOADING, ERROR & EMPTY STATES
+// ───────────────────────────────────────────────────────────────
+
+.loading-state,
+.error-state,
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-2xl) 0;
+  text-align: center;
+
+  .spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid rgba(0, 0, 0, 0.1);
+    border-left-color: var(--color-primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+
+  p {
+    margin-top: var(--spacing-md);
+    color: var(--color-text-secondary);
+    font-size: 14px;
+  }
+}
+
+.error-state {
+  .error-icon {
+    font-size: 48px;
+    color: var(--color-error);
+  }
+
+  button {
+    margin-top: var(--spacing-md);
+  }
+}
+
+.empty-state {
+  .empty-icon {
+    font-size: 48px;
+    color: var(--color-text-tertiary);
+    opacity: 0.5;
+  }
+}
+
+// ───────────────────────────────────────────────────────────────
+// ACTIVITY LIST
+// ───────────────────────────────────────────────────────────────
+
+.activity-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  overflow-y: auto;
+  max-height: 600px;
+
+  /* Custom scrollbar */
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: var(--color-surface);
+    border-radius: 3px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--color-border);
+    border-radius: 3px;
+
+    &:hover {
+      background: var(--color-border-hover);
+    }
+  }
+}
+
+.activity-item {
+  position: relative;
+  display: flex;
+  align-items: start;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  transition: all var(--transition-normal);
+  overflow: hidden;
+
+  &:hover {
+    border-color: var(--color-border-hover);
+    box-shadow: var(--shadow-sm);
+    transform: translateX(2px);
+  }
+
+  .activity-icon-wrapper {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all var(--transition-normal);
+
+    app-icon {
+      font-size: 20px;
+    }
+
+    &.severity-success {
+      background: rgba(34, 197, 94, 0.1);
+      app-icon {
+        color: rgb(34, 197, 94);
+      }
+    }
+
+    &.severity-info {
+      background: rgba(59, 130, 246, 0.1);
+      app-icon {
+        color: rgb(59, 130, 246);
+      }
+    }
+
+    &.severity-warning {
+      background: rgba(234, 179, 8, 0.1);
+      app-icon {
+        color: rgb(234, 179, 8);
+      }
+    }
+
+    &.severity-error {
+      background: rgba(239, 68, 68, 0.1);
+      app-icon {
+        color: rgb(239, 68, 68);
+      }
+    }
+  }
+
+  .activity-content {
+    flex: 1;
+    min-width: 0;
+
+    .activity-header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: start;
+      gap: var(--spacing-sm);
+      margin-bottom: var(--spacing-xs);
+    }
+
+    .activity-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--color-text-primary);
+      margin: 0;
+      line-height: 1.4;
+    }
+
+    .activity-time {
+      font-size: 12px;
+      color: var(--color-text-tertiary);
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .activity-description {
+      font-size: 13px;
+      color: var(--color-text-secondary);
+      line-height: 1.5;
+      margin: 0 0 var(--spacing-xs) 0;
+    }
+
+    .activity-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--spacing-md);
+      margin-top: var(--spacing-sm);
+
+      .meta-item {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-xs);
+        font-size: 12px;
+        color: var(--color-text-tertiary);
+
+        app-icon {
+          font-size: 14px;
+        }
+      }
+    }
+  }
+
+  .activity-severity-indicator {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    transition: width var(--transition-normal);
+
+    &.severity-success {
+      background: rgb(34, 197, 94);
+    }
+
+    &.severity-info {
+      background: rgb(59, 130, 246);
+    }
+
+    &.severity-warning {
+      background: rgb(234, 179, 8);
+    }
+
+    &.severity-error {
+      background: rgb(239, 68, 68);
+    }
+  }
+
+  &:hover .activity-severity-indicator {
+    width: 4px;
+  }
+}
+
+// ───────────────────────────────────────────────────────────────
+// ANIMATIONS
+// ───────────────────────────────────────────────────────────────
+
+.activity-item {
+  animation: slideIn 0.3s ease-out backwards;
+
+  @for $i from 1 through 10 {
+    &:nth-child(#{$i}) {
+      animation-delay: #{$i * 0.03}s;
+    }
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}

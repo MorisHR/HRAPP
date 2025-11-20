@@ -49,6 +49,7 @@ public class TimesheetEntry : BaseEntity
     public virtual Timesheet? Timesheet { get; set; }
     public virtual Attendance? Attendance { get; set; }
     public virtual ICollection<TimesheetAdjustment> Adjustments { get; set; } = new List<TimesheetAdjustment>();
+    public virtual ICollection<TimesheetProjectAllocation> ProjectAllocations { get; set; } = new List<TimesheetProjectAllocation>();
 
     /// <summary>
     /// Calculate hours worked based on clock in/out times

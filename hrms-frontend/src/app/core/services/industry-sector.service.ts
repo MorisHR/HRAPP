@@ -28,7 +28,7 @@ import type { IndustrySector, IndustrySectorsResponse } from '../models/industry
 export class IndustrySectorService {
   private http = inject(HttpClient);
 
-  private apiUrl = `${environment.apiUrl}/IndustrySectors`;
+  private apiUrl = `${environment.apiUrl}/api/IndustrySectors`;
 
   /**
    * FORTUNE 500 PATTERN: Cached observable using shareReplay

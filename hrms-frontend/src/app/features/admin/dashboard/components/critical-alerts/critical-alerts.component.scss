@@ -1,0 +1,328 @@
+// ═══════════════════════════════════════════════════════════════
+// CRITICAL ALERTS COMPONENT
+// Alert management and monitoring
+// ═══════════════════════════════════════════════════════════════
+
+.critical-alerts-card {
+  height: 100%;
+}
+
+.alerts-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-lg);
+
+  h3 {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    margin: 0;
+  }
+
+  .header-actions {
+    .refresh-button {
+      app-icon.spinning {
+        animation: spin 1s linear infinite;
+      }
+    }
+  }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+// ───────────────────────────────────────────────────────────────
+// LOADING, ERROR & EMPTY STATES
+// ───────────────────────────────────────────────────────────────
+
+.loading-state,
+.error-state,
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-2xl) 0;
+  text-align: center;
+
+  .spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid rgba(0, 0, 0, 0.1);
+    border-left-color: var(--color-primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+
+  p {
+    margin-top: var(--spacing-md);
+    color: var(--color-text-secondary);
+    font-size: 14px;
+  }
+}
+
+.error-state {
+  .error-icon {
+    font-size: 48px;
+    color: var(--color-error);
+  }
+
+  button {
+    margin-top: var(--spacing-md);
+  }
+}
+
+.empty-state {
+  .success-icon {
+    font-size: 64px;
+    color: rgb(34, 197, 94);
+    margin-bottom: var(--spacing-md);
+  }
+
+  h4 {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    margin: 0 0 var(--spacing-xs) 0;
+  }
+
+  p {
+    color: var(--color-text-secondary);
+  }
+}
+
+// ───────────────────────────────────────────────────────────────
+// ALERTS LIST
+// ───────────────────────────────────────────────────────────────
+
+.alerts-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.alert-item {
+  position: relative;
+  display: flex;
+  gap: var(--spacing-md);
+  padding: var(--spacing-lg);
+  border-radius: var(--radius-md);
+  border: 2px solid;
+  background: var(--color-card);
+  transition: all var(--transition-normal);
+  overflow: hidden;
+
+  &.severity-critical {
+    border-color: rgba(239, 68, 68, 0.3);
+    background: rgba(239, 68, 68, 0.02);
+  }
+
+  &.severity-high {
+    border-color: rgba(234, 179, 8, 0.3);
+    background: rgba(234, 179, 8, 0.02);
+  }
+
+  &.severity-medium {
+    border-color: rgba(59, 130, 246, 0.3);
+    background: rgba(59, 130, 246, 0.02);
+  }
+
+  &.severity-low {
+    border-color: rgba(148, 163, 184, 0.3);
+    background: rgba(148, 163, 184, 0.02);
+  }
+
+  &.acknowledged {
+    opacity: 0.7;
+  }
+
+  &:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+  }
+
+  .alert-severity-badge {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+
+    app-icon {
+      font-size: 24px;
+    }
+
+    &.severity-critical {
+      background: rgba(239, 68, 68, 0.1);
+      app-icon {
+        color: rgb(239, 68, 68);
+      }
+    }
+
+    &.severity-high {
+      background: rgba(234, 179, 8, 0.1);
+      app-icon {
+        color: rgb(234, 179, 8);
+      }
+    }
+
+    &.severity-medium {
+      background: rgba(59, 130, 246, 0.1);
+      app-icon {
+        color: rgb(59, 130, 246);
+      }
+    }
+
+    &.severity-low {
+      background: rgba(148, 163, 184, 0.1);
+      app-icon {
+        color: rgb(148, 163, 184);
+      }
+    }
+  }
+
+  .alert-content {
+    flex: 1;
+    min-width: 0;
+
+    .alert-header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: start;
+      gap: var(--spacing-md);
+      margin-bottom: var(--spacing-sm);
+    }
+
+    .alert-title-group {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+      flex-wrap: wrap;
+    }
+
+    .alert-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--color-text-primary);
+      margin: 0;
+    }
+
+    .acknowledged-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--spacing-2xs);
+      padding: var(--spacing-2xs) var(--spacing-sm);
+      background: rgba(34, 197, 94, 0.1);
+      color: rgb(34, 197, 94);
+      border-radius: var(--radius-sm);
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+
+      app-icon {
+        font-size: 14px;
+      }
+    }
+
+    .alert-time {
+      font-size: 12px;
+      color: var(--color-text-tertiary);
+      white-space: nowrap;
+    }
+
+    .alert-description {
+      font-size: 14px;
+      color: var(--color-text-secondary);
+      line-height: 1.5;
+      margin: 0 0 var(--spacing-sm) 0;
+    }
+
+    .alert-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--spacing-md);
+      margin-bottom: var(--spacing-md);
+
+      .meta-item {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-xs);
+        font-size: 12px;
+        color: var(--color-text-tertiary);
+
+        app-icon {
+          font-size: 14px;
+        }
+      }
+    }
+
+    .alert-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--spacing-sm);
+
+      .resolve-button {
+        margin-left: auto;
+        color: rgb(34, 197, 94);
+
+        app-icon {
+          font-size: 16px;
+        }
+      }
+    }
+  }
+
+  .alert-severity-indicator {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+
+    &.severity-critical {
+      background: rgb(239, 68, 68);
+    }
+
+    &.severity-high {
+      background: rgb(234, 179, 8);
+    }
+
+    &.severity-medium {
+      background: rgb(59, 130, 246);
+    }
+
+    &.severity-low {
+      background: rgb(148, 163, 184);
+    }
+  }
+}
+
+// ───────────────────────────────────────────────────────────────
+// ANIMATIONS
+// ───────────────────────────────────────────────────────────────
+
+.alert-item {
+  animation: slideIn 0.3s ease-out backwards;
+
+  @for $i from 1 through 5 {
+    &:nth-child(#{$i}) {
+      animation-delay: #{$i * 0.05}s;
+    }
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

@@ -31,10 +31,18 @@ public class PayrollCycleDto
 
     // Process Information
     public int EmployeeCount { get; set; }
-    public Guid? ProcessedBy { get; set; }
+    /// <summary>
+    /// Username or email of the user who processed this payroll cycle
+    /// FIXED: Changed from Guid to string (CRITICAL-1)
+    /// </summary>
+    public string? ProcessedBy { get; set; }
     public string? ProcessedByName { get; set; }
     public DateTime? ProcessedAt { get; set; }
-    public Guid? ApprovedBy { get; set; }
+    /// <summary>
+    /// Username or email of the user who approved this payroll cycle
+    /// FIXED: Changed from Guid to string (CRITICAL-1)
+    /// </summary>
+    public string? ApprovedBy { get; set; }
     public string? ApprovedByName { get; set; }
     public DateTime? ApprovedAt { get; set; }
     public DateTime? PaymentDate { get; set; }

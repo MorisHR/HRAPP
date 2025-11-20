@@ -1,11 +1,48 @@
 // ═══════════════════════════════════════════════════════════════
-// ADMIN DASHBOARD - Executive Theme
-// Clean, minimal, professional
+// ADMIN DASHBOARD - Production Grade
+// Enterprise-level dashboard with full data visualization
 // ═══════════════════════════════════════════════════════════════
 
 .admin-dashboard {
   min-height: 100vh;
   background: var(--color-background);
+}
+
+// ───────────────────────────────────────────────────────────────
+// DASHBOARD HEADER
+// ───────────────────────────────────────────────────────────────
+
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-2xl);
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-md);
+  }
+
+  button {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+
+    app-icon.spinning {
+      animation: spin 1s linear infinite;
+    }
+  }
+}
+
+.dashboard-subtitle {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  margin: var(--spacing-xs) 0 0 0;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
 // ───────────────────────────────────────────────────────────────
@@ -91,7 +128,43 @@
 }
 
 // ───────────────────────────────────────────────────────────────
-// STAT CARDS - Minimal, elegant
+// LOADING SKELETON
+// ───────────────────────────────────────────────────────────────
+
+.loading-skeleton {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--spacing-lg);
+  margin-bottom: var(--spacing-2xl);
+
+  @media (max-width: 1024px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+
+  .skeleton-card {
+    height: 140px;
+    background: linear-gradient(90deg, var(--color-surface) 0%, var(--color-card) 50%, var(--color-surface) 100%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    border-radius: var(--radius-md);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+// ───────────────────────────────────────────────────────────────
+// STAT CARDS - Enhanced with Trends & Color Coding
 // ───────────────────────────────────────────────────────────────
 
 .stats-grid {
@@ -112,29 +185,103 @@
 
 .stat-card {
   background: var(--color-card) !important;
-  border: 1px solid var(--color-border) !important;
+  border: 2px solid transparent !important;
   border-radius: var(--radius-md) !important;
   box-shadow: var(--shadow-sm) !important;
   transition: all var(--transition-normal);
   cursor: default;
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    transition: all var(--transition-normal);
+  }
+
+  // Color coding for each metric type
+  &.stat-card-tenants {
+    &::before {
+      background: rgb(59, 130, 246); // Blue
+    }
+    &:hover {
+      border-color: rgba(59, 130, 246, 0.3) !important;
+    }
+    .stat-icon {
+      background: rgba(59, 130, 246, 0.1);
+      app-icon {
+        color: rgb(59, 130, 246);
+      }
+    }
+  }
+
+  &.stat-card-active {
+    &::before {
+      background: rgb(34, 197, 94); // Green
+    }
+    &:hover {
+      border-color: rgba(34, 197, 94, 0.3) !important;
+    }
+    .stat-icon {
+      background: rgba(34, 197, 94, 0.1);
+      app-icon {
+        color: rgb(34, 197, 94);
+      }
+    }
+  }
+
+  &.stat-card-employees {
+    &::before {
+      background: rgb(168, 85, 247); // Purple
+    }
+    &:hover {
+      border-color: rgba(168, 85, 247, 0.3) !important;
+    }
+    .stat-icon {
+      background: rgba(168, 85, 247, 0.1);
+      app-icon {
+        color: rgb(168, 85, 247);
+      }
+    }
+  }
+
+  &.stat-card-revenue {
+    &::before {
+      background: rgb(234, 179, 8); // Gold
+    }
+    &:hover {
+      border-color: rgba(234, 179, 8, 0.3) !important;
+    }
+    .stat-icon {
+      background: rgba(234, 179, 8, 0.1);
+      app-icon {
+        color: rgb(234, 179, 8);
+      }
+    }
+  }
 
   &:hover {
-    box-shadow: var(--shadow-md) !important;
-    transform: translateY(-2px);
-    border-color: var(--color-border-hover);
+    box-shadow: var(--shadow-lg) !important;
+    transform: translateY(-4px);
+
+    &::before {
+      height: 6px;
+    }
   }
 
-  // Support both Material and custom cards
-  mat-card-content,
-  & {
-    padding: var(--spacing-xl) !important;
+  .stat-content {
+    width: 100%;
+  }
+
+  .stat-header {
     display: flex;
-    align-items: center;
     justify-content: space-between;
-  }
-
-  .stat-info {
-    flex: 1;
+    align-items: center;
+    margin-bottom: var(--spacing-md);
 
     .stat-label {
       font-size: 12px;
@@ -142,13 +289,43 @@
       color: var(--color-text-secondary);
       text-transform: uppercase;
       letter-spacing: 0.08em;
-      margin: 0 0 var(--spacing-sm) 0;
+      margin: 0;
     }
+
+    .stat-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all var(--transition-normal);
+
+      app-icon {
+        font-size: 24px;
+      }
+
+      @media (max-width: 768px) {
+        width: 40px;
+        height: 40px;
+
+        app-icon {
+          font-size: 20px;
+        }
+      }
+    }
+  }
+
+  .stat-value-row {
+    display: flex;
+    align-items: baseline;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-sm);
 
     .stat-value {
       font-size: 48px;
       font-weight: 700;
-      color: var(--color-primary);
+      color: var(--color-text-primary);
       line-height: 1;
       margin: 0;
       letter-spacing: -0.02em;
@@ -157,48 +334,120 @@
         font-size: 36px;
       }
     }
-  }
 
-  .stat-icon {
-    width: 48px;
-    height: 48px;
-    background: var(--color-surface);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-sm);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all var(--transition-normal);
+    .stat-trend {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-2xs);
+      padding: var(--spacing-xs) var(--spacing-sm);
+      border-radius: var(--radius-sm);
+      font-size: 12px;
+      font-weight: 600;
 
-    mat-icon,
-    app-icon {
-      color: var(--color-secondary);
-      font-size: 24px;
-      width: 24px;
-      height: 24px;
-    }
+      &.trend-up {
+        background: rgba(34, 197, 94, 0.1);
+        color: rgb(34, 197, 94);
+      }
 
-    @media (max-width: 768px) {
-      width: 40px;
-      height: 40px;
+      &.trend-down {
+        background: rgba(239, 68, 68, 0.1);
+        color: rgb(239, 68, 68);
+      }
 
-      mat-icon {
-        font-size: 20px;
-        width: 20px;
-        height: 20px;
+      &.trend-stable {
+        background: rgba(148, 163, 184, 0.1);
+        color: rgb(148, 163, 184);
+      }
+
+      app-icon {
+        font-size: 14px;
       }
     }
   }
 
-  &:hover .stat-icon {
-    background: var(--color-primary);
-    border-color: var(--color-primary);
+  .stat-description {
+    font-size: 13px;
+    color: var(--color-text-secondary);
+    margin: 0;
+  }
+}
 
-    mat-icon,
-    app-icon {
-      color: var(--color-background);
+// ───────────────────────────────────────────────────────────────
+// SECTION TITLES
+// ───────────────────────────────────────────────────────────────
+
+.section-title {
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0 0 var(--spacing-lg) 0;
+  letter-spacing: -0.01em;
+
+  @media (max-width: 768px) {
+    font-size: 20px;
+  }
+}
+
+// ───────────────────────────────────────────────────────────────
+// SYSTEM STATUS ROW (Health & Alerts)
+// ───────────────────────────────────────────────────────────────
+
+.system-status-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: var(--spacing-lg);
+  margin-bottom: var(--spacing-2xl);
+
+  @media (max-width: 1024px) {
+    grid-template-columns: 1fr;
+  }
+
+  .system-health-section,
+  .critical-alerts-section {
+    min-height: 400px;
+  }
+}
+
+// ───────────────────────────────────────────────────────────────
+// CHARTS SECTION
+// ───────────────────────────────────────────────────────────────
+
+.charts-section {
+  margin-bottom: var(--spacing-2xl);
+}
+
+.charts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+  gap: var(--spacing-lg);
+
+  @media (max-width: 1024px) {
+    grid-template-columns: 1fr;
+  }
+
+  .chart-card {
+    min-height: 400px;
+
+    .chart-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--color-text-primary);
+      margin: 0 0 var(--spacing-lg) 0;
+    }
+
+    .chart-wrapper {
+      width: 100%;
+      height: 300px;
     }
   }
+}
+
+// ───────────────────────────────────────────────────────────────
+// ACTIVITY SECTION
+// ───────────────────────────────────────────────────────────────
+
+.activity-section {
+  margin-bottom: var(--spacing-2xl);
 }
 
 // ───────────────────────────────────────────────────────────────
@@ -206,17 +455,7 @@
 // ───────────────────────────────────────────────────────────────
 
 .quick-actions {
-  h2 {
-    font-size: 24px;
-    font-weight: 600;
-    color: var(--color-text-primary);
-    margin: 0 0 var(--spacing-lg) 0;
-    letter-spacing: -0.01em;
-
-    @media (max-width: 768px) {
-      font-size: 20px;
-    }
-  }
+  margin-bottom: var(--spacing-2xl);
 }
 
 .actions-grid {

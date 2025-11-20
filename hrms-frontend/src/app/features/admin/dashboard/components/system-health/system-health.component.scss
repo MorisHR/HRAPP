@@ -1,0 +1,272 @@
+// ═══════════════════════════════════════════════════════════════
+// SYSTEM HEALTH COMPONENT
+// Real-time system status monitoring
+// ═══════════════════════════════════════════════════════════════
+
+.system-health-card {
+  height: 100%;
+}
+
+.system-health-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-lg);
+
+  h3 {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    margin: 0;
+  }
+
+  .refresh-button {
+    app-icon.spinning {
+      animation: spin 1s linear infinite;
+    }
+  }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+// ───────────────────────────────────────────────────────────────
+// LOADING & ERROR STATES
+// ───────────────────────────────────────────────────────────────
+
+.loading-state,
+.error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-2xl) 0;
+  text-align: center;
+
+  .spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid rgba(0, 0, 0, 0.1);
+    border-left-color: var(--color-primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+
+  p {
+    margin-top: var(--spacing-md);
+    color: var(--color-text-secondary);
+    font-size: 14px;
+  }
+}
+
+.error-state {
+  .error-icon {
+    font-size: 48px;
+    color: var(--color-error);
+  }
+
+  button {
+    margin-top: var(--spacing-md);
+  }
+}
+
+// ───────────────────────────────────────────────────────────────
+// OVERALL STATUS
+// ───────────────────────────────────────────────────────────────
+
+.overall-status {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-lg);
+  padding: var(--spacing-lg);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--spacing-xl);
+  border: 2px solid;
+  transition: all var(--transition-normal);
+
+  &.status-healthy {
+    background: rgba(34, 197, 94, 0.05);
+    border-color: rgba(34, 197, 94, 0.2);
+
+    .status-icon-wrapper {
+      background: rgba(34, 197, 94, 0.1);
+      app-icon {
+        color: rgb(34, 197, 94);
+      }
+    }
+  }
+
+  &.status-degraded {
+    background: rgba(234, 179, 8, 0.05);
+    border-color: rgba(234, 179, 8, 0.2);
+
+    .status-icon-wrapper {
+      background: rgba(234, 179, 8, 0.1);
+      app-icon {
+        color: rgb(234, 179, 8);
+      }
+    }
+  }
+
+  &.status-down {
+    background: rgba(239, 68, 68, 0.05);
+    border-color: rgba(239, 68, 68, 0.2);
+
+    .status-icon-wrapper {
+      background: rgba(239, 68, 68, 0.1);
+      app-icon {
+        color: rgb(239, 68, 68);
+      }
+    }
+  }
+
+  .status-icon-wrapper {
+    width: 60px;
+    height: 60px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    app-icon {
+      font-size: 32px;
+    }
+  }
+
+  .status-info {
+    flex: 1;
+
+    h4 {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--color-text-primary);
+      margin: 0 0 var(--spacing-xs) 0;
+    }
+
+    .status-detail {
+      font-size: 14px;
+      color: var(--color-text-secondary);
+      margin: 0 0 var(--spacing-2xs) 0;
+    }
+
+    .status-timestamp {
+      font-size: 12px;
+      color: var(--color-text-tertiary);
+      margin: 0;
+    }
+  }
+}
+
+// ───────────────────────────────────────────────────────────────
+// SERVICES LIST
+// ───────────────────────────────────────────────────────────────
+
+.services-list {
+  .services-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin: 0 0 var(--spacing-md) 0;
+  }
+}
+
+.service-item {
+  padding: var(--spacing-md);
+  border-radius: var(--radius-sm);
+  margin-bottom: var(--spacing-sm);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  transition: all var(--transition-normal);
+
+  &:hover {
+    border-color: var(--color-border-hover);
+    box-shadow: var(--shadow-sm);
+  }
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+
+  .service-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    .service-name {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--color-text-primary);
+
+      app-icon {
+        font-size: 18px;
+
+        &.icon-healthy {
+          color: rgb(34, 197, 94);
+        }
+
+        &.icon-degraded {
+          color: rgb(234, 179, 8);
+        }
+
+        &.icon-down {
+          color: rgb(239, 68, 68);
+        }
+      }
+    }
+
+    .service-metrics {
+      display: flex;
+      gap: var(--spacing-md);
+      font-size: 13px;
+
+      .metric {
+        color: var(--color-text-secondary);
+        font-weight: 500;
+      }
+
+      .uptime {
+        color: var(--color-text-tertiary);
+      }
+    }
+  }
+
+  .service-details {
+    display: flex;
+    align-items: start;
+    gap: var(--spacing-xs);
+    margin-top: var(--spacing-sm);
+    padding: var(--spacing-sm);
+    background: rgba(234, 179, 8, 0.05);
+    border-radius: var(--radius-xs);
+    font-size: 12px;
+    color: var(--color-text-secondary);
+
+    .info-icon {
+      font-size: 14px;
+      color: rgb(234, 179, 8);
+      flex-shrink: 0;
+    }
+  }
+
+  .service-error-rate {
+    display: flex;
+    gap: var(--spacing-xs);
+    margin-top: var(--spacing-sm);
+    font-size: 12px;
+
+    .error-label {
+      color: var(--color-text-secondary);
+    }
+
+    .error-value {
+      color: var(--color-error);
+      font-weight: 600;
+    }
+  }
+}

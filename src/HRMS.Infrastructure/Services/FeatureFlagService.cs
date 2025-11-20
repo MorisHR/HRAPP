@@ -216,7 +216,6 @@ public class FeatureFlagService : IFeatureFlagService
             .FirstOrDefaultAsync(f => f.TenantId == request.TenantId && f.Module == request.Module);
 
         FeatureFlag flag;
-        bool isNew = false;
 
         if (existingFlag != null)
         {
@@ -283,7 +282,6 @@ public class FeatureFlagService : IFeatureFlagService
             };
 
             _context.FeatureFlagsConfig.Add(flag);
-            isNew = true;
 
             _logger.LogInformation(
                 "Feature flag created: {Module} for tenant {TenantId} by {PerformedBy}",

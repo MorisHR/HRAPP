@@ -112,10 +112,6 @@
               "target": "Package",
               "version": "[9.0.10, )"
             },
-            "Microsoft.Extensions.Caching.StackExchangeRedis": {
-              "target": "Package",
-              "version": "[9.0.10, )"
-            },
             "Polly": {
               "target": "Package",
               "version": "[8.6.4, )"
@@ -446,6 +442,10 @@
               "target": "Package",
               "version": "[0.105.0, )"
             },
+            "EFCore.BulkExtensions": {
+              "target": "Package",
+              "version": "[9.0.2, )"
+            },
             "Google.Cloud.SecretManager.V1": {
               "target": "Package",
               "version": "[2.6.0, )"
@@ -490,6 +490,10 @@
               "target": "Package",
               "version": "[9.0.10, )"
             },
+            "Microsoft.Extensions.Caching.StackExchangeRedis": {
+              "target": "Package",
+              "version": "[10.0.0, )"
+            },
             "Microsoft.Extensions.Configuration.Abstractions": {
               "target": "Package",
               "version": "[9.0.10, )"
@@ -522,9 +526,17 @@
               "target": "Package",
               "version": "[2025.7.3, )"
             },
+            "Serilog": {
+              "target": "Package",
+              "version": "[4.2.0, )"
+            },
+            "Serilog.Extensions.Logging": {
+              "target": "Package",
+              "version": "[9.0.0, )"
+            },
             "StackExchange.Redis": {
               "target": "Package",
-              "version": "[2.7.10, )"
+              "version": "[2.8.16, )"
             },
             "System.IdentityModel.Tokens.Jwt": {
               "target": "Package",

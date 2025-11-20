@@ -351,12 +351,54 @@ public class Employee : BaseEntity
         VisaExpiryStatus == DocumentExpiryStatus.ExpiringVerySoon;
 
     // ==========================================
-    // OFFBOARDING
+    // OFFBOARDING & TERMINATION (Fortune 500 Grade)
     // ==========================================
 
+    /// <summary>
+    /// Termination date - actual last day of employment
+    /// CRITICAL for accurate turnover reporting and data integrity
+    /// </summary>
+    public DateTime? TerminationDate { get; set; }
+
+    /// <summary>
+    /// Termination type classification
+    /// </summary>
+    public TerminationType? TerminationType { get; set; }
+
+    /// <summary>
+    /// Termination reason - select from predefined list
+    /// Used for turnover analysis and compliance reporting
+    /// </summary>
+    public string? TerminationReason { get; set; }
+
+    /// <summary>
+    /// Detailed termination notes (optional)
+    /// </summary>
+    public string? TerminationNotes { get; set; }
+
+    /// <summary>
+    /// Is the employee eligible for rehire?
+    /// </summary>
+    public bool IsEligibleForRehire { get; set; } = true;
+
+    /// <summary>
+    /// Offboarding reason (legacy - kept for backward compatibility)
+    /// </summary>
     public string? OffboardingReason { get; set; }
+
+    /// <summary>
+    /// Is offboarding complete?
+    /// </summary>
     public bool IsOffboarded { get; set; }
+
+    /// <summary>
+    /// Offboarding completion date (different from termination date)
+    /// </summary>
     public DateTime? OffboardingDate { get; set; }
+
+    /// <summary>
+    /// Offboarding checklist completion notes
+    /// </summary>
     public string? OffboardingNotes { get; set; }
 
     // ==========================================

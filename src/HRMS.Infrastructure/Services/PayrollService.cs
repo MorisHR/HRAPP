@@ -21,7 +21,7 @@ public class PayrollService : IPayrollService
     private readonly ISalaryComponentService _salaryComponentService;
     private readonly ILogger<PayrollService> _logger;
     private readonly ICurrentUserService _currentUserService;
-    private readonly PayslipPdfGeneratorService _pdfGenerator;
+    private readonly IPayslipPdfGenerator _pdfGenerator; // FIXED: Use interface instead of concrete class (CRITICAL-2)
 
     // Role constants for authorization
     private const string RoleAdmin = "Admin";
@@ -66,14 +66,15 @@ public class PayrollService : IPayrollService
         ITenantService tenantService,
         ISalaryComponentService salaryComponentService,
         ILogger<PayrollService> logger,
-        ICurrentUserService currentUserService)
+        ICurrentUserService currentUserService,
+        IPayslipPdfGenerator pdfGenerator) // FIXED: Inject via constructor (CRITICAL-2)
     {
         _context = context;
         _tenantService = tenantService;
         _salaryComponentService = salaryComponentService;
         _logger = logger;
         _currentUserService = currentUserService;
-        _pdfGenerator = new PayslipPdfGeneratorService();
+        _pdfGenerator = pdfGenerator; // FIXED: Use injected instance (CRITICAL-2)
     }
 
     #region Authorization Helper Methods
@@ -456,7 +457,7 @@ public class PayrollService : IPayrollService
             cycle.TotalOvertimePay = payslips.Sum(p => p.OvertimePay);
 
             cycle.Status = PayrollCycleStatus.Calculated;
-            cycle.ProcessedBy = Guid.Parse(processedBy); // Simplified - should lookup user
+            cycle.ProcessedBy = processedBy; // FIXED: Store username directly instead of parsing as Guid
             cycle.ProcessedAt = DateTime.UtcNow;
             cycle.UpdatedBy = processedBy;
             cycle.UpdatedAt = DateTime.UtcNow;
@@ -612,7 +613,7 @@ public class PayrollService : IPayrollService
                 throw new InvalidOperationException("Payment date is required for approval");
 
             cycle.Status = PayrollCycleStatus.Approved;
-            cycle.ApprovedBy = Guid.Parse(approvedBy);
+            cycle.ApprovedBy = approvedBy; // FIXED: Store username directly instead of parsing as Guid
             cycle.ApprovedAt = DateTime.UtcNow;
             cycle.PaymentDate = dto.PaymentDate.Value;
 

@@ -863,6 +863,39 @@ public class EmployeeService : IEmployeeService
         return !await query.AnyAsync();
     }
 
+    /// <summary>
+    /// Check if employee code exists (for async form validation)
+    /// INTELLIGENCE: Supports real-time uniqueness validation in employee form
+    /// Returns TRUE if code exists, FALSE if available
+    /// </summary>
+    /// <param name="employeeCode">Employee code to check</param>
+    /// <param name="excludeId">Optional employee ID to exclude (for edit scenarios)</param>
+    /// <returns>True if code exists, false if available</returns>
+    public async Task<bool> CheckEmployeeCodeExistsAsync(string employeeCode, string? excludeId = null)
+    {
+        try
+        {
+            // Parse excludeId if provided
+            Guid? excludeGuid = null;
+            if (!string.IsNullOrWhiteSpace(excludeId) && Guid.TryParse(excludeId, out var parsedGuid))
+            {
+                excludeGuid = parsedGuid;
+            }
+
+            // Check if code is unique (opposite of exists)
+            var isUnique = await IsEmployeeCodeUniqueAsync(employeeCode, excludeGuid);
+
+            // Return exists (opposite of unique)
+            return !isUnique;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error checking employee code existence: {Code}", employeeCode);
+            // On error, return false (code doesn't exist) to not block the user
+            return false;
+        }
+    }
+
     public decimal CalculateProRatedAnnualLeave(DateTime joiningDate, DateTime calculationDate)
     {
         const decimal mauritiusAnnualLeave = 22m; // Mauritius standard: 22 working days

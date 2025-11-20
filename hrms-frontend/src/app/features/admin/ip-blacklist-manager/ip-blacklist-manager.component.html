@@ -1,0 +1,371 @@
+<!-- IP BLACKLIST MANAGEMENT UI -->
+<div class="ip-manager-container">
+  <!-- Header -->
+  <div class="manager-header">
+    <div class="title-section">
+      <h1 class="manager-title">
+        <mat-icon>block</mat-icon>
+        IP Blacklist & Whitelist Management
+      </h1>
+      <p class="manager-subtitle">
+        Manage IP-based access control (PCI-DSS 1.3, NIST 800-53 SC-7)
+      </p>
+    </div>
+
+    <div class="header-actions">
+      <button mat-raised-button color="warn" (click)="toggleAddBlacklistForm()" [disabled]="loading()">
+        <mat-icon>block</mat-icon>
+        Add to Blacklist
+      </button>
+      <button mat-raised-button color="primary" (click)="toggleAddWhitelistForm()" [disabled]="loading()">
+        <mat-icon>verified_user</mat-icon>
+        Add to Whitelist
+      </button>
+      <button mat-icon-button (click)="refresh()" [disabled]="loading()" matTooltip="Refresh">
+        <mat-icon>refresh</mat-icon>
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading Spinner -->
+  @if (loading()) {
+    <div class="loading-overlay">
+      <mat-spinner diameter="60"></mat-spinner>
+    </div>
+  }
+
+  <!-- Add to Blacklist Form -->
+  @if (showAddBlacklistForm()) {
+    <mat-card class="form-card">
+      <mat-card-header>
+        <mat-card-title>Add IP to Blacklist</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <form [formGroup]="addToBlacklistForm" (ngSubmit)="addToBlacklist()" class="add-form">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>IP Address</mat-label>
+            <input matInput formControlName="ipAddress" placeholder="e.g., 192.168.1.100">
+            <mat-error *ngIf="addToBlacklistForm.get('ipAddress')?.hasError('required')">
+              IP address is required
+            </mat-error>
+            <mat-error *ngIf="addToBlacklistForm.get('ipAddress')?.hasError('pattern')">
+              Invalid IP address format
+            </mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Reason</mat-label>
+            <textarea matInput formControlName="reason" rows="3" placeholder="Describe why this IP should be blacklisted..."></textarea>
+            <mat-error *ngIf="addToBlacklistForm.get('reason')?.hasError('required')">
+              Reason is required
+            </mat-error>
+            <mat-error *ngIf="addToBlacklistForm.get('reason')?.hasError('minlength')">
+              Reason must be at least 10 characters
+            </mat-error>
+          </mat-form-field>
+
+          <mat-checkbox formControlName="isPermanent" class="permanent-checkbox">
+            Permanent Block (does not expire)
+          </mat-checkbox>
+
+          @if (!addToBlacklistForm.get('isPermanent')?.value) {
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Expiration Date (Optional)</mat-label>
+              <input matInput [matDatepicker]="expiryPicker" formControlName="expiresAt">
+              <mat-datepicker-toggle matSuffix [for]="expiryPicker"></mat-datepicker-toggle>
+              <mat-datepicker #expiryPicker></mat-datepicker>
+            </mat-form-field>
+          }
+
+          <div class="form-actions">
+            <button mat-raised-button type="submit" color="warn" [disabled]="addToBlacklistForm.invalid || loading()">
+              <mat-icon>block</mat-icon>
+              Add to Blacklist
+            </button>
+            <button mat-button type="button" (click)="toggleAddBlacklistForm()">
+              Cancel
+            </button>
+          </div>
+        </form>
+      </mat-card-content>
+    </mat-card>
+  }
+
+  <!-- Add to Whitelist Form -->
+  @if (showAddWhitelistForm()) {
+    <mat-card class="form-card">
+      <mat-card-header>
+        <mat-card-title>Add IP to Whitelist</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <form [formGroup]="addToWhitelistForm" (ngSubmit)="addToWhitelist()" class="add-form">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>IP Address</mat-label>
+            <input matInput formControlName="ipAddress" placeholder="e.g., 203.0.113.0">
+            <mat-error *ngIf="addToWhitelistForm.get('ipAddress')?.hasError('required')">
+              IP address is required
+            </mat-error>
+            <mat-error *ngIf="addToWhitelistForm.get('ipAddress')?.hasError('pattern')">
+              Invalid IP address format
+            </mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Reason</mat-label>
+            <textarea matInput formControlName="reason" rows="3" placeholder="Describe why this IP should be trusted..."></textarea>
+            <mat-error *ngIf="addToWhitelistForm.get('reason')?.hasError('required')">
+              Reason is required
+            </mat-error>
+            <mat-error *ngIf="addToWhitelistForm.get('reason')?.hasError('minlength')">
+              Reason must be at least 10 characters
+            </mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Expiration Date (Optional)</mat-label>
+            <input matInput [matDatepicker]="whitelistExpiryPicker" formControlName="expiresAt">
+            <mat-datepicker-toggle matSuffix [for]="whitelistExpiryPicker"></mat-datepicker-toggle>
+            <mat-datepicker #whitelistExpiryPicker></mat-datepicker>
+          </mat-form-field>
+
+          <div class="form-actions">
+            <button mat-raised-button type="submit" color="primary" [disabled]="addToWhitelistForm.invalid || loading()">
+              <mat-icon>verified_user</mat-icon>
+              Add to Whitelist
+            </button>
+            <button mat-button type="button" (click)="toggleAddWhitelistForm()">
+              Cancel
+            </button>
+          </div>
+        </form>
+      </mat-card-content>
+    </mat-card>
+  }
+
+  <!-- Data Display -->
+  @if (ipBlacklistData(); as data) {
+    <!-- Summary Cards -->
+    <div class="summary-section">
+      <mat-card class="summary-card">
+        <div class="summary-icon warn">
+          <mat-icon>block</mat-icon>
+        </div>
+        <div class="summary-content">
+          <div class="summary-value">{{ data.totalBlacklisted }}</div>
+          <div class="summary-label">Total Blacklisted</div>
+          <div class="summary-detail">
+            {{ data.autoBlockedCount }} auto / {{ data.manuallyBlockedCount }} manual
+          </div>
+        </div>
+      </mat-card>
+
+      <mat-card class="summary-card">
+        <div class="summary-icon success">
+          <mat-icon>verified_user</mat-icon>
+        </div>
+        <div class="summary-content">
+          <div class="summary-value">{{ data.whitelistedCount }}</div>
+          <div class="summary-label">Total Whitelisted</div>
+          <div class="summary-detail">Trusted IP addresses</div>
+        </div>
+      </mat-card>
+
+      <mat-card class="summary-card">
+        <div class="summary-icon primary">
+          <mat-icon>schedule</mat-icon>
+        </div>
+        <div class="summary-content">
+          <div class="summary-value">{{ data.temporaryBlocksCount }}</div>
+          <div class="summary-label">Temporary Blocks</div>
+          <div class="summary-detail">
+            {{ data.permanentBlocksCount }} permanent
+          </div>
+        </div>
+      </mat-card>
+    </div>
+
+    <!-- Blacklisted IPs Table -->
+    <mat-card class="table-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>block</mat-icon>
+          Blacklisted IP Addresses
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        @if (data.blacklistedIps.length > 0) {
+          <div class="table-container">
+            <table mat-table [dataSource]="data.blacklistedIps" class="ip-table">
+              <ng-container matColumnDef="ipAddress">
+                <th mat-header-cell *matHeaderCellDef>IP Address</th>
+                <td mat-data-cell *matCellDef="let ip">
+                  <div class="ip-cell">
+                    <span class="ip-address">{{ ip.ipAddress }}</span>
+                    @if (ip.country) {
+                      <span class="country-badge">{{ ip.country }}</span>
+                    }
+                  </div>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="blacklistedAt">
+                <th mat-header-cell *matHeaderCellDef>Blacklisted</th>
+                <td mat-data-cell *matCellDef="let ip">{{ formatTimestamp(ip.blacklistedAt) }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="reason">
+                <th mat-header-cell *matHeaderCellDef>Reason</th>
+                <td mat-data-cell *matCellDef="let ip">{{ ip.reason }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="violationCount">
+                <th mat-header-cell *matHeaderCellDef>Violations</th>
+                <td mat-data-cell *matCellDef="let ip">
+                  <mat-chip [class]="ip.violationCount > 10 ? 'high-violations' : 'low-violations'">
+                    {{ ip.violationCount }}
+                  </mat-chip>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="isPermanent">
+                <th mat-header-cell *matHeaderCellDef>Type</th>
+                <td mat-data-cell *matCellDef="let ip">
+                  <mat-chip [class]="ip.isPermanent ? 'permanent-chip' : 'temporary-chip'">
+                    {{ ip.isPermanent ? 'Permanent' : 'Temporary' }}
+                  </mat-chip>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="threatLevel">
+                <th mat-header-cell *matHeaderCellDef>Threat Level</th>
+                <td mat-data-cell *matCellDef="let ip">
+                  <mat-chip [class]="getThreatLevelClass(ip.threatLevel)">
+                    {{ ip.threatLevel }}
+                  </mat-chip>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="actions">
+                <th mat-header-cell *matHeaderCellDef>Actions</th>
+                <td mat-data-cell *matCellDef="let ip">
+                  <button mat-icon-button color="warn" (click)="removeFromBlacklist(ip.ipAddress)"
+                    matTooltip="Remove from blacklist" [disabled]="loading()">
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                </td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="blacklistColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: blacklistColumns;"></tr>
+            </table>
+          </div>
+        } @else {
+          <p class="no-data">No blacklisted IPs</p>
+        }
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Whitelisted IPs Table -->
+    <mat-card class="table-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>verified_user</mat-icon>
+          Whitelisted IP Addresses (Trusted)
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        @if (data.whitelistedIps.length > 0) {
+          <div class="table-container">
+            <table mat-table [dataSource]="data.whitelistedIps" class="ip-table">
+              <ng-container matColumnDef="ipAddress">
+                <th mat-header-cell *matHeaderCellDef>IP Address</th>
+                <td mat-data-cell *matCellDef="let ip">{{ ip.ipAddress }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="whitelistedAt">
+                <th mat-header-cell *matHeaderCellDef>Whitelisted</th>
+                <td mat-data-cell *matCellDef="let ip">{{ formatTimestamp(ip.whitelistedAt) }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="reason">
+                <th mat-header-cell *matHeaderCellDef>Reason</th>
+                <td mat-data-cell *matCellDef="let ip">{{ ip.reason }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="addedBy">
+                <th mat-header-cell *matHeaderCellDef>Added By</th>
+                <td mat-data-cell *matCellDef="let ip">{{ ip.addedBy }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="actions">
+                <th mat-header-cell *matHeaderCellDef>Actions</th>
+                <td mat-data-cell *matCellDef="let ip">
+                  <button mat-icon-button color="warn" (click)="removeFromWhitelist(ip.ipAddress)"
+                    matTooltip="Remove from whitelist" [disabled]="loading()">
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                </td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="whitelistColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: whitelistColumns;"></tr>
+            </table>
+          </div>
+        } @else {
+          <p class="no-data">No whitelisted IPs</p>
+        }
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Recent Activity -->
+    <mat-card class="table-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>history</mat-icon>
+          Recent IP Management Activity
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        @if (data.recentActivity.length > 0) {
+          <div class="table-container">
+            <table mat-table [dataSource]="data.recentActivity" class="ip-table">
+              <ng-container matColumnDef="timestamp">
+                <th mat-header-cell *matHeaderCellDef>Timestamp</th>
+                <td mat-data-cell *matCellDef="let activity">{{ formatTimestamp(activity.timestamp) }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="ipAddress">
+                <th mat-header-cell *matHeaderCellDef>IP Address</th>
+                <td mat-data-cell *matCellDef="let activity">{{ activity.ipAddress }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="action">
+                <th mat-header-cell *matHeaderCellDef>Action</th>
+                <td mat-data-cell *matCellDef="let activity">
+                  <mat-chip [class]="getActionClass(activity.action)">
+                    {{ activity.action }}
+                  </mat-chip>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="reason">
+                <th mat-header-cell *matHeaderCellDef>Reason</th>
+                <td mat-data-cell *matCellDef="let activity">{{ activity.reason }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="performedBy">
+                <th mat-header-cell *matHeaderCellDef>Performed By</th>
+                <td mat-data-cell *matCellDef="let activity">{{ activity.performedBy }}</td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="activityColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: activityColumns;"></tr>
+            </table>
+          </div>
+        } @else {
+          <p class="no-data">No recent activity</p>
+        }
+      </mat-card-content>
+    </mat-card>
+  }
+</div>

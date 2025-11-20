@@ -2,6 +2,7 @@ using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
 using HRMS.Core.Entities.Tenant;
+using HRMS.Application.Interfaces;
 using System.Globalization;
 
 namespace HRMS.Infrastructure.Services;
@@ -9,8 +10,9 @@ namespace HRMS.Infrastructure.Services;
 /// <summary>
 /// Service for generating professional PDF payslips compliant with Mauritius labor laws
 /// Uses QuestPDF library for document generation
+/// FIXED: Implements IPayslipPdfGenerator for dependency injection (CRITICAL-2)
 /// </summary>
-public class PayslipPdfGeneratorService
+public class PayslipPdfGeneratorService : IPayslipPdfGenerator
 {
     private const string CURRENCY = "MUR";
     private static readonly CultureInfo MauritiusCulture = new CultureInfo("en-MU");

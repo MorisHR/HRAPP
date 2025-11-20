@@ -1,0 +1,69 @@
+<app-card [elevation]="2" padding="large" class="system-health-card">
+  <div class="system-health-header">
+    <h3>System Status</h3>
+    <button
+      app-icon-button
+      (click)="refresh()"
+      [disabled]="loading()"
+      class="refresh-button"
+    >
+      <app-icon [name]="loading() ? 'sync' : 'refresh'" [class.spinning]="loading()"></app-icon>
+    </button>
+  </div>
+
+  @if (loading() && !health()) {
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p>Loading system health...</p>
+    </div>
+  } @else if (error()) {
+    <div class="error-state">
+      <app-icon name="error" class="error-icon"></app-icon>
+      <p>{{ error() }}</p>
+      <button app-button (click)="refresh()">Retry</button>
+    </div>
+  } @else if (health(); as healthData) {
+    <!-- Overall Status -->
+    <div class="overall-status" [class]="'status-' + healthData.status">
+      <div class="status-icon-wrapper">
+        <app-icon [name]="getStatusIcon(healthData.status)"></app-icon>
+      </div>
+      <div class="status-info">
+        <h4>{{ getStatusText(healthData.status) }}</h4>
+        <p class="status-detail">Uptime: {{ healthData.uptime.toFixed(2) }}%</p>
+        <p class="status-timestamp">Last checked: {{ healthData.timestamp | date:'short' }}</p>
+      </div>
+    </div>
+
+    <!-- Service Health List -->
+    <div class="services-list">
+      <h4 class="services-title">Services</h4>
+      @for (service of healthData.services; track service.name) {
+        <div class="service-item" [class]="'status-' + service.status">
+          <div class="service-header">
+            <div class="service-name">
+              <app-icon [name]="getStatusIcon(service.status)" [class]="'icon-' + service.status"></app-icon>
+              <span>{{ service.name }}</span>
+            </div>
+            <div class="service-metrics">
+              <span class="metric">{{ service.responseTime }}ms</span>
+              <span class="uptime">{{ service.uptime.toFixed(2) }}%</span>
+            </div>
+          </div>
+          @if (service.details) {
+            <div class="service-details">
+              <app-icon name="info" class="info-icon"></app-icon>
+              <span>{{ service.details }}</span>
+            </div>
+          }
+          @if (service.errorRate && service.errorRate > 0) {
+            <div class="service-error-rate">
+              <span class="error-label">Error Rate:</span>
+              <span class="error-value">{{ service.errorRate.toFixed(2) }}%</span>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+</app-card>

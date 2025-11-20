@@ -1,9 +1,3 @@
-/workspaces/HRAPP/src/HRMS.Infrastructure/obj/Debug/net9.0/HRMS.Infrastructure.csproj.AssemblyReference.cache
-/workspaces/HRAPP/src/HRMS.Infrastructure/obj/Debug/net9.0/HRMS.Infrastructure.GeneratedMSBuildEditorConfig.editorconfig
-/workspaces/HRAPP/src/HRMS.Infrastructure/obj/Debug/net9.0/HRMS.Infrastructure.AssemblyInfoInputs.cache
-/workspaces/HRAPP/src/HRMS.Infrastructure/obj/Debug/net9.0/HRMS.Infrastructure.AssemblyInfo.cs
-/workspaces/HRAPP/src/HRMS.Infrastructure/obj/Debug/net9.0/HRMS.Infrastructure.csproj.CoreCompileInputs.cache
-/workspaces/HRAPP/src/HRMS.Infrastructure/obj/Debug/net9.0/HRMS.Infrastructure.sourcelink.json
 /workspaces/HRAPP/src/HRMS.Infrastructure/bin/Debug/net9.0/LatoFont/Lato-Black.ttf
 /workspaces/HRAPP/src/HRMS.Infrastructure/bin/Debug/net9.0/LatoFont/Lato-BlackItalic.ttf
 /workspaces/HRAPP/src/HRMS.Infrastructure/bin/Debug/net9.0/LatoFont/Lato-Bold.ttf
@@ -31,6 +25,12 @@
 /workspaces/HRAPP/src/HRMS.Infrastructure/bin/Debug/net9.0/HRMS.Core.dll
 /workspaces/HRAPP/src/HRMS.Infrastructure/bin/Debug/net9.0/HRMS.Core.pdb
 /workspaces/HRAPP/src/HRMS.Infrastructure/bin/Debug/net9.0/HRMS.Application.pdb
+/workspaces/HRAPP/src/HRMS.Infrastructure/obj/Debug/net9.0/HRMS.Infrastructure.csproj.AssemblyReference.cache
+/workspaces/HRAPP/src/HRMS.Infrastructure/obj/Debug/net9.0/HRMS.Infrastructure.GeneratedMSBuildEditorConfig.editorconfig
+/workspaces/HRAPP/src/HRMS.Infrastructure/obj/Debug/net9.0/HRMS.Infrastructure.AssemblyInfoInputs.cache
+/workspaces/HRAPP/src/HRMS.Infrastructure/obj/Debug/net9.0/HRMS.Infrastructure.AssemblyInfo.cs
+/workspaces/HRAPP/src/HRMS.Infrastructure/obj/Debug/net9.0/HRMS.Infrastructure.csproj.CoreCompileInputs.cache
+/workspaces/HRAPP/src/HRMS.Infrastructure/obj/Debug/net9.0/HRMS.Infrastructure.sourcelink.json
 /workspaces/HRAPP/src/HRMS.Infrastructure/obj/Debug/net9.0/HRMS.Inf.BA81F186.Up2Date
 /workspaces/HRAPP/src/HRMS.Infrastructure/obj/Debug/net9.0/HRMS.Infrastructure.dll
 /workspaces/HRAPP/src/HRMS.Infrastructure/obj/Debug/net9.0/refint/HRMS.Infrastructure.dll

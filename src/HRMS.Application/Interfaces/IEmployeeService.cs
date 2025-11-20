@@ -31,6 +31,9 @@ public interface IEmployeeService
     Task<bool> IsEmployeeCodeUniqueAsync(string employeeCode, Guid? excludeEmployeeId = null);
     Task<bool> IsEmailUniqueAsync(string email, Guid? excludeEmployeeId = null);
 
+    // Intelligence Support (for real-time form validation)
+    Task<bool> CheckEmployeeCodeExistsAsync(string employeeCode, string? excludeId = null);
+
     // Leave calculation
     decimal CalculateProRatedAnnualLeave(DateTime joiningDate, DateTime calculationDate);
 }

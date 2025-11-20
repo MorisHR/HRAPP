@@ -8,7 +8,7 @@ import { environment } from '../../environments/environment';
   providedIn: 'root'
 })
 export class AnomalyDetectionService {
-  private apiUrl = `${environment.apiUrl}/anomalydetection`;
+  private apiUrl = `${environment.apiUrl}/api/anomalydetection`;
 
   constructor(private http: HttpClient) {}
 

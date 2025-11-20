@@ -92,9 +92,10 @@ public class PayrollCycle : BaseEntity
 
     // Process tracking
     /// <summary>
-    /// ID of the user who processed this payroll cycle
+    /// Username or email of the user who processed this payroll cycle
+    /// FIXED: Changed from Guid to string to avoid Guid.Parse() on username
     /// </summary>
-    public Guid? ProcessedBy { get; set; }
+    public string? ProcessedBy { get; set; }
 
     /// <summary>
     /// Date and time when the payroll was processed
@@ -102,9 +103,10 @@ public class PayrollCycle : BaseEntity
     public DateTime? ProcessedAt { get; set; }
 
     /// <summary>
-    /// ID of the user who approved this payroll cycle
+    /// Username or email of the user who approved this payroll cycle
+    /// FIXED: Changed from Guid to string to avoid Guid.Parse() on username
     /// </summary>
-    public Guid? ApprovedBy { get; set; }
+    public string? ApprovedBy { get; set; }
 
     /// <summary>
     /// Date and time when the payroll was approved

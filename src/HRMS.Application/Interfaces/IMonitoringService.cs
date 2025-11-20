@@ -338,4 +338,138 @@ public interface IMonitoringService
         string? endpoint = null,
         bool isBlocked = false,
         string? details = null);
+
+    // ============================================
+    // FORTUNE 500: COMPREHENSIVE SECURITY ANALYTICS
+    // ============================================
+
+    /// <summary>
+    /// Get comprehensive failed login analytics with charts and trends
+    /// PATTERN: AWS GuardDuty, Azure Sentinel, Splunk ES
+    /// COMPLIANCE: PCI-DSS 8.1.6, NIST 800-53 AC-7, ISO 27001 A.9.4.3
+    /// </summary>
+    /// <param name="periodStart">Start of measurement period (default: 30 days ago)</param>
+    /// <param name="periodEnd">End of measurement period (default: now)</param>
+    /// <param name="tenantSubdomain">Filter by tenant (optional)</param>
+    /// <returns>Failed login analytics with time series, top IPs, targeted users</returns>
+    Task<FailedLoginAnalyticsDto> GetFailedLoginAnalyticsAsync(
+        DateTime? periodStart = null,
+        DateTime? periodEnd = null,
+        string? tenantSubdomain = null);
+
+    /// <summary>
+    /// Get brute force attack statistics and active attack monitoring
+    /// PATTERN: Cloudflare Bot Management, AWS WAF, Akamai Kona
+    /// COMPLIANCE: PCI-DSS 6.5.10, OWASP Top 10 A07:2021
+    /// </summary>
+    /// <param name="periodStart">Start of measurement period (default: 24 hours ago)</param>
+    /// <param name="periodEnd">End of measurement period (default: now)</param>
+    /// <returns>Brute force statistics with active attacks and blocked IPs</returns>
+    Task<BruteForceStatisticsDto> GetBruteForceStatisticsAsync(
+        DateTime? periodStart = null,
+        DateTime? periodEnd = null);
+
+    /// <summary>
+    /// Get IP blacklist/whitelist management overview
+    /// PATTERN: Cloudflare WAF, AWS Shield, Fail2Ban
+    /// COMPLIANCE: PCI-DSS 1.3, NIST 800-53 SC-7
+    /// </summary>
+    /// <returns>IP blacklist with auto-blocked and manual blocks</returns>
+    Task<IpBlacklistDto> GetIpBlacklistAsync();
+
+    /// <summary>
+    /// Add IP address to blacklist
+    /// </summary>
+    /// <param name="request">Blacklist request details</param>
+    /// <param name="addedBy">Admin user performing the action</param>
+    /// <returns>True if successfully added</returns>
+    Task<bool> AddIpToBlacklistAsync(AddIpToBlacklistRequest request, string addedBy);
+
+    /// <summary>
+    /// Remove IP address from blacklist
+    /// </summary>
+    /// <param name="ipAddress">IP address to remove</param>
+    /// <param name="removedBy">Admin user performing the action</param>
+    /// <returns>True if successfully removed</returns>
+    Task<bool> RemoveIpFromBlacklistAsync(string ipAddress, string removedBy);
+
+    /// <summary>
+    /// Add IP address to whitelist
+    /// </summary>
+    /// <param name="request">Whitelist request details</param>
+    /// <param name="addedBy">Admin user performing the action</param>
+    /// <returns>True if successfully added</returns>
+    Task<bool> AddIpToWhitelistAsync(AddIpToWhitelistRequest request, string addedBy);
+
+    /// <summary>
+    /// Remove IP address from whitelist
+    /// </summary>
+    /// <param name="ipAddress">IP address to remove</param>
+    /// <param name="removedBy">Admin user performing the action</param>
+    /// <returns>True if successfully removed</returns>
+    Task<bool> RemoveIpFromWhitelistAsync(string ipAddress, string removedBy);
+
+    /// <summary>
+    /// Get session management analytics across all tenants
+    /// PATTERN: Okta Session Management, Auth0 Sessions, AWS Cognito
+    /// COMPLIANCE: PCI-DSS 8.1.8, NIST 800-53 AC-12, ISO 27001 A.9.1.2
+    /// </summary>
+    /// <param name="periodStart">Start of measurement period (default: 24 hours ago)</param>
+    /// <param name="periodEnd">End of measurement period (default: now)</param>
+    /// <returns>Session management metrics with active sessions and suspicious activity</returns>
+    Task<SessionManagementDto> GetSessionManagementAsync(
+        DateTime? periodStart = null,
+        DateTime? periodEnd = null);
+
+    /// <summary>
+    /// Get detailed active sessions list
+    /// </summary>
+    /// <param name="tenantSubdomain">Filter by tenant (optional)</param>
+    /// <param name="userId">Filter by user (optional)</param>
+    /// <param name="limit">Maximum number of sessions (default: 100)</param>
+    /// <returns>List of active sessions</returns>
+    Task<List<ActiveSessionDto>> GetActiveSessionsAsync(
+        string? tenantSubdomain = null,
+        string? userId = null,
+        int limit = 100);
+
+    /// <summary>
+    /// Force logout session by ID
+    /// </summary>
+    /// <param name="sessionId">Session ID to terminate</param>
+    /// <param name="terminatedBy">Admin user performing the action</param>
+    /// <param name="reason">Reason for termination</param>
+    /// <returns>True if successfully terminated</returns>
+    Task<bool> ForceLogoutSessionAsync(string sessionId, string terminatedBy, string reason);
+
+    /// <summary>
+    /// Get MFA (Multi-Factor Authentication) compliance metrics
+    /// PATTERN: Okta MFA, Duo Security, Microsoft Authenticator
+    /// COMPLIANCE: PCI-DSS 8.3, NIST 800-63B AAL2/AAL3, SOX, GDPR Article 32
+    /// </summary>
+    /// <param name="tenantSubdomain">Filter by tenant (optional)</param>
+    /// <returns>MFA compliance metrics with adoption rates and non-compliant users</returns>
+    Task<MfaComplianceDto> GetMfaComplianceAsync(string? tenantSubdomain = null);
+
+    /// <summary>
+    /// Get password strength and compliance metrics
+    /// PATTERN: 1Password Insights, LastPass Security Dashboard
+    /// COMPLIANCE: NIST 800-63B, PCI-DSS 8.2, ISO 27001 A.9.4.3, GDPR Article 32
+    /// </summary>
+    /// <param name="tenantSubdomain">Filter by tenant (optional)</param>
+    /// <returns>Password compliance metrics with weak passwords and expiring passwords</returns>
+    Task<PasswordComplianceDto> GetPasswordComplianceAsync(string? tenantSubdomain = null);
+
+    /// <summary>
+    /// Get comprehensive security dashboard analytics
+    /// One-stop API for all security metrics and KPIs
+    /// PATTERN: Splunk Security Dashboard, Azure Sentinel Overview, AWS Security Hub
+    /// COMPLIANCE: SOC 2, ISO 27001, PCI-DSS, NIST 800-53, GDPR Article 32
+    /// </summary>
+    /// <param name="periodStart">Start of measurement period (default: 24 hours ago)</param>
+    /// <param name="periodEnd">End of measurement period (default: now)</param>
+    /// <returns>Comprehensive security dashboard with all metrics in one call</returns>
+    Task<SecurityDashboardAnalyticsDto> GetSecurityDashboardAnalyticsAsync(
+        DateTime? periodStart = null,
+        DateTime? periodEnd = null);
 }

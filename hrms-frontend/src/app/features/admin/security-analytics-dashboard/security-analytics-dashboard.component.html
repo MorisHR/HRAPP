@@ -1,0 +1,603 @@
+<!-- FORTUNE 500 SECURITY ANALYTICS DASHBOARD -->
+<div class="security-dashboard-container">
+  <!-- Header Section -->
+  <div class="dashboard-header">
+    <div class="header-content">
+      <div class="title-section">
+        <h1 class="dashboard-title">
+          <mat-icon>security</mat-icon>
+          Security Analytics Dashboard
+        </h1>
+        <p class="dashboard-subtitle">
+          Real-time security monitoring and threat detection
+        </p>
+      </div>
+
+      <div class="header-actions">
+        <button mat-raised-button color="primary" (click)="refresh()" [disabled]="loadingSignal()">
+          <mat-icon>refresh</mat-icon>
+          Refresh
+        </button>
+      </div>
+    </div>
+
+    <!-- Last Updated -->
+    @if (dashboardData(); as dashboard) {
+      <div class="last-updated">
+        Last updated: {{ formatTimestamp(dashboard.lastRefreshedAt) }}
+        ({{ dashboard.dataFreshnessSeconds }}s ago)
+      </div>
+    }
+  </div>
+
+  <!-- Loading Indicator -->
+  @if (loadingSignal()) {
+    <div class="loading-container">
+      <mat-spinner diameter="60"></mat-spinner>
+      <p>Loading security analytics...</p>
+    </div>
+  }
+
+  <!-- Error Message -->
+  @if (error()) {
+    <mat-card class="error-card">
+      <mat-card-content>
+        <div class="error-content">
+          <mat-icon color="warn">error</mat-icon>
+          <span>{{ error() }}</span>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  }
+
+  <!-- Main Dashboard Content -->
+  @if (dashboardData(); as dashboard) {
+    <!-- Overview Cards -->
+    <div class="overview-section">
+      <!-- Overall Security Score -->
+      <mat-card class="metric-card score-card" [class]="securityScoreColor()">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>shield</mat-icon>
+            Security Score
+          </mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="score-value">{{ dashboard.overallSecurityScore.toFixed(1) }}</div>
+          <div class="score-label">out of 100</div>
+          <div class="trend-indicator" [class]="securityTrendColor()">
+            <mat-icon>{{ securityTrendIcon() }}</mat-icon>
+            <span>{{ dashboard.securityTrend }}</span>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Critical Issues -->
+      <mat-card class="metric-card critical-card">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>error</mat-icon>
+            Critical Issues
+          </mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="metric-value critical">{{ dashboard.criticalIssuesCount }}</div>
+          <div class="metric-label">Require immediate attention</div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- High Priority Issues -->
+      <mat-card class="metric-card high-priority-card">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>warning</mat-icon>
+            High Priority
+          </mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="metric-value high">{{ dashboard.highPriorityIssuesCount }}</div>
+          <div class="metric-label">Need review within 1 hour</div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Failed Logins (24h) -->
+      <mat-card class="metric-card">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>person_off</mat-icon>
+            Failed Logins (24h)
+          </mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="metric-value">{{ dashboard.failedLogins.totalLast24Hours }}</div>
+          <div class="metric-trend" [class]="dashboard.failedLogins.trendDirection">
+            {{ dashboard.failedLogins.trendDirection === 'up' ? '↑' : dashboard.failedLogins.trendDirection === 'down' ? '↓' : '→' }}
+            {{ formatPercentage(Math.abs(dashboard.failedLogins.trendPercentage)) }}
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Active Attacks -->
+      <mat-card class="metric-card">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>gpp_bad</mat-icon>
+            Active Attacks
+          </mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="metric-value" [class.critical]="dashboard.bruteForce.activeAttacks > 0">
+            {{ dashboard.bruteForce.activeAttacks }}
+          </div>
+          <div class="metric-label">{{ dashboard.bruteForce.currentThreatLevel }} threat level</div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Suspicious Sessions -->
+      <mat-card class="metric-card">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>vpn_key_off</mat-icon>
+            Suspicious Sessions
+          </mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="metric-value">{{ dashboard.sessions.suspiciousSessions }}</div>
+          <div class="metric-label">of {{ dashboard.sessions.activeSessions }} active</div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Tabs for Detailed Analytics -->
+    <mat-tab-group class="analytics-tabs" animationDuration="300ms">
+      <!-- Failed Login Analytics Tab -->
+      <mat-tab label="Failed Login Analytics">
+        <div class="tab-content">
+          @if (failedLoginData(); as failedLogins) {
+            <div class="analytics-grid">
+              <!-- Time Series Chart -->
+              <mat-card class="chart-card full-width">
+                <mat-card-header>
+                  <mat-card-title>Failed Login Attempts Over Time</mat-card-title>
+                </mat-card-header>
+                <mat-card-content>
+                  @if (failedLoginsChartData) {
+                    <div class="chart-container">
+                      <canvas baseChart
+                        [data]="failedLoginsChartData"
+                        [options]="failedLoginsChartOptions"
+                        [type]="'line'">
+                      </canvas>
+                    </div>
+                  } @else {
+                    <p class="no-data">No time series data available</p>
+                  }
+                </mat-card-content>
+              </mat-card>
+
+              <!-- Top Attacking IPs -->
+              <mat-card class="table-card">
+                <mat-card-header>
+                  <mat-card-title>Top Attacking IP Addresses</mat-card-title>
+                </mat-card-header>
+                <mat-card-content>
+                  @if (failedLogins.topFailureIps.length > 0) {
+                    <table mat-table [dataSource]="failedLogins.topFailureIps" class="data-table">
+                      <ng-container matColumnDef="ipAddress">
+                        <th mat-header-cell *matHeaderCellDef>IP Address</th>
+                        <td mat-data-cell *matCellDef="let ip">
+                          {{ ip.ipAddress }}
+                          @if (ip.isBlacklisted) {
+                            <mat-chip class="blacklisted-chip">Blacklisted</mat-chip>
+                          }
+                        </td>
+                      </ng-container>
+
+                      <ng-container matColumnDef="failureCount">
+                        <th mat-header-cell *matHeaderCellDef>Attempts</th>
+                        <td mat-data-cell *matCellDef="let ip">{{ ip.failureCount }}</td>
+                      </ng-container>
+
+                      <ng-container matColumnDef="uniqueUsersTargeted">
+                        <th mat-header-cell *matHeaderCellDef>Users Targeted</th>
+                        <td mat-data-cell *matCellDef="let ip">{{ ip.uniqueUsersTargeted }}</td>
+                      </ng-container>
+
+                      <ng-container matColumnDef="lastSeen">
+                        <th mat-header-cell *matHeaderCellDef>Last Seen</th>
+                        <td mat-data-cell *matCellDef="let ip">{{ formatTimestamp(ip.lastSeen) }}</td>
+                      </ng-container>
+
+                      <tr mat-header-row *matHeaderRowDef="['ipAddress', 'failureCount', 'uniqueUsersTargeted', 'lastSeen']"></tr>
+                      <tr mat-row *matRowDef="let row; columns: ['ipAddress', 'failureCount', 'uniqueUsersTargeted', 'lastSeen'];"></tr>
+                    </table>
+                  } @else {
+                    <p class="no-data">No failed login attempts detected</p>
+                  }
+                </mat-card-content>
+              </mat-card>
+
+              <!-- Top Targeted Users -->
+              <mat-card class="table-card">
+                <mat-card-header>
+                  <mat-card-title>Most Targeted Users</mat-card-title>
+                </mat-card-header>
+                <mat-card-content>
+                  @if (failedLogins.topTargetedUsers.length > 0) {
+                    <table mat-table [dataSource]="failedLogins.topTargetedUsers" class="data-table">
+                      <ng-container matColumnDef="userIdentifier">
+                        <th mat-header-cell *matHeaderCellDef>User</th>
+                        <td mat-data-cell *matCellDef="let user">
+                          {{ user.userIdentifier }}
+                          @if (user.accountLocked) {
+                            <mat-chip class="locked-chip">Locked</mat-chip>
+                          }
+                        </td>
+                      </ng-container>
+
+                      <ng-container matColumnDef="failureCount">
+                        <th mat-header-cell *matHeaderCellDef>Failed Attempts</th>
+                        <td mat-data-cell *matCellDef="let user">{{ user.failureCount }}</td>
+                      </ng-container>
+
+                      <ng-container matColumnDef="uniqueIps">
+                        <th mat-header-cell *matHeaderCellDef>Unique IPs</th>
+                        <td mat-data-cell *matCellDef="let user">{{ user.uniqueIps }}</td>
+                      </ng-container>
+
+                      <ng-container matColumnDef="tenantSubdomain">
+                        <th mat-header-cell *matHeaderCellDef>Tenant</th>
+                        <td mat-data-cell *matCellDef="let user">{{ user.tenantSubdomain }}</td>
+                      </ng-container>
+
+                      <tr mat-header-row *matHeaderRowDef="['userIdentifier', 'failureCount', 'uniqueIps', 'tenantSubdomain']"></tr>
+                      <tr mat-row *matRowDef="let row; columns: ['userIdentifier', 'failureCount', 'uniqueIps', 'tenantSubdomain'];"></tr>
+                    </table>
+                  } @else {
+                    <p class="no-data">No targeted users found</p>
+                  }
+                </mat-card-content>
+              </mat-card>
+            </div>
+          }
+        </div>
+      </mat-tab>
+
+      <!-- Brute Force Monitoring Tab -->
+      <mat-tab label="Brute Force Attacks">
+        <div class="tab-content">
+          @if (bruteForceData(); as bruteForce) {
+            <div class="analytics-grid">
+              <!-- Attack Statistics -->
+              <mat-card>
+                <mat-card-header>
+                  <mat-card-title>Attack Statistics</mat-card-title>
+                </mat-card-header>
+                <mat-card-content>
+                  <div class="stats-grid">
+                    <div class="stat-item">
+                      <span class="stat-label">Total Attacks Detected</span>
+                      <span class="stat-value">{{ bruteForce.totalAttacksDetected }}</span>
+                    </div>
+                    <div class="stat-item">
+                      <span class="stat-label">Attacks Blocked</span>
+                      <span class="stat-value success">{{ bruteForce.attacksBlocked }}</span>
+                    </div>
+                    <div class="stat-item">
+                      <span class="stat-label">Block Success Rate</span>
+                      <span class="stat-value">{{ formatPercentage(bruteForce.blockSuccessRate) }}</span>
+                    </div>
+                    <div class="stat-item">
+                      <span class="stat-label">Locked Accounts</span>
+                      <span class="stat-value">{{ bruteForce.lockedAccountsCount }}</span>
+                    </div>
+                  </div>
+                </mat-card-content>
+              </mat-card>
+
+              <!-- Hourly Distribution Chart -->
+              <mat-card class="chart-card full-width">
+                <mat-card-header>
+                  <mat-card-title>Attack Distribution by Hour</mat-card-title>
+                </mat-card-header>
+                <mat-card-content>
+                  @if (bruteForceChartData) {
+                    <div class="chart-container">
+                      <canvas baseChart
+                        [data]="bruteForceChartData"
+                        [options]="bruteForceChartOptions"
+                        [type]="'bar'">
+                      </canvas>
+                    </div>
+                  } @else {
+                    <p class="no-data">No hourly distribution data available</p>
+                  }
+                </mat-card-content>
+              </mat-card>
+
+              <!-- Active Attacks List -->
+              @if (bruteForce.activeAttacksList.length > 0) {
+                <mat-card class="full-width">
+                  <mat-card-header>
+                    <mat-card-title>
+                      <mat-icon color="warn">warning</mat-icon>
+                      Active Attacks (Last 5 Minutes)
+                    </mat-card-title>
+                  </mat-card-header>
+                  <mat-card-content>
+                    <table mat-table [dataSource]="bruteForce.activeAttacksList" class="data-table">
+                      <ng-container matColumnDef="ipAddress">
+                        <th mat-header-cell *matHeaderCellDef>IP Address</th>
+                        <td mat-data-cell *matCellDef="let attack">{{ attack.ipAddress }}</td>
+                      </ng-container>
+
+                      <ng-container matColumnDef="targetUser">
+                        <th mat-header-cell *matHeaderCellDef>Target User</th>
+                        <td mat-data-cell *matCellDef="let attack">{{ attack.targetUser }}</td>
+                      </ng-container>
+
+                      <ng-container matColumnDef="attemptCount">
+                        <th mat-header-cell *matHeaderCellDef>Attempts</th>
+                        <td mat-data-cell *matCellDef="let attack">{{ attack.attemptCount }}</td>
+                      </ng-container>
+
+                      <ng-container matColumnDef="isBlocked">
+                        <th mat-header-cell *matHeaderCellDef>Status</th>
+                        <td mat-data-cell *matCellDef="let attack">
+                          <mat-chip [class]="attack.isBlocked ? 'blocked-chip' : 'active-chip'">
+                            {{ attack.isBlocked ? 'Blocked' : 'Active' }}
+                          </mat-chip>
+                        </td>
+                      </ng-container>
+
+                      <tr mat-header-row *matHeaderRowDef="['ipAddress', 'targetUser', 'attemptCount', 'isBlocked']"></tr>
+                      <tr mat-row *matRowDef="let row; columns: ['ipAddress', 'targetUser', 'attemptCount', 'isBlocked'];"></tr>
+                    </table>
+                  </mat-card-content>
+                </mat-card>
+              }
+            </div>
+          }
+        </div>
+      </mat-tab>
+
+      <!-- MFA Compliance Tab -->
+      <mat-tab label="MFA Compliance">
+        <div class="tab-content">
+          @if (mfaComplianceData(); as mfa) {
+            <div class="analytics-grid">
+              <!-- Compliance Overview -->
+              <mat-card>
+                <mat-card-header>
+                  <mat-card-title>MFA Compliance Overview</mat-card-title>
+                </mat-card-header>
+                <mat-card-content>
+                  <div class="compliance-overview">
+                    <div class="compliance-stat">
+                      <span class="label">Adoption Rate</span>
+                      <span class="value" [class]="getComplianceColor(mfa.complianceStatus)">
+                        {{ formatPercentage(mfa.adoptionRate) }}
+                      </span>
+                    </div>
+                    <div class="compliance-stat">
+                      <span class="label">Status</span>
+                      <mat-chip [class]="getComplianceColor(mfa.complianceStatus)">
+                        {{ mfa.complianceStatus }}
+                      </mat-chip>
+                    </div>
+                    <div class="compliance-stat">
+                      <span class="label">Non-Compliant Users</span>
+                      <span class="value warn">{{ mfa.nonCompliantUsers.length }}</span>
+                    </div>
+                  </div>
+                </mat-card-content>
+              </mat-card>
+
+              <!-- MFA Adoption Chart -->
+              <mat-card class="chart-card">
+                <mat-card-header>
+                  <mat-card-title>MFA Adoption</mat-card-title>
+                </mat-card-header>
+                <mat-card-content>
+                  @if (mfaComplianceChartData) {
+                    <div class="chart-container doughnut-chart">
+                      <canvas baseChart
+                        [data]="mfaComplianceChartData"
+                        [options]="mfaComplianceChartOptions"
+                        [type]="'doughnut'">
+                      </canvas>
+                    </div>
+                  }
+                </mat-card-content>
+              </mat-card>
+
+              <!-- Non-Compliant Users -->
+              @if (mfa.nonCompliantUsers.length > 0) {
+                <mat-card class="full-width">
+                  <mat-card-header>
+                    <mat-card-title>Non-Compliant Users Requiring MFA</mat-card-title>
+                  </mat-card-header>
+                  <mat-card-content>
+                    <table mat-table [dataSource]="mfa.nonCompliantUsers" class="data-table">
+                      <ng-container matColumnDef="userEmail">
+                        <th mat-header-cell *matHeaderCellDef>User</th>
+                        <td mat-data-cell *matCellDef="let user">{{ user.userEmail }}</td>
+                      </ng-container>
+
+                      <ng-container matColumnDef="roleName">
+                        <th mat-header-cell *matHeaderCellDef>Role</th>
+                        <td mat-data-cell *matCellDef="let user">{{ user.roleName }}</td>
+                      </ng-container>
+
+                      <ng-container matColumnDef="tenantSubdomain">
+                        <th mat-header-cell *matHeaderCellDef>Tenant</th>
+                        <td mat-data-cell *matCellDef="let user">{{ user.tenantSubdomain }}</td>
+                      </ng-container>
+
+                      <ng-container matColumnDef="riskLevel">
+                        <th mat-header-cell *matHeaderCellDef>Risk Level</th>
+                        <td mat-data-cell *matCellDef="let user">
+                          <mat-chip [class]="getSeverityClass(user.riskLevel)">
+                            {{ user.riskLevel }}
+                          </mat-chip>
+                        </td>
+                      </ng-container>
+
+                      <tr mat-header-row *matHeaderRowDef="['userEmail', 'roleName', 'tenantSubdomain', 'riskLevel']"></tr>
+                      <tr mat-row *matRowDef="let row; columns: ['userEmail', 'roleName', 'tenantSubdomain', 'riskLevel'];"></tr>
+                    </table>
+                  </mat-card-content>
+                </mat-card>
+              }
+            </div>
+          }
+        </div>
+      </mat-tab>
+
+      <!-- Password Compliance Tab -->
+      <mat-tab label="Password Compliance">
+        <div class="tab-content">
+          @if (passwordComplianceData(); as password) {
+            <div class="analytics-grid">
+              <!-- Compliance Overview -->
+              <mat-card>
+                <mat-card-header>
+                  <mat-card-title>Password Compliance Overview</mat-card-title>
+                </mat-card-header>
+                <mat-card-content>
+                  <div class="compliance-overview">
+                    <div class="compliance-stat">
+                      <span class="label">Compliance Rate</span>
+                      <span class="value" [class]="getComplianceColor(password.complianceStatus)">
+                        {{ formatPercentage(password.complianceRate) }}
+                      </span>
+                    </div>
+                    <div class="compliance-stat">
+                      <span class="label">Weak Passwords</span>
+                      <span class="value warn">{{ password.weakPasswordCount }}</span>
+                    </div>
+                    <div class="compliance-stat">
+                      <span class="label">Avg Password Age</span>
+                      <span class="value">{{ password.averagePasswordAge }} days</span>
+                    </div>
+                  </div>
+                </mat-card-content>
+              </mat-card>
+
+              <!-- Password Strength Distribution Chart -->
+              <mat-card class="chart-card">
+                <mat-card-header>
+                  <mat-card-title>Password Strength Distribution</mat-card-title>
+                </mat-card-header>
+                <mat-card-content>
+                  @if (passwordStrengthChartData) {
+                    <div class="chart-container pie-chart">
+                      <canvas baseChart
+                        [data]="passwordStrengthChartData"
+                        [options]="passwordStrengthChartOptions"
+                        [type]="'pie'">
+                      </canvas>
+                    </div>
+                  }
+                </mat-card-content>
+              </mat-card>
+
+              <!-- Weak Password Users -->
+              @if (password.weakPasswordUsers.length > 0) {
+                <mat-card class="full-width">
+                  <mat-card-header>
+                    <mat-card-title>Users with Weak Passwords</mat-card-title>
+                  </mat-card-header>
+                  <mat-card-content>
+                    <table mat-table [dataSource]="password.weakPasswordUsers" class="data-table">
+                      <ng-container matColumnDef="userEmail">
+                        <th mat-header-cell *matHeaderCellDef>User</th>
+                        <td mat-data-cell *matCellDef="let user">{{ user.userEmail }}</td>
+                      </ng-container>
+
+                      <ng-container matColumnDef="passwordStrength">
+                        <th mat-header-cell *matHeaderCellDef>Strength</th>
+                        <td mat-data-cell *matCellDef="let user">{{ user.passwordStrength }}</td>
+                      </ng-container>
+
+                      <ng-container matColumnDef="passwordAge">
+                        <th mat-header-cell *matHeaderCellDef>Age (days)</th>
+                        <td mat-data-cell *matCellDef="let user">{{ user.passwordAge }}</td>
+                      </ng-container>
+
+                      <ng-container matColumnDef="riskLevel">
+                        <th mat-header-cell *matHeaderCellDef>Risk Level</th>
+                        <td mat-data-cell *matCellDef="let user">
+                          <mat-chip [class]="getSeverityClass(user.riskLevel)">
+                            {{ user.riskLevel }}
+                          </mat-chip>
+                        </td>
+                      </ng-container>
+
+                      <tr mat-header-row *matHeaderRowDef="['userEmail', 'passwordStrength', 'passwordAge', 'riskLevel']"></tr>
+                      <tr mat-row *matRowDef="let row; columns: ['userEmail', 'passwordStrength', 'passwordAge', 'riskLevel'];"></tr>
+                    </table>
+                  </mat-card-content>
+                </mat-card>
+              }
+            </div>
+          }
+        </div>
+      </mat-tab>
+
+      <!-- Recent Critical Activity Tab -->
+      <mat-tab label="Critical Activity">
+        <div class="tab-content">
+          @if (dashboard.recentCriticalActivity.length > 0) {
+            <mat-card>
+              <mat-card-header>
+                <mat-card-title>Recent Critical Security Events</mat-card-title>
+              </mat-card-header>
+              <mat-card-content>
+                <table mat-table [dataSource]="dashboard.recentCriticalActivity" class="data-table">
+                  <ng-container matColumnDef="timestamp">
+                    <th mat-header-cell *matHeaderCellDef>Timestamp</th>
+                    <td mat-data-cell *matCellDef="let event">{{ formatTimestamp(event.timestamp) }}</td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="severity">
+                    <th mat-header-cell *matHeaderCellDef>Severity</th>
+                    <td mat-data-cell *matCellDef="let event">
+                      <mat-chip [class]="getSeverityClass(event.severity)">
+                        {{ event.severity }}
+                      </mat-chip>
+                    </td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="eventType">
+                    <th mat-header-cell *matHeaderCellDef>Event Type</th>
+                    <td mat-data-cell *matCellDef="let event">{{ event.eventType }}</td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="description">
+                    <th mat-header-cell *matHeaderCellDef>Description</th>
+                    <td mat-data-cell *matCellDef="let event">{{ event.description }}</td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="ipAddress">
+                    <th mat-header-cell *matHeaderCellDef>IP Address</th>
+                    <td mat-data-cell *matCellDef="let event">{{ event.ipAddress || 'N/A' }}</td>
+                  </ng-container>
+
+                  <tr mat-header-row *matHeaderRowDef="criticalActivityColumns"></tr>
+                  <tr mat-row *matRowDef="let row; columns: criticalActivityColumns;"></tr>
+                </table>
+              </mat-card-content>
+            </mat-card>
+          } @else {
+            <mat-card>
+              <mat-card-content>
+                <p class="no-data">No critical security events in the selected time period</p>
+              </mat-card-content>
+            </mat-card>
+          }
+        </div>
+      </mat-tab>
+    </mat-tab-group>
+  }
+</div>

@@ -149,6 +149,51 @@ public class EmployeesController : ControllerBase
     }
 
     /// <summary>
+    /// Check if employee code already exists
+    /// Used for async validation in employee form
+    /// INTELLIGENCE: Supports real-time uniqueness validation
+    /// </summary>
+    /// <param name="code">Employee code to check</param>
+    /// <param name="excludeId">Optional employee ID to exclude (for edit scenarios)</param>
+    /// <returns>Object with 'exists' boolean indicating if code is already used</returns>
+    [HttpGet("check-code/{code}")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    public async Task<IActionResult> CheckEmployeeCodeExists(
+        string code,
+        [FromQuery] string? excludeId = null)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(code))
+            {
+                return BadRequest(new { success = false, message = "Employee code is required" });
+            }
+
+            var exists = await _employeeService.CheckEmployeeCodeExistsAsync(code, excludeId);
+
+            _logger.LogDebug("Employee code check: {Code} (exclude: {ExcludeId}) - exists: {Exists}",
+                code, excludeId ?? "none", exists);
+
+            return Ok(new
+            {
+                success = true,
+                data = new { exists }
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error checking employee code {Code}", code);
+            // On error, return exists=false to not block the user
+            return Ok(new
+            {
+                success = false,
+                message = "Error checking employee code",
+                data = new { exists = false }
+            });
+        }
+    }
+
+    /// <summary>
     /// Update employee information
     /// SECURITY: Requires HR or Admin role
     /// </summary>

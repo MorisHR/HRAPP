@@ -939,6 +939,550 @@ public class MonitoringController : ControllerBase
             });
         }
     }
+
+    // ============================================
+    // FORTUNE 500: COMPREHENSIVE SECURITY ANALYTICS
+    // ============================================
+
+    /// <summary>
+    /// Get comprehensive failed login analytics
+    /// PATTERN: AWS GuardDuty, Azure Sentinel, Splunk ES
+    /// </summary>
+    /// <param name="periodStart">Start of period</param>
+    /// <param name="periodEnd">End of period</param>
+    /// <param name="tenantSubdomain">Filter by tenant (optional)</param>
+    /// <returns>Failed login analytics with charts and trends</returns>
+    [HttpGet("security/failed-logins/analytics")]
+    [ProducesResponseType(typeof(FailedLoginAnalyticsDto), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetFailedLoginAnalytics(
+        [FromQuery] DateTime? periodStart = null,
+        [FromQuery] DateTime? periodEnd = null,
+        [FromQuery] string? tenantSubdomain = null)
+    {
+        try
+        {
+            var analytics = await _monitoringService.GetFailedLoginAnalyticsAsync(
+                periodStart, periodEnd, tenantSubdomain);
+
+            return Ok(new
+            {
+                success = true,
+                data = analytics,
+                message = "Failed login analytics retrieved successfully"
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to get failed login analytics");
+            return StatusCode(500, new
+            {
+                success = false,
+                message = "An error occurred while retrieving failed login analytics"
+            });
+        }
+    }
+
+    /// <summary>
+    /// Get brute force attack statistics
+    /// PATTERN: Cloudflare Bot Management, AWS WAF
+    /// </summary>
+    /// <param name="periodStart">Start of period</param>
+    /// <param name="periodEnd">End of period</param>
+    /// <returns>Brute force statistics with active attacks</returns>
+    [HttpGet("security/brute-force/statistics")]
+    [ProducesResponseType(typeof(BruteForceStatisticsDto), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetBruteForceStatistics(
+        [FromQuery] DateTime? periodStart = null,
+        [FromQuery] DateTime? periodEnd = null)
+    {
+        try
+        {
+            var statistics = await _monitoringService.GetBruteForceStatisticsAsync(
+                periodStart, periodEnd);
+
+            return Ok(new
+            {
+                success = true,
+                data = statistics,
+                message = "Brute force statistics retrieved successfully"
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to get brute force statistics");
+            return StatusCode(500, new
+            {
+                success = false,
+                message = "An error occurred while retrieving brute force statistics"
+            });
+        }
+    }
+
+    /// <summary>
+    /// Get IP blacklist/whitelist management overview
+    /// PATTERN: Cloudflare WAF, AWS Shield, Fail2Ban
+    /// </summary>
+    /// <returns>IP blacklist with auto-blocked and manual blocks</returns>
+    [HttpGet("security/ip-blacklist")]
+    [ProducesResponseType(typeof(IpBlacklistDto), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetIpBlacklist()
+    {
+        try
+        {
+            var blacklist = await _monitoringService.GetIpBlacklistAsync();
+
+            return Ok(new
+            {
+                success = true,
+                data = blacklist,
+                message = "IP blacklist retrieved successfully"
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to get IP blacklist");
+            return StatusCode(500, new
+            {
+                success = false,
+                message = "An error occurred while retrieving IP blacklist"
+            });
+        }
+    }
+
+    /// <summary>
+    /// Add IP address to blacklist
+    /// </summary>
+    /// <param name="request">Blacklist request</param>
+    /// <returns>Success status</returns>
+    [HttpPost("security/ip-blacklist")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> AddIpToBlacklist(
+        [FromBody] AddIpToBlacklistRequest request)
+    {
+        try
+        {
+            // SECURITY: Validate IP address format
+            if (string.IsNullOrWhiteSpace(request.IpAddress))
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    message = "IP address is required"
+                });
+            }
+
+            // Basic IP validation (simple regex)
+            if (!System.Text.RegularExpressions.Regex.IsMatch(
+                request.IpAddress,
+                @"^(\d{1,3}\.){3}\d{1,3}$"))
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    message = "Invalid IP address format"
+                });
+            }
+
+            var addedBy = User.Identity?.Name ?? "Unknown";
+            var success = await _monitoringService.AddIpToBlacklistAsync(request, addedBy);
+
+            if (!success)
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    message = "Failed to add IP to blacklist (may already exist)"
+                });
+            }
+
+            _logger.LogInformation("IP {IpAddress} added to blacklist by {AddedBy}",
+                request.IpAddress, addedBy);
+
+            return Ok(new
+            {
+                success = true,
+                message = $"IP {request.IpAddress} added to blacklist"
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to add IP to blacklist");
+            return StatusCode(500, new
+            {
+                success = false,
+                message = "An error occurred while adding IP to blacklist"
+            });
+        }
+    }
+
+    /// <summary>
+    /// Remove IP address from blacklist
+    /// </summary>
+    /// <param name="ipAddress">IP address to remove</param>
+    /// <returns>Success status</returns>
+    [HttpDelete("security/ip-blacklist/{ipAddress}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> RemoveIpFromBlacklist(string ipAddress)
+    {
+        try
+        {
+            var removedBy = User.Identity?.Name ?? "Unknown";
+            var success = await _monitoringService.RemoveIpFromBlacklistAsync(ipAddress, removedBy);
+
+            if (!success)
+            {
+                return NotFound(new
+                {
+                    success = false,
+                    message = $"IP {ipAddress} not found in blacklist"
+                });
+            }
+
+            _logger.LogInformation("IP {IpAddress} removed from blacklist by {RemovedBy}",
+                ipAddress, removedBy);
+
+            return Ok(new
+            {
+                success = true,
+                message = $"IP {ipAddress} removed from blacklist"
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to remove IP from blacklist");
+            return StatusCode(500, new
+            {
+                success = false,
+                message = "An error occurred while removing IP from blacklist"
+            });
+        }
+    }
+
+    /// <summary>
+    /// Add IP address to whitelist
+    /// </summary>
+    /// <param name="request">Whitelist request</param>
+    /// <returns>Success status</returns>
+    [HttpPost("security/ip-whitelist")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> AddIpToWhitelist(
+        [FromBody] AddIpToWhitelistRequest request)
+    {
+        try
+        {
+            // SECURITY: Validate IP address format
+            if (string.IsNullOrWhiteSpace(request.IpAddress))
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    message = "IP address is required"
+                });
+            }
+
+            var addedBy = User.Identity?.Name ?? "Unknown";
+            var success = await _monitoringService.AddIpToWhitelistAsync(request, addedBy);
+
+            if (!success)
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    message = "Failed to add IP to whitelist (may already exist)"
+                });
+            }
+
+            _logger.LogInformation("IP {IpAddress} added to whitelist by {AddedBy}",
+                request.IpAddress, addedBy);
+
+            return Ok(new
+            {
+                success = true,
+                message = $"IP {request.IpAddress} added to whitelist"
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to add IP to whitelist");
+            return StatusCode(500, new
+            {
+                success = false,
+                message = "An error occurred while adding IP to whitelist"
+            });
+        }
+    }
+
+    /// <summary>
+    /// Remove IP address from whitelist
+    /// </summary>
+    /// <param name="ipAddress">IP address to remove</param>
+    /// <returns>Success status</returns>
+    [HttpDelete("security/ip-whitelist/{ipAddress}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> RemoveIpFromWhitelist(string ipAddress)
+    {
+        try
+        {
+            var removedBy = User.Identity?.Name ?? "Unknown";
+            var success = await _monitoringService.RemoveIpFromWhitelistAsync(ipAddress, removedBy);
+
+            if (!success)
+            {
+                return NotFound(new
+                {
+                    success = false,
+                    message = $"IP {ipAddress} not found in whitelist"
+                });
+            }
+
+            _logger.LogInformation("IP {IpAddress} removed from whitelist by {RemovedBy}",
+                ipAddress, removedBy);
+
+            return Ok(new
+            {
+                success = true,
+                message = $"IP {ipAddress} removed from whitelist"
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to remove IP from whitelist");
+            return StatusCode(500, new
+            {
+                success = false,
+                message = "An error occurred while removing IP from whitelist"
+            });
+        }
+    }
+
+    /// <summary>
+    /// Get session management analytics
+    /// PATTERN: Okta Session Management, Auth0 Sessions
+    /// </summary>
+    /// <param name="periodStart">Start of period</param>
+    /// <param name="periodEnd">End of period</param>
+    /// <returns>Session management metrics</returns>
+    [HttpGet("security/sessions")]
+    [ProducesResponseType(typeof(SessionManagementDto), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetSessionManagement(
+        [FromQuery] DateTime? periodStart = null,
+        [FromQuery] DateTime? periodEnd = null)
+    {
+        try
+        {
+            var sessions = await _monitoringService.GetSessionManagementAsync(
+                periodStart, periodEnd);
+
+            return Ok(new
+            {
+                success = true,
+                data = sessions,
+                message = "Session management metrics retrieved successfully"
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to get session management metrics");
+            return StatusCode(500, new
+            {
+                success = false,
+                message = "An error occurred while retrieving session management metrics"
+            });
+        }
+    }
+
+    /// <summary>
+    /// Get detailed active sessions list
+    /// </summary>
+    /// <param name="tenantSubdomain">Filter by tenant (optional)</param>
+    /// <param name="userId">Filter by user (optional)</param>
+    /// <param name="limit">Maximum number of sessions</param>
+    /// <returns>List of active sessions</returns>
+    [HttpGet("security/sessions/active")]
+    [ProducesResponseType(typeof(List<ActiveSessionDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetActiveSessions(
+        [FromQuery] string? tenantSubdomain = null,
+        [FromQuery] string? userId = null,
+        [FromQuery] int limit = 100)
+    {
+        try
+        {
+            var sessions = await _monitoringService.GetActiveSessionsAsync(
+                tenantSubdomain, userId, limit);
+
+            return Ok(new
+            {
+                success = true,
+                data = sessions,
+                count = sessions.Count,
+                message = $"Retrieved {sessions.Count} active sessions"
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to get active sessions");
+            return StatusCode(500, new
+            {
+                success = false,
+                message = "An error occurred while retrieving active sessions"
+            });
+        }
+    }
+
+    /// <summary>
+    /// Force logout session by ID
+    /// </summary>
+    /// <param name="sessionId">Session ID to terminate</param>
+    /// <param name="request">Termination request with reason</param>
+    /// <returns>Success status</returns>
+    [HttpPost("security/sessions/{sessionId}/force-logout")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> ForceLogoutSession(
+        string sessionId,
+        [FromBody] ForceLogoutRequest request)
+    {
+        try
+        {
+            var terminatedBy = User.Identity?.Name ?? "Unknown";
+            var success = await _monitoringService.ForceLogoutSessionAsync(
+                sessionId, terminatedBy, request.Reason);
+
+            if (!success)
+            {
+                return NotFound(new
+                {
+                    success = false,
+                    message = $"Session {sessionId} not found or already terminated"
+                });
+            }
+
+            _logger.LogInformation("Session {SessionId} force logged out by {TerminatedBy}",
+                sessionId, terminatedBy);
+
+            return Ok(new
+            {
+                success = true,
+                message = $"Session {sessionId} terminated successfully"
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to force logout session");
+            return StatusCode(500, new
+            {
+                success = false,
+                message = "An error occurred while terminating session"
+            });
+        }
+    }
+
+    /// <summary>
+    /// Get MFA compliance metrics
+    /// PATTERN: Okta MFA, Duo Security
+    /// </summary>
+    /// <param name="tenantSubdomain">Filter by tenant (optional)</param>
+    /// <returns>MFA compliance metrics</returns>
+    [HttpGet("security/mfa-compliance")]
+    [ProducesResponseType(typeof(MfaComplianceDto), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetMfaCompliance(
+        [FromQuery] string? tenantSubdomain = null)
+    {
+        try
+        {
+            var compliance = await _monitoringService.GetMfaComplianceAsync(tenantSubdomain);
+
+            return Ok(new
+            {
+                success = true,
+                data = compliance,
+                message = "MFA compliance metrics retrieved successfully"
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to get MFA compliance metrics");
+            return StatusCode(500, new
+            {
+                success = false,
+                message = "An error occurred while retrieving MFA compliance metrics"
+            });
+        }
+    }
+
+    /// <summary>
+    /// Get password compliance metrics
+    /// PATTERN: 1Password Insights, LastPass Security Dashboard
+    /// </summary>
+    /// <param name="tenantSubdomain">Filter by tenant (optional)</param>
+    /// <returns>Password compliance metrics</returns>
+    [HttpGet("security/password-compliance")]
+    [ProducesResponseType(typeof(PasswordComplianceDto), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetPasswordCompliance(
+        [FromQuery] string? tenantSubdomain = null)
+    {
+        try
+        {
+            var compliance = await _monitoringService.GetPasswordComplianceAsync(tenantSubdomain);
+
+            return Ok(new
+            {
+                success = true,
+                data = compliance,
+                message = "Password compliance metrics retrieved successfully"
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to get password compliance metrics");
+            return StatusCode(500, new
+            {
+                success = false,
+                message = "An error occurred while retrieving password compliance metrics"
+            });
+        }
+    }
+
+    /// <summary>
+    /// Get comprehensive security dashboard analytics
+    /// One-stop API for all security metrics
+    /// PATTERN: Splunk Security Dashboard, Azure Sentinel, AWS Security Hub
+    /// </summary>
+    /// <param name="periodStart">Start of period</param>
+    /// <param name="periodEnd">End of period</param>
+    /// <returns>Comprehensive security dashboard</returns>
+    [HttpGet("security/dashboard")]
+    [ProducesResponseType(typeof(SecurityDashboardAnalyticsDto), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetSecurityDashboard(
+        [FromQuery] DateTime? periodStart = null,
+        [FromQuery] DateTime? periodEnd = null)
+    {
+        try
+        {
+            var dashboard = await _monitoringService.GetSecurityDashboardAnalyticsAsync(
+                periodStart, periodEnd);
+
+            return Ok(new
+            {
+                success = true,
+                data = dashboard,
+                message = "Security dashboard analytics retrieved successfully"
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to get security dashboard analytics");
+            return StatusCode(500, new
+            {
+                success = false,
+                message = "An error occurred while retrieving security dashboard analytics"
+            });
+        }
+    }
 }
 
 // ============================================
@@ -965,4 +1509,15 @@ public class AlertResolutionRequest
     /// Actions taken to resolve the alert
     /// </summary>
     public string? ResolutionNotes { get; set; }
+}
+
+/// <summary>
+/// Request model for force logout
+/// </summary>
+public class ForceLogoutRequest
+{
+    /// <summary>
+    /// Reason for terminating the session
+    /// </summary>
+    public string Reason { get; set; } = string.Empty;
 }

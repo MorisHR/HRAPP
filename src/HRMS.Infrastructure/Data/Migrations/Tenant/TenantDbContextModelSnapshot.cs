@@ -693,6 +693,60 @@ namespace HRMS.Infrastructure.Data.Migrations.Tenant
                     b.ToTable("Departments", "tenant_default");
                 });
 
+            modelBuilder.Entity("HRMS.Core.Entities.Tenant.DepartmentAuditLog", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ActivityType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<Guid>("DepartmentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<string>("IpAddress")
+                        .HasMaxLength(45)
+                        .HasColumnType("character varying(45)");
+
+                    b.Property<string>("NewValue")
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
+
+                    b.Property<string>("OldValue")
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
+
+                    b.Property<DateTime>("PerformedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("PerformedBy")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("UserAgent")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ActivityType");
+
+                    b.HasIndex("DepartmentId");
+
+                    b.HasIndex("PerformedAt");
+
+                    b.ToTable("DepartmentAuditLogs", "tenant_default");
+                });
+
             modelBuilder.Entity("HRMS.Core.Entities.Tenant.DeviceApiKey", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1118,6 +1172,9 @@ namespace HRMS.Infrastructure.Data.Migrations.Tenant
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
 
+                    b.Property<bool>("IsEligibleForRehire")
+                        .HasColumnType("boolean");
+
                     b.Property<bool>("IsNPFEligible")
                         .HasColumnType("boolean");
 
@@ -1288,6 +1345,18 @@ namespace HRMS.Infrastructure.Data.Migrations.Tenant
                         .HasColumnType("character varying(50)");
 
                     b.Property<int>("TaxResidentStatus")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("TerminationDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("TerminationNotes")
+                        .HasColumnType("text");
+
+                    b.Property<string>("TerminationReason")
+                        .HasColumnType("text");
+
+                    b.Property<int?>("TerminationType")
                         .HasColumnType("integer");
 
                     b.Property<decimal?>("TransportAllowance")
@@ -1500,6 +1569,256 @@ namespace HRMS.Infrastructure.Data.Migrations.Tenant
                     b.HasKey("Id");
 
                     b.ToTable("EmployeeDrafts", "tenant_default");
+                });
+
+            modelBuilder.Entity("HRMS.Core.Entities.Tenant.JiraIntegration", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("AutoSyncEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DeletedBy")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("JiraApiTokenEncrypted")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("JiraInstanceUrl")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("JiraUserEmail")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("LastSyncAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("LastSyncError")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ProjectMappingsJson")
+                        .HasColumnType("text");
+
+                    b.Property<int>("SyncIntervalMinutes")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("TotalIssuesSynced")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TotalWorkLogsSynced")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<string>("WebhookSecret")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("JiraIntegrations", "tenant_default");
+                });
+
+            modelBuilder.Entity("HRMS.Core.Entities.Tenant.JiraIssueAssignment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("AssignedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DeletedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("DueDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("EmployeeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal?>("EstimateHours")
+                        .HasColumnType("numeric");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("IssueType")
+                        .HasColumnType("text");
+
+                    b.Property<string>("JiraIssueKey")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("JiraIssueSummary")
+                        .HasColumnType("text");
+
+                    b.Property<string>("JiraIssueUrl")
+                        .HasColumnType("text");
+
+                    b.Property<string>("JiraProjectKey")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("LastUpdatedInJira")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Priority")
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("ProjectId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal?>("RemainingHours")
+                        .HasColumnType("numeric");
+
+                    b.Property<string>("SprintName")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("SyncedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal?>("TimeSpentHours")
+                        .HasColumnType("numeric");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EmployeeId");
+
+                    b.HasIndex("ProjectId");
+
+                    b.ToTable("JiraIssueAssignments", "tenant_default");
+                });
+
+            modelBuilder.Entity("HRMS.Core.Entities.Tenant.JiraWorkLog", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DeletedBy")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("EmployeeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("JiraAuthorUsername")
+                        .HasColumnType("text");
+
+                    b.Property<string>("JiraIssueKey")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("JiraIssueSummary")
+                        .HasColumnType("text");
+
+                    b.Property<string>("JiraIssueType")
+                        .HasColumnType("text");
+
+                    b.Property<string>("JiraWorkLogId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("ProjectId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("StartedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("SyncedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("TimeSpentHours")
+                        .HasColumnType("numeric");
+
+                    b.Property<Guid?>("TimesheetProjectAllocationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("WasConverted")
+                        .HasColumnType("boolean");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EmployeeId");
+
+                    b.HasIndex("ProjectId");
+
+                    b.HasIndex("TimesheetProjectAllocationId");
+
+                    b.ToTable("JiraWorkLogs", "tenant_default");
                 });
 
             modelBuilder.Entity("HRMS.Core.Entities.Tenant.LeaveApplication", b =>
@@ -2037,8 +2356,8 @@ namespace HRMS.Infrastructure.Data.Migrations.Tenant
                     b.Property<DateTime?>("ApprovedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<Guid?>("ApprovedBy")
-                        .HasColumnType("uuid");
+                    b.Property<string>("ApprovedBy")
+                        .HasColumnType("text");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -2071,8 +2390,8 @@ namespace HRMS.Infrastructure.Data.Migrations.Tenant
                     b.Property<DateTime?>("ProcessedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<Guid?>("ProcessedBy")
-                        .HasColumnType("uuid");
+                    b.Property<string>("ProcessedBy")
+                        .HasColumnType("text");
 
                     b.Property<int>("Status")
                         .HasColumnType("integer");
@@ -2349,6 +2668,248 @@ namespace HRMS.Infrastructure.Data.Migrations.Tenant
 
                             t.HasCheckConstraint("chk_Payslips_Salary_NonNegative", "\"BasicSalary\" >= 0 AND \"TotalGrossSalary\" >= 0 AND \"TotalDeductions\" >= 0");
                         });
+                });
+
+            modelBuilder.Entity("HRMS.Core.Entities.Tenant.Project", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("AllowTimeEntry")
+                        .HasColumnType("boolean");
+
+                    b.Property<decimal?>("BillingRate")
+                        .HasColumnType("numeric");
+
+                    b.Property<decimal?>("BudgetAmount")
+                        .HasColumnType("numeric");
+
+                    b.Property<decimal?>("BudgetHours")
+                        .HasColumnType("numeric");
+
+                    b.Property<string>("ClientName")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("CompletedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DeletedBy")
+                        .HasColumnType("text");
+
+                    b.Property<Guid?>("DepartmentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("EndDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsBillable")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("ProjectCode")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid?>("ProjectManagerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ProjectName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("ProjectType")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("RequireApproval")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("StartDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DepartmentId");
+
+                    b.HasIndex("ProjectManagerId");
+
+                    b.ToTable("Projects", "tenant_default");
+                });
+
+            modelBuilder.Entity("HRMS.Core.Entities.Tenant.ProjectAllocationSuggestion", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("ActionedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("ConfidenceScore")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DeletedBy")
+                        .HasColumnType("text");
+
+                    b.Property<string>("EmployeeFeedback")
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("EmployeeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Evidence")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("ExpiryDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<decimal?>("FinalHours")
+                        .HasColumnType("numeric");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("ProjectId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("RejectionReason")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<decimal>("SuggestedHours")
+                        .HasColumnType("numeric");
+
+                    b.Property<DateTime>("SuggestionDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("SuggestionReason")
+                        .HasColumnType("text");
+
+                    b.Property<string>("SuggestionSource")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("TimesheetProjectAllocationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EmployeeId");
+
+                    b.HasIndex("ProjectId");
+
+                    b.HasIndex("TimesheetProjectAllocationId");
+
+                    b.ToTable("ProjectAllocationSuggestions", "tenant_default");
+                });
+
+            modelBuilder.Entity("HRMS.Core.Entities.Tenant.ProjectMember", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("AssignedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<decimal?>("BillingRateOverride")
+                        .HasColumnType("numeric");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DeletedBy")
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("EmployeeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal?>("ExpectedHoursPerWeek")
+                        .HasColumnType("numeric");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("ProjectId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("RemovedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Role")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EmployeeId");
+
+                    b.HasIndex("ProjectId");
+
+                    b.ToTable("ProjectMembers", "tenant_default");
                 });
 
             modelBuilder.Entity("HRMS.Core.Entities.Tenant.PublicHoliday", b =>
@@ -3001,6 +3562,259 @@ namespace HRMS.Infrastructure.Data.Migrations.Tenant
                         });
                 });
 
+            modelBuilder.Entity("HRMS.Core.Entities.Tenant.TimesheetIntelligenceEvent", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AutomatedAction")
+                        .HasColumnType("text");
+
+                    b.Property<int?>("ConfidenceScore")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DeletedBy")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid?>("EmployeeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("EventData")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("EventTimestamp")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("EventType")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("FeedbackNotes")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("ModelUsed")
+                        .HasColumnType("text");
+
+                    b.Property<Guid?>("ProjectId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("RequiredManualIntervention")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("ResolutionNotes")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("ResolvedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ResolvedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Severity")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("TimesheetEntryId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("TimesheetId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<bool?>("WasDecisionCorrect")
+                        .HasColumnType("boolean");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EmployeeId");
+
+                    b.HasIndex("ProjectId");
+
+                    b.HasIndex("TimesheetEntryId");
+
+                    b.HasIndex("TimesheetId");
+
+                    b.ToTable("TimesheetIntelligenceEvents", "tenant_default");
+                });
+
+            modelBuilder.Entity("HRMS.Core.Entities.Tenant.TimesheetProjectAllocation", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AllocationSource")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<decimal?>("BillingRate")
+                        .HasColumnType("numeric");
+
+                    b.Property<int?>("ConfidenceScore")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("Date")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DeletedBy")
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("EmployeeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("Hours")
+                        .HasColumnType("numeric");
+
+                    b.Property<bool>("IsBillable")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Notes")
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("ProjectId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool?>("SuggestionAccepted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("TaskDescription")
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TimesheetEntryId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EmployeeId");
+
+                    b.HasIndex("ProjectId");
+
+                    b.HasIndex("TimesheetEntryId");
+
+                    b.ToTable("TimesheetProjectAllocations", "tenant_default");
+                });
+
+            modelBuilder.Entity("HRMS.Core.Entities.Tenant.WorkPattern", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("AverageHours")
+                        .HasColumnType("numeric");
+
+                    b.Property<int>("ConfidenceScore")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<int?>("DayOfWeek")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DeletedBy")
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("EmployeeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("FirstOccurrence")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("HourOfDay")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime>("LastOccurrence")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("OccurrenceCount")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("PatternContext")
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("ProjectId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("TotalHours")
+                        .HasColumnType("numeric");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EmployeeId");
+
+                    b.HasIndex("ProjectId");
+
+                    b.ToTable("WorkPatterns", "tenant_default");
+                });
+
             modelBuilder.Entity("HRMS.Core.Entities.Tenant.Attendance", b =>
                 {
                     b.HasOne("HRMS.Core.Entities.Tenant.AttendanceMachine", "Device")
@@ -3136,6 +3950,17 @@ namespace HRMS.Infrastructure.Data.Migrations.Tenant
                     b.Navigation("ParentDepartment");
                 });
 
+            modelBuilder.Entity("HRMS.Core.Entities.Tenant.DepartmentAuditLog", b =>
+                {
+                    b.HasOne("HRMS.Core.Entities.Tenant.Department", "Department")
+                        .WithMany()
+                        .HasForeignKey("DepartmentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Department");
+                });
+
             modelBuilder.Entity("HRMS.Core.Entities.Tenant.DeviceApiKey", b =>
                 {
                     b.HasOne("HRMS.Core.Entities.Tenant.AttendanceMachine", "Device")
@@ -3211,6 +4036,50 @@ namespace HRMS.Infrastructure.Data.Migrations.Tenant
                     b.Navigation("Device");
 
                     b.Navigation("Employee");
+                });
+
+            modelBuilder.Entity("HRMS.Core.Entities.Tenant.JiraIssueAssignment", b =>
+                {
+                    b.HasOne("HRMS.Core.Entities.Tenant.Employee", "Employee")
+                        .WithMany()
+                        .HasForeignKey("EmployeeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("HRMS.Core.Entities.Tenant.Project", "Project")
+                        .WithMany()
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Employee");
+
+                    b.Navigation("Project");
+                });
+
+            modelBuilder.Entity("HRMS.Core.Entities.Tenant.JiraWorkLog", b =>
+                {
+                    b.HasOne("HRMS.Core.Entities.Tenant.Employee", "Employee")
+                        .WithMany()
+                        .HasForeignKey("EmployeeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("HRMS.Core.Entities.Tenant.Project", "Project")
+                        .WithMany()
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("HRMS.Core.Entities.Tenant.TimesheetProjectAllocation", "TimesheetProjectAllocation")
+                        .WithMany()
+                        .HasForeignKey("TimesheetProjectAllocationId");
+
+                    b.Navigation("Employee");
+
+                    b.Navigation("Project");
+
+                    b.Navigation("TimesheetProjectAllocation");
                 });
 
             modelBuilder.Entity("HRMS.Core.Entities.Tenant.LeaveApplication", b =>
@@ -3323,6 +4192,65 @@ namespace HRMS.Infrastructure.Data.Migrations.Tenant
                     b.Navigation("PayrollCycle");
                 });
 
+            modelBuilder.Entity("HRMS.Core.Entities.Tenant.Project", b =>
+                {
+                    b.HasOne("HRMS.Core.Entities.Tenant.Department", "Department")
+                        .WithMany()
+                        .HasForeignKey("DepartmentId");
+
+                    b.HasOne("HRMS.Core.Entities.Tenant.Employee", "ProjectManager")
+                        .WithMany()
+                        .HasForeignKey("ProjectManagerId");
+
+                    b.Navigation("Department");
+
+                    b.Navigation("ProjectManager");
+                });
+
+            modelBuilder.Entity("HRMS.Core.Entities.Tenant.ProjectAllocationSuggestion", b =>
+                {
+                    b.HasOne("HRMS.Core.Entities.Tenant.Employee", "Employee")
+                        .WithMany()
+                        .HasForeignKey("EmployeeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("HRMS.Core.Entities.Tenant.Project", "Project")
+                        .WithMany()
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("HRMS.Core.Entities.Tenant.TimesheetProjectAllocation", "TimesheetProjectAllocation")
+                        .WithMany()
+                        .HasForeignKey("TimesheetProjectAllocationId");
+
+                    b.Navigation("Employee");
+
+                    b.Navigation("Project");
+
+                    b.Navigation("TimesheetProjectAllocation");
+                });
+
+            modelBuilder.Entity("HRMS.Core.Entities.Tenant.ProjectMember", b =>
+                {
+                    b.HasOne("HRMS.Core.Entities.Tenant.Employee", "Employee")
+                        .WithMany()
+                        .HasForeignKey("EmployeeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("HRMS.Core.Entities.Tenant.Project", "Project")
+                        .WithMany("ProjectMembers")
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Employee");
+
+                    b.Navigation("Project");
+                });
+
             modelBuilder.Entity("HRMS.Core.Entities.Tenant.SalaryComponent", b =>
                 {
                     b.HasOne("HRMS.Core.Entities.Tenant.Employee", "Employee")
@@ -3385,6 +4313,79 @@ namespace HRMS.Infrastructure.Data.Migrations.Tenant
                     b.Navigation("Timesheet");
                 });
 
+            modelBuilder.Entity("HRMS.Core.Entities.Tenant.TimesheetIntelligenceEvent", b =>
+                {
+                    b.HasOne("HRMS.Core.Entities.Tenant.Employee", "Employee")
+                        .WithMany()
+                        .HasForeignKey("EmployeeId");
+
+                    b.HasOne("HRMS.Core.Entities.Tenant.Project", "Project")
+                        .WithMany()
+                        .HasForeignKey("ProjectId");
+
+                    b.HasOne("HRMS.Core.Entities.Tenant.TimesheetEntry", "TimesheetEntry")
+                        .WithMany()
+                        .HasForeignKey("TimesheetEntryId");
+
+                    b.HasOne("HRMS.Core.Entities.Tenant.Timesheet", "Timesheet")
+                        .WithMany()
+                        .HasForeignKey("TimesheetId");
+
+                    b.Navigation("Employee");
+
+                    b.Navigation("Project");
+
+                    b.Navigation("Timesheet");
+
+                    b.Navigation("TimesheetEntry");
+                });
+
+            modelBuilder.Entity("HRMS.Core.Entities.Tenant.TimesheetProjectAllocation", b =>
+                {
+                    b.HasOne("HRMS.Core.Entities.Tenant.Employee", "Employee")
+                        .WithMany()
+                        .HasForeignKey("EmployeeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("HRMS.Core.Entities.Tenant.Project", "Project")
+                        .WithMany("TimesheetAllocations")
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("HRMS.Core.Entities.Tenant.TimesheetEntry", "TimesheetEntry")
+                        .WithMany("ProjectAllocations")
+                        .HasForeignKey("TimesheetEntryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Employee");
+
+                    b.Navigation("Project");
+
+                    b.Navigation("TimesheetEntry");
+                });
+
+            modelBuilder.Entity("HRMS.Core.Entities.Tenant.WorkPattern", b =>
+                {
+                    b.HasOne("HRMS.Core.Entities.Tenant.Employee", "Employee")
+                        .WithMany()
+                        .HasForeignKey("EmployeeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("HRMS.Core.Entities.Tenant.Project", "Project")
+                        .WithMany()
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Employee");
+
+                    b.Navigation("Project");
+                });
+
             modelBuilder.Entity("HRMS.Core.Entities.Tenant.Attendance", b =>
                 {
                     b.Navigation("Anomalies");
@@ -3441,6 +4442,13 @@ namespace HRMS.Infrastructure.Data.Migrations.Tenant
                     b.Navigation("Payslips");
                 });
 
+            modelBuilder.Entity("HRMS.Core.Entities.Tenant.Project", b =>
+                {
+                    b.Navigation("ProjectMembers");
+
+                    b.Navigation("TimesheetAllocations");
+                });
+
             modelBuilder.Entity("HRMS.Core.Entities.Tenant.Timesheet", b =>
                 {
                     b.Navigation("Comments");
@@ -3451,6 +4459,8 @@ namespace HRMS.Infrastructure.Data.Migrations.Tenant
             modelBuilder.Entity("HRMS.Core.Entities.Tenant.TimesheetEntry", b =>
                 {
                     b.Navigation("Adjustments");
+
+                    b.Navigation("ProjectAllocations");
                 });
 #pragma warning restore 612, 618
         }

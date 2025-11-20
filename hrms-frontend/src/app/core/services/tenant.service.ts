@@ -9,7 +9,7 @@ import { environment } from '../../../environments/environment';
 })
 export class TenantService {
   private http = inject(HttpClient);
-  private apiUrl = `${environment.apiUrl}/tenants`;
+  private apiUrl = `${environment.apiUrl}/api/tenants`;
 
   // Signals for reactive state
   private tenantsSignal = signal<Tenant[]>([]);

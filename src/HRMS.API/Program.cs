@@ -43,7 +43,10 @@ using Microsoft.Extensions.Caching.Memory;
 var builder = WebApplication.CreateBuilder(args);
 
 // ======================
-// PRODUCTION SERILOG CONFIGURATION
+// PRODUCTION SERILOG CONFIGURATION WITH SIEM INTEGRATION
+// ======================
+// FORTUNE 500 PATTERN: AWS CloudTrail, Azure Activity Log, Splunk Enterprise Security
+// Structured JSON logging for SIEM consumption (Splunk, ELK, Azure Sentinel)
 // ======================
 Log.Logger = new LoggerConfiguration()
     .ReadFrom.Configuration(builder.Configuration)
@@ -56,6 +59,15 @@ Log.Logger = new LoggerConfiguration()
     .WriteTo.Console(
         outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] [{CorrelationId}] {Message:lj}{NewLine}{Exception}",
         restrictedToMinimumLevel: LogEventLevel.Information)
+    // SIEM-COMPATIBLE JSON STRUCTURED LOGGING
+    .WriteTo.File(
+        new Serilog.Formatting.Compact.CompactJsonFormatter(),
+        path: "Logs/siem/security-events-.json",
+        rollingInterval: RollingInterval.Day,
+        retainedFileCountLimit: 90, // 90 days retention for compliance
+        restrictedToMinimumLevel: LogEventLevel.Information,
+        shared: false,
+        flushToDiskInterval: TimeSpan.FromSeconds(1))
     .CreateLogger();
 
 builder.Host.UseSerilog();
@@ -321,6 +333,7 @@ builder.Services.AddScoped<ISectorComplianceService, SectorComplianceService>();
 builder.Services.AddScoped<IAttendanceService, AttendanceService>();
 builder.Services.AddScoped<IAttendanceMachineService, AttendanceMachineService>();
 builder.Services.AddScoped<IPayrollService, PayrollService>();
+builder.Services.AddScoped<IPayslipPdfGenerator, PayslipPdfGeneratorService>(); // FIXED: Register PDF generator for DI (CRITICAL-2)
 builder.Services.AddScoped<ISalaryComponentService, SalaryComponentService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IReportService, ReportService>();
@@ -339,6 +352,10 @@ Log.Information("Audit logging interceptor registered for automatic database cha
 builder.Services.AddScoped<ISecurityAlertingService, SecurityAlertingService>();
 Log.Information("Security alerting service registered for real-time threat detection");
 
+// FORTUNE 500 SIEM INTEGRATION - Security Event Logger
+builder.Services.AddScoped<HRMS.Infrastructure.Logging.ISecurityEventLogger, HRMS.Infrastructure.Logging.SecurityEventLogger>();
+Log.Information("SIEM security event logger registered: Splunk/ELK/Azure Sentinel compatible structured logging");
+
 // Fortune 500 Compliance Services - Anomaly Detection, Legal Hold, E-Discovery, SOX, GDPR
 builder.Services.AddScoped<IAnomalyDetectionService, AnomalyDetectionService>();
 builder.Services.AddScoped<ILegalHoldService, LegalHoldService>();
@@ -347,6 +364,10 @@ builder.Services.AddScoped<ISOXComplianceService, SOXComplianceService>();
 builder.Services.AddScoped<IGDPRComplianceService, GDPRComplianceService>();
 builder.Services.AddScoped<IAuditCorrelationService, AuditCorrelationService>();
 Log.Information("Fortune 500 compliance services registered: Anomaly Detection, Legal Hold, E-Discovery, SOX, GDPR, Audit Correlation");
+
+// FORTUNE 500 COMPLIANCE REPORTING - Multi-framework audit reports (SOX, GDPR, ISO 27001, SOC 2, PCI-DSS, HIPAA, NIST 800-53)
+builder.Services.AddScoped<HRMS.Infrastructure.Compliance.IComplianceReportService, HRMS.Infrastructure.Compliance.ComplianceReportService>();
+Log.Information("Fortune 500 compliance reporting service registered: SOX, GDPR, ISO 27001, SOC 2, PCI-DSS, HIPAA, NIST 800-53");
 
 // Fortune 500 Subscription Management Service - Yearly billing with auto-renewals
 builder.Services.AddScoped<ISubscriptionManagementService, SubscriptionManagementService>();
@@ -384,6 +405,17 @@ builder.Services.AddScoped<ITimesheetApprovalService, TimesheetApprovalService>(
 builder.Services.AddScoped<ITimesheetAdjustmentService, TimesheetAdjustmentService>();
 Log.Information("Timesheet management services registered");
 
+// Intelligent Timesheet System - ML-powered project allocation and anomaly detection
+builder.Services.AddScoped<ITimesheetIntelligenceService, TimesheetIntelligenceService>();
+builder.Services.AddScoped<IProjectAllocationEngine, ProjectAllocationEngine>();
+builder.Services.AddScoped<ITimesheetAnomalyDetector, TimesheetAnomalyDetector>();
+Log.Information("Intelligent timesheet system registered: ML-powered project allocation, anomaly detection, risk scoring");
+
+// PRODUCTION SCALE FIXES - Distributed Locking and Caching
+builder.Services.AddSingleton<HRMS.Infrastructure.Locking.IDistributedLockService, HRMS.Infrastructure.Locking.DistributedLockService>();
+builder.Services.AddSingleton<HRMS.Infrastructure.Caching.ITenantCacheService, HRMS.Infrastructure.Caching.TenantCacheService>();
+Log.Information("Production scale services registered: Distributed locking, tenant-aware caching");
+
 // Multi-Device Biometric Attendance System Services
 builder.Services.AddScoped<ILocationService, LocationService>();
 
@@ -403,9 +435,17 @@ builder.Services.AddScoped<IPermissionService, PermissionService>();
 builder.Services.AddScoped<PermissionAuthorizationFilter>();
 Log.Information("Permission service registered for granular AdminUser RBAC");
 
-// Department Management Service
-builder.Services.AddScoped<DepartmentService>();
-Log.Information("Department management service registered");
+// Department Management Service - FORTUNE 500 REFACTORED (2025-11-20)
+// Implements comprehensive validation, caching, search, bulk operations, and merge functionality
+builder.Services.AddScoped<HRMS.Infrastructure.Validators.DepartmentValidator>();
+builder.Services.AddScoped<IDepartmentService, HRMS.Infrastructure.Services.DepartmentService>();
+Log.Information("Department service registered with Fortune 500-grade features (search, bulk ops, merge, caching)");
+
+// Department Intelligence Service - Analytics and Insights (2025-11-20)
+// Provides intelligent analytics: health scores, turnover risk, workload distribution
+// Optimized for scalability with Redis caching (15-min TTL) and query optimization
+builder.Services.AddScoped<IDepartmentIntelligenceService, HRMS.Infrastructure.Services.DepartmentIntelligenceService>();
+Log.Information("Department intelligence service registered: health score, turnover risk, workload distribution (cached for high concurrency)");
 
 // PRODUCTION FIX #1: Cloud Storage Service for file uploads
 builder.Services.AddSingleton<IFileStorageService, GoogleCloudStorageService>();
@@ -789,7 +829,11 @@ builder.Services.AddAntiforgery(options =>
     options.HeaderName = "X-XSRF-TOKEN";
     options.Cookie.Name = "XSRF-TOKEN";
     options.Cookie.HttpOnly = false; // Must be readable by JavaScript
-    options.Cookie.SecurePolicy = CookieSecurePolicy.Always; // HTTPS only
+    // SECURITY: Use SameAsRequest in development (Codespaces proxy terminates HTTPS)
+    // In production with direct HTTPS, change to CookieSecurePolicy.Always
+    options.Cookie.SecurePolicy = builder.Environment.IsDevelopment()
+        ? CookieSecurePolicy.SameAsRequest
+        : CookieSecurePolicy.Always;
     options.Cookie.SameSite = SameSiteMode.Strict;
     options.Cookie.IsEssential = true; // GDPR compliance
 });
@@ -941,6 +985,34 @@ using (var scope = app.Services.CreateScope())
             {
                 Log.Information("No pending migrations - database schema is up to date");
             }
+
+            // PRODUCTION-READY: Validate SMTP configuration at startup (fail-fast pattern)
+            Log.Information("Validating SMTP configuration...");
+            var emailSettings = app.Configuration.GetSection("EmailSettings").Get<EmailSettings>();
+            if (emailSettings == null || string.IsNullOrEmpty(emailSettings.SmtpServer))
+            {
+                throw new InvalidOperationException(
+                    "PRODUCTION ERROR: EmailSettings not configured. " +
+                    "Configure EmailSettings:SmtpServer, SmtpPort, SmtpUsername, SmtpPassword in appsettings.Production.json or environment variables.");
+            }
+
+            if (string.IsNullOrEmpty(emailSettings.SmtpPassword))
+            {
+                throw new InvalidOperationException(
+                    "PRODUCTION ERROR: EmailSettings:SmtpPassword not configured. " +
+                    "This is required for email notifications in production. " +
+                    "Set via environment variable or Azure Key Vault.");
+            }
+
+            if (string.IsNullOrEmpty(emailSettings.FromEmail))
+            {
+                throw new InvalidOperationException(
+                    "PRODUCTION ERROR: EmailSettings:FromEmail not configured. " +
+                    "Configure a valid sender email address.");
+            }
+
+            Log.Information("SMTP configuration validated: Server={Server}:{Port}, From={From}",
+                emailSettings.SmtpServer, emailSettings.SmtpPort, emailSettings.FromEmail);
         }
     }
     catch (Exception ex)
@@ -1278,6 +1350,10 @@ if (healthCheckSettings.Enabled)
 // Map AttendanceHub for real-time attendance notifications
 app.MapHub<HRMS.API.Hubs.AttendanceHub>("/hubs/attendance");
 Log.Information("SignalR hub mapped: /hubs/attendance");
+
+// FORTUNE 500: Map SecurityEventsHub for real-time security monitoring
+app.MapHub<HRMS.API.Hubs.SecurityEventsHub>("/hubs/security-events");
+Log.Information("SignalR hub mapped: /hubs/security-events (SuperAdmin only)");
 
 // Map Controllers
 app.MapControllers();

@@ -1,68 +1,166 @@
 <div class="admin-dashboard">
   <div class="dashboard-content container">
-    <h1 class="dashboard-title">Dashboard</h1>
+    <!-- Dashboard Header -->
+    <div class="dashboard-header">
+      <div>
+        <h1 class="dashboard-title">Admin Dashboard</h1>
+        <p class="dashboard-subtitle">System overview and monitoring</p>
+      </div>
+      <button app-button variant="outlined" (click)="refresh()" [disabled]="loading()">
+        <app-icon name="refresh" [class.spinning]="loading()"></app-icon>
+        Refresh
+      </button>
+    </div>
 
-    <!-- Stats Cards -->
-    <!-- OLD MATERIAL CARDS (commented for reference):
-    <div class="stats-grid">
-      <mat-card class="stat-card">
-        <mat-card-content>
-          <div class="stat-info">
-            <p class="stat-label">Total Tenants</p>
-            <h3 class="stat-value">{{ stats().totalTenants }}</h3>
+    <!-- Stats Cards with Trends -->
+    @if (loading() && !stats()) {
+      <div class="loading-skeleton">
+        <div class="skeleton-card" *ngFor="let i of [1,2,3,4]"></div>
+      </div>
+    } @else if (stats(); as dashboardStats) {
+      <div class="stats-grid">
+        <!-- Total Tenants -->
+        <app-card class="stat-card stat-card-tenants" [elevation]="2" [hoverable]="true" padding="large">
+          <div class="stat-content">
+            <div class="stat-header">
+              <span class="stat-label">Total Tenants</span>
+              <div class="stat-icon stat-icon-tenants">
+                <app-icon name="business"></app-icon>
+              </div>
+            </div>
+            <div class="stat-value-row">
+              <h3 class="stat-value">{{ dashboardStats.totalTenants }}</h3>
+              @if (dashboardStats.trends?.tenantGrowth) {
+                <div class="stat-trend" [class]="'trend-' + dashboardStats.trends.tenantGrowth.direction">
+                  <app-icon [name]="getTrendIcon(dashboardStats.trends.tenantGrowth.direction)"></app-icon>
+                  <span>{{ dashboardStats.trends.tenantGrowth.percentChange.toFixed(1) }}%</span>
+                </div>
+              }
+            </div>
+            <p class="stat-description">Total organizations</p>
           </div>
-          <div class="stat-icon">
-            <mat-icon>business</mat-icon>
+        </app-card>
+
+        <!-- Active Tenants -->
+        <app-card class="stat-card stat-card-active" [elevation]="2" [hoverable]="true" padding="large">
+          <div class="stat-content">
+            <div class="stat-header">
+              <span class="stat-label">Active Tenants</span>
+              <div class="stat-icon stat-icon-active">
+                <app-icon name="check_circle"></app-icon>
+              </div>
+            </div>
+            <div class="stat-value-row">
+              <h3 class="stat-value">{{ dashboardStats.activeTenants }}</h3>
+              @if (dashboardStats.trends?.activeGrowth) {
+                <div class="stat-trend" [class]="'trend-' + dashboardStats.trends.activeGrowth.direction">
+                  <app-icon [name]="getTrendIcon(dashboardStats.trends.activeGrowth.direction)"></app-icon>
+                  <span>{{ dashboardStats.trends.activeGrowth.percentChange.toFixed(1) }}%</span>
+                </div>
+              }
+            </div>
+            <p class="stat-description">Currently active</p>
           </div>
-        </mat-card-content>
-      </mat-card>
-    -->
+        </app-card>
 
-    <div class="stats-grid">
-      <app-card class="stat-card" [elevation]="2" [hoverable]="true" padding="medium">
-        <div class="stat-info">
-          <p class="stat-label">Total Tenants</p>
-          <h3 class="stat-value">{{ stats().totalTenants }}</h3>
-        </div>
-        <div class="stat-icon">
-          <app-icon name="business"></app-icon>
-        </div>
-      </app-card>
+        <!-- Total Employees -->
+        <app-card class="stat-card stat-card-employees" [elevation]="2" [hoverable]="true" padding="large">
+          <div class="stat-content">
+            <div class="stat-header">
+              <span class="stat-label">Total Employees</span>
+              <div class="stat-icon stat-icon-employees">
+                <app-icon name="people"></app-icon>
+              </div>
+            </div>
+            <div class="stat-value-row">
+              <h3 class="stat-value">{{ formatNumber(dashboardStats.totalEmployees) }}</h3>
+              @if (dashboardStats.trends?.employeeGrowth) {
+                <div class="stat-trend" [class]="'trend-' + dashboardStats.trends.employeeGrowth.direction">
+                  <app-icon [name]="getTrendIcon(dashboardStats.trends.employeeGrowth.direction)"></app-icon>
+                  <span>{{ dashboardStats.trends.employeeGrowth.percentChange.toFixed(1) }}%</span>
+                </div>
+              }
+            </div>
+            <p class="stat-description">Across all tenants</p>
+          </div>
+        </app-card>
 
-      <app-card class="stat-card" [elevation]="2" [hoverable]="true" padding="medium">
-        <div class="stat-info">
-          <p class="stat-label">Active Tenants</p>
-          <h3 class="stat-value">{{ stats().activeTenants }}</h3>
-        </div>
-        <div class="stat-icon">
-          <app-icon name="check_circle"></app-icon>
-        </div>
-      </app-card>
+        <!-- Monthly Revenue -->
+        <app-card class="stat-card stat-card-revenue" [elevation]="2" [hoverable]="true" padding="large">
+          <div class="stat-content">
+            <div class="stat-header">
+              <span class="stat-label">Monthly Revenue</span>
+              <div class="stat-icon stat-icon-revenue">
+                <app-icon name="payments"></app-icon>
+              </div>
+            </div>
+            <div class="stat-value-row">
+              <h3 class="stat-value">{{ formatCurrency(dashboardStats.monthlyRevenue) }}</h3>
+              @if (dashboardStats.trends?.revenueGrowth) {
+                <div class="stat-trend" [class]="'trend-' + dashboardStats.trends.revenueGrowth.direction">
+                  <app-icon [name]="getTrendIcon(dashboardStats.trends.revenueGrowth.direction)"></app-icon>
+                  <span>{{ dashboardStats.trends.revenueGrowth.percentChange.toFixed(1) }}%</span>
+                </div>
+              }
+            </div>
+            <p class="stat-description">Recurring revenue</p>
+          </div>
+        </app-card>
+      </div>
+    }
 
-      <app-card class="stat-card" [elevation]="2" [hoverable]="true" padding="medium">
-        <div class="stat-info">
-          <p class="stat-label">Total Employees</p>
-          <h3 class="stat-value">{{ stats().totalEmployees }}</h3>
-        </div>
-        <div class="stat-icon">
-          <app-icon name="people"></app-icon>
-        </div>
-      </app-card>
+    <!-- System Health & Critical Alerts Row -->
+    <div class="system-status-row">
+      <div class="system-health-section">
+        <app-system-health></app-system-health>
+      </div>
+      <div class="critical-alerts-section">
+        <app-critical-alerts></app-critical-alerts>
+      </div>
+    </div>
 
-      <app-card class="stat-card" [elevation]="2" [hoverable]="true" padding="medium">
-        <div class="stat-info">
-          <p class="stat-label">Monthly Revenue</p>
-          <h3 class="stat-value">${{ stats().monthlyRevenue }}</h3>
-        </div>
-        <div class="stat-icon">
-          <app-icon name="payments"></app-icon>
-        </div>
-      </app-card>
+    <!-- Charts Section -->
+    <div class="charts-section">
+      <h2 class="section-title">Analytics & Trends</h2>
+      <div class="charts-grid">
+        <!-- Tenant Growth Chart -->
+        <app-card [elevation]="2" padding="large" class="chart-card">
+          <h3 class="chart-title">Tenant Growth (Last 6 Months)</h3>
+          @if (tenantGrowthChart(); as chartData) {
+            <div class="chart-wrapper">
+              <app-line-chart
+                [data]="chartData"
+                [loading]="chartsLoading"
+                [height]="300"
+              ></app-line-chart>
+            </div>
+          }
+        </app-card>
+
+        <!-- Revenue Chart -->
+        <app-card [elevation]="2" padding="large" class="chart-card">
+          <h3 class="chart-title">Revenue Trend (Last 6 Months)</h3>
+          @if (revenueChart(); as chartData) {
+            <div class="chart-wrapper">
+              <app-bar-chart
+                [data]="chartData"
+                [loading]="chartsLoading"
+                [height]="300"
+              ></app-bar-chart>
+            </div>
+          }
+        </app-card>
+      </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="activity-section">
+      <app-recent-activity [limit]="10" [showViewAll]="true"></app-recent-activity>
     </div>
 
     <!-- Quick Actions -->
     <div class="quick-actions">
-      <h2>Quick Actions</h2>
+      <h2 class="section-title">Quick Actions</h2>
       <div class="actions-grid">
         <app-card class="action-card" [elevation]="2" [hoverable]="true" [clickable]="true" padding="large" routerLink="/admin/tenants">
           <div class="icon-wrapper">
@@ -94,46 +192,6 @@
           </div>
           <h3>Security Alerts</h3>
           <p>Real-time threat detection and security monitoring</p>
-        </app-card>
-
-        <app-card class="action-card" [elevation]="2" [hoverable]="true" [clickable]="true" padding="large" routerLink="/admin/anomaly-detection">
-          <div class="icon-wrapper">
-            <app-icon name="warning"></app-icon>
-          </div>
-          <h3>Anomaly Detection</h3>
-          <p>AI-powered threat detection and suspicious activity monitoring</p>
-        </app-card>
-
-        <app-card class="action-card" [elevation]="2" [hoverable]="true" [clickable]="true" padding="large" routerLink="/admin/legal-hold">
-          <div class="icon-wrapper">
-            <app-icon name="gavel"></app-icon>
-          </div>
-          <h3>Legal Hold</h3>
-          <p>Manage legal holds and eDiscovery for compliance</p>
-        </app-card>
-
-        <app-card class="action-card" [elevation]="2" [hoverable]="true" [clickable]="true" padding="large" routerLink="/admin/compliance-reports">
-          <div class="icon-wrapper">
-            <app-icon name="assessment"></app-icon>
-          </div>
-          <h3>Compliance Reports</h3>
-          <p>SOX, GDPR, and regulatory compliance reports</p>
-        </app-card>
-
-        <app-card class="action-card" [elevation]="2" [hoverable]="true" [clickable]="true" padding="large" routerLink="/admin/activity-correlation">
-          <div class="icon-wrapper">
-            <app-icon name="timeline"></app-icon>
-          </div>
-          <h3>Activity Correlation</h3>
-          <p>User activity timeline and pattern analysis</p>
-        </app-card>
-
-        <app-card class="action-card" [elevation]="2" [hoverable]="true" [clickable]="true" padding="large">
-          <div class="icon-wrapper">
-            <app-icon name="settings"></app-icon>
-          </div>
-          <h3>Settings</h3>
-          <p>Configure system settings</p>
         </app-card>
       </div>
     </div>

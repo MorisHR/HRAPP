@@ -330,4 +330,32 @@ export class EmployeeService {
       })
     );
   }
+
+  /**
+   * Check if employee code already exists
+   * Used for async validation in employee form
+   *
+   * @param code - Employee code to check
+   * @param excludeId - Optional employee ID to exclude (for edit scenarios)
+   * @returns Observable<boolean> - true if code exists, false otherwise
+   */
+  checkEmployeeCodeExists(code: string, excludeId?: string): Observable<boolean> {
+    const params = excludeId ? `?excludeId=${excludeId}` : '';
+
+    return this.http.get<ApiResponse<{ exists: boolean }>>(
+      `${this.apiUrl}/check-code/${code}${params}`
+    ).pipe(
+      map(response => {
+        if (!response.success) {
+          return false; // On API error, assume code doesn't exist
+        }
+        return response.data?.exists || false;
+      }),
+      catchError(() => {
+        // On error, return false to not block the user
+        console.warn('⚠️ Employee code check failed, allowing code to proceed');
+        return of(false);
+      })
+    );
+  }
 }

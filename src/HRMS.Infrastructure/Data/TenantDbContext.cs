@@ -38,6 +38,7 @@ public class TenantDbContext : DbContext
     public DbSet<Employee> Employees { get; set; }
     public DbSet<EmployeeDraft> EmployeeDrafts { get; set; }
     public DbSet<Department> Departments { get; set; }
+    public DbSet<DepartmentAuditLog> DepartmentAuditLogs { get; set; }
     public DbSet<EmergencyContact> EmergencyContacts { get; set; }
 
     // Leave Management
@@ -67,6 +68,19 @@ public class TenantDbContext : DbContext
     public DbSet<TimesheetEntry> TimesheetEntries { get; set; }
     public DbSet<TimesheetAdjustment> TimesheetAdjustments { get; set; }
     public DbSet<TimesheetComment> TimesheetComments { get; set; }
+
+    // Intelligent Timesheet - Project Allocation
+    public DbSet<Project> Projects { get; set; }
+    public DbSet<ProjectMember> ProjectMembers { get; set; }
+    public DbSet<TimesheetProjectAllocation> TimesheetProjectAllocations { get; set; }
+    public DbSet<ProjectAllocationSuggestion> ProjectAllocationSuggestions { get; set; }
+    public DbSet<WorkPattern> WorkPatterns { get; set; }
+    public DbSet<TimesheetIntelligenceEvent> TimesheetIntelligenceEvents { get; set; }
+
+    // Jira Integration (Phase 2)
+    public DbSet<JiraIntegration> JiraIntegrations { get; set; }
+    public DbSet<JiraWorkLog> JiraWorkLogs { get; set; }
+    public DbSet<JiraIssueAssignment> JiraIssueAssignments { get; set; }
 
     // Multi-Device Biometric Attendance System
     public DbSet<Location> Locations { get; set; }
@@ -278,6 +292,30 @@ public class TenantDbContext : DbContext
                   .OnDelete(DeleteBehavior.SetNull);
 
             entity.HasQueryFilter(d => !d.IsDeleted);
+        });
+
+        // Configure DepartmentAuditLog entity
+        modelBuilder.Entity<DepartmentAuditLog>(entity =>
+        {
+            entity.HasKey(dal => dal.Id);
+            entity.Property(dal => dal.ActivityType).IsRequired().HasMaxLength(50);
+            entity.Property(dal => dal.Description).IsRequired().HasMaxLength(1000);
+            entity.Property(dal => dal.OldValue).HasMaxLength(4000);
+            entity.Property(dal => dal.NewValue).HasMaxLength(4000);
+            entity.Property(dal => dal.PerformedBy).IsRequired().HasMaxLength(200);
+            entity.Property(dal => dal.IpAddress).HasMaxLength(45); // IPv6 max length
+            entity.Property(dal => dal.UserAgent).HasMaxLength(500);
+
+            // Relationship to Department
+            entity.HasOne(dal => dal.Department)
+                  .WithMany()
+                  .HasForeignKey(dal => dal.DepartmentId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            // Index for performance
+            entity.HasIndex(dal => dal.DepartmentId);
+            entity.HasIndex(dal => dal.PerformedAt);
+            entity.HasIndex(dal => dal.ActivityType);
         });
 
         // Configure EmergencyContact entity

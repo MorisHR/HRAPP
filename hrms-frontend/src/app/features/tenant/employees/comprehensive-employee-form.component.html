@@ -264,6 +264,815 @@
                   </div>
                 </div>
               }
+
+              <!-- ========== INTELLIGENCE INSIGHTS (Rule-based, NO AI) ========== -->
+              <div class="intelligence-insights full-width">
+                <h4 class="subsection-title">
+                  <app-icon name="auto_awesome"></app-icon>
+                  Smart Insights (Rule-based Assistant)
+                </h4>
+
+                <!-- Passport Detection Result -->
+                @if (passportDetectionResult() && passportDetectionResult()!.detectedNationality) {
+                  <div class="insight-card passport-detection" [class]="'confidence-' + passportDetectionResult()!.confidence">
+                    <div class="insight-header">
+                      <app-icon name="card_travel"></app-icon>
+                      <strong>Passport Detected</strong>
+                      <app-chip
+                        [label]="passportDetectionResult()!.confidence + ' confidence'"
+                        [color]="passportDetectionResult()!.confidence === 'high' ? 'success' : 'warning'"
+                        [variant]="'filled'">
+                      </app-chip>
+                    </div>
+                    <p>Detected nationality: <strong>{{ passportDetectionResult()!.detectedNationality }}</strong></p>
+                    <p class="pattern-info">Pattern: {{ passportDetectionResult()!.pattern }}</p>
+                  </div>
+                }
+
+                <!-- Work Permit Recommendation -->
+                @if (workPermitRecommendation()) {
+                  <div class="insight-card work-permit" [class]="'priority-' + workPermitRecommendation()!.priority">
+                    <div class="insight-header">
+                      <app-icon name="work"></app-icon>
+                      <strong>Work Permit Recommendation</strong>
+                      <app-chip
+                        [label]="workPermitRecommendation()!.priority + ' priority'"
+                        [color]="workPermitRecommendation()!.priority === 'high' ? 'error' : workPermitRecommendation()!.priority === 'medium' ? 'warning' : 'primary'"
+                        [variant]="'filled'">
+                      </app-chip>
+                    </div>
+                    <p><strong>Recommended Type:</strong> {{ workPermitRecommendation()!.recommendedType }}</p>
+                    <p><strong>Reason:</strong> {{ workPermitRecommendation()!.reason }}</p>
+                    <ul class="requirements-list">
+                      @for (req of workPermitRecommendation()!.requirements; track req) {
+                        <li>{{ req }}</li>
+                      }
+                    </ul>
+                    <p class="processing-time"><app-icon name="schedule"></app-icon> Processing time: {{ workPermitRecommendation()!.estimatedProcessingTime }}</p>
+                  </div>
+                }
+
+                <!-- Expiry Alerts -->
+                @if (expiryAlerts() && expiryAlerts().length > 0) {
+                  <div class="insight-card expiry-alerts">
+                    <div class="insight-header">
+                      <app-icon name="warning"></app-icon>
+                      <strong>Document Expiry Alerts</strong>
+                    </div>
+                    @for (alert of expiryAlerts(); track alert.documentType) {
+                      <div class="alert-item" [class]="'severity-' + alert.severity">
+                        <div class="alert-info">
+                          <app-chip
+                            [label]="alert.severity"
+                            [color]="alert.severity === 'critical' ? 'error' : alert.severity === 'warning' ? 'warning' : 'primary'"
+                            [variant]="'filled'">
+                          </app-chip>
+                          <span><strong>{{ alert.documentType }}:</strong> {{ alert.message }}</span>
+                        </div>
+                        <span class="days-remaining">{{ alert.daysUntilExpiry }} days</span>
+                      </div>
+                    }
+                  </div>
+                }
+
+                <!-- Tax Calculation Preview -->
+                @if (taxCalculation()) {
+                  <div class="insight-card tax-calculation">
+                    <div class="insight-header">
+                      <app-icon name="account_balance"></app-icon>
+                      <strong>Tax Liability Estimate</strong>
+                    </div>
+                    <div class="tax-summary">
+                      <div class="tax-row">
+                        <span>Annual Salary:</span>
+                        <strong>{{ formatCurrency(taxCalculation()!.annualSalary) }}</strong>
+                      </div>
+                      <div class="tax-row">
+                        <span>Tax Rate:</span>
+                        <strong>{{ (taxCalculation()!.effectiveRate * 100).toFixed(2) }}%</strong>
+                      </div>
+                      <div class="tax-row primary">
+                        <span>Annual Tax:</span>
+                        <strong>{{ formatCurrency(taxCalculation()!.totalTax) }}</strong>
+                      </div>
+                      <div class="tax-row">
+                        <span>Monthly Tax:</span>
+                        <strong>{{ formatCurrency(taxCalculation()!.totalTax / 12) }}</strong>
+                      </div>
+                    </div>
+                    @if (taxCalculation()!.treatyBenefit && taxCalculation()!.treatyBenefit > 0) {
+                      <div class="treaty-benefit">
+                        <app-icon name="savings"></app-icon>
+                        <span>Treaty Benefit: {{ formatCurrency(taxCalculation()!.treatyBenefit) }} annual savings!</span>
+                      </div>
+                    }
+                  </div>
+                }
+
+                <!-- Sector Compliance -->
+                @if (sectorCompliance() && !sectorCompliance()!.isCompliant) {
+                  <div class="insight-card sector-compliance warning">
+                    <div class="insight-header">
+                      <app-icon name="report_problem"></app-icon>
+                      <strong>Sector Compliance Issues</strong>
+                    </div>
+                    <ul class="violations-list">
+                      @for (violation of sectorCompliance()!.violations; track violation) {
+                        <li>
+                          <app-icon name="error"></app-icon>
+                          {{ violation }}
+                        </li>
+                      }
+                    </ul>
+                    <div class="recommendations">
+                      <strong>Recommendations:</strong>
+                      <ul>
+                        @for (rec of sectorCompliance()!.recommendations; track rec) {
+                          <li>{{ rec }}</li>
+                        }
+                      </ul>
+                    </div>
+                  </div>
+                }
+
+                <!-- Leave Balance Prediction -->
+                @if (leaveBalancePrediction()) {
+                  <div class="insight-card leave-balance" [class]="'risk-' + leaveBalancePrediction()!.riskLevel">
+                    <div class="insight-header">
+                      <app-icon name="event_available"></app-icon>
+                      <strong>Leave Balance Prediction</strong>
+                      <app-chip
+                        [label]="leaveBalancePrediction()!.riskLevel + ' risk'"
+                        [color]="leaveBalancePrediction()!.riskLevel === 'high' ? 'error' : leaveBalancePrediction()!.riskLevel === 'medium' ? 'warning' : 'success'"
+                        [variant]="'filled'">
+                      </app-chip>
+                    </div>
+
+                    <!-- Current Status -->
+                    <div class="leave-summary">
+                      <div class="summary-row">
+                        <span>Current Balance:</span>
+                        <strong>{{ leaveBalancePrediction()!.currentBalance.toFixed(1) }} days</strong>
+                      </div>
+                      <div class="summary-row">
+                        <span>Annual Entitlement:</span>
+                        <strong>{{ leaveBalancePrediction()!.annualEntitlement.toFixed(1) }} days</strong>
+                      </div>
+                      <div class="summary-row">
+                        <span>Used This Year:</span>
+                        <strong>{{ leaveBalancePrediction()!.usedThisYear.toFixed(1) }} days</strong>
+                      </div>
+                      <div class="summary-row highlight">
+                        <span>Year-End Prediction:</span>
+                        <strong>{{ leaveBalancePrediction()!.predictedYearEndBalance.toFixed(1) }} days</strong>
+                      </div>
+                      <div class="summary-row">
+                        <span>Utilization Rate:</span>
+                        <strong>{{ leaveBalancePrediction()!.utilizationRate.toFixed(1) }}%</strong>
+                      </div>
+                    </div>
+
+                    <!-- Risk Message -->
+                    <div class="risk-message" [class]="'risk-' + leaveBalancePrediction()!.riskLevel">
+                      <app-icon name="info"></app-icon>
+                      <span>{{ leaveBalancePrediction()!.riskMessage }}</span>
+                    </div>
+
+                    <!-- Expiring Leave Warning -->
+                    @if (leaveBalancePrediction()!.expiringLeave && leaveBalancePrediction()!.expiringLeave! > 0) {
+                      <div class="expiring-warning">
+                        <app-icon name="warning"></app-icon>
+                        <strong>{{ leaveBalancePrediction()!.expiringLeave }} days will expire</strong> if not used by year-end!
+                      </div>
+                    }
+
+                    <!-- Public Holidays -->
+                    @if (leaveBalancePrediction()!.publicHolidaysRemaining > 0) {
+                      <div class="public-holidays">
+                        <app-icon name="celebration"></app-icon>
+                        <span><strong>{{ leaveBalancePrediction()!.publicHolidaysRemaining }}</strong> public holidays remaining this year</span>
+                      </div>
+                    }
+
+                    <!-- Recommendations -->
+                    @if (leaveBalancePrediction()!.recommendations.length > 0) {
+                      <div class="recommendations-section">
+                        <strong>Recommendations:</strong>
+                        <ul class="recommendations-list">
+                          @for (rec of leaveBalancePrediction()!.recommendations; track rec) {
+                            <li>{{ rec }}</li>
+                          }
+                        </ul>
+                      </div>
+                    }
+
+                    <!-- Suggested Leave Schedule -->
+                    @if (leaveBalancePrediction()!.suggestedLeaveSchedule.length > 0) {
+                      <div class="leave-schedule">
+                        <strong>Suggested Leave Schedule:</strong>
+                        <div class="schedule-items">
+                          @for (schedule of leaveBalancePrediction()!.suggestedLeaveSchedule; track schedule.month) {
+                            <div class="schedule-item" [class]="'priority-' + schedule.priority">
+                              <div class="schedule-header">
+                                <app-chip
+                                  [label]="schedule.priority"
+                                  [color]="schedule.priority === 'high' ? 'error' : schedule.priority === 'medium' ? 'warning' : 'primary'"
+                                  [variant]="'outlined'"
+                                  size="small">
+                                </app-chip>
+                                <span class="month">{{ schedule.month }}</span>
+                                <span class="days">{{ schedule.suggestedDays }} days</span>
+                              </div>
+                              <p class="reason">{{ schedule.reason }}</p>
+                            </div>
+                          }
+                        </div>
+                      </div>
+                    }
+                  </div>
+                }
+
+                <!-- Probation Period Calculation -->
+                @if (probationCalculation()) {
+                  <div class="insight-card probation-period" [class]="'urgency-' + probationCalculation()!.urgency">
+                    <div class="insight-header">
+                      <app-icon name="schedule"></app-icon>
+                      <strong>Probation Period Tracker</strong>
+                      <app-chip
+                        [label]="probationCalculation()!.status"
+                        [color]="probationCalculation()!.urgency === 'critical' ? 'error' : probationCalculation()!.urgency === 'high' ? 'warning' : 'primary'"
+                        [variant]="'filled'">
+                      </app-chip>
+                    </div>
+
+                    <!-- Status Message -->
+                    <div class="probation-status">
+                      <app-icon name="info"></app-icon>
+                      <p>{{ probationCalculation()!.statusMessage }}</p>
+                    </div>
+
+                    <!-- Progress Bar -->
+                    <div class="probation-progress">
+                      <div class="progress-header">
+                        <span>Progress</span>
+                        <strong>{{ probationCalculation()!.progressPercentage.toFixed(0) }}%</strong>
+                      </div>
+                      <div class="progress-bar-container">
+                        <div class="progress-bar" [style.width.%]="probationCalculation()!.progressPercentage"></div>
+                      </div>
+                      <div class="progress-details">
+                        <span>{{ probationCalculation()!.daysElapsed }} days elapsed</span>
+                        <span>{{ probationCalculation()!.daysRemaining }} days remaining</span>
+                      </div>
+                    </div>
+
+                    <!-- Dates -->
+                    <div class="probation-dates">
+                      <div class="date-item">
+                        <app-icon name="event"></app-icon>
+                        <div>
+                          <span class="label">Start Date</span>
+                          <strong>{{ probationCalculation()!.probationStartDate | date: 'mediumDate' }}</strong>
+                        </div>
+                      </div>
+                      <div class="date-item">
+                        <app-icon name="event_available"></app-icon>
+                        <div>
+                          <span class="label">End Date</span>
+                          <strong>{{ probationCalculation()!.probationEndDate | date: 'mediumDate' }}</strong>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Alerts -->
+                    @if (probationCalculation()!.alerts.length > 0) {
+                      <div class="probation-alerts">
+                        <strong>Alerts:</strong>
+                        @for (alert of probationCalculation()!.alerts; track alert.message) {
+                          <div class="alert-item" [class]="'severity-' + alert.severity">
+                            <app-icon [name]="alert.icon"></app-icon>
+                            <div class="alert-content">
+                              <p class="alert-message">{{ alert.message }}</p>
+                              <p class="alert-action">{{ alert.actionRequired }}</p>
+                            </div>
+                          </div>
+                        }
+                      </div>
+                    }
+
+                    <!-- Review Milestones -->
+                    @if (probationCalculation()!.reviewMilestones.length > 0) {
+                      <div class="review-milestones">
+                        <strong>Review Milestones:</strong>
+                        <div class="milestones-timeline">
+                          @for (milestone of probationCalculation()!.reviewMilestones; track milestone.id) {
+                            <div class="milestone-item"
+                                 [class.completed]="milestone.isCompleted"
+                                 [class.overdue]="milestone.isOverdue"
+                                 [class.pending]="milestone.isPending">
+                              <div class="milestone-icon">
+                                <app-icon [name]="milestone.isCompleted ? 'check_circle' : milestone.isOverdue ? 'error' : 'schedule'"></app-icon>
+                              </div>
+                              <div class="milestone-details">
+                                <div class="milestone-header">
+                                  <strong>{{ milestone.name }}</strong>
+                                  <app-chip
+                                    [label]="milestone.isOverdue ? 'OVERDUE' : milestone.isPending ? 'DUE SOON' : milestone.daysUntil + ' days'"
+                                    [color]="milestone.isOverdue ? 'error' : milestone.isPending ? 'warning' : 'primary'"
+                                    [variant]="'outlined'"
+                                    size="small">
+                                  </app-chip>
+                                </div>
+                                <p class="milestone-date">{{ milestone.scheduledDate | date: 'mediumDate' }}</p>
+                                <p class="milestone-description">{{ milestone.description }}</p>
+                              </div>
+                            </div>
+                          }
+                        </div>
+                      </div>
+                    }
+
+                    <!-- Recommendations -->
+                    @if (probationCalculation()!.recommendations.length > 0) {
+                      <div class="recommendations-section">
+                        <strong>Recommendations:</strong>
+                        <ul class="recommendations-list">
+                          @for (rec of probationCalculation()!.recommendations; track rec) {
+                            <li>{{ rec }}</li>
+                          }
+                        </ul>
+                      </div>
+                    }
+                  </div>
+                }
+
+                <!-- ============================================ -->
+                <!-- ADVANCED INTELLIGENCE FEATURES (8 NEW)       -->
+                <!-- ============================================ -->
+
+                <!-- 1. OVERTIME COMPLIANCE MONITOR -->
+                @if (overtimeCompliance()) {
+                  <div class="insight-card overtime-compliance" [class]="'risk-' + overtimeCompliance()!.riskLevel">
+                    <div class="insight-header">
+                      <app-icon name="schedule"></app-icon>
+                      <strong>Overtime Compliance</strong>
+                      <app-chip
+                        [label]="overtimeCompliance()!.isCompliant ? 'Compliant' : 'Non-Compliant'"
+                        [variant]="overtimeCompliance()!.isCompliant ? 'success' : 'error'">
+                      </app-chip>
+                    </div>
+
+                    <div class="compliance-summary">
+                      <div class="summary-row">
+                        <span>Weekly Hours:</span>
+                        <strong>{{ overtimeCompliance()!.weeklyHours }}h / {{ overtimeCompliance()!.maxLegalHours }}h</strong>
+                      </div>
+                      <div class="summary-row">
+                        <span>Overtime:</span>
+                        <strong>{{ overtimeCompliance()!.overtimeHours }}h</strong>
+                      </div>
+                      @if (overtimeCompliance()!.violations.length > 0) {
+                        <div class="violations-section">
+                          <strong class="error-text">⚠️ {{ overtimeCompliance()!.violations.length }} Violation(s)</strong>
+                          @for (violation of overtimeCompliance()!.violations; track violation.type) {
+                            <div class="violation-item">• {{ violation.description }}</div>
+                          }
+                        </div>
+                      }
+                      @if (overtimeCompliance()!.restPeriodViolations.length > 0) {
+                        <div class="violations-section">
+                          <strong class="error-text">⚠️ {{ overtimeCompliance()!.restPeriodViolations.length }} Rest Period Violation(s)</strong>
+                          @for (violation of overtimeCompliance()!.restPeriodViolations; track violation.date) {
+                            <div class="violation-item">• {{ violation.restHours }}h rest (requires {{ violation.requiredRestHours }}h)</div>
+                          }
+                        </div>
+                      }
+                    </div>
+
+                    @if (overtimeCompliance()!.recommendations.length > 0) {
+                      <div class="recommendations-section">
+                        <strong>Recommendations:</strong>
+                        <ul class="recommendations-list">
+                          @for (rec of overtimeCompliance()!.recommendations; track rec) {
+                            <li>{{ rec }}</li>
+                          }
+                        </ul>
+                      </div>
+                    }
+                  </div>
+                }
+
+                <!-- 2. SALARY ANOMALY DETECTOR -->
+                @if (salaryAnomalies()) {
+                  <div class="insight-card salary-anomalies" [class]="'risk-' + salaryAnomalies()!.overallRiskLevel">
+                    <div class="insight-header">
+                      <app-icon name="account_balance_wallet"></app-icon>
+                      <strong>Salary Analysis</strong>
+                      <app-chip
+                        [label]="salaryAnomalies()!.hasAnomalies ? 'Anomalies Detected' : 'No Issues'"
+                        [variant]="salaryAnomalies()!.hasAnomalies ? 'warning' : 'success'">
+                      </app-chip>
+                    </div>
+
+                    <div class="salary-summary">
+                      <!-- Gender Pay Gap -->
+                      <div class="summary-section">
+                        <strong>Gender Pay Gap:</strong>
+                        <div class="summary-row">
+                          <span>Gap Percentage:</span>
+                          <strong [class.error-text]="!salaryAnomalies()!.genderPayGapAnalysis.isCompliant">
+                            {{ salaryAnomalies()!.genderPayGapAnalysis.gapPercentage }}%
+                          </strong>
+                        </div>
+                        <div class="summary-row">
+                          <span>Compliance:</span>
+                          <strong [class.success-text]="salaryAnomalies()!.genderPayGapAnalysis.isCompliant"
+                                  [class.error-text]="!salaryAnomalies()!.genderPayGapAnalysis.isCompliant">
+                            {{ salaryAnomalies()!.genderPayGapAnalysis.isCompliant ? 'Compliant' : 'Non-Compliant' }}
+                          </strong>
+                        </div>
+                      </div>
+
+                      <!-- Market Rate Comparison -->
+                      <div class="summary-section">
+                        <strong>Market Rate:</strong>
+                        <div class="summary-row">
+                          <span>Position:</span>
+                          <strong>{{ salaryAnomalies()!.marketRateComparison.positionInRange | titlecase }}</strong>
+                        </div>
+                        <div class="summary-row">
+                          <span>Competitiveness:</span>
+                          <strong [class.success-text]="salaryAnomalies()!.marketRateComparison.isCompetitive"
+                                  [class.warning-text]="!salaryAnomalies()!.marketRateComparison.isCompetitive">
+                            {{ salaryAnomalies()!.marketRateComparison.isCompetitive ? 'Competitive' : 'Below Market' }}
+                          </strong>
+                        </div>
+                      </div>
+
+                      <!-- Anomalies -->
+                      @if (salaryAnomalies()!.anomalies.length > 0) {
+                        <div class="anomalies-section">
+                          <strong>Detected Anomalies:</strong>
+                          @for (anomaly of salaryAnomalies()!.anomalies; track anomaly.type) {
+                            <div class="anomaly-item" [class.high-severity]="anomaly.severity === 'high'">
+                              <span class="anomaly-type">{{ anomaly.description }}</span>
+                              <span class="anomaly-diff">{{ anomaly.percentageDifference > 0 ? '+' : '' }}{{ anomaly.percentageDifference }}%</span>
+                            </div>
+                          }
+                        </div>
+                      }
+                    </div>
+
+                    @if (salaryAnomalies()!.recommendations.length > 0) {
+                      <div class="recommendations-section">
+                        <strong>Recommendations:</strong>
+                        <ul class="recommendations-list">
+                          @for (rec of salaryAnomalies()!.recommendations; track rec) {
+                            <li>{{ rec }}</li>
+                          }
+                        </ul>
+                      </div>
+                    }
+                  </div>
+                }
+
+                <!-- 3. RETENTION RISK SCORER -->
+                @if (retentionRisk()) {
+                  <div class="insight-card retention-risk" [class]="'risk-' + retentionRisk()!.riskLevel">
+                    <div class="insight-header">
+                      <app-icon name="groups"></app-icon>
+                      <strong>Retention Risk Assessment</strong>
+                      <app-chip
+                        [label]="retentionRisk()!.riskLevel + ' risk'"
+                        [variant]="retentionRisk()!.riskLevel === 'high' ? 'error' : retentionRisk()!.riskLevel === 'medium' ? 'warning' : 'success'">
+                      </app-chip>
+                    </div>
+
+                    <div class="risk-summary">
+                      <div class="risk-score-display">
+                        <div class="score-circle" [class]="'risk-' + retentionRisk()!.riskLevel">
+                          <span class="score-value">{{ retentionRisk()!.riskScore }}</span>
+                          <span class="score-label">Risk Score</span>
+                        </div>
+                        <div class="flight-risk">
+                          <strong>Flight Risk:</strong>
+                          <span>{{ retentionRisk()!.flightRiskPercentage }}%</span>
+                        </div>
+                      </div>
+
+                      <div class="summary-row highlight">
+                        <span>Replacement Cost:</span>
+                        <strong class="cost-value">MUR {{ retentionRisk()!.replacementCost.toLocaleString() }}</strong>
+                      </div>
+
+                      @if (retentionRisk()!.riskFactors.length > 0) {
+                        <div class="risk-factors-section">
+                          <strong>Risk Factors:</strong>
+                          @for (factor of retentionRisk()!.riskFactors; track factor.factor) {
+                            <div class="risk-factor-item" [class]="'impact-' + factor.impact">
+                              <span class="factor-name">{{ factor.description }}</span>
+                              <span class="factor-weight">Weight: {{ factor.weight }}%</span>
+                            </div>
+                          }
+                        </div>
+                      }
+                    </div>
+
+                    @if (retentionRisk()!.recommendations.length > 0) {
+                      <div class="recommendations-section">
+                        <strong>Action Items:</strong>
+                        <ul class="recommendations-list">
+                          @for (rec of retentionRisk()!.recommendations; track rec.action) {
+                            <li>
+                              <strong>[{{ rec.priority | uppercase }}]</strong> {{ rec.action }}
+                              @if (rec.timeframe) {
+                                <span class="timeframe">({{ rec.timeframe }})</span>
+                              }
+                            </li>
+                          }
+                        </ul>
+                      </div>
+                    }
+                  </div>
+                }
+
+                <!-- 4. PERFORMANCE REVIEW SCHEDULER -->
+                @if (performanceReviews()) {
+                  <div class="insight-card performance-reviews" [class]="'status-' + performanceReviews()!.complianceStatus">
+                    <div class="insight-header">
+                      <app-icon name="assessment"></app-icon>
+                      <strong>Performance Review Schedule</strong>
+                      <app-chip
+                        [label]="performanceReviews()!.complianceStatus"
+                        [variant]="performanceReviews()!.complianceStatus === 'compliant' ? 'success' : performanceReviews()!.complianceStatus === 'warning' ? 'warning' : 'error'">
+                      </app-chip>
+                    </div>
+
+                    <div class="reviews-summary">
+                      <div class="summary-row">
+                        <span>Review Cycle:</span>
+                        <strong>{{ performanceReviews()!.reviewCycle | titlecase }}</strong>
+                      </div>
+
+                      @if (performanceReviews()!.nextReview) {
+                        <div class="summary-row highlight">
+                          <span>Next Review:</span>
+                          <strong>{{ performanceReviews()!.nextReview.dueDate | date }}</strong>
+                        </div>
+                      }
+
+                      @if (performanceReviews()!.hasOverdueReviews) {
+                        <div class="overdue-section">
+                          <strong class="error-text">⚠️ {{ performanceReviews()!.overdueReviews.length }} Overdue Review(s)</strong>
+                          @for (review of performanceReviews()!.overdueReviews; track review.reviewNumber) {
+                            <div class="overdue-item">
+                              • Review #{{ review.reviewNumber }}: {{ review.daysOverdue }} days overdue
+                            </div>
+                          }
+                        </div>
+                      }
+
+                      <div class="reviews-timeline">
+                        <strong>Review History:</strong>
+                        @for (review of performanceReviews()!.reviews.slice(0, 5); track review.reviewNumber) {
+                          <div class="timeline-item" [class]="'status-' + review.status">
+                            <span class="review-number">#{{ review.reviewNumber }}</span>
+                            <span class="review-date">{{ review.dueDate | date }}</span>
+                            <app-chip
+                              [label]="review.status"
+                              [variant]="review.status === 'completed' ? 'success' : review.status === 'overdue' ? 'error' : 'default'">
+                            </app-chip>
+                          </div>
+                        }
+                      </div>
+                    </div>
+
+                    @if (performanceReviews()!.recommendations.length > 0) {
+                      <div class="recommendations-section">
+                        <strong>Recommendations:</strong>
+                        <ul class="recommendations-list">
+                          @for (rec of performanceReviews()!.recommendations; track rec) {
+                            <li>{{ rec }}</li>
+                          }
+                        </ul>
+                      </div>
+                    }
+                  </div>
+                }
+
+                <!-- 5. TRAINING NEEDS ANALYZER -->
+                @if (trainingNeeds()) {
+                  <div class="insight-card training-needs" [class]="'compliance-' + trainingNeeds()!.complianceStatus">
+                    <div class="insight-header">
+                      <app-icon name="school"></app-icon>
+                      <strong>Training Needs Analysis</strong>
+                      <app-chip
+                        [label]="trainingNeeds()!.complianceStatus"
+                        [variant]="trainingNeeds()!.complianceStatus === 'compliant' ? 'success' : 'error'">
+                      </app-chip>
+                    </div>
+
+                    <div class="training-summary">
+                      <div class="summary-row">
+                        <span>Estimated Budget:</span>
+                        <strong>MUR {{ trainingNeeds()!.trainingBudgetEstimate.toLocaleString() }}</strong>
+                      </div>
+                      <div class="summary-row">
+                        <span>Estimated Hours:</span>
+                        <strong>{{ trainingNeeds()!.estimatedTrainingHours }}h</strong>
+                      </div>
+
+                      <!-- Mandatory Training Status -->
+                      <div class="mandatory-training-section">
+                        <strong>Mandatory Training:</strong>
+                        @for (training of trainingNeeds()!.mandatoryTraining; track training.trainingName) {
+                          <div class="training-item" [class.completed]="training.isCompleted" [class.expired]="training.isExpired">
+                            <app-icon [name]="training.isCompleted && !training.isExpired ? 'check_circle' : 'cancel'"></app-icon>
+                            <span class="training-name">{{ training.trainingName }}</span>
+                            @if (training.isExpired) {
+                              <span class="status-badge expired">Expired</span>
+                            } @else if (!training.isCompleted) {
+                              <span class="status-badge pending">Pending</span>
+                            } @else {
+                              <span class="status-badge completed">Completed</span>
+                            }
+                          </div>
+                        }
+                      </div>
+
+                      <!-- Skill Gaps -->
+                      @if (trainingNeeds()!.skillGaps.length > 0) {
+                        <div class="skill-gaps-section">
+                          <strong>Skill Gaps Identified:</strong>
+                          @for (gap of trainingNeeds()!.skillGaps; track gap.skillName) {
+                            <div class="skill-gap-item" [class]="'priority-' + gap.priority">
+                              <span class="skill-name">{{ gap.skillName }}</span>
+                              <span class="skill-level">{{ gap.currentLevel }} → {{ gap.requiredLevel }}</span>
+                              <span class="training-rec">{{ gap.recommendedTraining }}</span>
+                            </div>
+                          }
+                        </div>
+                      }
+                    </div>
+
+                    @if (trainingNeeds()!.recommendations.length > 0) {
+                      <div class="recommendations-section">
+                        <strong>Recommendations:</strong>
+                        <ul class="recommendations-list">
+                          @for (rec of trainingNeeds()!.recommendations; track rec) {
+                            <li>{{ rec }}</li>
+                          }
+                        </ul>
+                      </div>
+                    }
+                  </div>
+                }
+
+                <!-- 6. CAREER PROGRESSION ANALYZER -->
+                @if (careerProgression()) {
+                  <div class="insight-card career-progression" [class.promotion-ready]="careerProgression()!.isPromotionReady">
+                    <div class="insight-header">
+                      <app-icon name="trending_up"></app-icon>
+                      <strong>Career Progression</strong>
+                      <app-chip
+                        [label]="careerProgression()!.isPromotionReady ? 'Promotion Ready' : 'In Development'"
+                        [variant]="careerProgression()!.isPromotionReady ? 'success' : 'default'">
+                      </app-chip>
+                    </div>
+
+                    <div class="progression-summary">
+                      <div class="level-progression">
+                        <span class="current-level">{{ careerProgression()!.currentLevel | titlecase }}</span>
+                        <app-icon name="arrow_forward"></app-icon>
+                        <span class="next-level">{{ careerProgression()!.nextLevel | titlecase }}</span>
+                      </div>
+
+                      <div class="readiness-score">
+                        <div class="score-bar">
+                          <div class="score-fill" [style.width.%]="careerProgression()!.promotionReadinessScore"></div>
+                        </div>
+                        <span class="score-label">{{ careerProgression()!.promotionReadinessScore }}% Ready</span>
+                      </div>
+
+                      @if (careerProgression()!.estimatedMonthsToPromotion > 0) {
+                        <div class="summary-row">
+                          <span>Estimated Time to Promotion:</span>
+                          <strong>{{ careerProgression()!.estimatedMonthsToPromotion }} months</strong>
+                        </div>
+                      }
+
+                      <!-- Qualification Checklist -->
+                      <div class="qualifications-section">
+                        <strong>Promotion Qualifications:</strong>
+                        @for (qual of careerProgression()!.qualifications; track qual.criterion) {
+                          <div class="qualification-item" [class.met]="qual.isMet">
+                            <app-icon [name]="qual.isMet ? 'check_circle' : 'radio_button_unchecked'"></app-icon>
+                            <span class="qual-criterion">{{ qual.criterion }}</span>
+                            <span class="qual-status">{{ qual.currentValue }} / {{ qual.requiredValue }}</span>
+                          </div>
+                        }
+                      </div>
+                    </div>
+
+                    @if (careerProgression()!.developmentRecommendations.length > 0) {
+                      <div class="recommendations-section">
+                        <strong>Development Plan:</strong>
+                        <ul class="recommendations-list">
+                          @for (rec of careerProgression()!.developmentRecommendations; track rec) {
+                            <li>{{ rec }}</li>
+                          }
+                        </ul>
+                      </div>
+                    }
+                  </div>
+                }
+
+                <!-- 7. VISA/WORK PERMIT RENEWAL FORECASTER -->
+                @if (visaRenewal()) {
+                  <div class="insight-card visa-renewal" [class]="'urgency-' + visaRenewal()!.urgencyLevel">
+                    <div class="insight-header">
+                      <app-icon name="flight_takeoff"></app-icon>
+                      <strong>Visa Renewal Forecast</strong>
+                      <app-chip
+                        [label]="visaRenewal()!.urgencyLevel + ' urgency'"
+                        [variant]="visaRenewal()!.urgencyLevel === 'critical' || visaRenewal()!.urgencyLevel === 'high' ? 'error' : visaRenewal()!.urgencyLevel === 'medium' ? 'warning' : 'success'">
+                      </app-chip>
+                    </div>
+
+                    <div class="visa-summary">
+                      <div class="summary-row">
+                        <span>Permit Type:</span>
+                        <strong>{{ visaRenewal()!.permitType.replace('_', ' ') | titlecase }}</strong>
+                      </div>
+                      <div class="summary-row highlight">
+                        <span>Days Until Expiry:</span>
+                        <strong [class.error-text]="visaRenewal()!.daysUntilExpiry < 30">
+                          {{ visaRenewal()!.daysUntilExpiry }} days
+                        </strong>
+                      </div>
+                      <div class="summary-row">
+                        <span>Processing Time:</span>
+                        <strong>{{ visaRenewal()!.estimatedProcessingDays }} days</strong>
+                      </div>
+                      <div class="summary-row">
+                        <span>Recommended Start:</span>
+                        <strong>{{ visaRenewal()!.recommendedStartDate | date }}</strong>
+                      </div>
+
+                      <!-- Renewal Timeline -->
+                      <div class="timeline-section">
+                        <strong>Renewal Milestones:</strong>
+                        @for (milestone of visaRenewal()!.renewalTimeline; track milestone.milestone) {
+                          <div class="timeline-item"
+                               [class.completed]="milestone.isCompleted"
+                               [class.urgent]="milestone.priority === 'urgent' && !milestone.isCompleted">
+                            <div class="milestone-status">
+                              <app-icon [name]="milestone.isCompleted ? 'check_circle' : 'schedule'"></app-icon>
+                            </div>
+                            <div class="milestone-content">
+                              <span class="milestone-name">{{ milestone.milestone }}</span>
+                              <span class="milestone-date">{{ milestone.dueDate | date }}</span>
+                              @if (!milestone.isCompleted && milestone.daysUntil !== null) {
+                                <span class="days-until">{{ milestone.daysUntil > 0 ? milestone.daysUntil + ' days' : 'Overdue' }}</span>
+                              }
+                            </div>
+                          </div>
+                        }
+                      </div>
+
+                      <!-- Required Documents -->
+                      <div class="documents-section">
+                        <strong>Required Documents ({{ visaRenewal()!.requiredDocuments.length }}):</strong>
+                        @for (doc of visaRenewal()!.requiredDocuments; track doc.documentName) {
+                          <div class="document-item" [class.submitted]="doc.isSubmitted">
+                            <app-icon [name]="doc.isSubmitted ? 'check_box' : 'check_box_outline_blank'"></app-icon>
+                            <span>{{ doc.documentName }}</span>
+                          </div>
+                        }
+                      </div>
+                    </div>
+
+                    @if (visaRenewal()!.recommendations.length > 0) {
+                      <div class="recommendations-section">
+                        <strong>Action Items:</strong>
+                        <ul class="recommendations-list">
+                          @for (rec of visaRenewal()!.recommendations; track rec) {
+                            <li>{{ rec }}</li>
+                          }
+                        </ul>
+                      </div>
+                    }
+                  </div>
+                }
+
+                <!-- No Insights Message -->
+                @if (!passportDetectionResult() && !workPermitRecommendation() && !expiryAlerts().length && !taxCalculation() && !sectorCompliance() && !leaveBalancePrediction() && !probationCalculation() && !overtimeCompliance() && !salaryAnomalies() && !retentionRisk() && !performanceReviews() && !trainingNeeds() && !careerProgression() && !visaRenewal()) {
+                  <div class="no-insights">
+                    <app-icon name="lightbulb"></app-icon>
+                    <p>Fill in employee details to see intelligent recommendations and compliance checks</p>
+                  </div>
+                }
+              </div>
             </div>
           </app-expansion-panel>
 

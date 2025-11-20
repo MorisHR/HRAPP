@@ -50,13 +50,17 @@ public class PayrollServiceTests : IDisposable
         _mockSalaryComponentService.Setup(x => x.GetTotalDeductionsAsync(It.IsAny<Guid>(), It.IsAny<int>(), It.IsAny<int>()))
             .ReturnsAsync(0m);
 
+        // Mock PDF Generator - FIXED: Added for CRITICAL-2
+        var mockPdfGenerator = new Mock<IPayslipPdfGenerator>();
+
         // Create Service
         _service = new PayrollService(
             _tenantDbContext,
             _mockTenantService.Object,
             _mockSalaryComponentService.Object,
             _mockLogger.Object,
-            _mockCurrentUserService.Object
+            _mockCurrentUserService.Object,
+            mockPdfGenerator.Object // FIXED: Pass PDF generator mock (CRITICAL-2)
         );
 
         // Seed Test Data
