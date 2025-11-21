@@ -1,0 +1,594 @@
+<app-card [elevation]="2" padding="large" class="infrastructure-monitor">
+  <!-- Header -->
+  <div class="monitor-header">
+    <div class="header-title">
+      <h3>Infrastructure Monitoring</h3>
+      @if (metrics()) {
+        <span class="health-badge" [class]="'health-' + overallHealth()">
+          <app-icon [name]="getHealthIcon(overallHealth())"></app-icon>
+          {{ overallHealth() | uppercase }}
+        </span>
+      }
+    </div>
+    <div class="header-actions">
+      <button
+        app-icon-button
+        (click)="refresh()"
+        [disabled]="loading()"
+        title="Refresh"
+      >
+        <app-icon [name]="loading() ? 'sync' : 'refresh'" [class.spinning]="loading()"></app-icon>
+      </button>
+    </div>
+  </div>
+
+  @if (loading() && !metrics()) {
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p>Loading infrastructure metrics...</p>
+    </div>
+  } @else if (error()) {
+    <div class="error-state">
+      <app-icon name="error" class="error-icon"></app-icon>
+      <p>{{ error() }}</p>
+      <app-button (clicked)="refresh()">Retry</app-button>
+    </div>
+  } @else if (metrics(); as m) {
+    <!-- Tab Navigation -->
+    <div class="tab-nav">
+      <button
+        class="tab-button"
+        [class.active]="selectedTab() === 'overview'"
+        (click)="selectTab('overview')"
+      >
+        <app-icon name="dashboard"></app-icon>
+        Overview
+      </button>
+      <button
+        class="tab-button"
+        [class.active]="selectedTab() === 'database'"
+        (click)="selectTab('database')"
+      >
+        <app-icon name="storage"></app-icon>
+        Database
+      </button>
+      <button
+        class="tab-button"
+        [class.active]="selectedTab() === 'api'"
+        (click)="selectTab('api')"
+      >
+        <app-icon name="api"></app-icon>
+        API & Rate Limits
+      </button>
+      <button
+        class="tab-button"
+        [class.active]="selectedTab() === 'cache'"
+        (click)="selectTab('cache')"
+      >
+        <app-icon name="memory"></app-icon>
+        Cache & Redis
+      </button>
+      <button
+        class="tab-button"
+        [class.active]="selectedTab() === 'cdn'"
+        (click)="selectTab('cdn')"
+      >
+        <app-icon name="cloud"></app-icon>
+        CDN
+      </button>
+      <button
+        class="tab-button"
+        [class.active]="selectedTab() === 'jobs'"
+        (click)="selectTab('jobs')"
+      >
+        <app-icon name="work"></app-icon>
+        Jobs & Queues
+      </button>
+    </div>
+
+    <!-- Tab Content -->
+    <div class="tab-content">
+      <!-- Overview Tab -->
+      @if (selectedTab() === 'overview') {
+        <div class="overview-grid">
+          <!-- Queue Health -->
+          <app-card class="metric-card">
+            <div class="card-header">
+              <h4>Queue Status</h4>
+              <app-icon name="queue"></app-icon>
+            </div>
+            <div class="metric-grid">
+              <div class="metric-item">
+                <span class="metric-label">Active Jobs</span>
+                <span class="metric-value">{{ m.queueMetrics.activeJobs }}</span>
+              </div>
+              <div class="metric-item">
+                <span class="metric-label">Pending</span>
+                <span class="metric-value">{{ m.queueMetrics.pendingJobs }}</span>
+              </div>
+              <div class="metric-item">
+                <span class="metric-label">Failed</span>
+                <span class="metric-value danger">{{ m.queueMetrics.failedJobs }}</span>
+              </div>
+              <div class="metric-item">
+                <span class="metric-label">Completed Today</span>
+                <span class="metric-value">{{ formatNumber(m.queueMetrics.completedJobsToday) }}</span>
+              </div>
+            </div>
+          </app-card>
+
+          <!-- Database Health -->
+          <app-card class="metric-card">
+            <div class="card-header">
+              <h4>Database Performance</h4>
+              <app-icon name="storage"></app-icon>
+            </div>
+            <div class="metric-grid">
+              <div class="metric-item">
+                <span class="metric-label">Connection Pool</span>
+                <span class="metric-value">{{ m.databasePerformance.connectionPool.activeConnections }} / {{ m.databasePerformance.connectionPool.maxConnections }}</span>
+              </div>
+              <div class="metric-item">
+                <span class="metric-label">Utilization</span>
+                <span class="metric-value" [class.warning]="m.databasePerformance.connectionPool.utilizationPercent > 80">
+                  {{ formatPercent(m.databasePerformance.connectionPool.utilizationPercent) }}
+                </span>
+              </div>
+              <div class="metric-item">
+                <span class="metric-label">Avg Query Time</span>
+                <span class="metric-value">{{ m.databasePerformance.queryPerformance.averageQueryTime.toFixed(1) }}ms</span>
+              </div>
+              <div class="metric-item">
+                <span class="metric-label">Slow Queries</span>
+                <span class="metric-value" [class.warning]="m.databasePerformance.queryPerformance.slowQueryCount > 10">
+                  {{ m.databasePerformance.queryPerformance.slowQueryCount }}
+                </span>
+              </div>
+            </div>
+          </app-card>
+
+          <!-- Cache Health -->
+          <app-card class="metric-card">
+            <div class="card-header">
+              <h4>Cache Performance</h4>
+              <app-icon name="memory"></app-icon>
+            </div>
+            <div class="metric-grid">
+              <div class="metric-item">
+                <span class="metric-label">Hit Rate</span>
+                <span class="metric-value success">{{ formatPercent(m.cacheMetrics.hitRate) }}</span>
+              </div>
+              <div class="metric-item">
+                <span class="metric-label">Memory Used</span>
+                <span class="metric-value">{{ m.cacheMetrics.memoryUsedMB }} / {{ m.cacheMetrics.memoryMaxMB }} MB</span>
+              </div>
+              <div class="metric-item">
+                <span class="metric-label">Keys</span>
+                <span class="metric-value">{{ formatNumber(m.cacheMetrics.totalKeys) }}</span>
+              </div>
+              <div class="metric-item">
+                <span class="metric-label">Ops/Sec</span>
+                <span class="metric-value">{{ formatNumber(m.cacheMetrics.opsPerSecond) }}</span>
+              </div>
+            </div>
+          </app-card>
+
+          <!-- API Rate Limiting -->
+          <app-card class="metric-card">
+            <div class="card-header">
+              <h4>API Rate Limiting</h4>
+              <app-icon name="api"></app-icon>
+            </div>
+            <div class="metric-grid">
+              <div class="metric-item">
+                <span class="metric-label">Total Requests</span>
+                <span class="metric-value">{{ formatNumber(m.apiRateLimiting.totalRequests) }}</span>
+              </div>
+              <div class="metric-item">
+                <span class="metric-label">Rate Limited</span>
+                <span class="metric-value warning">{{ formatNumber(m.apiRateLimiting.rateLimitedRequests) }}</span>
+              </div>
+              <div class="metric-item">
+                <span class="metric-label">Throttled</span>
+                <span class="metric-value">{{ formatNumber(m.apiRateLimiting.throttledRequests) }}</span>
+              </div>
+              <div class="metric-item">
+                <span class="metric-label">Violations</span>
+                <span class="metric-value danger">{{ m.apiRateLimiting.rateLimitViolations.length }}</span>
+              </div>
+            </div>
+          </app-card>
+
+          <!-- CDN Performance -->
+          <app-card class="metric-card">
+            <div class="card-header">
+              <h4>CDN Performance</h4>
+              <app-icon name="cloud"></app-icon>
+            </div>
+            <div class="metric-grid">
+              <div class="metric-item">
+                <span class="metric-label">Cache Hit Rate</span>
+                <span class="metric-value success">{{ formatPercent(m.cdnMetrics.cacheHitRate) }}</span>
+              </div>
+              <div class="metric-item">
+                <span class="metric-label">Bandwidth</span>
+                <span class="metric-value">{{ m.cdnMetrics.bandwidthGB.toFixed(1) }} GB</span>
+              </div>
+              <div class="metric-item">
+                <span class="metric-label">Avg Latency</span>
+                <span class="metric-value">{{ m.cdnMetrics.averageLatency }}ms</span>
+              </div>
+              <div class="metric-item">
+                <span class="metric-label">Error Rate</span>
+                <span class="metric-value" [class.warning]="m.cdnMetrics.errorRate > 1">
+                  {{ formatPercent(m.cdnMetrics.errorRate) }}
+                </span>
+              </div>
+            </div>
+          </app-card>
+
+          <!-- Background Jobs -->
+          <app-card class="metric-card">
+            <div class="card-header">
+              <h4>Background Jobs</h4>
+              <app-icon name="work"></app-icon>
+            </div>
+            <div class="metric-grid">
+              <div class="metric-item">
+                <span class="metric-label">Running</span>
+                <span class="metric-value">{{ m.backgroundJobs.running }}</span>
+              </div>
+              <div class="metric-item">
+                <span class="metric-label">Scheduled</span>
+                <span class="metric-value">{{ m.backgroundJobs.scheduled }}</span>
+              </div>
+              <div class="metric-item">
+                <span class="metric-label">Failed</span>
+                <span class="metric-value danger">{{ m.backgroundJobs.failed }}</span>
+              </div>
+              <div class="metric-item">
+                <span class="metric-label">Retrying</span>
+                <span class="metric-value warning">{{ m.backgroundJobs.retrying }}</span>
+              </div>
+            </div>
+          </app-card>
+        </div>
+      }
+
+      <!-- Database Tab -->
+      @if (selectedTab() === 'database') {
+        <div class="database-content">
+          <!-- Connection Pool -->
+          <app-card>
+            <h4>Connection Pool Status</h4>
+            <div class="progress-container">
+              <div class="progress-label">
+                <span>{{ m.databasePerformance.connectionPool.activeConnections }} Active / {{ m.databasePerformance.connectionPool.maxConnections }} Max</span>
+                <span>{{ formatPercent(m.databasePerformance.connectionPool.utilizationPercent) }}</span>
+              </div>
+              <div class="progress-bar">
+                <div
+                  class="progress-fill"
+                  [class.warning]="m.databasePerformance.connectionPool.utilizationPercent > 80"
+                  [class.danger]="m.databasePerformance.connectionPool.utilizationPercent > 95"
+                  [style.width.%]="m.databasePerformance.connectionPool.utilizationPercent"
+                ></div>
+              </div>
+            </div>
+            <div class="stats-grid">
+              <div><strong>Idle:</strong> {{ m.databasePerformance.connectionPool.idleConnections }}</div>
+              <div><strong>Waiting:</strong> {{ m.databasePerformance.connectionPool.waitingRequests }}</div>
+              <div><strong>Avg Wait:</strong> {{ m.databasePerformance.connectionPool.averageWaitTime }}ms</div>
+              <div><strong>Errors:</strong> {{ m.databasePerformance.connectionPool.connectionErrors }}</div>
+            </div>
+          </app-card>
+
+          <!-- Slow Queries -->
+          <app-card>
+            <h4>Recent Slow Queries (>5s)</h4>
+            <div class="table-container">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Query</th>
+                    <th>Time</th>
+                    <th>Database</th>
+                    <th>Tenant</th>
+                    <th>Rows</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (query of m.databasePerformance.slowQueries; track query.query) {
+                    <tr>
+                      <td class="query-cell">{{ query.query }}</td>
+                      <td class="time-cell danger">{{ (query.executionTime / 1000).toFixed(2) }}s</td>
+                      <td>{{ query.database }}</td>
+                      <td>{{ query.tenantId || 'N/A' }}</td>
+                      <td>{{ formatNumber(query.rowsReturned) }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </app-card>
+
+          <!-- Tenant Database Sizes -->
+          <app-card>
+            <h4>Top Tenant Database Sizes</h4>
+            <div class="table-container">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Tenant</th>
+                    <th>Size</th>
+                    <th>Rows</th>
+                    <th>Index Size</th>
+                    <th>Growth Rate</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (tenant of m.databasePerformance.tenantSizes; track tenant.tenantId) {
+                    <tr>
+                      <td><strong>{{ tenant.tenantName }}</strong></td>
+                      <td>{{ tenant.sizeGB.toFixed(1) }} GB</td>
+                      <td>{{ formatNumber(tenant.rowCount) }}</td>
+                      <td>{{ tenant.indexSizeGB.toFixed(1) }} GB</td>
+                      <td>{{ tenant.growthRate.toFixed(1) }} GB/mo</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </app-card>
+        </div>
+      }
+
+      <!-- API Tab -->
+      @if (selectedTab() === 'api') {
+        <div class="api-content">
+          <!-- Rate Limit Violations -->
+          <app-card>
+            <h4>Recent Rate Limit Violations</h4>
+            <div class="violations-list">
+              @for (violation of m.apiRateLimiting.rateLimitViolations; track violation.timestamp) {
+                <div class="violation-item">
+                  <div class="violation-header">
+                    <span class="violation-tenant">{{ violation.tenantName }}</span>
+                    <span class="violation-time">{{ violation.timestamp.toLocaleTimeString() }}</span>
+                  </div>
+                  <div class="violation-details">
+                    <span class="violation-endpoint">{{ violation.endpoint }}</span>
+                    <span class="violation-count">{{ formatNumber(violation.requestCount) }} / {{ formatNumber(violation.limit) }} requests</span>
+                    <span class="violation-action" [class]="'action-' + violation.action">{{ violation.action }}</span>
+                  </div>
+                </div>
+              }
+            </div>
+          </app-card>
+
+          <!-- Tenant API Usage -->
+          <app-card>
+            <h4>Top Tenant API Usage</h4>
+            <div class="table-container">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Tenant</th>
+                    <th>Requests</th>
+                    <th>Limit</th>
+                    <th>Utilization</th>
+                    <th>Violations</th>
+                    <th>Avg Response</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (tenant of m.apiRateLimiting.tenantRequestCounts; track tenant.tenantId) {
+                    <tr>
+                      <td><strong>{{ tenant.tenantName }}</strong></td>
+                      <td>{{ formatNumber(tenant.requestCount) }}</td>
+                      <td>{{ formatNumber(tenant.limit) }}</td>
+                      <td [class.danger]="tenant.utilizationPercent > 100" [class.warning]="tenant.utilizationPercent > 80">
+                        {{ formatPercent(tenant.utilizationPercent) }}
+                      </td>
+                      <td class="danger">{{ tenant.rateLimitHits }}</td>
+                      <td>{{ tenant.averageResponseTime }}ms</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </app-card>
+        </div>
+      }
+
+      <!-- Cache Tab -->
+      @if (selectedTab() === 'cache') {
+        <div class="cache-content">
+          <div class="cache-grid">
+            <!-- Cache Overview -->
+            <app-card>
+              <h4>Redis Cache Health</h4>
+              <div class="cache-stats">
+                <div class="stat-large">
+                  <span class="stat-value success">{{ formatPercent(m.cacheMetrics.hitRate) }}</span>
+                  <span class="stat-label">Hit Rate</span>
+                </div>
+                <div class="stat-large">
+                  <span class="stat-value">{{ formatNumber(m.cacheMetrics.opsPerSecond) }}</span>
+                  <span class="stat-label">Ops/Second</span>
+                </div>
+                <div class="stat-large">
+                  <span class="stat-value">{{ m.cacheMetrics.averageLatency.toFixed(1) }}ms</span>
+                  <span class="stat-label">Avg Latency</span>
+                </div>
+              </div>
+            </app-card>
+
+            <!-- Memory Usage -->
+            <app-card>
+              <h4>Memory Usage</h4>
+              <div class="progress-container">
+                <div class="progress-label">
+                  <span>{{ m.cacheMetrics.memoryUsedMB }} MB / {{ m.cacheMetrics.memoryMaxMB }} MB</span>
+                  <span>{{ formatPercent((m.cacheMetrics.memoryUsedMB / m.cacheMetrics.memoryMaxMB) * 100) }}</span>
+                </div>
+                <div class="progress-bar">
+                  <div
+                    class="progress-fill"
+                    [style.width.%]="(m.cacheMetrics.memoryUsedMB / m.cacheMetrics.memoryMaxMB) * 100"
+                  ></div>
+                </div>
+              </div>
+            </app-card>
+          </div>
+
+          <!-- Cache Breakdown -->
+          <app-card>
+            <h4>Cache Category Breakdown</h4>
+            <div class="table-container">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Category</th>
+                    <th>Keys</th>
+                    <th>Memory</th>
+                    <th>Hit Rate</th>
+                    <th>Avg TTL</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (category of m.cacheMetrics.cacheBreakdown; track category.category) {
+                    <tr>
+                      <td><strong>{{ category.category }}</strong></td>
+                      <td>{{ formatNumber(category.keys) }}</td>
+                      <td>{{ category.memoryMB }} MB</td>
+                      <td class="success">{{ formatPercent(category.hitRate) }}</td>
+                      <td>{{ category.ttlAverage }}s</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </app-card>
+        </div>
+      }
+
+      <!-- CDN Tab -->
+      @if (selectedTab() === 'cdn') {
+        <div class="cdn-content">
+          <app-card>
+            <h4>Geographic Distribution</h4>
+            <div class="table-container">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Region</th>
+                    <th>Requests</th>
+                    <th>Bandwidth</th>
+                    <th>Avg Latency</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (region of m.cdnMetrics.geographicDistribution; track region.region) {
+                    <tr>
+                      <td><strong>{{ region.region }}</strong></td>
+                      <td>{{ formatNumber(region.requests) }}</td>
+                      <td>{{ region.bandwidthGB.toFixed(1) }} GB</td>
+                      <td>{{ region.averageLatency }}ms</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </app-card>
+
+          <app-card>
+            <h4>Top Assets</h4>
+            <div class="table-container">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Path</th>
+                    <th>Requests</th>
+                    <th>Cache Hit Rate</th>
+                    <th>Bandwidth</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (asset of m.cdnMetrics.topAssets; track asset.path) {
+                    <tr>
+                      <td class="path-cell">{{ asset.path }}</td>
+                      <td>{{ formatNumber(asset.requests) }}</td>
+                      <td class="success">{{ formatPercent(asset.cacheHitRate) }}</td>
+                      <td>{{ asset.bandwidthGB.toFixed(1) }} GB</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </app-card>
+        </div>
+      }
+
+      <!-- Jobs Tab -->
+      @if (selectedTab() === 'jobs') {
+        <div class="jobs-content">
+          <!-- Queue Status -->
+          <app-card>
+            <h4>Queue Status by Type</h4>
+            <div class="queues-grid">
+              @for (queue of m.queueMetrics.queues; track queue.name) {
+                <div class="queue-card" [class]="'queue-' + queue.status">
+                  <div class="queue-header">
+                    <span class="queue-name">{{ queue.name }}</span>
+                    <span class="queue-status" [class]="'status-' + queue.status">{{ queue.status }}</span>
+                  </div>
+                  <div class="queue-stats">
+                    <div><strong>Pending:</strong> {{ queue.pending }}</div>
+                    <div><strong>Active:</strong> {{ queue.active }}</div>
+                    <div><strong>Failed:</strong> {{ queue.failed }}</div>
+                    <div><strong>Completed:</strong> {{ formatNumber(queue.completed) }}</div>
+                  </div>
+                  <div class="queue-wait">
+                    Avg Wait: {{ formatDuration(queue.averageWaitTime) }}
+                  </div>
+                </div>
+              }
+            </div>
+          </app-card>
+
+          <!-- Recent Jobs -->
+          <app-card>
+            <h4>Recent Background Jobs</h4>
+            <div class="jobs-list">
+              @for (job of m.backgroundJobs.recentJobs; track job.id) {
+                <div class="job-item" [class]="'job-' + job.status">
+                  <div class="job-header">
+                    <span class="job-name">{{ job.name }}</span>
+                    <span class="job-status" [class]="'status-' + job.status">{{ job.status }}</span>
+                  </div>
+                  <div class="job-details">
+                    @if (job.progress !== undefined) {
+                      <div class="job-progress">
+                        <div class="progress-bar small">
+                          <div class="progress-fill" [style.width.%]="job.progress"></div>
+                        </div>
+                        <span>{{ job.progress }}%</span>
+                      </div>
+                    }
+                    @if (job.error) {
+                      <div class="job-error">{{ job.error }}</div>
+                    }
+                    @if (job.duration) {
+                      <div class="job-duration">Duration: {{ formatDuration(job.duration) }}</div>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+          </app-card>
+        </div>
+      }
+    </div>
+  }
+</app-card>

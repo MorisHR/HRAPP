@@ -37,13 +37,116 @@ mat-toolbar {
 }
 
 // ───────────────────────────────────────────────────────────────
-// SEARCH FIELD
+// CONTROLS BAR (Search + Select All)
 // ───────────────────────────────────────────────────────────────
 
-.search-field {
-  width: 100%;
-  max-width: 400px;
+.controls-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-lg);
   margin-bottom: var(--spacing-xl);
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+.search-field {
+  flex: 1;
+  max-width: 400px;
+
+  @media (max-width: 768px) {
+    max-width: 100%;
+  }
+}
+
+.select-all-control {
+  display: flex;
+  align-items: center;
+
+  .checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    cursor: pointer;
+    font-size: 14px;
+    color: var(--color-text-primary);
+    font-weight: 500;
+    user-select: none;
+
+    input[type="checkbox"] {
+      cursor: pointer;
+      width: 18px;
+      height: 18px;
+      margin: 0;
+    }
+
+    span {
+      white-space: nowrap;
+    }
+  }
+}
+
+// ───────────────────────────────────────────────────────────────
+// BULK ACTION TOOLBAR
+// ───────────────────────────────────────────────────────────────
+
+.bulk-action-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-lg);
+  padding: var(--spacing-md) var(--spacing-lg);
+  margin-bottom: var(--spacing-md);
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.08), rgba(147, 51, 234, 0.08));
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  border-radius: var(--radius-md);
+  animation: slideDown 0.3s ease-out;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .selection-info {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    color: var(--color-text-primary);
+    font-weight: 500;
+
+    app-icon {
+      color: rgb(59, 130, 246);
+      font-size: 20px;
+    }
+
+    span {
+      font-size: 14px;
+    }
+  }
+
+  .bulk-actions {
+    display: flex;
+    gap: var(--spacing-sm);
+    flex-wrap: wrap;
+
+    @media (max-width: 768px) {
+      flex-direction: column;
+    }
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 // ───────────────────────────────────────────────────────────────
@@ -94,6 +197,23 @@ mat-toolbar {
     &:last-child td {
       border-bottom: none;
     }
+  }
+}
+
+// ───────────────────────────────────────────────────────────────
+// TABLE CHECKBOXES
+// ───────────────────────────────────────────────────────────────
+
+.tenant-checkbox {
+  cursor: pointer;
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: rgb(59, 130, 246);
+
+  &:hover {
+    transform: scale(1.1);
+    transition: transform 0.15s ease-in-out;
   }
 }
 

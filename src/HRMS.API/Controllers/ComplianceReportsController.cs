@@ -17,15 +17,19 @@ public class ComplianceReportsController : ControllerBase
     private readonly IAuditCorrelationService _correlationService;
     private readonly ILogger<ComplianceReportsController> _logger;
 
+    private readonly IGDPRDataExportService _dataExportService;
+
     public ComplianceReportsController(
         ISOXComplianceService soxService,
         IGDPRComplianceService gdprService,
         IAuditCorrelationService correlationService,
+        IGDPRDataExportService dataExportService,
         ILogger<ComplianceReportsController> logger)
     {
         _soxService = soxService;
         _gdprService = gdprService;
         _correlationService = correlationService;
+        _dataExportService = dataExportService;
         _logger = logger;
     }
 
@@ -137,6 +141,36 @@ public class ComplianceReportsController : ControllerBase
         {
             _logger.LogError(ex, "Failed to detect patterns");
             return StatusCode(500, new { error = "Failed to detect patterns" });
+        }
+    }
+
+    /// <summary>
+    /// GDPR Article 15 & 20 - Complete User Data Export
+    /// Downloads ALL personal data for a user in specified format
+    /// </summary>
+    /// <param name="userId">User ID to export data for</param>
+    /// <param name="format">Export format: json, csv (default: json)</param>
+    [HttpGet("gdpr/export/{userId}")]
+    [ProducesResponseType(typeof(FileContentResult), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> ExportUserData(
+        Guid userId,
+        [FromQuery] string format = "json",
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            _logger.LogInformation("Generating GDPR data export for user {UserId}, format {Format}", userId, format);
+
+            var exportResult = await _dataExportService.ExportUserDataToFileAsync(userId, format, cancellationToken);
+
+            return File(exportResult.FileBytes, exportResult.MimeType, exportResult.FileName);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to export user data for {UserId}", userId);
+            return StatusCode(500, new { error = "Failed to export user data", details = ex.Message });
         }
     }
 }

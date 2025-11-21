@@ -421,7 +421,7 @@ public class AuditLoggingSaveChangesInterceptor : SaveChangesInterceptor
                 ? JsonSerializer.Serialize(oldValues, new JsonSerializerOptions
                 {
                     WriteIndented = false,
-                    MaxDepth = 1, // Prevent deep object graphs
+                    MaxDepth = 64, // Allow reasonable object graphs while preventing stack overflow
                     DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
                     // PRODUCTION-READY: Handle circular references gracefully (Fortune 500 standard)
                     ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles
@@ -482,7 +482,7 @@ public class AuditLoggingSaveChangesInterceptor : SaveChangesInterceptor
                 ? JsonSerializer.Serialize(newValues, new JsonSerializerOptions
                 {
                     WriteIndented = false,
-                    MaxDepth = 1, // Prevent deep object graphs
+                    MaxDepth = 64, // Allow reasonable object graphs while preventing stack overflow
                     DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
                     // PRODUCTION-READY: Handle circular references gracefully (Fortune 500 standard)
                     ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles

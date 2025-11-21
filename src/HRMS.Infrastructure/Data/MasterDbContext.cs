@@ -56,6 +56,62 @@ public class MasterDbContext : DbContext
     /// </summary>
     public DbSet<ActivationResendLog> ActivationResendLogs { get; set; }
 
+    /// <summary>
+    /// FORTUNE 500: System-wide configuration settings
+    /// PATTERN: AWS Systems Manager Parameter Store, Salesforce Setup
+    /// </summary>
+    public DbSet<SystemSetting> SystemSettings { get; set; }
+
+    /// <summary>
+    /// FORTUNE 500: Platform-wide announcements and notifications
+    /// PATTERN: AWS Service Health Dashboard, Salesforce In-App Notifications
+    /// </summary>
+    public DbSet<PlatformAnnouncement> PlatformAnnouncements { get; set; }
+
+    /// <summary>
+    /// FORTUNE 500: File upload tracking and analytics
+    /// PATTERN: AWS S3 Access Logs, Azure Blob Analytics, GCS Insights
+    /// </summary>
+    public DbSet<FileUploadLog> FileUploadLogs { get; set; }
+
+    /// <summary>
+    /// FORTUNE 500: Storage quota alerts and monitoring
+    /// PATTERN: AWS CloudWatch Alarms, Azure Monitor, Datadog Alerts
+    /// </summary>
+    public DbSet<StorageAlert> StorageAlerts { get; set; }
+
+    /// <summary>
+    /// FORTUNE 500: Daily storage snapshots for growth tracking
+    /// PATTERN: AWS Cost Explorer, Azure Cost Management
+    /// </summary>
+    public DbSet<TenantStorageSnapshot> TenantStorageSnapshots { get; set; }
+
+    /// <summary>
+    /// TIER 1: Impersonation audit trail (CRITICAL for security compliance)
+    /// PATTERN: Complete audit trail for SOX, GDPR, ISO 27001 compliance
+    /// </summary>
+    public DbSet<TenantImpersonationLog> TenantImpersonationLogs { get; set; }
+
+    /// <summary>
+    /// TIER 1: Tenant health history tracking
+    /// PATTERN: Predictive analytics and trend analysis for proactive intervention
+    /// </summary>
+    public DbSet<TenantHealthHistory> TenantHealthHistories { get; set; }
+
+    /// <summary>
+    /// GDPR ARTICLE 7: User consent management with immutable audit trail
+    /// FORTUNE 500 PATTERN: OneTrust, TrustArc consent platforms
+    /// COMPLIANCE: GDPR, CCPA, ePrivacy Directive
+    /// </summary>
+    public DbSet<UserConsent> UserConsents { get; set; }
+
+    /// <summary>
+    /// GDPR ARTICLE 28: Data Processing Agreements with vendors/processors
+    /// FORTUNE 500 PATTERN: Vendor Risk Management (VRM), OneTrust Vendorpedia
+    /// COMPLIANCE: GDPR, SOC 2, ISO 27001 supplier management
+    /// </summary>
+    public DbSet<DataProcessingAgreement> DataProcessingAgreements { get; set; }
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
         base.OnConfiguring(optionsBuilder);
@@ -1284,6 +1340,277 @@ public class MasterDbContext : DbContext
                 .OnDelete(DeleteBehavior.Cascade); // Delete logs when tenant is deleted
 
             // Soft delete filter (inherited from BaseEntity)
+            entity.HasQueryFilter(e => !e.IsDeleted);
+        });
+
+        // ============================================
+        // TIER 1: TENANT IMPERSONATION TRACKING
+        // ============================================
+        modelBuilder.Entity<TenantImpersonationLog>(entity =>
+        {
+            entity.ToTable("TenantImpersonationLogs", schema: "master", tb =>
+            {
+                tb.HasComment("TIER 1 - Critical security audit trail for superadmin impersonations. " +
+                             "Tracks every impersonation session with complete activity log. " +
+                             "Required for SOX, GDPR, ISO 27001 compliance. " +
+                             "IMMUTABLE - no UPDATE/DELETE allowed (enforced by triggers).");
+            });
+
+            entity.HasKey(e => e.Id);
+
+            // Foreign key to Tenant
+            entity.Property(e => e.TenantId)
+                .IsRequired()
+                .HasComment("Tenant being impersonated");
+
+            // SuperAdmin tracking
+            entity.Property(e => e.SuperAdminUserId)
+                .IsRequired()
+                .HasMaxLength(50)
+                .HasComment("SuperAdmin user ID who initiated impersonation");
+
+            entity.Property(e => e.SuperAdminUserName)
+                .IsRequired()
+                .HasMaxLength(100)
+                .HasComment("SuperAdmin username for quick reference");
+
+            // Session timing
+            entity.Property(e => e.StartedAt)
+                .IsRequired()
+                .HasComment("When impersonation started (UTC)");
+
+            entity.Property(e => e.EndedAt)
+                .HasComment("When impersonation ended (null if still active)");
+
+            entity.Property(e => e.DurationSeconds)
+                .HasComment("Duration in seconds (computed on end)");
+
+            // Justification and tracking
+            entity.Property(e => e.Reason)
+                .IsRequired()
+                .HasMaxLength(1000)
+                .HasComment("Business justification for impersonation (COMPLIANCE)");
+
+            entity.Property(e => e.IpAddress)
+                .IsRequired()
+                .HasMaxLength(45)
+                .HasComment("IP address of superadmin (IPv4 or IPv6)");
+
+            entity.Property(e => e.UserAgent)
+                .HasMaxLength(500)
+                .HasComment("User agent of superadmin");
+
+            entity.Property(e => e.ActionsPerformed)
+                .IsRequired()
+                .HasColumnType("jsonb")
+                .HasDefaultValue("[]")
+                .HasComment("JSON array of ImpersonationAction enums");
+
+            entity.Property(e => e.DataModified)
+                .IsRequired()
+                .HasDefaultValue(false)
+                .HasComment("Was any data modified during impersonation? (HIGH RISK)");
+
+            entity.Property(e => e.DataExported)
+                .IsRequired()
+                .HasDefaultValue(false)
+                .HasComment("Was any data exported during impersonation? (GDPR)");
+
+            entity.Property(e => e.ActivityLog)
+                .HasColumnType("jsonb")
+                .HasComment("Detailed activity log - timestamped actions for forensics");
+
+            entity.Property(e => e.RiskScore)
+                .IsRequired()
+                .HasDefaultValue(0)
+                .HasComment("Risk score 0-100 (ML-based anomaly detection)");
+
+            entity.Property(e => e.FlaggedBySecurity)
+                .IsRequired()
+                .HasDefaultValue(false)
+                .HasComment("Was this session flagged by security systems?");
+
+            entity.Property(e => e.SecurityFlagReason)
+                .HasMaxLength(500)
+                .HasComment("Security flag reason");
+
+            entity.Property(e => e.WasForcedLogout)
+                .IsRequired()
+                .HasDefaultValue(false)
+                .HasComment("Session ended normally or forced logout?");
+
+            // Indexes for performance
+            entity.HasIndex(e => e.TenantId)
+                .HasDatabaseName("IX_TenantImpersonationLogs_TenantId");
+
+            entity.HasIndex(e => e.SuperAdminUserId)
+                .HasDatabaseName("IX_TenantImpersonationLogs_SuperAdminUserId");
+
+            entity.HasIndex(e => e.StartedAt)
+                .HasDatabaseName("IX_TenantImpersonationLogs_StartedAt");
+
+            entity.HasIndex(e => e.EndedAt)
+                .HasDatabaseName("IX_TenantImpersonationLogs_EndedAt");
+
+            entity.HasIndex(e => new { e.TenantId, e.StartedAt })
+                .HasDatabaseName("IX_TenantImpersonationLogs_TenantId_StartedAt");
+
+            entity.HasIndex(e => new { e.SuperAdminUserId, e.StartedAt })
+                .HasDatabaseName("IX_TenantImpersonationLogs_SuperAdminUserId_StartedAt");
+
+            // Index for security monitoring
+            entity.HasIndex(e => new { e.DataModified, e.StartedAt })
+                .HasDatabaseName("IX_TenantImpersonationLogs_DataModified_StartedAt");
+
+            entity.HasIndex(e => new { e.FlaggedBySecurity, e.StartedAt })
+                .HasDatabaseName("IX_TenantImpersonationLogs_FlaggedBySecurity_StartedAt");
+
+            // Relationship to Tenant
+            entity.HasOne(e => e.Tenant)
+                .WithMany(t => t.ImpersonationLogs)
+                .HasForeignKey(e => e.TenantId)
+                .OnDelete(DeleteBehavior.Restrict); // Never cascade delete audit logs
+
+            // Soft delete filter
+            entity.HasQueryFilter(e => !e.IsDeleted);
+        });
+
+        // ============================================
+        // TIER 1: TENANT HEALTH HISTORY
+        // ============================================
+        modelBuilder.Entity<TenantHealthHistory>(entity =>
+        {
+            entity.ToTable("TenantHealthHistories", schema: "master", tb =>
+            {
+                tb.HasComment("TIER 1 - Tenant health score history for predictive analytics. " +
+                             "Tracks health score changes over time for trend analysis. " +
+                             "Enables proactive intervention before critical failures.");
+            });
+
+            entity.HasKey(e => e.Id);
+
+            // Foreign key to Tenant
+            entity.Property(e => e.TenantId)
+                .IsRequired()
+                .HasComment("Tenant this health record belongs to");
+
+            // Health score tracking
+            entity.Property(e => e.HealthScore)
+                .IsRequired()
+                .HasPrecision(5, 2)
+                .HasComment("Health score 0-100");
+
+            entity.Property(e => e.Severity)
+                .IsRequired()
+                .HasComment("Severity level based on score (enum)");
+
+            entity.Property(e => e.CalculatedAt)
+                .IsRequired()
+                .HasComment("When this health score was calculated (UTC)");
+
+            entity.Property(e => e.ScoreChange)
+                .HasPrecision(5, 2)
+                .HasComment("Change from previous score (+/-)");
+
+            entity.Property(e => e.PreviousScore)
+                .HasPrecision(5, 2)
+                .HasComment("Previous health score for comparison");
+
+            // Scoring breakdown
+            entity.Property(e => e.HealthScoreFactors)
+                .IsRequired()
+                .HasColumnType("jsonb")
+                .HasDefaultValue("{}")
+                .HasComment("Breakdown of factors: uptime, performance, errors, activity");
+
+            entity.Property(e => e.IssuesDetected)
+                .HasColumnType("jsonb")
+                .HasComment("JSON array of detected issues");
+
+            entity.Property(e => e.CriticalIssueCount)
+                .IsRequired()
+                .HasDefaultValue(0)
+                .HasComment("Count of critical issues");
+
+            entity.Property(e => e.WarningCount)
+                .IsRequired()
+                .HasDefaultValue(0)
+                .HasComment("Count of warnings");
+
+            entity.Property(e => e.RecommendedActions)
+                .HasColumnType("jsonb")
+                .HasComment("JSON array of recommended actions");
+
+            // Alert tracking
+            entity.Property(e => e.AlertSent)
+                .IsRequired()
+                .HasDefaultValue(false)
+                .HasComment("Was an alert sent to tenant admin?");
+
+            entity.Property(e => e.AlertType)
+                .HasMaxLength(50)
+                .HasComment("Alert type if sent (email, in-app, etc.)");
+
+            entity.Property(e => e.AcknowledgedByAdmin)
+                .IsRequired()
+                .HasDefaultValue(false)
+                .HasComment("Has admin acknowledged the health issue?");
+
+            entity.Property(e => e.AcknowledgedAt)
+                .HasComment("When admin acknowledged the health issue");
+
+            // Auto-remediation tracking
+            entity.Property(e => e.AutoRemediationAttempted)
+                .IsRequired()
+                .HasDefaultValue(false)
+                .HasComment("Was automatic remediation attempted?");
+
+            entity.Property(e => e.AutoRemediationResult)
+                .HasMaxLength(1000)
+                .HasComment("Result of auto-remediation");
+
+            // Contextual data
+            entity.Property(e => e.TenantStatusAtCheck)
+                .IsRequired()
+                .HasComment("Tenant subscription status at time of check");
+
+            entity.Property(e => e.ActiveUsersAtCheck)
+                .HasComment("Number of active users at time of check");
+
+            entity.Property(e => e.ApiCallVolume24h)
+                .HasComment("API call volume in last 24h");
+
+            entity.Property(e => e.StorageUsagePercent)
+                .HasPrecision(5, 2)
+                .HasComment("Storage usage percentage at time of check");
+
+            // Indexes for performance
+            entity.HasIndex(e => e.TenantId)
+                .HasDatabaseName("IX_TenantHealthHistories_TenantId");
+
+            entity.HasIndex(e => e.CalculatedAt)
+                .HasDatabaseName("IX_TenantHealthHistories_CalculatedAt");
+
+            entity.HasIndex(e => e.Severity)
+                .HasDatabaseName("IX_TenantHealthHistories_Severity");
+
+            entity.HasIndex(e => new { e.TenantId, e.CalculatedAt })
+                .HasDatabaseName("IX_TenantHealthHistories_TenantId_CalculatedAt");
+
+            entity.HasIndex(e => new { e.Severity, e.CalculatedAt })
+                .HasDatabaseName("IX_TenantHealthHistories_Severity_CalculatedAt");
+
+            // Index for unacknowledged alerts
+            entity.HasIndex(e => new { e.AlertSent, e.AcknowledgedByAdmin, e.CalculatedAt })
+                .HasDatabaseName("IX_TenantHealthHistories_Alerts");
+
+            // Relationship to Tenant
+            entity.HasOne(e => e.Tenant)
+                .WithMany(t => t.HealthHistory)
+                .HasForeignKey(e => e.TenantId)
+                .OnDelete(DeleteBehavior.Cascade); // Cascade delete health history with tenant
+
+            // Soft delete filter
             entity.HasQueryFilter(e => !e.IsDeleted);
         });
     }

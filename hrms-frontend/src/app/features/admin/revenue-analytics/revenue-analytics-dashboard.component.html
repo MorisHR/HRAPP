@@ -1,0 +1,333 @@
+<div class="revenue-analytics-container">
+  <!-- Header -->
+  <div class="header">
+    <div class="title-section">
+      <h1>Revenue Analytics</h1>
+      <p class="subtitle">Real-time revenue tracking and SaaS metrics</p>
+    </div>
+
+    <div class="actions">
+      <app-button
+        variant="secondary"
+        (click)="exportData()"
+        [disabled]="loading()">
+        <mat-icon>download</mat-icon>
+        Export CSV
+      </app-button>
+
+      <app-button
+        variant="primary"
+        (click)="loadAllData()">
+        <mat-icon>refresh</mat-icon>
+        Refresh
+      </app-button>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  @if (loading()) {
+    <div class="loading-container">
+      <mat-spinner diameter="50"></mat-spinner>
+      <p>Loading revenue analytics...</p>
+    </div>
+  }
+
+  <!-- Error State -->
+  @if (error()) {
+    <mat-card class="error-card">
+      <mat-icon color="warn">error</mat-icon>
+      <p>{{ error() }}</p>
+      <app-button variant="secondary" (click)="loadAllData()">
+        Retry
+      </app-button>
+    </mat-card>
+  }
+
+  <!-- Content -->
+  @if (!loading() && !error() && dashboard()) {
+    <!-- Key Metrics Cards -->
+    <div class="metrics-grid">
+      <mat-card class="metric-card">
+        <div class="metric-header">
+          <mat-icon>attach_money</mat-icon>
+          <span class="metric-label">Monthly Recurring Revenue</span>
+        </div>
+        <div class="metric-value">{{ formatCurrency(mrr()!.totalMRR) }}</div>
+        <div class="metric-subtitle">MRR from {{ mrr()!.totalActiveTenants }} active tenants</div>
+      </mat-card>
+
+      <mat-card class="metric-card">
+        <div class="metric-header">
+          <mat-icon>trending_up</mat-icon>
+          <span class="metric-label">Annual Recurring Revenue</span>
+        </div>
+        <div class="metric-value">{{ formatCurrency(arr()!.currentARR) }}</div>
+        <div class="metric-change" [class.positive]="arr()!.growthRate > 0" [class.negative]="arr()!.growthRate < 0">
+          <mat-icon>{{ arr()!.growthRate > 0 ? 'trending_up' : 'trending_down' }}</mat-icon>
+          {{ formatPercent(arr()!.growthRate) }}
+        </div>
+      </mat-card>
+
+      <mat-card class="metric-card">
+        <div class="metric-header">
+          <mat-icon>people_outline</mat-icon>
+          <span class="metric-label">Churn Rate</span>
+        </div>
+        <div class="metric-value">{{ formatPercent(churnRate()!.currentMonthChurnRate) }}</div>
+        <div class="metric-subtitle">
+          Average: {{ formatPercent(churnRate()!.averageChurnRate) }}
+        </div>
+      </mat-card>
+
+      <mat-card class="metric-card">
+        <div class="metric-header">
+          <mat-icon>insights</mat-icon>
+          <span class="metric-label">Customer Lifetime Value</span>
+        </div>
+        <div class="metric-value">{{ formatCurrency(keyMetrics()!.ltv) }}</div>
+        <div class="metric-subtitle">
+          LTV:CAC Ratio: {{ keyMetrics()!.ltvToCACRatio.toFixed(2) }}
+        </div>
+      </mat-card>
+    </div>
+
+    <!-- Tabs for Different Views -->
+    <mat-tab-group [selectedIndex]="selectedView()" (selectedIndexChange)="onViewChange($event)">
+      <!-- Overview Tab -->
+      <mat-tab label="Overview">
+        <div class="tab-content">
+          <div class="charts-row">
+            <mat-card class="chart-card">
+              <mat-card-header>
+                <mat-card-title>ARR Trend</mat-card-title>
+              </mat-card-header>
+              <mat-card-content>
+                <app-line-chart
+                  [data]="getArrTrendData()"
+                  [height]="300">
+                </app-line-chart>
+              </mat-card-content>
+            </mat-card>
+
+            <mat-card class="chart-card">
+              <mat-card-header>
+                <mat-card-title>MRR by Tier</mat-card-title>
+              </mat-card-header>
+              <mat-card-content>
+                <app-bar-chart
+                  [data]="getMrrByTierData()"
+                  [height]="300">
+                </app-bar-chart>
+              </mat-card-content>
+            </mat-card>
+          </div>
+
+          <!-- Additional Metrics -->
+          <div class="additional-metrics">
+            <mat-card>
+              <mat-card-header>
+                <mat-card-title>Key Business Metrics</mat-card-title>
+              </mat-card-header>
+              <mat-card-content>
+                <div class="metric-row">
+                  <span class="label">Customer Acquisition Cost:</span>
+                  <span class="value">{{ formatCurrency(keyMetrics()!.cac) }}</span>
+                </div>
+                <div class="metric-row">
+                  <span class="label">Average Revenue Per User:</span>
+                  <span class="value">{{ formatCurrency(keyMetrics()!.arpu) }}</span>
+                </div>
+                <div class="metric-row">
+                  <span class="label">Payback Period:</span>
+                  <span class="value">{{ keyMetrics()!.paybackPeriodMonths.toFixed(1) }} months</span>
+                </div>
+              </mat-card-content>
+            </mat-card>
+
+            <mat-card>
+              <mat-card-header>
+                <mat-card-title>Tenant Distribution</mat-card-title>
+              </mat-card-header>
+              <mat-card-content>
+                @for (tier of mrr()!.byTier; track tier.tier) {
+                  <div class="metric-row">
+                    <span class="label">{{ tier.tier }}:</span>
+                    <span class="value">{{ tier.tenantCount }} tenants ({{ formatCurrency(tier.mrr) }})</span>
+                  </div>
+                }
+              </mat-card-content>
+            </mat-card>
+          </div>
+        </div>
+      </mat-tab>
+
+      <!-- MRR/ARR Tab -->
+      <mat-tab label="MRR / ARR">
+        <div class="tab-content">
+          <mat-card class="full-width-chart">
+            <mat-card-header>
+              <mat-card-title>Annual Recurring Revenue Growth</mat-card-title>
+              <div class="growth-indicator" [class]="getGrowthTrend()">
+                <mat-icon>{{ getGrowthTrend() === 'up' ? 'trending_up' : getGrowthTrend() === 'down' ? 'trending_down' : 'trending_flat' }}</mat-icon>
+                <span>{{ getGrowthRate() }}%</span>
+              </div>
+            </mat-card-header>
+            <mat-card-content>
+              <app-line-chart
+                [data]="getArrTrendData()"
+                [height]="400"
+                [showLegend]="true">
+              </app-line-chart>
+            </mat-card-content>
+          </mat-card>
+
+          <!-- MRR Breakdown Table -->
+          <mat-card>
+            <mat-card-header>
+              <mat-card-title>MRR Breakdown by Subscription Tier</mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              <table class="tier-table">
+                <thead>
+                  <tr>
+                    <th>Tier</th>
+                    <th>Tenants</th>
+                    <th>MRR (MUR)</th>
+                    <th>Avg per Tenant</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (tier of mrr()!.byTier; track tier.tier) {
+                    <tr>
+                      <td>{{ tier.tier }}</td>
+                      <td>{{ tier.tenantCount }}</td>
+                      <td>{{ formatCurrency(tier.mrr) }}</td>
+                      <td>{{ formatCurrency(tier.averageRevenuePerTenant) }}</td>
+                    </tr>
+                  }
+                  <tr class="total-row">
+                    <td><strong>Total</strong></td>
+                    <td><strong>{{ mrr()!.totalActiveTenants }}</strong></td>
+                    <td><strong>{{ formatCurrency(mrr()!.totalMRR) }}</strong></td>
+                    <td><strong>{{ formatCurrency(mrr()!.totalMRR / mrr()!.totalActiveTenants) }}</strong></td>
+                  </tr>
+                </tbody>
+              </table>
+            </mat-card-content>
+          </mat-card>
+        </div>
+      </mat-tab>
+
+      <!-- Churn Analysis Tab -->
+      <mat-tab label="Churn Analysis">
+        <div class="tab-content">
+          <div class="metrics-grid">
+            <mat-card>
+              <mat-card-header>
+                <mat-card-title>Current Churn Metrics</mat-card-title>
+              </mat-card-header>
+              <mat-card-content>
+                <div class="metric-row">
+                  <span class="label">Current Month Churn:</span>
+                  <span class="value">{{ formatPercent(churnRate()!.currentMonthChurnRate) }}</span>
+                </div>
+                <div class="metric-row">
+                  <span class="label">Average Churn Rate:</span>
+                  <span class="value">{{ formatPercent(churnRate()!.averageChurnRate) }}</span>
+                </div>
+                @if (churnRate()!.trend && churnRate()!.trend.length > 0) {
+                  <div class="metric-row">
+                    <span class="label">Latest Period Churned:</span>
+                    <span class="value">{{ churnRate()!.trend[churnRate()!.trend.length - 1].churnedTenants }}</span>
+                  </div>
+                }
+              </mat-card-content>
+            </mat-card>
+          </div>
+
+          <mat-card class="full-width-chart">
+            <mat-card-header>
+              <mat-card-title>Churn Rate Trend</mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              <app-line-chart
+                [data]="getChurnTrendData()"
+                [height]="400"
+                [showLegend]="true">
+              </app-line-chart>
+            </mat-card-content>
+          </mat-card>
+        </div>
+      </mat-tab>
+
+      <!-- Advanced Metrics Tab -->
+      <mat-tab label="Advanced Metrics">
+        <div class="tab-content">
+          <div class="growth-cards">
+            <mat-card>
+              <mat-card-header>
+                <mat-card-title>Customer Lifetime Value (LTV)</mat-card-title>
+              </mat-card-header>
+              <mat-card-content>
+                <div class="forecast-value">
+                  {{ formatCurrency(keyMetrics()!.ltv) }}
+                </div>
+                <p class="forecast-note">
+                  Average customer lifetime value
+                </p>
+              </mat-card-content>
+            </mat-card>
+
+            <mat-card>
+              <mat-card-header>
+                <mat-card-title>Customer Acquisition Cost (CAC)</mat-card-title>
+              </mat-card-header>
+              <mat-card-content>
+                <div class="forecast-value">
+                  {{ formatCurrency(keyMetrics()!.cac) }}
+                </div>
+                <p class="forecast-note">
+                  Cost to acquire a new customer
+                </p>
+              </mat-card-content>
+            </mat-card>
+
+            <mat-card>
+              <mat-card-header>
+                <mat-card-title>LTV:CAC Ratio</mat-card-title>
+              </mat-card-header>
+              <mat-card-content>
+                <div class="forecast-value" [class.healthy]="keyMetrics()!.ltvToCACRatio >= 3" [class.warning]="keyMetrics()!.ltvToCACRatio >= 1 && keyMetrics()!.ltvToCACRatio < 3" [class.critical]="keyMetrics()!.ltvToCACRatio < 1">
+                  {{ keyMetrics()!.ltvToCACRatio.toFixed(2) }}:1
+                </div>
+                <p class="forecast-note">
+                  @if (keyMetrics()!.ltvToCACRatio >= 3) {
+                    Healthy ratio (> 3:1)
+                  } @else if (keyMetrics()!.ltvToCACRatio >= 1) {
+                    Warning: Should be > 3:1
+                  } @else {
+                    Critical: Should be > 3:1
+                  }
+                </p>
+              </mat-card-content>
+            </mat-card>
+
+            <mat-card>
+              <mat-card-header>
+                <mat-card-title>Average Revenue Per User (ARPU)</mat-card-title>
+              </mat-card-header>
+              <mat-card-content>
+                <div class="forecast-value">
+                  {{ formatCurrency(keyMetrics()!.arpu) }}
+                </div>
+                <p class="forecast-note">
+                  Average monthly revenue per user
+                </p>
+              </mat-card-content>
+            </mat-card>
+          </div>
+        </div>
+      </mat-tab>
+    </mat-tab-group>
+  }
+</div>

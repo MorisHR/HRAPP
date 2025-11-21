@@ -69,7 +69,18 @@ export enum ActivityType {
   UserLogout = 'user_logout',
   SystemError = 'system_error',
   BackupCompleted = 'backup_completed',
-  MaintenanceScheduled = 'maintenance_scheduled'
+  MaintenanceScheduled = 'maintenance_scheduled',
+  // Infrastructure Events
+  QueueOverload = 'queue_overload',
+  JobFailed = 'job_failed',
+  DatabaseSlowQuery = 'database_slow_query',
+  DatabaseConnectionPoolExhausted = 'database_connection_pool_exhausted',
+  RateLimitExceeded = 'rate_limit_exceeded',
+  CacheMiss = 'cache_miss',
+  CDNError = 'cdn_error',
+  HighCPUUsage = 'high_cpu_usage',
+  HighMemoryUsage = 'high_memory_usage',
+  DiskSpaceWarning = 'disk_space_warning'
 }
 
 export interface SystemMetrics {
@@ -181,4 +192,212 @@ export interface AlertAction {
   label: string;
   action: string;
   primary: boolean;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// INFRASTRUCTURE MONITORING MODELS
+// ═══════════════════════════════════════════════════════════════
+
+export interface InfrastructureMetrics {
+  timestamp: Date;
+  queueMetrics: QueueMetrics;
+  databasePerformance: DatabasePerformanceMetrics;
+  apiRateLimiting: ApiRateLimitingMetrics;
+  cacheMetrics: CacheMetrics;
+  cdnMetrics: CdnMetrics;
+  backgroundJobs: BackgroundJobMetrics;
+}
+
+export interface QueueMetrics {
+  totalQueues: number;
+  activeJobs: number;
+  pendingJobs: number;
+  failedJobs: number;
+  completedJobsToday: number;
+  averageProcessingTime: number; // milliseconds
+  oldestJobAge: number; // seconds
+  queues: QueueDetails[];
+}
+
+export interface QueueDetails {
+  name: string;
+  pending: number;
+  active: number;
+  failed: number;
+  completed: number;
+  averageWaitTime: number;
+  status: 'healthy' | 'warning' | 'critical';
+}
+
+export interface BackgroundJobMetrics {
+  totalJobs: number;
+  running: number;
+  scheduled: number;
+  failed: number;
+  retrying: number;
+  recentJobs: BackgroundJob[];
+}
+
+export interface BackgroundJob {
+  id: string;
+  name: string;
+  status: 'running' | 'completed' | 'failed' | 'scheduled' | 'retrying';
+  startedAt?: Date;
+  completedAt?: Date;
+  duration?: number;
+  error?: string;
+  progress?: number;
+  tenantId?: string;
+}
+
+export interface DatabasePerformanceMetrics {
+  connectionPool: ConnectionPoolMetrics;
+  queryPerformance: QueryPerformanceMetrics;
+  slowQueries: SlowQuery[];
+  tenantSizes: TenantDatabaseSize[];
+  overallHealth: 'healthy' | 'degraded' | 'critical';
+}
+
+export interface ConnectionPoolMetrics {
+  maxConnections: number;
+  activeConnections: number;
+  idleConnections: number;
+  waitingRequests: number;
+  utilizationPercent: number;
+  averageWaitTime: number;
+  connectionErrors: number;
+}
+
+export interface QueryPerformanceMetrics {
+  totalQueries: number;
+  averageQueryTime: number;
+  slowQueryCount: number;
+  queryErrorRate: number;
+  queriesPerSecond: number;
+  topQueries: TopQuery[];
+}
+
+export interface SlowQuery {
+  query: string;
+  executionTime: number;
+  timestamp: Date;
+  database: string;
+  tenantId?: string;
+  rowsReturned: number;
+}
+
+export interface TopQuery {
+  queryHash: string;
+  queryTemplate: string;
+  executionCount: number;
+  averageTime: number;
+  maxTime: number;
+  minTime: number;
+}
+
+export interface TenantDatabaseSize {
+  tenantId: string;
+  tenantName: string;
+  sizeGB: number;
+  tableCount: number;
+  rowCount: number;
+  indexSizeGB: number;
+  growthRate: number; // GB per month
+}
+
+export interface ApiRateLimitingMetrics {
+  totalRequests: number;
+  rateLimitedRequests: number;
+  throttledRequests: number;
+  rateLimitViolations: ApiRateViolation[];
+  tenantRequestCounts: TenantApiUsage[];
+  topEndpoints: EndpointRateLimit[];
+}
+
+export interface ApiRateViolation {
+  timestamp: Date;
+  tenantId: string;
+  tenantName: string;
+  endpoint: string;
+  requestCount: number;
+  limit: number;
+  timeWindow: string;
+  action: 'throttled' | 'blocked' | 'warned';
+}
+
+export interface TenantApiUsage {
+  tenantId: string;
+  tenantName: string;
+  requestCount: number;
+  rateLimitHits: number;
+  averageResponseTime: number;
+  errorRate: number;
+  tier: string;
+  limit: number;
+  utilizationPercent: number;
+}
+
+export interface EndpointRateLimit {
+  endpoint: string;
+  method: string;
+  requestCount: number;
+  limit: number;
+  violations: number;
+  averageResponseTime: number;
+}
+
+export interface CacheMetrics {
+  totalKeys: number;
+  memoryUsedMB: number;
+  memoryMaxMB: number;
+  hitRate: number;
+  missRate: number;
+  evictions: number;
+  connections: number;
+  opsPerSecond: number;
+  averageLatency: number;
+  health: 'healthy' | 'degraded' | 'critical';
+  cacheBreakdown: CacheBreakdown[];
+}
+
+export interface CacheBreakdown {
+  category: string;
+  keys: number;
+  memoryMB: number;
+  hitRate: number;
+  ttlAverage: number;
+}
+
+export interface CdnMetrics {
+  totalRequests: number;
+  cacheHitRate: number;
+  bandwidthGB: number;
+  averageLatency: number;
+  errorRate: number;
+  origins: CdnOriginMetrics[];
+  topAssets: CdnAssetMetrics[];
+  geographicDistribution: GeoMetrics[];
+}
+
+export interface CdnOriginMetrics {
+  origin: string;
+  requests: number;
+  cacheHitRate: number;
+  errorRate: number;
+  averageLatency: number;
+}
+
+export interface CdnAssetMetrics {
+  path: string;
+  requests: number;
+  cacheHitRate: number;
+  bandwidthGB: number;
+  contentType: string;
+}
+
+export interface GeoMetrics {
+  region: string;
+  requests: number;
+  bandwidthGB: number;
+  averageLatency: number;
 }

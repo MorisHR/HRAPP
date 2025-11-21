@@ -1,12 +1,12 @@
-<div class="anomaly-dashboard">
-  <h1>Anomaly Detection Dashboard</h1>
+<div class="threat-dashboard">
+  <h1>Threat Detection Dashboard</h1>
 
   <!-- Statistics Cards -->
   @if (statistics) {
     <div class="statistics-grid">
       <app-card>
         <div class="card-header">
-          <h3 class="card-title">Total Anomalies</h3>
+          <h3 class="card-title">Total Threats</h3>
         </div>
         <div class="card-content">
           <div class="stat-value">{{ statistics.totalAnomalies }}</div>
@@ -15,7 +15,7 @@
       </app-card>
       <app-card>
         <div class="card-header">
-          <h3 class="card-title">New Anomalies</h3>
+          <h3 class="card-title">New Threats</h3>
         </div>
         <div class="card-content">
           <div class="stat-value warn-text">{{ statistics.newAnomalies }}</div>
@@ -43,10 +43,10 @@
     </div>
   }
 
-  <!-- Anomalies Table -->
-  <app-card class="anomalies-card">
+  <!-- Threats Table -->
+  <app-card class="threats-card">
     <div class="card-header">
-      <h3 class="card-title">Detected Anomalies</h3>
+      <h3 class="card-title">Detected Threats</h3>
       <div class="filters">
         <app-select
           label="Filter by Status"
@@ -121,7 +121,7 @@
               </app-button>
             }
             @if (row.status === 'INVESTIGATING') {
-              <app-button variant="ghost" size="small" (clicked)="resolveAnomaly(row)"
+              <app-button variant="ghost" size="small" (clicked)="resolveThreat(row)"
                 appTooltip="Resolve">
                 <app-icon name="check-circle"></app-icon>
               </app-button>

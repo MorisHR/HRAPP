@@ -30,7 +30,7 @@
             </div>
             <div class="stat-value-row">
               <h3 class="stat-value">{{ dashboardStats.totalTenants }}</h3>
-              @if (dashboardStats.trends?.tenantGrowth) {
+              @if (dashboardStats.trends.tenantGrowth && dashboardStats.totalTenants > 0) {
                 <div class="stat-trend" [class]="'trend-' + dashboardStats.trends.tenantGrowth.direction">
                   <app-icon [name]="getTrendIcon(dashboardStats.trends.tenantGrowth.direction)"></app-icon>
                   <span>{{ dashboardStats.trends.tenantGrowth.percentChange.toFixed(1) }}%</span>
@@ -52,7 +52,7 @@
             </div>
             <div class="stat-value-row">
               <h3 class="stat-value">{{ dashboardStats.activeTenants }}</h3>
-              @if (dashboardStats.trends?.activeGrowth) {
+              @if (dashboardStats.trends.activeGrowth && dashboardStats.activeTenants > 0) {
                 <div class="stat-trend" [class]="'trend-' + dashboardStats.trends.activeGrowth.direction">
                   <app-icon [name]="getTrendIcon(dashboardStats.trends.activeGrowth.direction)"></app-icon>
                   <span>{{ dashboardStats.trends.activeGrowth.percentChange.toFixed(1) }}%</span>
@@ -74,7 +74,7 @@
             </div>
             <div class="stat-value-row">
               <h3 class="stat-value">{{ formatNumber(dashboardStats.totalEmployees) }}</h3>
-              @if (dashboardStats.trends?.employeeGrowth) {
+              @if (dashboardStats.trends.employeeGrowth && dashboardStats.totalEmployees > 0) {
                 <div class="stat-trend" [class]="'trend-' + dashboardStats.trends.employeeGrowth.direction">
                   <app-icon [name]="getTrendIcon(dashboardStats.trends.employeeGrowth.direction)"></app-icon>
                   <span>{{ dashboardStats.trends.employeeGrowth.percentChange.toFixed(1) }}%</span>
@@ -96,7 +96,7 @@
             </div>
             <div class="stat-value-row">
               <h3 class="stat-value">{{ formatCurrency(dashboardStats.monthlyRevenue) }}</h3>
-              @if (dashboardStats.trends?.revenueGrowth) {
+              @if (dashboardStats.trends.revenueGrowth && dashboardStats.monthlyRevenue > 0) {
                 <div class="stat-trend" [class]="'trend-' + dashboardStats.trends.revenueGrowth.direction">
                   <app-icon [name]="getTrendIcon(dashboardStats.trends.revenueGrowth.direction)"></app-icon>
                   <span>{{ dashboardStats.trends.revenueGrowth.percentChange.toFixed(1) }}%</span>

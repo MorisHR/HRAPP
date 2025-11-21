@@ -29,7 +29,6 @@ import {
     MatButtonModule,
     MatIconModule,
     CheckboxComponent,
-    Chip,
     UiModule,
     MatFormFieldModule,
     MatInputModule,

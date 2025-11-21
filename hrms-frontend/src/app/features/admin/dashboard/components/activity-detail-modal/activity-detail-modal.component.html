@@ -1,0 +1,138 @@
+<div class="activity-detail-modal">
+  <div class="modal-header" [class]="'severity-' + data.severity">
+    <div class="header-content">
+      <div class="activity-icon-large" [class]="'severity-' + data.severity">
+        <app-icon [name]="getActivityIcon()"></app-icon>
+      </div>
+      <div class="header-text">
+        <h2>{{ data.title }}</h2>
+        <p class="timestamp">{{ getFormattedTimestamp() }}</p>
+      </div>
+    </div>
+    <button app-icon-button (click)="close()" class="close-button">
+      <app-icon name="close"></app-icon>
+    </button>
+  </div>
+
+  <div class="modal-body">
+    <!-- Severity Badge -->
+    <div class="severity-badge-container">
+      <span class="severity-badge" [class]="'severity-' + data.severity">
+        <app-icon [name]="data.severity === 'error' ? 'error' : data.severity === 'warning' ? 'warning' : data.severity === 'success' ? 'check_circle' : 'info'"></app-icon>
+        {{ data.severity | uppercase }}
+      </span>
+    </div>
+
+    <!-- Description -->
+    <div class="section">
+      <h3>Description</h3>
+      <p class="description">{{ data.description }}</p>
+    </div>
+
+    <!-- Tenant/User Information -->
+    @if (data.tenantName || data.userName) {
+      <div class="section">
+        <h3>Related Information</h3>
+        <div class="info-grid">
+          @if (data.tenantName) {
+            <div class="info-item">
+              <app-icon name="business"></app-icon>
+              <div class="info-content">
+                <span class="info-label">Tenant</span>
+                <span class="info-value">{{ data.tenantName }}</span>
+                @if (data.tenantId) {
+                  <button app-icon-button (click)="copyToClipboard(data.tenantId)" class="copy-button" title="Copy Tenant ID">
+                    <app-icon name="content_copy" class="small-icon"></app-icon>
+                  </button>
+                }
+              </div>
+            </div>
+          }
+          @if (data.userName) {
+            <div class="info-item">
+              <app-icon name="person"></app-icon>
+              <div class="info-content">
+                <span class="info-label">User</span>
+                <span class="info-value">{{ data.userName }}</span>
+                @if (data.userId) {
+                  <button app-icon-button (click)="copyToClipboard(data.userId)" class="copy-button" title="Copy User ID">
+                    <app-icon name="content_copy" class="small-icon"></app-icon>
+                  </button>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- Metadata -->
+    @if (metadataEntries.length > 0) {
+      <div class="section">
+        <h3>Additional Details</h3>
+        <div class="metadata-grid">
+          @for (entry of metadataEntries; track entry.key) {
+            <div class="metadata-item">
+              @if (entry.icon) {
+                <app-icon [name]="entry.icon"></app-icon>
+              }
+              <div class="metadata-content">
+                <span class="metadata-label">{{ entry.key }}</span>
+                <span class="metadata-value">{{ entry.value }}</span>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- Technical Information -->
+    <div class="section">
+      <h3>Technical Details</h3>
+      <div class="technical-info">
+        <div class="technical-item">
+          <span class="technical-label">Event ID</span>
+          <code class="technical-value">{{ data.id }}</code>
+          <button app-icon-button (click)="copyToClipboard(data.id)" class="copy-button" title="Copy Event ID">
+            <app-icon name="content_copy" class="small-icon"></app-icon>
+          </button>
+        </div>
+        <div class="technical-item">
+          <span class="technical-label">Event Type</span>
+          <code class="technical-value">{{ data.type }}</code>
+        </div>
+        <div class="technical-item">
+          <span class="technical-label">Timestamp (ISO)</span>
+          <code class="technical-value">{{ data.timestamp.toISOString() }}</code>
+          <button app-icon-button (click)="copyToClipboard(data.timestamp.toISOString())" class="copy-button" title="Copy Timestamp">
+            <app-icon name="content_copy" class="small-icon"></app-icon>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+    @if (quickActions.length > 0) {
+      <div class="section">
+        <h3>Quick Actions</h3>
+        <div class="quick-actions">
+          @for (action of quickActions; track action.action) {
+            <app-button
+              [variant]="action.variant || 'secondary'"
+              (clicked)="handleQuickAction(action)"
+              [disabled]="processing()"
+              class="action-button"
+            >
+              <app-icon [name]="action.icon"></app-icon>
+              {{ action.label }}
+            </app-button>
+          }
+        </div>
+      </div>
+    }
+  </div>
+
+  <div class="modal-footer">
+    <button app-button variant="text" (click)="close()">Close</button>
+  </div>
+</div>

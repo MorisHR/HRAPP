@@ -1,0 +1,107 @@
+<div class="activity-filters">
+  <!-- Search and Quick Actions Row -->
+  <div class="filters-row">
+    <!-- Search -->
+    <div class="search-container">
+      <app-icon name="search" class="search-icon"></app-icon>
+      <input
+        type="text"
+        placeholder="Search activities..."
+        [value]="searchQuery()"
+        (input)="onSearchChange($any($event.target).value)"
+        class="search-input"
+      />
+      @if (searchQuery()) {
+        <button app-icon-button (click)="onSearchChange('')" class="clear-search">
+          <app-icon name="close" class="small-icon"></app-icon>
+        </button>
+      }
+    </div>
+
+    <!-- Quick Export Actions -->
+    <div class="quick-actions">
+      <button
+        app-icon-button
+        (click)="exportCSV()"
+        title="Export to CSV"
+        class="export-button"
+      >
+        <app-icon name="download"></app-icon>
+      </button>
+      <button
+        app-icon-button
+        (click)="exportPDF()"
+        title="Export to PDF"
+        class="export-button"
+      >
+        <app-icon name="description"></app-icon>
+      </button>
+    </div>
+  </div>
+
+  <!-- Filter Controls Row -->
+  <div class="filters-controls">
+    <!-- Event Type Filter -->
+    <mat-form-field appearance="outline" class="filter-field">
+      <mat-label>Event Types</mat-label>
+      <mat-select
+        multiple
+        [value]="selectedTypes()"
+        (valueChange)="onTypeSelectionChange($event)"
+      >
+        @for (type of activityTypes; track type.value) {
+          <mat-option [value]="type.value">
+            <div class="option-content">
+              <app-icon [name]="type.icon"></app-icon>
+              <span>{{ type.label }}</span>
+            </div>
+          </mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <!-- Severity Filter -->
+    <mat-form-field appearance="outline" class="filter-field">
+      <mat-label>Severity</mat-label>
+      <mat-select
+        multiple
+        [value]="selectedSeverities()"
+        (valueChange)="onSeveritySelectionChange($event)"
+      >
+        @for (severity of severityOptions; track severity.value) {
+          <mat-option [value]="severity.value">
+            <div class="option-content">
+              <app-icon [name]="severity.icon" [class]="'severity-icon severity-' + severity.color"></app-icon>
+              <span>{{ severity.label }}</span>
+            </div>
+          </mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <!-- Clear Filters Button -->
+    @if (hasActiveFilters()) {
+      <button
+        app-button
+        variant="text"
+        (click)="clearFilters()"
+        class="clear-filters-button"
+      >
+        <app-icon name="filter_alt_off"></app-icon>
+        Clear Filters
+      </button>
+    }
+  </div>
+
+  <!-- Active Filters Display -->
+  @if (hasActiveFilters()) {
+    <div class="active-filters">
+      <span class="active-filters-label">Active filters:</span>
+      <div class="filter-chips">
+        @for (filter of activeFilters(); track filter) {
+          <span class="filter-chip">{{ filter }}</span>
+        }
+      </div>
+    </div>
+  }
+</div>

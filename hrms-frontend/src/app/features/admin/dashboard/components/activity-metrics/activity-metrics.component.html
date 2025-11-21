@@ -1,0 +1,16 @@
+<div class="activity-metrics">
+  @for (metric of metrics(); track metric.label) {
+    <div class="metric-card" [class]="'metric-' + metric.color">
+      <div class="metric-icon" [class]="'icon-' + metric.color">
+        <app-icon [name]="metric.icon"></app-icon>
+      </div>
+      <div class="metric-content">
+        <div class="metric-value">{{ metric.value }}</div>
+        <div class="metric-label">{{ metric.label }}</div>
+        @if (metric.subtitle) {
+          <div class="metric-subtitle">{{ metric.subtitle }}</div>
+        }
+      </div>
+    </div>
+  }
+</div>

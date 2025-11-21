@@ -1,12 +1,29 @@
 <app-card [elevation]="2" padding="large" class="recent-activity-card">
   <div class="activity-header">
-    <h3>Recent Activity</h3>
+    <div class="header-title">
+      <h3>Recent Activity</h3>
+      @if (unreadCount() > 0) {
+        <span class="unread-badge">{{ unreadCount() }} new</span>
+      }
+    </div>
     <div class="header-actions">
+      @if (unreadCount() > 0) {
+        <app-button
+          variant="text"
+          size="small"
+          (clicked)="markAllAsRead()"
+          class="mark-read-button"
+        >
+          <app-icon name="check_circle"></app-icon>
+          Mark all read
+        </app-button>
+      }
       <button
         app-icon-button
         (click)="refresh()"
         [disabled]="loading()"
         class="refresh-button"
+        title="Refresh"
       >
         <app-icon [name]="loading() ? 'sync' : 'refresh'" [class.spinning]="loading()"></app-icon>
       </button>
@@ -19,7 +36,20 @@
     </div>
   </div>
 
-  @if (loading() && activities().length === 0) {
+  <!-- Activity Metrics -->
+  @if (showMetrics && filteredActivities().length > 0) {
+    <app-activity-metrics [activities]="filteredActivities()"></app-activity-metrics>
+  }
+
+  <!-- Filters -->
+  @if (showFilters) {
+    <app-activity-filters
+      (filtersChanged)="onFiltersChanged($event)"
+      (exportRequested)="onExportRequested($event)"
+    ></app-activity-filters>
+  }
+
+  @if (loading() && filteredActivities().length === 0) {
     <div class="loading-state">
       <div class="spinner"></div>
       <p>Loading activity...</p>
@@ -28,46 +58,184 @@
     <div class="error-state">
       <app-icon name="error" class="error-icon"></app-icon>
       <p>{{ error() }}</p>
-      <button app-button (click)="refresh()">Retry</button>
+      <app-button (clicked)="refresh()">Retry</app-button>
     </div>
-  } @else if (activities().length === 0) {
+  } @else if (filteredActivities().length === 0) {
     <div class="empty-state">
       <app-icon name="history" class="empty-icon"></app-icon>
-      <p>No recent activity</p>
-    </div>
-  } @else {
-    <div class="activity-list">
-      @for (activity of activities(); track activity.id) {
-        <div class="activity-item" [class.severity]="'severity-' + activity.severity">
-          <div class="activity-icon-wrapper" [class]="'severity-' + activity.severity">
-            <app-icon [name]="getActivityIcon(activity)"></app-icon>
-          </div>
-          <div class="activity-content">
-            <div class="activity-header-row">
-              <h4 class="activity-title">{{ activity.title }}</h4>
-              <span class="activity-time">{{ getRelativeTime(activity.timestamp) }}</span>
-            </div>
-            <p class="activity-description">{{ activity.description }}</p>
-            @if (activity.tenantName || activity.userName) {
-              <div class="activity-meta">
-                @if (activity.tenantName) {
-                  <span class="meta-item">
-                    <app-icon name="business"></app-icon>
-                    {{ activity.tenantName }}
-                  </span>
-                }
-                @if (activity.userName) {
-                  <span class="meta-item">
-                    <app-icon name="person"></app-icon>
-                    {{ activity.userName }}
-                  </span>
-                }
-              </div>
-            }
-          </div>
-          <div class="activity-severity-indicator" [class]="'severity-' + activity.severity"></div>
-        </div>
+      <p>No activities match your filters</p>
+      @if (currentFilters().types.length > 0 || currentFilters().severities.length > 0 || currentFilters().searchQuery) {
+        <p class="empty-hint">Try adjusting your filters to see more results</p>
       }
     </div>
+  } @else {
+    <!-- Virtual Scroll Container -->
+    @if (enableVirtualScroll) {
+      <cdk-virtual-scroll-viewport
+        [itemSize]="80"
+        class="activity-list-viewport"
+      >
+        <div class="activity-list">
+          @for (activity of filteredActivities(); track trackByActivityId($index, activity)) {
+            <div
+              class="activity-item"
+              [class.severity]="'severity-' + activity.severity"
+              [class.unread]="isUnread(activity.id)"
+              (click)="openActivityDetail(activity)"
+              role="button"
+              tabindex="0"
+              [attr.aria-label]="'View details for: ' + activity.title"
+            >
+              @if (isUnread(activity.id)) {
+                <div class="unread-indicator"></div>
+              }
+              <div class="activity-icon-wrapper" [class]="'severity-' + activity.severity">
+                <app-icon [name]="getActivityIcon(activity)"></app-icon>
+              </div>
+              <div class="activity-content">
+                <div class="activity-header-row">
+                  <h4 class="activity-title">{{ activity.title }}</h4>
+                  <span class="activity-time">{{ getRelativeTime(activity.timestamp) }}</span>
+                </div>
+                <p class="activity-description">{{ activity.description }}</p>
+                @if (activity.tenantName || activity.userName) {
+                  <div class="activity-meta">
+                    @if (activity.tenantName) {
+                      <span class="meta-item">
+                        <app-icon name="business"></app-icon>
+                        <span class="meta-text">{{ activity.tenantName }}</span>
+                      </span>
+                    }
+                    @if (activity.userName) {
+                      <span class="meta-item">
+                        <app-icon name="person"></app-icon>
+                        <span class="meta-text">{{ activity.userName }}</span>
+                      </span>
+                    }
+                  </div>
+                }
+              </div>
+              <div class="activity-actions" (click)="$event.stopPropagation()">
+                <!-- Quick Action Buttons (shown on hover) -->
+                <div class="hover-actions">
+                  @if (activity.tenantId) {
+                    <button
+                      app-icon-button
+                      (click)="navigateToTenant(activity.tenantId)"
+                      title="View Tenant"
+                      class="hover-action-button"
+                    >
+                      <app-icon name="business"></app-icon>
+                    </button>
+                  }
+                  @if (canDismiss(activity)) {
+                    <button
+                      app-icon-button
+                      (click)="dismissActivity(activity)"
+                      title="Dismiss"
+                      class="hover-action-button dismiss-button"
+                    >
+                      <app-icon name="close"></app-icon>
+                    </button>
+                  }
+                  <button
+                    app-icon-button
+                    (click)="openActivityDetail(activity)"
+                    title="View Details"
+                    class="hover-action-button primary"
+                  >
+                    <app-icon name="open_in_new"></app-icon>
+                  </button>
+                </div>
+                <!-- Chevron (always visible) -->
+                <app-icon name="chevron_right" class="chevron-icon"></app-icon>
+              </div>
+              <div class="activity-severity-indicator" [class]="'severity-' + activity.severity"></div>
+            </div>
+          }
+        </div>
+      </cdk-virtual-scroll-viewport>
+    } @else {
+      <!-- Standard List (no virtual scroll) -->
+      <div class="activity-list">
+        @for (activity of filteredActivities(); track trackByActivityId($index, activity)) {
+          <div
+            class="activity-item"
+            [class.severity]="'severity-' + activity.severity"
+            [class.unread]="isUnread(activity.id)"
+            (click)="openActivityDetail(activity)"
+            role="button"
+            tabindex="0"
+            [attr.aria-label]="'View details for: ' + activity.title"
+          >
+            @if (isUnread(activity.id)) {
+              <div class="unread-indicator"></div>
+            }
+            <div class="activity-icon-wrapper" [class]="'severity-' + activity.severity">
+              <app-icon [name]="getActivityIcon(activity)"></app-icon>
+            </div>
+            <div class="activity-content">
+              <div class="activity-header-row">
+                <h4 class="activity-title">{{ activity.title }}</h4>
+                <span class="activity-time">{{ getRelativeTime(activity.timestamp) }}</span>
+              </div>
+              <p class="activity-description">{{ activity.description }}</p>
+              @if (activity.tenantName || activity.userName) {
+                <div class="activity-meta">
+                  @if (activity.tenantName) {
+                    <span class="meta-item">
+                      <app-icon name="business"></app-icon>
+                      <span class="meta-text">{{ activity.tenantName }}</span>
+                    </span>
+                  }
+                  @if (activity.userName) {
+                    <span class="meta-item">
+                      <app-icon name="person"></app-icon>
+                      <span class="meta-text">{{ activity.userName }}</span>
+                    </span>
+                  }
+                </div>
+              }
+            </div>
+            <div class="activity-actions" (click)="$event.stopPropagation()">
+              <!-- Quick Action Buttons (shown on hover) -->
+              <div class="hover-actions">
+                @if (activity.tenantId) {
+                  <button
+                    app-icon-button
+                    (click)="navigateToTenant(activity.tenantId)"
+                    title="View Tenant"
+                    class="hover-action-button"
+                  >
+                    <app-icon name="business"></app-icon>
+                  </button>
+                }
+                @if (canDismiss(activity)) {
+                  <button
+                    app-icon-button
+                    (click)="dismissActivity(activity)"
+                    title="Dismiss"
+                    class="hover-action-button dismiss-button"
+                  >
+                    <app-icon name="close"></app-icon>
+                  </button>
+                }
+                <button
+                  app-icon-button
+                  (click)="openActivityDetail(activity)"
+                  title="View Details"
+                  class="hover-action-button primary"
+                >
+                  <app-icon name="open_in_new"></app-icon>
+                </button>
+              </div>
+              <!-- Chevron (always visible) -->
+              <app-icon name="chevron_right" class="chevron-icon"></app-icon>
+            </div>
+            <div class="activity-severity-indicator" [class]="'severity-' + activity.severity"></div>
+          </div>
+        }
+      </div>
+    }
   }
 </app-card>

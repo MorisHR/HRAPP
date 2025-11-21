@@ -64,9 +64,17 @@ export class CriticalAlertsComponent implements OnInit {
     });
   }
 
-  getRelativeTime(date: Date): string {
+  getRelativeTime(date: Date | string): string {
     const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
+    // Convert to Date object if it's a string
+    const dateObj = typeof date === 'string' ? new Date(date) : date;
+
+    // Validate that we have a valid date
+    if (!dateObj || isNaN(dateObj.getTime())) {
+      return 'Unknown';
+    }
+
+    const diffMs = now.getTime() - dateObj.getTime();
     const diffHours = Math.floor(diffMs / 3600000);
 
     if (diffHours < 1) return 'Just now';
@@ -80,5 +88,17 @@ export class CriticalAlertsComponent implements OnInit {
 
   refresh(): void {
     this.loadAlerts();
+  }
+
+  handleAlertAction(alert: CriticalAlert, action: { action: string; label: string; primary?: boolean }): void {
+    this.dashboardService.handleAlertAction(alert.id, action.action).subscribe({
+      next: () => {
+        this.loadAlerts();
+      },
+      error: (err) => {
+        console.error('Failed to handle alert action:', err);
+        this.error.set(`Failed to ${action.label.toLowerCase()}`);
+      }
+    });
   }
 }

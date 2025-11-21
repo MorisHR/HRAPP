@@ -88,6 +88,19 @@ export class AdminDashboardService {
   }
 
   /**
+   * Handle alert action (e.g., scale_storage, review_tenants, etc.)
+   */
+  handleAlertAction(alertId: string, action: string): Observable<void> {
+    return this.http.post<void>(`${this.apiUrl}/alerts/${alertId}/action`, { action }).pipe(
+      catchError(() => {
+        // Fallback: log the action locally for now
+        console.log(`Alert action triggered: ${action} for alert ${alertId}`);
+        return of(void 0);
+      })
+    );
+  }
+
+  /**
    * Calculate stats from tenant data (fallback method)
    */
   private calculateStatsFromTenants(): Observable<DashboardStats> {
@@ -174,9 +187,9 @@ export class AdminDashboardService {
    * Format currency
    */
   formatCurrency(value: number): string {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat('en-MU', {
       style: 'currency',
-      currency: 'USD',
+      currency: 'MUR',
       minimumFractionDigits: 0,
       maximumFractionDigits: 0
     }).format(value);

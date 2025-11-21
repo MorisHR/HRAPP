@@ -31,7 +31,6 @@ import { TableComponent, TableColumn } from '../../../shared/ui/components/table
     MatDatepickerModule,
     MatNativeDateModule,
     ExpansionPanel,
-    ExpansionPanelGroup,
     TooltipDirective,
     MatButtonModule,
     Tabs,

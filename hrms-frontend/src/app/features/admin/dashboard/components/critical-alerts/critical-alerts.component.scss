@@ -13,11 +13,32 @@
   align-items: center;
   margin-bottom: var(--spacing-lg);
 
+  .title-with-badge {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+  }
+
   h3 {
     font-size: 20px;
     font-weight: 600;
     color: var(--color-text-primary);
     margin: 0;
+  }
+
+  .count-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 24px;
+    height: 24px;
+    padding: 0 8px;
+    background: var(--color-primary, #0F62FE);
+    color: white;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1;
   }
 
   .header-actions {

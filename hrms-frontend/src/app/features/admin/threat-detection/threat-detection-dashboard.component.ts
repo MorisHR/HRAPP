@@ -11,7 +11,7 @@ import { AnomalyDetectionService } from '../../../services/anomaly-detection.ser
 import { NotificationService } from '../../../services/notification.service';
 
 @Component({
-  selector: 'app-anomaly-detection-dashboard',
+  selector: 'app-threat-detection-dashboard',
   standalone: true,
   imports: [
     CommonModule,
@@ -27,10 +27,10 @@ import { NotificationService } from '../../../services/notification.service';
     TableColumnDirective,
     TooltipDirective
   ],
-  templateUrl: './anomaly-detection-dashboard.component.html',
-  styleUrls: ['./anomaly-detection-dashboard.component.css']
+  templateUrl: './threat-detection-dashboard.component.html',
+  styleUrls: ['./threat-detection-dashboard.component.scss']
 })
-export class AnomalyDetectionDashboardComponent implements OnInit {
+export class ThreatDetectionDashboardComponent implements OnInit {
   anomalies: DetectedAnomaly[] = [];
   statistics?: AnomalyStatistics;
   loading = false;
@@ -82,7 +82,7 @@ export class AnomalyDetectionDashboardComponent implements OnInit {
       },
       error: (error) => {
         console.error('Failed to load statistics:', error);
-        this.notificationService.error('Failed to load anomaly statistics');
+        this.notificationService.error('Failed to load threat detection statistics');
         this.cdr.detectChanges();
       }
     });
@@ -99,8 +99,8 @@ export class AnomalyDetectionDashboardComponent implements OnInit {
         this.cdr.detectChanges();
       },
       error: (error) => {
-        console.error('Failed to load anomalies:', error);
-        this.notificationService.error('Failed to load anomalies');
+        console.error('Failed to load threats:', error);
+        this.notificationService.error('Failed to load detected threats');
         this.loading = false;
         this.cdr.detectChanges();
       }
@@ -151,20 +151,20 @@ export class AnomalyDetectionDashboardComponent implements OnInit {
 
   viewDetails(anomaly: DetectedAnomaly): void {
     // Open details dialog
-    console.log('View details for anomaly:', anomaly.id);
-    this.notificationService.info('Anomaly details dialog not yet implemented');
+    console.log('View details for threat:', anomaly.id);
+    this.notificationService.info('Threat details dialog not yet implemented');
   }
 
   updateStatus(anomaly: DetectedAnomaly, newStatus: AnomalyStatus): void {
     this.anomalyService.updateAnomalyStatus(anomaly.id, newStatus).subscribe({
       next: () => {
-        this.notificationService.success(`Anomaly status updated to ${newStatus}`);
+        this.notificationService.success(`Threat status updated to ${newStatus}`);
         this.loadAnomalies();
         this.loadStatistics();
       },
       error: (error) => {
-        console.error('Failed to update anomaly status:', error);
-        this.notificationService.error('Failed to update anomaly status');
+        console.error('Failed to update threat status:', error);
+        this.notificationService.error('Failed to update threat status');
       }
     });
   }
@@ -177,7 +177,7 @@ export class AnomalyDetectionDashboardComponent implements OnInit {
     this.updateStatus(anomaly, AnomalyStatus.INVESTIGATING);
   }
 
-  resolveAnomaly(anomaly: DetectedAnomaly): void {
+  resolveThreat(anomaly: DetectedAnomaly): void {
     this.updateStatus(anomaly, AnomalyStatus.RESOLVED);
   }
 }

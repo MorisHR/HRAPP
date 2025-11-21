@@ -360,6 +360,10 @@ Log.Information("Security alerting service registered for real-time threat detec
 builder.Services.AddScoped<HRMS.Infrastructure.Logging.ISecurityEventLogger, HRMS.Infrastructure.Logging.SecurityEventLogger>();
 Log.Information("SIEM security event logger registered: Splunk/ELK/Azure Sentinel compatible structured logging");
 
+// FORTUNE 500 INTELLIGENT HEALTH MONITORING - Google SRE + Netflix + AWS Patterns
+builder.Services.AddScoped<IntelligentHealthService>();
+Log.Information("Intelligent health monitoring service registered: Weighted health scores with tier-based SLO tracking");
+
 // Fortune 500 Compliance Services - Anomaly Detection, Legal Hold, E-Discovery, SOX, GDPR
 builder.Services.AddScoped<IAnomalyDetectionService, AnomalyDetectionService>();
 builder.Services.AddScoped<ILegalHoldService, LegalHoldService>();
@@ -367,7 +371,13 @@ builder.Services.AddScoped<IEDiscoveryService, EDiscoveryService>();
 builder.Services.AddScoped<ISOXComplianceService, SOXComplianceService>();
 builder.Services.AddScoped<IGDPRComplianceService, GDPRComplianceService>();
 builder.Services.AddScoped<IAuditCorrelationService, AuditCorrelationService>();
-Log.Information("Fortune 500 compliance services registered: Anomaly Detection, Legal Hold, E-Discovery, SOX, GDPR, Audit Correlation");
+
+// GDPR Article 7 & 28 - Consent Management and DPA Tracking
+builder.Services.AddScoped<IConsentManagementService, ConsentManagementService>();
+builder.Services.AddScoped<IDPAManagementService, DPAManagementService>();
+builder.Services.AddScoped<IGDPRDataExportService, GDPRDataExportService>();
+
+Log.Information("Fortune 500 compliance services registered: Anomaly Detection, Legal Hold, E-Discovery, SOX, GDPR, Consent Management, DPA Tracking, Data Export");
 
 // FORTUNE 500 COMPLIANCE REPORTING - Multi-framework audit reports (SOX, GDPR, ISO 27001, SOC 2, PCI-DSS, HIPAA, NIST 800-53)
 builder.Services.AddScoped<HRMS.Infrastructure.Compliance.IComplianceReportService, HRMS.Infrastructure.Compliance.ComplianceReportService>();

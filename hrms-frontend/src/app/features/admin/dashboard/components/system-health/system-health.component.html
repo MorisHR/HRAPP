@@ -56,8 +56,11 @@
               <span>{{ service.details }}</span>
             </div>
           }
-          @if (service.errorRate && service.errorRate > 0) {
-            <div class="service-error-rate">
+          @if (service.errorRate !== undefined && service.errorRate !== null) {
+            <div class="service-error-rate"
+                 [class.error-low]="service.errorRate <= 1"
+                 [class.error-medium]="service.errorRate > 1 && service.errorRate <= 5"
+                 [class.error-high]="service.errorRate > 5">
               <span class="error-label">Error Rate:</span>
               <span class="error-value">{{ service.errorRate.toFixed(2) }}%</span>
             </div>

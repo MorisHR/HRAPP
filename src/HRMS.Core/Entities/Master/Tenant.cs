@@ -83,6 +83,79 @@ public class Tenant : BaseEntity
     public int? SectorId { get; set; }
     public DateTime? SectorSelectedAt { get; set; }
 
+    // ========================================================================
+    // TIER 3: BUSINESS MANAGEMENT - Contract & SLA
+    // ========================================================================
+    public string? ContractNumber { get; set; }
+    public DateTime? ContractStartDate { get; set; }
+    public DateTime? ContractEndDate { get; set; }
+    public string? ContractTerms { get; set; } // JSON for detailed terms
+    public string? CustomSLA { get; set; } // JSON for SLA details (uptime %, response time, etc.)
+    public string? AccountManagerId { get; set; } // SuperAdmin user ID
+    public string? AccountManagerName { get; set; }
+    public string? AccountManagerEmail { get; set; }
+
+    // ========================================================================
+    // TIER 3: BUSINESS MANAGEMENT - Tenant Metadata
+    // ========================================================================
+    public TenantIndustry? Industry { get; set; }
+    public CompanySize? CompanySize { get; set; }
+    public string? PrimaryUseCase { get; set; }
+    public string? BusinessDescription { get; set; }
+    public string? CustomNotes { get; set; } // Internal notes from support/sales
+
+    // ========================================================================
+    // TIER 2: OPERATIONAL - Emergency Contact
+    // ========================================================================
+    public string? EmergencyContactName { get; set; }
+    public string? EmergencyContactEmail { get; set; }
+    public string? EmergencyContactPhone { get; set; }
+    public string? EmergencyContactRole { get; set; }
+
+    // ========================================================================
+    // TIER 1: TENANT HEALTH SCORING
+    // ========================================================================
+    public decimal HealthScore { get; set; } = 100m; // 0-100 score
+    public DateTime? HealthScoreLastCalculated { get; set; }
+    public string? HealthScoreFactors { get; set; } // JSON with breakdown
+
+    // ========================================================================
+    // TIER 2: PROVISIONING & MIGRATION
+    // ========================================================================
+    public TenantProvisioningStatus? ProvisioningStatus { get; set; }
+    public int ProvisioningProgress { get; set; } = 0; // 0-100
+    public string? ProvisioningError { get; set; }
+    public DateTime? ProvisioningStartedAt { get; set; }
+    public DateTime? ProvisioningCompletedAt { get; set; }
+    public string? MigrationNotes { get; set; }
+    public string? InfrastructureRegion { get; set; } // e.g., "eu-west-1", "us-east-1"
+
+    // ========================================================================
+    // TIER 3: CUSTOM BRANDING
+    // ========================================================================
+    public string? LogoUrl { get; set; }
+    public string? PrimaryColor { get; set; } // Hex color
+    public string? SecondaryColor { get; set; }
+    public string? CustomDomain { get; set; } // e.g., hrms.clientcompany.com
+    public bool CustomBrandingEnabled { get; set; } = false;
+
+    // ========================================================================
+    // TIER 2: DATA MANAGEMENT
+    // ========================================================================
+    public DateTime? LastDataResetDate { get; set; }
+    public string? LastDataResetBy { get; set; }
+    public string? DataResetReason { get; set; }
+    public bool IsDemo { get; set; } = false; // Flag for demo/sandbox tenants
+    public bool IsClone { get; set; } = false; // Flag for cloned tenants
+    public Guid? ClonedFromTenantId { get; set; } // Source tenant if cloned
+
+    // ========================================================================
+    // TIER 1: IMPERSONATION TRACKING
+    // ========================================================================
+    public DateTime? LastImpersonatedAt { get; set; }
+    public string? LastImpersonatedBy { get; set; } // SuperAdmin user ID
+    public int TotalImpersonationCount { get; set; } = 0;
+
     // Navigation properties
     public virtual IndustrySector? Sector { get; set; }
 
@@ -97,6 +170,18 @@ public class Tenant : BaseEntity
     /// FORTUNE 500 PATTERN: Email deduplication and compliance tracking
     /// </summary>
     public virtual ICollection<SubscriptionNotificationLog> SubscriptionNotificationLogs { get; set; } = new List<SubscriptionNotificationLog>();
+
+    /// <summary>
+    /// TIER 1: Impersonation audit trail
+    /// CRITICAL: Track every superadmin impersonation for security compliance
+    /// </summary>
+    public virtual ICollection<TenantImpersonationLog> ImpersonationLogs { get; set; } = new List<TenantImpersonationLog>();
+
+    /// <summary>
+    /// TIER 1: Tenant health history
+    /// Track health score changes over time for analytics
+    /// </summary>
+    public virtual ICollection<TenantHealthHistory> HealthHistory { get; set; } = new List<TenantHealthHistory>();
 
     // Computed property: Can be hard deleted?
     public bool CanBeHardDeleted()

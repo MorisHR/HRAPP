@@ -540,6 +540,208 @@ namespace HRMS.Infrastructure.Data.Migrations.Master
                         });
                 });
 
+            modelBuilder.Entity("HRMS.Core.Entities.Master.DataProcessingAgreement", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("AdequacyDecisionDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("AllowsSubProcessors")
+                        .HasColumnType("boolean");
+
+                    b.Property<decimal?>("AnnualValueUsd")
+                        .HasColumnType("numeric");
+
+                    b.Property<string>("ApprovalStatus")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("ApprovedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ApprovedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AuditNotes")
+                        .HasColumnType("text");
+
+                    b.Property<string>("AuditRights")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("AuthorizedSubProcessors")
+                        .HasColumnType("text");
+
+                    b.Property<int>("BreachNotificationHours")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Certifications")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Currency")
+                        .HasColumnType("text");
+
+                    b.Property<string>("DataDisposalMethod")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("DataProtectionOfficer")
+                        .HasColumnType("text");
+
+                    b.Property<string>("DataSubjectCategories")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("DocumentHash")
+                        .HasColumnType("text");
+
+                    b.Property<string>("DocumentMimeType")
+                        .HasColumnType("text");
+
+                    b.Property<string>("DocumentPath")
+                        .HasColumnType("text");
+
+                    b.Property<long?>("DocumentSizeBytes")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("DpaReferenceNumber")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("EffectiveDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("ExpiryDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("InternalNotes")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("InternationalDataTransfer")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsAutoRenewal")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("LastAuditDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("LastRiskAssessmentDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Metadata")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("NextAuditDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("NextRiskAssessmentDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("NoticePeriodDays")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("PaymentTerms")
+                        .HasColumnType("text");
+
+                    b.Property<string>("PersonalDataCategories")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("ProcessesSensitiveData")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("ProcessingPurpose")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("RequiresPriorConsentForSubProcessors")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("RetentionPeriodDays")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("RiskLevel")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("SecurityMeasures")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("SignedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("SpecialDataCategories")
+                        .HasColumnType("text");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("TerminatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("TerminatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("TerminationReason")
+                        .HasColumnType("text");
+
+                    b.Property<string>("TransferCountries")
+                        .HasColumnType("text");
+
+                    b.Property<string>("TransferMechanism")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("VendorAddress")
+                        .HasColumnType("text");
+
+                    b.Property<string>("VendorContactEmail")
+                        .HasColumnType("text");
+
+                    b.Property<string>("VendorContactName")
+                        .HasColumnType("text");
+
+                    b.Property<string>("VendorCountry")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("VendorName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("VendorPhone")
+                        .HasColumnType("text");
+
+                    b.Property<string>("VendorType")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("VendorWebsite")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId");
+
+                    b.ToTable("DataProcessingAgreements", "master");
+                });
+
             modelBuilder.Entity("HRMS.Core.Entities.Master.DetectedAnomaly", b =>
                 {
                     b.Property<Guid>("Id")
@@ -816,6 +1018,118 @@ namespace HRMS.Infrastructure.Data.Migrations.Master
                         });
                 });
 
+            modelBuilder.Entity("HRMS.Core.Entities.Master.FileUploadLog", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("AccessCount")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("DeletedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text");
+
+                    b.Property<string>("FileHash")
+                        .HasColumnType("text");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<long>("FileSizeBytes")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("FileType")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsDuplicate")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsEncrypted")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("LastAccessedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Module")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<decimal>("MonthlyCostUSD")
+                        .HasColumnType("numeric");
+
+                    b.Property<Guid?>("OriginalFileId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("PermanentlyDeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("RelatedEntityId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("RelatedEntityType")
+                        .HasColumnType("text");
+
+                    b.Property<int>("ScanStatus")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("ScannedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("StorageClass")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("StoragePath")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Tags")
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("UploadedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("UploadedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("UploadedByEmail")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId");
+
+                    b.ToTable("FileUploadLogs", "master");
+                });
+
             modelBuilder.Entity("HRMS.Core.Entities.Master.IndustrySector", b =>
                 {
                     b.Property<int>("Id")
@@ -991,6 +1305,67 @@ namespace HRMS.Infrastructure.Data.Migrations.Master
                     b.HasIndex("TenantId");
 
                     b.ToTable("LegalHolds", "master");
+                });
+
+            modelBuilder.Entity("HRMS.Core.Entities.Master.PlatformAnnouncement", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ActionText")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ActionUrl")
+                        .HasColumnType("text");
+
+                    b.Property<int>("Audience")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("EndDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsDismissible")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Message")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("Priority")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("StartDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("TargetTenantIds")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("PlatformAnnouncements", "master");
                 });
 
             modelBuilder.Entity("HRMS.Core.Entities.Master.PostalCode", b =>
@@ -1493,6 +1868,117 @@ namespace HRMS.Infrastructure.Data.Migrations.Master
                         });
                 });
 
+            modelBuilder.Entity("HRMS.Core.Entities.Master.StorageAlert", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("AcknowledgedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("AcknowledgedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AcknowledgementNotes")
+                        .HasColumnType("text");
+
+                    b.Property<int>("AlertType")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<decimal>("CurrentUsageGB")
+                        .HasColumnType("numeric");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DeletedBy")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("EmailRecipients")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("EmailSent")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("EmailSentAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("InAppNotificationSent")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("LastRecurrenceAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("PredictedDaysUntilFull")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("QuotaGB")
+                        .HasColumnType("numeric");
+
+                    b.Property<string>("RecommendedActions")
+                        .HasColumnType("text");
+
+                    b.Property<int>("RecurrenceCount")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ResolutionMethod")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("ResolvedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Severity")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("ThresholdPercentage")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("TimeToResolveMinutes")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("TriggeredAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<decimal>("UsagePercentage")
+                        .HasColumnType("numeric");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId");
+
+                    b.ToTable("StorageAlerts", "master");
+                });
+
             modelBuilder.Entity("HRMS.Core.Entities.Master.SubscriptionNotificationLog", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1732,11 +2218,69 @@ namespace HRMS.Infrastructure.Data.Migrations.Master
                         });
                 });
 
+            modelBuilder.Entity("HRMS.Core.Entities.Master.SystemSetting", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("DataType")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsEncrypted")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsReadOnly")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Key")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Value")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("SystemSettings", "master");
+                });
+
             modelBuilder.Entity("HRMS.Core.Entities.Master.Tenant", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
+
+                    b.Property<string>("AccountManagerEmail")
+                        .HasColumnType("text");
+
+                    b.Property<string>("AccountManagerId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("AccountManagerName")
+                        .HasColumnType("text");
 
                     b.Property<DateTime?>("ActivatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -1771,10 +2315,19 @@ namespace HRMS.Infrastructure.Data.Migrations.Master
                     b.Property<int>("ApiCallsPerMonth")
                         .HasColumnType("integer");
 
+                    b.Property<string>("BusinessDescription")
+                        .HasColumnType("text");
+
+                    b.Property<Guid?>("ClonedFromTenantId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("CompanyName")
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
+
+                    b.Property<int?>("CompanySize")
+                        .HasColumnType("integer");
 
                     b.Property<string>("ContactEmail")
                         .IsRequired()
@@ -1785,6 +2338,18 @@ namespace HRMS.Infrastructure.Data.Migrations.Master
                         .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
+
+                    b.Property<DateTime?>("ContractEndDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ContractNumber")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("ContractStartDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ContractTerms")
+                        .HasColumnType("text");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -1798,6 +2363,21 @@ namespace HRMS.Infrastructure.Data.Migrations.Master
                     b.Property<int>("CurrentUserCount")
                         .HasColumnType("integer");
 
+                    b.Property<bool>("CustomBrandingEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("CustomDomain")
+                        .HasColumnType("text");
+
+                    b.Property<string>("CustomNotes")
+                        .HasColumnType("text");
+
+                    b.Property<string>("CustomSLA")
+                        .HasColumnType("text");
+
+                    b.Property<string>("DataResetReason")
+                        .HasColumnType("text");
+
                     b.Property<DateTime?>("DeletedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -1805,6 +2385,18 @@ namespace HRMS.Infrastructure.Data.Migrations.Master
                         .HasColumnType("text");
 
                     b.Property<string>("DeletionReason")
+                        .HasColumnType("text");
+
+                    b.Property<string>("EmergencyContactEmail")
+                        .HasColumnType("text");
+
+                    b.Property<string>("EmergencyContactName")
+                        .HasColumnType("text");
+
+                    b.Property<string>("EmergencyContactPhone")
+                        .HasColumnType("text");
+
+                    b.Property<string>("EmergencyContactRole")
                         .HasColumnType("text");
 
                     b.Property<int>("EmployeeTier")
@@ -1817,11 +2409,44 @@ namespace HRMS.Infrastructure.Data.Migrations.Master
                         .HasColumnType("timestamp with time zone")
                         .HasComment("Grace period start date (when subscription expired)");
 
+                    b.Property<decimal>("HealthScore")
+                        .HasColumnType("numeric");
+
+                    b.Property<string>("HealthScoreFactors")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("HealthScoreLastCalculated")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("Industry")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("InfrastructureRegion")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsClone")
+                        .HasColumnType("boolean");
+
                     b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsDemo")
                         .HasColumnType("boolean");
 
                     b.Property<bool>("IsGovernmentEntity")
                         .HasColumnType("boolean");
+
+                    b.Property<string>("LastDataResetBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("LastDataResetDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("LastImpersonatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("LastImpersonatedBy")
+                        .HasColumnType("text");
 
                     b.Property<DateTime?>("LastNotificationSent")
                         .HasColumnType("timestamp with time zone")
@@ -1831,16 +2456,46 @@ namespace HRMS.Infrastructure.Data.Migrations.Master
                         .HasColumnType("integer")
                         .HasComment("Type of last notification sent (prevents duplicates)");
 
+                    b.Property<string>("LogoUrl")
+                        .HasColumnType("text");
+
                     b.Property<int>("MaxStorageGB")
                         .HasColumnType("integer");
 
                     b.Property<int>("MaxUsers")
                         .HasColumnType("integer");
 
+                    b.Property<string>("MigrationNotes")
+                        .HasColumnType("text");
+
+                    b.Property<string>("PrimaryColor")
+                        .HasColumnType("text");
+
+                    b.Property<string>("PrimaryUseCase")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("ProvisioningCompletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ProvisioningError")
+                        .HasColumnType("text");
+
+                    b.Property<int>("ProvisioningProgress")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("ProvisioningStartedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("ProvisioningStatus")
+                        .HasColumnType("integer");
+
                     b.Property<string>("SchemaName")
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
+
+                    b.Property<string>("SecondaryColor")
+                        .HasColumnType("text");
 
                     b.Property<int?>("SectorId")
                         .HasColumnType("integer");
@@ -1870,6 +2525,9 @@ namespace HRMS.Infrastructure.Data.Migrations.Master
 
                     b.Property<string>("SuspensionReason")
                         .HasColumnType("text");
+
+                    b.Property<int>("TotalImpersonationCount")
+                        .HasColumnType("integer");
 
                     b.Property<DateTime?>("TrialEndDate")
                         .HasColumnType("timestamp with time zone");
@@ -1904,6 +2562,556 @@ namespace HRMS.Infrastructure.Data.Migrations.Master
                         .HasDatabaseName("IX_Tenants_Status_SubscriptionEndDate");
 
                     b.ToTable("Tenants", "master");
+                });
+
+            modelBuilder.Entity("HRMS.Core.Entities.Master.TenantHealthHistory", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("AcknowledgedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasComment("When admin acknowledged the health issue");
+
+                    b.Property<bool>("AcknowledgedByAdmin")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasComment("Has admin acknowledged the health issue?");
+
+                    b.Property<int?>("ActiveUsersAtCheck")
+                        .HasColumnType("integer")
+                        .HasComment("Number of active users at time of check");
+
+                    b.Property<bool>("AlertSent")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasComment("Was an alert sent to tenant admin?");
+
+                    b.Property<string>("AlertType")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasComment("Alert type if sent (email, in-app, etc.)");
+
+                    b.Property<int?>("ApiCallVolume24h")
+                        .HasColumnType("integer")
+                        .HasComment("API call volume in last 24h");
+
+                    b.Property<bool>("AutoRemediationAttempted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasComment("Was automatic remediation attempted?");
+
+                    b.Property<string>("AutoRemediationResult")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)")
+                        .HasComment("Result of auto-remediation");
+
+                    b.Property<DateTime>("CalculatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasComment("When this health score was calculated (UTC)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<int>("CriticalIssueCount")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasComment("Count of critical issues");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DeletedBy")
+                        .HasColumnType("text");
+
+                    b.Property<decimal>("HealthScore")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("numeric(5,2)")
+                        .HasComment("Health score 0-100");
+
+                    b.Property<string>("HealthScoreFactors")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("jsonb")
+                        .HasDefaultValue("{}")
+                        .HasComment("Breakdown of factors: uptime, performance, errors, activity");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("IssuesDetected")
+                        .HasColumnType("jsonb")
+                        .HasComment("JSON array of detected issues");
+
+                    b.Property<decimal?>("PreviousScore")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("numeric(5,2)")
+                        .HasComment("Previous health score for comparison");
+
+                    b.Property<string>("RecommendedActions")
+                        .HasColumnType("jsonb")
+                        .HasComment("JSON array of recommended actions");
+
+                    b.Property<decimal?>("ScoreChange")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("numeric(5,2)")
+                        .HasComment("Change from previous score (+/-)");
+
+                    b.Property<int>("Severity")
+                        .HasColumnType("integer")
+                        .HasComment("Severity level based on score (enum)");
+
+                    b.Property<decimal?>("StorageUsagePercent")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("numeric(5,2)")
+                        .HasComment("Storage usage percentage at time of check");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasComment("Tenant this health record belongs to");
+
+                    b.Property<int>("TenantStatusAtCheck")
+                        .HasColumnType("integer")
+                        .HasComment("Tenant subscription status at time of check");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<int>("WarningCount")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasComment("Count of warnings");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CalculatedAt")
+                        .HasDatabaseName("IX_TenantHealthHistories_CalculatedAt");
+
+                    b.HasIndex("Severity")
+                        .HasDatabaseName("IX_TenantHealthHistories_Severity");
+
+                    b.HasIndex("TenantId")
+                        .HasDatabaseName("IX_TenantHealthHistories_TenantId");
+
+                    b.HasIndex("Severity", "CalculatedAt")
+                        .HasDatabaseName("IX_TenantHealthHistories_Severity_CalculatedAt");
+
+                    b.HasIndex("TenantId", "CalculatedAt")
+                        .HasDatabaseName("IX_TenantHealthHistories_TenantId_CalculatedAt");
+
+                    b.HasIndex("AlertSent", "AcknowledgedByAdmin", "CalculatedAt")
+                        .HasDatabaseName("IX_TenantHealthHistories_Alerts");
+
+                    b.ToTable("TenantHealthHistories", "master", t =>
+                        {
+                            t.HasComment("TIER 1 - Tenant health score history for predictive analytics. Tracks health score changes over time for trend analysis. Enables proactive intervention before critical failures.");
+                        });
+                });
+
+            modelBuilder.Entity("HRMS.Core.Entities.Master.TenantImpersonationLog", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ActionsPerformed")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("jsonb")
+                        .HasDefaultValue("[]")
+                        .HasComment("JSON array of ImpersonationAction enums");
+
+                    b.Property<string>("ActivityLog")
+                        .HasColumnType("jsonb")
+                        .HasComment("Detailed activity log - timestamped actions for forensics");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("DataExported")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasComment("Was any data exported during impersonation? (GDPR)");
+
+                    b.Property<bool>("DataModified")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasComment("Was any data modified during impersonation? (HIGH RISK)");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DeletedBy")
+                        .HasColumnType("text");
+
+                    b.Property<int?>("DurationSeconds")
+                        .HasColumnType("integer")
+                        .HasComment("Duration in seconds (computed on end)");
+
+                    b.Property<DateTime?>("EndedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasComment("When impersonation ended (null if still active)");
+
+                    b.Property<bool>("FlaggedBySecurity")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasComment("Was this session flagged by security systems?");
+
+                    b.Property<string>("IpAddress")
+                        .IsRequired()
+                        .HasMaxLength(45)
+                        .HasColumnType("character varying(45)")
+                        .HasComment("IP address of superadmin (IPv4 or IPv6)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)")
+                        .HasComment("Business justification for impersonation (COMPLIANCE)");
+
+                    b.Property<int>("RiskScore")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasComment("Risk score 0-100 (ML-based anomaly detection)");
+
+                    b.Property<string>("SecurityFlagReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasComment("Security flag reason");
+
+                    b.Property<DateTime>("StartedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasComment("When impersonation started (UTC)");
+
+                    b.Property<string>("SuperAdminUserId")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasComment("SuperAdmin user ID who initiated impersonation");
+
+                    b.Property<string>("SuperAdminUserName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasComment("SuperAdmin username for quick reference");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasComment("Tenant being impersonated");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<string>("UserAgent")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasComment("User agent of superadmin");
+
+                    b.Property<bool>("WasForcedLogout")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasComment("Session ended normally or forced logout?");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EndedAt")
+                        .HasDatabaseName("IX_TenantImpersonationLogs_EndedAt");
+
+                    b.HasIndex("StartedAt")
+                        .HasDatabaseName("IX_TenantImpersonationLogs_StartedAt");
+
+                    b.HasIndex("SuperAdminUserId")
+                        .HasDatabaseName("IX_TenantImpersonationLogs_SuperAdminUserId");
+
+                    b.HasIndex("TenantId")
+                        .HasDatabaseName("IX_TenantImpersonationLogs_TenantId");
+
+                    b.HasIndex("DataModified", "StartedAt")
+                        .HasDatabaseName("IX_TenantImpersonationLogs_DataModified_StartedAt");
+
+                    b.HasIndex("FlaggedBySecurity", "StartedAt")
+                        .HasDatabaseName("IX_TenantImpersonationLogs_FlaggedBySecurity_StartedAt");
+
+                    b.HasIndex("SuperAdminUserId", "StartedAt")
+                        .HasDatabaseName("IX_TenantImpersonationLogs_SuperAdminUserId_StartedAt");
+
+                    b.HasIndex("TenantId", "StartedAt")
+                        .HasDatabaseName("IX_TenantImpersonationLogs_TenantId_StartedAt");
+
+                    b.ToTable("TenantImpersonationLogs", "master", t =>
+                        {
+                            t.HasComment("TIER 1 - Critical security audit trail for superadmin impersonations. Tracks every impersonation session with complete activity log. Required for SOX, GDPR, ISO 27001 compliance. IMMUTABLE - no UPDATE/DELETE allowed (enforced by triggers).");
+                        });
+                });
+
+            modelBuilder.Entity("HRMS.Core.Entities.Master.TenantStorageSnapshot", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("ActiveFiles")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("AvgGrowthRate30Day")
+                        .HasColumnType("numeric");
+
+                    b.Property<decimal>("AvgGrowthRate7Day")
+                        .HasColumnType("numeric");
+
+                    b.Property<decimal>("BackupStorageGB")
+                        .HasColumnType("numeric");
+
+                    b.Property<decimal>("CostChangeUSD")
+                        .HasColumnType("numeric");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<int>("DataQualityScore")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("DatabaseStorageGB")
+                        .HasColumnType("numeric");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DeletedBy")
+                        .HasColumnType("text");
+
+                    b.Property<int>("DeletedFiles")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("DuplicateFiles")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("DuplicateStorageGB")
+                        .HasColumnType("numeric");
+
+                    b.Property<string>("Errors")
+                        .HasColumnType("text");
+
+                    b.Property<decimal>("FileStorageGB")
+                        .HasColumnType("numeric");
+
+                    b.Property<int>("GenerationDurationMs")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("GrowthGB")
+                        .HasColumnType("numeric");
+
+                    b.Property<decimal>("GrowthPercentage")
+                        .HasColumnType("numeric");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("LargestFiles")
+                        .HasColumnType("text");
+
+                    b.Property<decimal>("MonthlyCostUSD")
+                        .HasColumnType("numeric");
+
+                    b.Property<int?>("PredictedDaysUntilFull")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("QuotaGB")
+                        .HasColumnType("numeric");
+
+                    b.Property<DateTime>("SnapshotDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("StorageByFileType")
+                        .HasColumnType("text");
+
+                    b.Property<string>("StorageByModule")
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("TotalFiles")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("TotalStorageGB")
+                        .HasColumnType("numeric");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<decimal>("UsagePercentage")
+                        .HasColumnType("numeric");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId");
+
+                    b.ToTable("TenantStorageSnapshots", "master");
+                });
+
+            modelBuilder.Entity("HRMS.Core.Entities.Master.UserConsent", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ConsentCategory")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("ConsentMethod")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("ConsentText")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("ConsentTextHash")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("ConsentType")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ConsentVersion")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("CountryCode")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("DataProcessingAgreementId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("GivenAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("InternationalTransfer")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("IpAddress")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsExplicit")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsOptIn")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Language")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("LegalBasis")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("LegalNotes")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Metadata")
+                        .HasColumnType("text");
+
+                    b.Property<Guid?>("ParentUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("ParentalConsentGivenAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("PreviousConsentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Purpose")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("RequiresParentalConsent")
+                        .HasColumnType("boolean");
+
+                    b.Property<int?>("RetentionPeriodDays")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("SourceUrl")
+                        .HasColumnType("text");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ThirdParties")
+                        .HasColumnType("text");
+
+                    b.Property<string>("TransferCountries")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UserAgent")
+                        .HasColumnType("text");
+
+                    b.Property<string>("UserEmail")
+                        .HasColumnType("text");
+
+                    b.Property<Guid?>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("WithdrawalReason")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("WithdrawnAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId");
+
+                    b.ToTable("UserConsents", "master");
                 });
 
             modelBuilder.Entity("HRMS.Core.Entities.Master.Village", b =>
@@ -1986,12 +3194,32 @@ namespace HRMS.Infrastructure.Data.Migrations.Master
                     b.Navigation("Tenant");
                 });
 
+            modelBuilder.Entity("HRMS.Core.Entities.Master.DataProcessingAgreement", b =>
+                {
+                    b.HasOne("HRMS.Core.Entities.Master.Tenant", "Tenant")
+                        .WithMany()
+                        .HasForeignKey("TenantId");
+
+                    b.Navigation("Tenant");
+                });
+
             modelBuilder.Entity("HRMS.Core.Entities.Master.FeatureFlag", b =>
                 {
                     b.HasOne("HRMS.Core.Entities.Master.Tenant", "Tenant")
                         .WithMany()
                         .HasForeignKey("TenantId")
                         .OnDelete(DeleteBehavior.Cascade);
+
+                    b.Navigation("Tenant");
+                });
+
+            modelBuilder.Entity("HRMS.Core.Entities.Master.FileUploadLog", b =>
+                {
+                    b.HasOne("HRMS.Core.Entities.Master.Tenant", "Tenant")
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Tenant");
                 });
@@ -2046,6 +3274,15 @@ namespace HRMS.Infrastructure.Data.Migrations.Master
                     b.Navigation("Sector");
                 });
 
+            modelBuilder.Entity("HRMS.Core.Entities.Master.StorageAlert", b =>
+                {
+                    b.HasOne("HRMS.Core.Entities.Master.Tenant", "Tenant")
+                        .WithMany()
+                        .HasForeignKey("TenantId");
+
+                    b.Navigation("Tenant");
+                });
+
             modelBuilder.Entity("HRMS.Core.Entities.Master.SubscriptionNotificationLog", b =>
                 {
                     b.HasOne("HRMS.Core.Entities.Master.SubscriptionPayment", "SubscriptionPayment")
@@ -2085,6 +3322,48 @@ namespace HRMS.Infrastructure.Data.Migrations.Master
                     b.Navigation("Sector");
                 });
 
+            modelBuilder.Entity("HRMS.Core.Entities.Master.TenantHealthHistory", b =>
+                {
+                    b.HasOne("HRMS.Core.Entities.Master.Tenant", "Tenant")
+                        .WithMany("HealthHistory")
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Tenant");
+                });
+
+            modelBuilder.Entity("HRMS.Core.Entities.Master.TenantImpersonationLog", b =>
+                {
+                    b.HasOne("HRMS.Core.Entities.Master.Tenant", "Tenant")
+                        .WithMany("ImpersonationLogs")
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Tenant");
+                });
+
+            modelBuilder.Entity("HRMS.Core.Entities.Master.TenantStorageSnapshot", b =>
+                {
+                    b.HasOne("HRMS.Core.Entities.Master.Tenant", "Tenant")
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Tenant");
+                });
+
+            modelBuilder.Entity("HRMS.Core.Entities.Master.UserConsent", b =>
+                {
+                    b.HasOne("HRMS.Core.Entities.Master.Tenant", "Tenant")
+                        .WithMany()
+                        .HasForeignKey("TenantId");
+
+                    b.Navigation("Tenant");
+                });
+
             modelBuilder.Entity("HRMS.Core.Entities.Master.Village", b =>
                 {
                     b.HasOne("HRMS.Core.Entities.Master.District", "District")
@@ -2110,6 +3389,10 @@ namespace HRMS.Infrastructure.Data.Migrations.Master
 
             modelBuilder.Entity("HRMS.Core.Entities.Master.Tenant", b =>
                 {
+                    b.Navigation("HealthHistory");
+
+                    b.Navigation("ImpersonationLogs");
+
                     b.Navigation("SubscriptionNotificationLogs");
 
                     b.Navigation("SubscriptionPayments");

@@ -42,7 +42,6 @@ import { ErrorTrackingService } from '../../../core/services/error-tracking.serv
     CardComponent,
     ButtonComponent,
     IconComponent,
-    TableComponent,
     ProgressSpinner
 ],
   changeDetection: ChangeDetectionStrategy.OnPush,

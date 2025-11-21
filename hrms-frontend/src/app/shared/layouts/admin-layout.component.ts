@@ -164,7 +164,7 @@ interface NavItem {
       a {
         margin: 4px 8px;
         padding: 12px;
-        border-radius: 10px;
+        border-radius: 8px;
         display: flex;
         align-items: center;
         gap: 12px;
@@ -172,8 +172,9 @@ interface NavItem {
         color: #525252;
         font-weight: 500;
         position: relative;
-        border: 2px solid transparent;
+        border-left: 4px solid transparent;
         transition: all 250ms cubic-bezier(0.4, 0.0, 0.2, 1);
+        background-color: transparent;
 
         &:hover {
           background-color: rgba(15, 98, 254, 0.04);
@@ -199,20 +200,27 @@ interface NavItem {
         }
       }
 
-      .active-link {
-        background: rgba(15, 98, 254, 0.02);
-        color: #0F62FE;
-        font-weight: 600;
-        border-left: 4px solid #0F62FE;
-        padding-left: 10px;
+      // Active link styling - Fortune 500 grade with left accent border
+      a.active-link {
+        background-color: rgba(15, 98, 254, 0.06) !important;
+        color: #0F62FE !important;
+        font-weight: 600 !important;
+        border-left: 4px solid #0F62FE !important;
+        padding-left: 10px !important;
+        margin-left: 8px !important;
 
         .item-icon {
-          color: #0F62FE;
+          color: #0F62FE !important;
           font-weight: 600;
         }
 
         .item-label {
-          color: #0F62FE;
+          color: #0F62FE !important;
+        }
+
+        &:hover {
+          background-color: rgba(15, 98, 254, 0.08) !important;
+          transform: none !important;
         }
       }
     }
@@ -275,12 +283,13 @@ export class AdminLayoutComponent implements OnInit {
     { label: 'Dashboard', icon: 'dashboard', route: '/admin/dashboard' },
     { label: 'Tenants', icon: 'business', route: '/admin/tenants' },
     { label: 'Subscriptions', icon: 'payment', route: '/admin/subscriptions', description: 'Subscription & Payment Management' },
-    { label: 'Audit Logs', icon: 'history', route: '/admin/audit-logs' },
-    { label: 'Security Alerts', icon: 'security', route: '/admin/security-alerts' },
-    { label: 'Anomaly Detection', icon: 'warning', route: '/admin/anomaly-detection' },
-    { label: 'Legal Hold', icon: 'gavel', route: '/admin/legal-hold' },
-    { label: 'Compliance Reports', icon: 'assessment', route: '/admin/compliance-reports' },
-    { label: 'Activity Correlation', icon: 'timeline', route: '/admin/activity-correlation' }
+    { label: 'Revenue Analytics', icon: 'trending_up', route: '/admin/revenue-analytics', description: 'Revenue tracking & forecasting' },
+    { label: 'Audit Trail', icon: 'history', route: '/admin/audit-logs', description: 'System-wide audit logs' },
+    { label: 'Security Alerts', icon: 'security', route: '/admin/security-alerts', description: 'Real-time security alerts' },
+    { label: 'Threat Detection', icon: 'shield-alert', route: '/admin/threat-detection', description: 'Rule-based threat monitoring' },
+    { label: 'Legal Hold', icon: 'gavel', route: '/admin/legal-hold', description: 'Litigation & e-discovery' },
+    { label: 'Compliance Reports', icon: 'assessment', route: '/admin/compliance-reports', description: 'SOX, GDPR, regulatory reports' },
+    { label: 'Security Analytics', icon: 'timeline', route: '/admin/security-analytics', description: 'User behavior analytics' }
   ];
 
   pageTitle = computed(() => {

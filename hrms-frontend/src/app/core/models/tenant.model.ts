@@ -97,3 +97,112 @@ export interface CreateTenantRequest {
   adminEmail: string;
   adminPassword: string;
 }
+
+// ═══════════════════════════════════════════════════════════════
+// FORTUNE 500: Bulk Operations
+// ═══════════════════════════════════════════════════════════════
+
+export interface BulkOperationResult {
+  total: number;
+  success: number;
+  failed: number;
+  inProgress: number;
+  errors: string[];
+}
+
+export interface BulkOperationProgress {
+  totalTenants: number;
+  processedTenants: number;
+  successfulTenants: number;
+  failedTenants: number;
+  currentBatch: number;
+  totalBatches: number;
+  percentComplete: number;
+  estimatedTimeRemaining?: number;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// FORTUNE 500: Tenant Health Scoring
+// ═══════════════════════════════════════════════════════════════
+
+export interface TenantHealthScore {
+  tenantId: string;
+  tenantName: string;
+  overallScore: number; // 0-100
+  scoreGrade: 'A' | 'B' | 'C' | 'D' | 'F';
+  lastCalculated: Date;
+  metrics: TenantHealthMetrics;
+  alerts: HealthAlert[];
+  trend: 'improving' | 'stable' | 'declining';
+  riskLevel: 'low' | 'medium' | 'high' | 'critical';
+}
+
+export interface TenantHealthMetrics {
+  usageScore: number;        // 0-100: API calls, storage, active users
+  engagementScore: number;   // 0-100: Login frequency, feature adoption
+  paymentScore: number;      // 0-100: Payment history, on-time rate
+  supportScore: number;      // 0-100: Ticket volume, satisfaction
+  riskScore: number;         // 0-100: Churn indicators, complaints
+}
+
+export interface HealthAlert {
+  id: string;
+  severity: 'info' | 'warning' | 'critical';
+  category: 'usage' | 'payment' | 'support' | 'engagement' | 'risk';
+  title: string;
+  message: string;
+  actionRequired: string;
+  createdAt: Date;
+  acknowledged: boolean;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// FORTUNE 500: Provisioning Queue Status
+// ═══════════════════════════════════════════════════════════════
+
+export interface TenantProvisioningStatus {
+  tenantId: string;
+  status: 'queued' | 'provisioning' | 'completed' | 'failed';
+  startedAt?: Date;
+  completedAt?: Date;
+  estimatedCompletionTime?: Date;
+  currentStep: string;
+  totalSteps: number;
+  completedSteps: number;
+  progressPercent: number;
+  steps: ProvisioningStep[];
+  error?: string;
+}
+
+export interface ProvisioningStep {
+  name: string;
+  description: string;
+  status: 'pending' | 'in_progress' | 'completed' | 'failed';
+  startedAt?: Date;
+  completedAt?: Date;
+  duration?: number;
+  details?: string;
+  error?: string;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// FORTUNE 500: Tenant Lifecycle Actions
+// ═══════════════════════════════════════════════════════════════
+
+export interface SuspendTenantRequest {
+  reason: string;
+  notifyTenant?: boolean;
+  suspensionDuration?: number; // days, null = indefinite
+}
+
+export interface DeleteTenantRequest {
+  reason: string;
+  confirmationText: string;
+  dataRetentionDays?: number; // Default 30 days
+}
+
+export interface HardDeleteTenantRequest {
+  confirmationName: string; // Must type exact company name
+  confirmationText: string; // Must type "PERMANENTLY DELETE"
+  acknowledgeIrreversible: boolean;
+}

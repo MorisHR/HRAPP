@@ -1,7 +1,7 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
-export type ButtonVariant = 'primary' | 'secondary' | 'success' | 'warning' | 'error' | 'ghost';
+export type ButtonVariant = 'primary' | 'secondary' | 'success' | 'warning' | 'error' | 'ghost' | 'danger' | 'text';
 export type ButtonSize = 'small' | 'medium' | 'large';
 
 @Component({
@@ -27,9 +27,14 @@ export class ButtonComponent {
   }
 
   get buttonClasses(): string[] {
+    // Map variant aliases to actual classes
+    const variantClass = this.variant === 'danger' ? 'error' :
+                         this.variant === 'text' ? 'ghost' :
+                         this.variant;
+
     return [
       'btn',
-      `btn--${this.variant}`,
+      `btn--${variantClass}`,
       `btn--${this.size}`,
       this.disabled ? 'btn--disabled' : '',
       this.fullWidth ? 'btn--full-width' : '',

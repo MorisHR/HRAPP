@@ -15,7 +15,7 @@ import { NotificationService } from '../../../services/notification.service';
 import { TableComponent, TableColumn } from '../../../shared/ui/components/table/table';
 
 @Component({
-  selector: 'app-activity-correlation',
+  selector: 'app-security-analytics',
   standalone: true,
   imports: [
     CommonModule,
@@ -30,10 +30,10 @@ import { TableComponent, TableColumn } from '../../../shared/ui/components/table
     UiModule,
     TableComponent
   ],
-  templateUrl: './activity-correlation.component.html',
-  styleUrls: ['./activity-correlation.component.css']
+  templateUrl: './security-analytics.component.html',
+  styleUrls: ['./security-analytics.component.scss']
 })
-export class ActivityCorrelationComponent implements OnInit {
+export class SecurityAnalyticsComponent implements OnInit {
   loading = signal(false);
   correlation = signal<ActivityCorrelation | undefined>(undefined);
 
@@ -58,7 +58,7 @@ export class ActivityCorrelationComponent implements OnInit {
 
   ngOnInit(): void {}
 
-  generateCorrelation(): void {
+  generateAnalytics(): void {
     if (!this.userId) {
       this.notificationService.warning('Please enter a user ID');
       return;
@@ -73,11 +73,11 @@ export class ActivityCorrelationComponent implements OnInit {
       next: (correlation) => {
         this.correlation.set(correlation);
         this.loading.set(false);
-        this.notificationService.success('Activity correlation generated successfully');
+        this.notificationService.success('Security analytics generated successfully');
       },
       error: (error) => {
-        console.error('Failed to generate activity correlation:', error);
-        this.notificationService.error('Failed to generate activity correlation');
+        console.error('Failed to generate security analytics:', error);
+        this.notificationService.error('Failed to generate security analytics');
         this.loading.set(false);
       }
     });

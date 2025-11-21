@@ -42,8 +42,8 @@ public class MonitoringController : ControllerBase
     // ============================================
 
     /// <summary>
-    /// FORTUNE 500: Comprehensive system health endpoint
-    /// Designed for extreme high-concurrency SuperAdmin dashboard
+    /// FORTUNE 500: Comprehensive system health endpoint for LOAD BALANCERS
+    /// Designed for extreme high-concurrency health checks
     ///
     /// PERFORMANCE: Optimized for 10,000+ concurrent requests/sec
     /// CACHING: Redis-backed with 60-second TTL
@@ -57,11 +57,14 @@ public class MonitoringController : ControllerBase
     /// - API response time percentiles (P95, P99)
     /// - Active user count across all tenants
     /// - Resource utilization (CPU, memory, connections)
+    ///
+    /// NOTE: This endpoint is for LOAD BALANCERS (anonymous).
+    /// For SuperAdmin dashboard health, use /admin/system-health (SuperAdmin-only)
     /// </summary>
     /// <returns>Comprehensive system health snapshot</returns>
     /// <response code="200">System is healthy and operational</response>
     /// <response code="503">System is degraded or unhealthy</response>
-    [HttpGet("/admin/system-health")]
+    [HttpGet("/health/system")]
     [AllowAnonymous] // Health checks should be accessible for load balancers
     [ProducesResponseType(typeof(SystemHealthDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(SystemHealthDto), StatusCodes.Status503ServiceUnavailable)]

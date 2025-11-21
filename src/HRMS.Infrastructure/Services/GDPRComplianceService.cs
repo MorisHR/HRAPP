@@ -89,21 +89,43 @@ public class GDPRComplianceService : IGDPRComplianceService
         });
     }
 
-    public Task<ConsentAuditReport> GenerateConsentAuditReportAsync(
+    public async Task<ConsentAuditReport> GenerateConsentAuditReportAsync(
         DateTime startDate,
         DateTime endDate,
         Guid? tenantId = null,
         CancellationToken cancellationToken = default)
     {
-        return Task.FromResult(new ConsentAuditReport
+        // Query consents from database
+        var query = _context.UserConsents
+            .Where(c => c.GivenAt >= startDate && c.GivenAt <= endDate);
+
+        if (tenantId.HasValue)
+        {
+            query = query.Where(c => c.TenantId == tenantId);
+        }
+
+        var consents = await query.ToListAsync(cancellationToken);
+
+        var report = new ConsentAuditReport
         {
             ReportGeneratedAt = DateTime.UtcNow,
             PeriodStart = startDate,
             PeriodEnd = endDate,
             TenantId = tenantId,
-            TotalConsents = 0,
-            ActiveConsents = 0,
-            WithdrawnConsents = 0
-        });
+            TotalConsents = consents.Count,
+            ActiveConsents = consents.Count(c => c.Status == Core.Enums.ConsentStatus.Active),
+            WithdrawnConsents = consents.Count(c => c.Status == Core.Enums.ConsentStatus.Withdrawn),
+            ConsentRecords = consents.Select(c => new ConsentRecord
+            {
+                UserId = c.UserId ?? Guid.Empty,
+                UserEmail = c.UserEmail,
+                ConsentType = c.ConsentType.ToString(),
+                ConsentGivenAt = c.GivenAt,
+                ConsentWithdrawnAt = c.WithdrawnAt,
+                IsActive = c.Status == Core.Enums.ConsentStatus.Active
+            }).ToList()
+        };
+
+        return report;
     }
 }

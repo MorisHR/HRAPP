@@ -12,13 +12,69 @@
   </div>
 
   <div class="content">
-    <!-- Search Filter -->
-    <app-input
-      class="search-field"
-      label="Search tenants"
-      placeholder="Search by name, domain..."
-      (input)="applyFilter($event)">
-    </app-input>
+    <!-- Search and Select All Controls -->
+    <div class="controls-bar">
+      <app-input
+        class="search-field"
+        label="Search tenants"
+        placeholder="Search by name, domain..."
+        (input)="applyFilter($event)">
+      </app-input>
+
+      <div class="select-all-control">
+        <label class="checkbox-label">
+          <input
+            type="checkbox"
+            [checked]="allSelected()"
+            [indeterminate]="someSelected()"
+            (change)="toggleSelectAll()"
+          />
+          <span>Select All</span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Bulk Action Toolbar (appears when tenants are selected) -->
+    @if (selectedCount() > 0) {
+      <div class="bulk-action-toolbar">
+        <div class="selection-info">
+          <app-icon name="check_circle"></app-icon>
+          <span>{{ selectedCount() }} tenant(s) selected</span>
+          <button app-button variant="text" size="small" (click)="clearSelection()">
+            Clear
+          </button>
+        </div>
+        <div class="bulk-actions">
+          <button
+            app-button
+            variant="outline"
+            size="small"
+            (click)="bulkSuspend()"
+            [disabled]="bulkOperationInProgress()">
+            <app-icon name="cancel"></app-icon>
+            Suspend Selected
+          </button>
+          <button
+            app-button
+            variant="outline"
+            size="small"
+            (click)="bulkReactivate()"
+            [disabled]="bulkOperationInProgress()">
+            <app-icon name="check_circle"></app-icon>
+            Reactivate Selected
+          </button>
+          <button
+            app-button
+            variant="outline"
+            size="small"
+            (click)="bulkArchive()"
+            [disabled]="bulkOperationInProgress()">
+            <app-icon name="archive"></app-icon>
+            Archive Selected
+          </button>
+        </div>
+      </div>
+    }
 
     <!-- Table -->
     <div class="table-container">
@@ -28,6 +84,16 @@
         [loading]="loading()"
         [hoverable]="true"
         [striped]="true">
+
+        <!-- Checkbox Column Template -->
+        <ng-template appTableColumn="checkbox" let-row>
+          <input
+            type="checkbox"
+            class="tenant-checkbox"
+            [checked]="isSelected(row)"
+            (change)="toggleTenantSelection(row)"
+            (click)="$event.stopPropagation()" />
+        </ng-template>
 
         <!-- Status Column Template -->
         <ng-template appTableColumn="status" let-row>

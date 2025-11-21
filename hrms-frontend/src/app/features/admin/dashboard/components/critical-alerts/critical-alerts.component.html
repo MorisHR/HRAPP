@@ -1,6 +1,11 @@
 <app-card [elevation]="2" padding="large" class="critical-alerts-card">
   <div class="alerts-header">
-    <h3>Critical Alerts</h3>
+    <div class="title-with-badge">
+      <h3>Critical Alerts</h3>
+      @if (alerts().length > 0) {
+        <span class="count-badge">{{ alerts().length }}</span>
+      }
+    </div>
     <div class="header-actions">
       <button
         app-icon-button
@@ -72,6 +77,7 @@
                 <app-button
                   [variant]="action.primary ? 'primary' : 'secondary'"
                   size="small"
+                  (clicked)="handleAlertAction(alert, action)"
                 >
                   {{ action.label }}
                 </app-button>

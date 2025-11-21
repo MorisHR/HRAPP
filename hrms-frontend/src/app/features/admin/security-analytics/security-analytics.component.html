@@ -1,12 +1,12 @@
-<div class="activity-correlation">
-  <h1>User Activity Correlation</h1>
+<div class="security-analytics">
+  <h1>Security Analytics</h1>
 
   <mat-card>
     <mat-card-header>
-      <mat-card-title>Generate Activity Timeline</mat-card-title>
+      <mat-card-title>User Behavior Analysis</mat-card-title>
     </mat-card-header>
     <mat-card-content>
-      <div class="correlation-parameters">
+      <div class="analytics-parameters">
         <mat-form-field appearance="outline">
           <mat-label>User ID</mat-label>
           <input matInput [(ngModel)]="userId" placeholder="Enter user ID">
@@ -26,9 +26,9 @@
           <mat-datepicker #endPicker></mat-datepicker>
         </mat-form-field>
 
-        <button mat-raised-button color="primary" (click)="generateCorrelation()" [disabled]="loading()">
+        <button mat-raised-button color="primary" (click)="generateAnalytics()" [disabled]="loading()">
           <app-icon name="timeline"></app-icon>
-          Generate Timeline
+          Generate Analytics
         </button>
       </div>
 
@@ -39,7 +39,7 @@
       }
 
       @if (correlation() && !loading()) {
-        <div class="correlation-results">
+        <div class="analytics-results">
           <h3>Activity Summary</h3>
           <div class="summary-grid">
             <div class="summary-item">
@@ -55,7 +55,7 @@
               <span [class.warn-text]="correlation()!.riskScore > 50">{{ correlation()!.riskScore }}</span>
             </div>
             <div class="summary-item">
-              <label>Anomalies Detected:</label>
+              <label>Threats Detected:</label>
               <span [class.error-text]="correlation()!.anomalies.length > 0">
                 {{ correlation()!.anomalies.length }}
               </span>

@@ -132,9 +132,9 @@ export const routes: Routes = [
         ]
       },
       {
-        path: 'anomaly-detection',
-        loadComponent: () => import('./features/admin/anomaly-detection/anomaly-detection-dashboard.component').then(m => m.AnomalyDetectionDashboardComponent),
-        data: { title: 'Anomaly Detection' }
+        path: 'threat-detection',
+        loadComponent: () => import('./features/admin/threat-detection/threat-detection-dashboard.component').then(m => m.ThreatDetectionDashboardComponent),
+        data: { title: 'Threat Detection' }
       },
       {
         path: 'legal-hold',
@@ -147,14 +147,25 @@ export const routes: Routes = [
         data: { title: 'Compliance Reports' }
       },
       {
+        path: 'security-analytics',
+        loadComponent: () => import('./features/admin/security-analytics/security-analytics.component').then(m => m.SecurityAnalyticsComponent),
+        data: { title: 'Security Analytics' }
+      },
+      // Legacy route redirect for backward compatibility
+      {
         path: 'activity-correlation',
-        loadComponent: () => import('./features/admin/activity-correlation/activity-correlation.component').then(m => m.ActivityCorrelationComponent),
-        data: { title: 'Activity Correlation' }
+        redirectTo: 'security-analytics',
+        pathMatch: 'full'
       },
       {
         path: 'subscriptions',
         loadComponent: () => import('./features/admin/subscription-management/subscription-dashboard.component').then(m => m.SubscriptionDashboardComponent),
         data: { title: 'Subscription Management' }
+      },
+      {
+        path: 'revenue-analytics',
+        loadComponent: () => import('./features/admin/revenue-analytics/revenue-analytics-dashboard.component').then(m => m.RevenueAnalyticsDashboardComponent),
+        data: { title: 'Revenue Analytics' }
       },
       // Location Management Routes (Super Admin)
       {
