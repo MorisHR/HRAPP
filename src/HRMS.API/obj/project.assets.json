@@ -289,6 +289,45 @@
           }
         }
       },
+      "EPPlus/7.4.2": {
+        "type": "package",
+        "dependencies": {
+          "EPPlus.System.Drawing": "6.1.1",
+          "Microsoft.Extensions.Configuration.Json": "8.0.1",
+          "Microsoft.IO.RecyclableMemoryStream": "3.0.1",
+          "System.ComponentModel.Annotations": "5.0.0",
+          "System.Security.Cryptography.Pkcs": "8.0.1",
+          "System.Text.Encoding.CodePages": "8.0.0"
+        },
+        "compile": {
+          "lib/net8.0/EPPlus.dll": {}
+        },
+        "runtime": {
+          "lib/net8.0/EPPlus.dll": {}
+        }
+      },
+      "EPPlus.Interfaces/6.1.1": {
+        "type": "package",
+        "compile": {
+          "lib/net7.0/EPPlus.Interfaces.dll": {}
+        },
+        "runtime": {
+          "lib/net7.0/EPPlus.Interfaces.dll": {}
+        }
+      },
+      "EPPlus.System.Drawing/6.1.1": {
+        "type": "package",
+        "dependencies": {
+          "EPPlus.Interfaces": "6.1.1",
+          "System.Drawing.Common": "7.0.0"
+        },
+        "compile": {
+          "lib/net7.0/EPPlus.System.Drawing.dll": {}
+        },
+        "runtime": {
+          "lib/net7.0/EPPlus.System.Drawing.dll": {}
+        }
+      },
       "ExcelNumberFormat/1.1.0": {
         "type": "package",
         "compile": {
@@ -1170,6 +1209,20 @@
         "frameworkReferences": [
           "Microsoft.AspNetCore.App"
         ]
+      },
+      "Microsoft.AspNetCore.ResponseCompression/2.2.0": {
+        "type": "package",
+        "dependencies": {
+          "Microsoft.AspNetCore.Http.Extensions": "2.2.0",
+          "Microsoft.Extensions.Logging.Abstractions": "2.2.0",
+          "Microsoft.Extensions.Options": "2.2.0"
+        },
+        "compile": {
+          "lib/netcoreapp2.1/Microsoft.AspNetCore.ResponseCompression.dll": {}
+        },
+        "runtime": {
+          "lib/netcoreapp2.1/Microsoft.AspNetCore.ResponseCompression.dll": {}
+        }
       },
       "Microsoft.AspNetCore.Routing/2.2.0": {
         "type": "package",
@@ -2361,6 +2414,15 @@
           "lib/net9.0/Microsoft.IdentityModel.Tokens.dll": {}
         }
       },
+      "Microsoft.IO.RecyclableMemoryStream/3.0.1": {
+        "type": "package",
+        "compile": {
+          "lib/net6.0/Microsoft.IO.RecyclableMemoryStream.dll": {}
+        },
+        "runtime": {
+          "lib/net6.0/Microsoft.IO.RecyclableMemoryStream.dll": {}
+        }
+      },
       "Microsoft.Net.Http.Headers/2.2.0": {
         "type": "package",
         "dependencies": {
@@ -2472,19 +2534,19 @@
           }
         }
       },
-      "Microsoft.Win32.SystemEvents/6.0.0": {
+      "Microsoft.Win32.SystemEvents/7.0.0": {
         "type": "package",
         "compile": {
-          "lib/net6.0/Microsoft.Win32.SystemEvents.dll": {}
+          "lib/net7.0/Microsoft.Win32.SystemEvents.dll": {}
         },
         "runtime": {
-          "lib/net6.0/Microsoft.Win32.SystemEvents.dll": {}
+          "lib/net7.0/Microsoft.Win32.SystemEvents.dll": {}
         },
         "build": {
-          "buildTransitive/netcoreapp3.1/_._": {}
+          "buildTransitive/net6.0/_._": {}
         },
         "runtimeTargets": {
-          "runtimes/win/lib/net6.0/Microsoft.Win32.SystemEvents.dll": {
+          "runtimes/win/lib/net7.0/Microsoft.Win32.SystemEvents.dll": {
             "assetType": "runtime",
             "rid": "win"
           }
@@ -2653,10 +2715,10 @@
           "lib/net5.0/Pipelines.Sockets.Unofficial.dll": {}
         }
       },
-      "Polly/8.6.4": {
+      "Polly/8.5.0": {
         "type": "package",
         "dependencies": {
-          "Polly.Core": "8.6.4"
+          "Polly.Core": "8.5.0"
         },
         "compile": {
           "lib/net6.0/Polly.dll": {
@@ -2669,7 +2731,7 @@
           }
         }
       },
-      "Polly.Core/8.6.4": {
+      "Polly.Core/8.5.0": {
         "type": "package",
         "compile": {
           "lib/net8.0/Polly.Core.dll": {
@@ -2707,7 +2769,7 @@
           "lib/net6.0/QRCoder.dll": {}
         }
       },
-      "QuestPDF/2025.7.3": {
+      "QuestPDF/2024.10.3": {
         "type": "package",
         "compile": {
           "lib/net8.0/QuestPDF.dll": {}
@@ -2723,15 +2785,7 @@
             "assetType": "native",
             "rid": "linux-arm64"
           },
-          "runtimes/linux-arm64/native/libqpdf.so": {
-            "assetType": "native",
-            "rid": "linux-arm64"
-          },
           "runtimes/linux-musl-x64/native/libQuestPdfSkia.so": {
-            "assetType": "native",
-            "rid": "linux-musl-x64"
-          },
-          "runtimes/linux-musl-x64/native/libqpdf.so": {
             "assetType": "native",
             "rid": "linux-musl-x64"
           },
@@ -2739,15 +2793,7 @@
             "assetType": "native",
             "rid": "linux-x64"
           },
-          "runtimes/linux-x64/native/libqpdf.so": {
-            "assetType": "native",
-            "rid": "linux-x64"
-          },
           "runtimes/osx-arm64/native/libQuestPdfSkia.dylib": {
-            "assetType": "native",
-            "rid": "osx-arm64"
-          },
-          "runtimes/osx-arm64/native/libqpdf.dylib": {
             "assetType": "native",
             "rid": "osx-arm64"
           },
@@ -2755,55 +2801,11 @@
             "assetType": "native",
             "rid": "osx-x64"
           },
-          "runtimes/osx-x64/native/libqpdf.dylib": {
-            "assetType": "native",
-            "rid": "osx-x64"
-          },
           "runtimes/win-x64/native/QuestPdfSkia.dll": {
             "assetType": "native",
             "rid": "win-x64"
           },
-          "runtimes/win-x64/native/libgcc_s_seh-1.dll": {
-            "assetType": "native",
-            "rid": "win-x64"
-          },
-          "runtimes/win-x64/native/libstdc++-6.dll": {
-            "assetType": "native",
-            "rid": "win-x64"
-          },
-          "runtimes/win-x64/native/libwinpthread-1.dll": {
-            "assetType": "native",
-            "rid": "win-x64"
-          },
-          "runtimes/win-x64/native/qpdf.dll": {
-            "assetType": "native",
-            "rid": "win-x64"
-          },
-          "runtimes/win-x64/native/zlib1.dll": {
-            "assetType": "native",
-            "rid": "win-x64"
-          },
           "runtimes/win-x86/native/QuestPdfSkia.dll": {
-            "assetType": "native",
-            "rid": "win-x86"
-          },
-          "runtimes/win-x86/native/libgcc_s_dw2-1.dll": {
-            "assetType": "native",
-            "rid": "win-x86"
-          },
-          "runtimes/win-x86/native/libstdc++-6.dll": {
-            "assetType": "native",
-            "rid": "win-x86"
-          },
-          "runtimes/win-x86/native/libwinpthread-1.dll": {
-            "assetType": "native",
-            "rid": "win-x86"
-          },
-          "runtimes/win-x86/native/qpdf.dll": {
-            "assetType": "native",
-            "rid": "win-x86"
-          },
-          "runtimes/win-x86/native/zlib1.dll": {
             "assetType": "native",
             "rid": "win-x86"
           }
@@ -2984,17 +2986,17 @@
           "lib/netstandard2.0/SQLitePCLRaw.core.dll": {}
         }
       },
-      "StackExchange.Redis/2.9.32": {
+      "StackExchange.Redis/2.8.16": {
         "type": "package",
         "dependencies": {
-          "Microsoft.Extensions.Logging.Abstractions": "8.0.0",
+          "Microsoft.Extensions.Logging.Abstractions": "6.0.0",
           "Pipelines.Sockets.Unofficial": "2.2.8"
         },
         "compile": {
-          "lib/net8.0/StackExchange.Redis.dll": {}
+          "lib/net6.0/StackExchange.Redis.dll": {}
         },
         "runtime": {
-          "lib/net8.0/StackExchange.Redis.dll": {}
+          "lib/net6.0/StackExchange.Redis.dll": {}
         }
       },
       "Swashbuckle.AspNetCore/9.0.6": {
@@ -3107,6 +3109,15 @@
         },
         "build": {
           "buildTransitive/net6.0/_._": {}
+        }
+      },
+      "System.ComponentModel.Annotations/5.0.0": {
+        "type": "package",
+        "compile": {
+          "ref/netstandard2.1/System.ComponentModel.Annotations.dll": {}
+        },
+        "runtime": {
+          "lib/netstandard2.1/System.ComponentModel.Annotations.dll": {}
         }
       },
       "System.Composition/7.0.0": {
@@ -3311,26 +3322,22 @@
           }
         }
       },
-      "System.Drawing.Common/6.0.0": {
+      "System.Drawing.Common/7.0.0": {
         "type": "package",
         "dependencies": {
-          "Microsoft.Win32.SystemEvents": "6.0.0"
+          "Microsoft.Win32.SystemEvents": "7.0.0"
         },
         "compile": {
-          "lib/net6.0/System.Drawing.Common.dll": {}
+          "lib/net7.0/System.Drawing.Common.dll": {}
         },
         "runtime": {
-          "lib/net6.0/System.Drawing.Common.dll": {}
+          "lib/net7.0/System.Drawing.Common.dll": {}
         },
         "build": {
-          "buildTransitive/netcoreapp3.1/_._": {}
+          "buildTransitive/net6.0/_._": {}
         },
         "runtimeTargets": {
-          "runtimes/unix/lib/net6.0/System.Drawing.Common.dll": {
-            "assetType": "runtime",
-            "rid": "unix"
-          },
-          "runtimes/win/lib/net6.0/System.Drawing.Common.dll": {
+          "runtimes/win/lib/net7.0/System.Drawing.Common.dll": {
             "assetType": "runtime",
             "rid": "win"
           }
@@ -3642,6 +3649,24 @@
           "ref/netstandard1.3/System.Text.Encoding.dll": {}
         }
       },
+      "System.Text.Encoding.CodePages/8.0.0": {
+        "type": "package",
+        "compile": {
+          "lib/net8.0/System.Text.Encoding.CodePages.dll": {}
+        },
+        "runtime": {
+          "lib/net8.0/System.Text.Encoding.CodePages.dll": {}
+        },
+        "build": {
+          "buildTransitive/net6.0/_._": {}
+        },
+        "runtimeTargets": {
+          "runtimes/win/lib/net8.0/System.Text.Encoding.CodePages.dll": {
+            "assetType": "runtime",
+            "rid": "win"
+          }
+        }
+      },
       "System.Text.Encodings.Web/4.5.0": {
         "type": "package",
         "compile": {
@@ -3737,6 +3762,7 @@
         "dependencies": {
           "ClosedXML": "0.105.0",
           "EFCore.BulkExtensions": "9.0.2",
+          "EPPlus": "7.4.2",
           "Google.Cloud.SecretManager.V1": "2.6.0",
           "Google.Cloud.Storage.V1": "4.13.0",
           "HRMS.Application": "1.0.0",
@@ -3755,7 +3781,7 @@
           "Otp.NET": "1.4.0",
           "Polly": "8.5.0",
           "QRCoder": "1.7.0",
-          "QuestPDF": "2025.7.3",
+          "QuestPDF": "2024.10.3",
           "Serilog": "4.2.0",
           "Serilog.Extensions.Logging": "9.0.0",
           "StackExchange.Redis": "2.8.16",
@@ -4079,6 +4105,68 @@
         "efcore.bulkextensions.sqlserver.nuspec",
         "lib/net9.0/EFCore.BulkExtensions.SqlServer.dll",
         "lib/net9.0/EFCore.BulkExtensions.SqlServer.pdb"
+      ]
+    },
+    "EPPlus/7.4.2": {
+      "sha512": "TGFbvGSQQEX4Egxi6YIcnEkid47bSx7xmzS1I8HNlrgNklIN4skodsqzqo9li+SUCj9MWjROqKp/oeVqSaMHew==",
+      "type": "package",
+      "path": "epplus/7.4.2",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "EPPlusLogo.png",
+        "epplus.7.4.2.nupkg.sha512",
+        "epplus.nuspec",
+        "lib/net35/EPPlus.dll",
+        "lib/net462/EPPlus.dll",
+        "lib/net6.0/EPPlus.dll",
+        "lib/net7.0/EPPlus.dll",
+        "lib/net8.0/EPPlus.dll",
+        "lib/netstandard2.0/EPPlus.dll",
+        "lib/netstandard2.1/EPPlus.dll",
+        "license.md",
+        "readme.md",
+        "readme.txt"
+      ]
+    },
+    "EPPlus.Interfaces/6.1.1": {
+      "sha512": "y7dkrOoE1ZR9Vgy1Jf2rEIaTf3SHlUjYt01NklP+F5Qh7S2ruPbzTcpYLRWMeXiG8XL8h2jqX4CyIkFt3NQGZw==",
+      "type": "package",
+      "path": "epplus.interfaces/6.1.1",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "EPPlusLogo.png",
+        "epplus.interfaces.6.1.1.nupkg.sha512",
+        "epplus.interfaces.nuspec",
+        "lib/net35/EPPlus.Interfaces.dll",
+        "lib/net462/EPPlus.Interfaces.dll",
+        "lib/net6.0/EPPlus.Interfaces.dll",
+        "lib/net7.0/EPPlus.Interfaces.dll",
+        "lib/netstandard2.0/EPPlus.Interfaces.dll",
+        "lib/netstandard2.1/EPPlus.Interfaces.dll",
+        "license.md",
+        "readme.md"
+      ]
+    },
+    "EPPlus.System.Drawing/6.1.1": {
+      "sha512": "lRF5gHYrmkHOOiLMI0t6q8zNYjUrzRgAM5BCXumv5xiqXko8fx3AWI+HCNZfhEqVFGOop+42KfR5GiUcCoyoMw==",
+      "type": "package",
+      "path": "epplus.system.drawing/6.1.1",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "EPPlusLogo.png",
+        "epplus.system.drawing.6.1.1.nupkg.sha512",
+        "epplus.system.drawing.nuspec",
+        "lib/net35/EPPlus.System.Drawing.dll",
+        "lib/net462/EPPlus.System.Drawing.dll",
+        "lib/net6.0/EPPlus.System.Drawing.dll",
+        "lib/net7.0/EPPlus.System.Drawing.dll",
+        "lib/netstandard2.0/EPPlus.System.Drawing.dll",
+        "lib/netstandard2.1/EPPlus.System.Drawing.dll",
+        "license.md",
+        "readme.md"
       ]
     },
     "ExcelNumberFormat/1.1.0": {
@@ -5109,6 +5197,20 @@
         "lib/net9.0/Microsoft.AspNetCore.OpenApi.dll",
         "microsoft.aspnetcore.openapi.9.0.10.nupkg.sha512",
         "microsoft.aspnetcore.openapi.nuspec"
+      ]
+    },
+    "Microsoft.AspNetCore.ResponseCompression/2.2.0": {
+      "sha512": "RvSstOhebIMDdRLd4iWjA6z2o2kGGwEYGPajvTXwndOA3TZpWH3FOIV4L7mehN/HoKrbTbX5vZ54ZFDwWoAFKA==",
+      "type": "package",
+      "path": "microsoft.aspnetcore.responsecompression/2.2.0",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "lib/net461/Microsoft.AspNetCore.ResponseCompression.dll",
+        "lib/netcoreapp2.1/Microsoft.AspNetCore.ResponseCompression.dll",
+        "lib/netstandard2.0/Microsoft.AspNetCore.ResponseCompression.dll",
+        "microsoft.aspnetcore.responsecompression.2.2.0.nupkg.sha512",
+        "microsoft.aspnetcore.responsecompression.nuspec"
       ]
     },
     "Microsoft.AspNetCore.Routing/2.2.0": {
@@ -7463,6 +7565,21 @@
         "microsoft.identitymodel.tokens.nuspec"
       ]
     },
+    "Microsoft.IO.RecyclableMemoryStream/3.0.1": {
+      "sha512": "s/s20YTVY9r9TPfTrN5g8zPF1YhwxyqO6PxUkrYTGI2B+OGPe9AdajWZrLhFqXIvqIW23fnUE4+ztrUWNU1+9g==",
+      "type": "package",
+      "path": "microsoft.io.recyclablememorystream/3.0.1",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "README.md",
+        "lib/net6.0/Microsoft.IO.RecyclableMemoryStream.dll",
+        "lib/netstandard2.0/Microsoft.IO.RecyclableMemoryStream.dll",
+        "lib/netstandard2.1/Microsoft.IO.RecyclableMemoryStream.dll",
+        "microsoft.io.recyclablememorystream.3.0.1.nupkg.sha512",
+        "microsoft.io.recyclablememorystream.nuspec"
+      ]
+    },
     "Microsoft.Net.Http.Headers/2.2.0": {
       "sha512": "iZNkjYqlo8sIOI0bQfpsSoMTmB/kyvmV2h225ihyZT33aTp48ZpF6qYnXxzSXmHt8DpBAwBTX+1s1UFLbYfZKg==",
       "type": "package",
@@ -7574,28 +7691,30 @@
         "runtimes/win-x86/native/SqlServerSpatial160.dll"
       ]
     },
-    "Microsoft.Win32.SystemEvents/6.0.0": {
-      "sha512": "hqTM5628jSsQiv+HGpiq3WKBl2c8v1KZfby2J6Pr7pEPlK9waPdgEO6b8A/+/xn/yZ9ulv8HuqK71ONy2tg67A==",
+    "Microsoft.Win32.SystemEvents/7.0.0": {
+      "sha512": "2nXPrhdAyAzir0gLl8Yy8S5Mnm/uBSQQA7jEsILOS1MTyS7DbmV1NgViMtvV1sfCD1ebITpNwb1NIinKeJgUVQ==",
       "type": "package",
-      "path": "microsoft.win32.systemevents/6.0.0",
+      "path": "microsoft.win32.systemevents/7.0.0",
       "files": [
         ".nupkg.metadata",
         ".signature.p7s",
         "Icon.png",
         "LICENSE.TXT",
         "THIRD-PARTY-NOTICES.TXT",
+        "buildTransitive/net461/Microsoft.Win32.SystemEvents.targets",
+        "buildTransitive/net462/_._",
+        "buildTransitive/net6.0/_._",
         "buildTransitive/netcoreapp2.0/Microsoft.Win32.SystemEvents.targets",
-        "buildTransitive/netcoreapp3.1/_._",
-        "lib/net461/Microsoft.Win32.SystemEvents.dll",
+        "lib/net462/Microsoft.Win32.SystemEvents.dll",
         "lib/net6.0/Microsoft.Win32.SystemEvents.dll",
-        "lib/netcoreapp3.1/Microsoft.Win32.SystemEvents.dll",
+        "lib/net7.0/Microsoft.Win32.SystemEvents.dll",
         "lib/netstandard2.0/Microsoft.Win32.SystemEvents.dll",
-        "microsoft.win32.systemevents.6.0.0.nupkg.sha512",
+        "microsoft.win32.systemevents.7.0.0.nupkg.sha512",
         "microsoft.win32.systemevents.nuspec",
         "runtimes/win/lib/net6.0/Microsoft.Win32.SystemEvents.dll",
         "runtimes/win/lib/net6.0/Microsoft.Win32.SystemEvents.xml",
-        "runtimes/win/lib/netcoreapp3.1/Microsoft.Win32.SystemEvents.dll",
-        "runtimes/win/lib/netcoreapp3.1/Microsoft.Win32.SystemEvents.xml",
+        "runtimes/win/lib/net7.0/Microsoft.Win32.SystemEvents.dll",
+        "runtimes/win/lib/net7.0/Microsoft.Win32.SystemEvents.xml",
         "useSharedDesignerContext.txt"
       ]
     },
@@ -7827,14 +7946,13 @@
         "pipelines.sockets.unofficial.nuspec"
       ]
     },
-    "Polly/8.6.4": {
-      "sha512": "uuBsDoBw0oYrMe3uTWRjkT2sIkKh+ZZnnDrLb4Z+QANfeA4+7FJacx6E8CY5GAxXRoSgFrvUADEAQ7DPF6fGiw==",
+    "Polly/8.5.0": {
+      "sha512": "GBNZPy7i7OpkaIruWPRJ0+AWzdGDQDnKY91b7Ic2aAch4lKhPjUc5KSffpH9krIWe0MoyghqaRxwRC0Uwz2PkA==",
       "type": "package",
-      "path": "polly/8.6.4",
+      "path": "polly/8.5.0",
       "files": [
         ".nupkg.metadata",
         ".signature.p7s",
-        "LICENSE",
         "lib/net462/Polly.dll",
         "lib/net462/Polly.pdb",
         "lib/net472/Polly.dll",
@@ -7845,18 +7963,17 @@
         "lib/netstandard2.0/Polly.pdb",
         "package-icon.png",
         "package-readme.md",
-        "polly.8.6.4.nupkg.sha512",
+        "polly.8.5.0.nupkg.sha512",
         "polly.nuspec"
       ]
     },
-    "Polly.Core/8.6.4": {
-      "sha512": "4AWqYnQ2TME0E+Mzovt1Uu+VyvpR84ymUldMcPw7Mbj799Phaag14CKrMtlJGx5jsvYP+S3oR1QmysgmXoD5cw==",
+    "Polly.Core/8.5.0": {
+      "sha512": "VYYMZNitZ85UEhwOKkTQI63WEMvzUqwQc74I2mm8h/DBVAMcBBxqYPni4DmuRtbCwngmuONuK2yBJfWNRKzI+A==",
       "type": "package",
-      "path": "polly.core/8.6.4",
+      "path": "polly.core/8.5.0",
       "files": [
         ".nupkg.metadata",
         ".signature.p7s",
-        "LICENSE",
         "lib/net462/Polly.Core.dll",
         "lib/net462/Polly.Core.pdb",
         "lib/net472/Polly.Core.dll",
@@ -7869,7 +7986,7 @@
         "lib/netstandard2.0/Polly.Core.pdb",
         "package-icon.png",
         "package-readme.md",
-        "polly.core.8.6.4.nupkg.sha512",
+        "polly.core.8.5.0.nupkg.sha512",
         "polly.core.nuspec"
       ]
     },
@@ -7907,10 +8024,10 @@
         "qrcoder.nuspec"
       ]
     },
-    "QuestPDF/2025.7.3": {
-      "sha512": "mEAooT42M8yjw18Etc548RY/OgSb4DqUXS6BjiJVOEFXiW5tFQ0UDcZ0uagjypREKp2Ajb2J6zSoRT5qbYLAng==",
+    "QuestPDF/2024.10.3": {
+      "sha512": "pYqotWAm9XncO0c63zGXf2yPKnghP7uTiO6OJFX7jEHZrlApBFzViXSvWPAC5Yjark4MVztiq+4l5nZjYWIIUg==",
       "type": "package",
-      "path": "questpdf/2025.7.3",
+      "path": "questpdf/2024.10.3",
       "files": [
         ".nupkg.metadata",
         ".signature.p7s",
@@ -7925,12 +8042,10 @@
         "ExternalDependencyLicenses/libpng.txt",
         "ExternalDependencyLicenses/libwebp.txt",
         "ExternalDependencyLicenses/ninja-build.txt",
-        "ExternalDependencyLicenses/qpdf.txt",
         "ExternalDependencyLicenses/readme.txt",
         "ExternalDependencyLicenses/skia.txt",
         "ExternalDependencyLicenses/wuffs.txt",
         "ExternalDependencyLicenses/zlib.txt",
-        "LatinWords.txt",
         "LatoFont/Lato-Black.ttf",
         "LatoFont/Lato-BlackItalic.ttf",
         "LatoFont/Lato-Bold.ttf",
@@ -7951,9 +8066,8 @@
         "LatoFont/Lato-ThinItalic.ttf",
         "LatoFont/OFL.txt",
         "Logo.png",
-        "MimeTypes.csv",
         "PackageLicense.md",
-        "README.md",
+        "PackageReadme.md",
         "ReleaseNotes.txt",
         "build/QuestPDF.targets",
         "build/net4/QuestPDF.targets",
@@ -7962,30 +8076,15 @@
         "lib/net6.0/QuestPDF.dll",
         "lib/net8.0/QuestPDF.dll",
         "lib/netstandard2.0/QuestPDF.dll",
-        "questpdf.2025.7.3.nupkg.sha512",
+        "questpdf.2024.10.3.nupkg.sha512",
         "questpdf.nuspec",
         "runtimes/linux-arm64/native/libQuestPdfSkia.so",
-        "runtimes/linux-arm64/native/libqpdf.so",
         "runtimes/linux-musl-x64/native/libQuestPdfSkia.so",
-        "runtimes/linux-musl-x64/native/libqpdf.so",
         "runtimes/linux-x64/native/libQuestPdfSkia.so",
-        "runtimes/linux-x64/native/libqpdf.so",
         "runtimes/osx-arm64/native/libQuestPdfSkia.dylib",
-        "runtimes/osx-arm64/native/libqpdf.dylib",
         "runtimes/osx-x64/native/libQuestPdfSkia.dylib",
-        "runtimes/osx-x64/native/libqpdf.dylib",
         "runtimes/win-x64/native/QuestPdfSkia.dll",
-        "runtimes/win-x64/native/libgcc_s_seh-1.dll",
-        "runtimes/win-x64/native/libstdc++-6.dll",
-        "runtimes/win-x64/native/libwinpthread-1.dll",
-        "runtimes/win-x64/native/qpdf.dll",
-        "runtimes/win-x64/native/zlib1.dll",
-        "runtimes/win-x86/native/QuestPdfSkia.dll",
-        "runtimes/win-x86/native/libgcc_s_dw2-1.dll",
-        "runtimes/win-x86/native/libstdc++-6.dll",
-        "runtimes/win-x86/native/libwinpthread-1.dll",
-        "runtimes/win-x86/native/qpdf.dll",
-        "runtimes/win-x86/native/zlib1.dll"
+        "runtimes/win-x86/native/QuestPdfSkia.dll"
       ]
     },
     "RBush.Signed/4.0.0": {
@@ -8229,21 +8328,19 @@
         "sqlitepclraw.core.nuspec"
       ]
     },
-    "StackExchange.Redis/2.9.32": {
-      "sha512": "j5Rjbf7gWz5izrn0UWQy9RlQY4cQDPkwJfVqATnVsOa/+zzJrps12LOgacMsDl/Vit2f01cDiDkG/Rst8v2iGw==",
+    "StackExchange.Redis/2.8.16": {
+      "sha512": "WaoulkOqOC9jHepca3JZKFTqndCWab5uYS7qCzmiQDlrTkFaDN7eLSlEfHycBxipRnQY9ppZM7QSsWAwUEGblw==",
       "type": "package",
-      "path": "stackexchange.redis/2.9.32",
+      "path": "stackexchange.redis/2.8.16",
       "files": [
         ".nupkg.metadata",
         ".signature.p7s",
-        "README.md",
         "lib/net461/StackExchange.Redis.dll",
         "lib/net472/StackExchange.Redis.dll",
         "lib/net6.0/StackExchange.Redis.dll",
-        "lib/net8.0/StackExchange.Redis.dll",
         "lib/netcoreapp3.1/StackExchange.Redis.dll",
         "lib/netstandard2.0/StackExchange.Redis.dll",
-        "stackexchange.redis.2.9.32.nupkg.sha512",
+        "stackexchange.redis.2.8.16.nupkg.sha512",
         "stackexchange.redis.nuspec"
       ]
     },
@@ -8395,6 +8492,52 @@
         "system.collections.immutable.7.0.0.nupkg.sha512",
         "system.collections.immutable.nuspec",
         "useSharedDesignerContext.txt"
+      ]
+    },
+    "System.ComponentModel.Annotations/5.0.0": {
+      "sha512": "dMkqfy2el8A8/I76n2Hi1oBFEbG1SfxD2l5nhwXV3XjlnOmwxJlQbYpJH4W51odnU9sARCSAgv7S3CyAFMkpYg==",
+      "type": "package",
+      "path": "system.componentmodel.annotations/5.0.0",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "Icon.png",
+        "LICENSE.TXT",
+        "THIRD-PARTY-NOTICES.TXT",
+        "lib/MonoAndroid10/_._",
+        "lib/MonoTouch10/_._",
+        "lib/net45/_._",
+        "lib/net461/System.ComponentModel.Annotations.dll",
+        "lib/netcore50/System.ComponentModel.Annotations.dll",
+        "lib/netstandard1.4/System.ComponentModel.Annotations.dll",
+        "lib/netstandard2.0/System.ComponentModel.Annotations.dll",
+        "lib/netstandard2.1/System.ComponentModel.Annotations.dll",
+        "lib/portable-net45+win8/_._",
+        "lib/win8/_._",
+        "lib/xamarinios10/_._",
+        "lib/xamarinmac20/_._",
+        "lib/xamarintvos10/_._",
+        "lib/xamarinwatchos10/_._",
+        "ref/MonoAndroid10/_._",
+        "ref/MonoTouch10/_._",
+        "ref/net45/_._",
+        "ref/net461/System.ComponentModel.Annotations.dll",
+        "ref/netcore50/System.ComponentModel.Annotations.dll",
+        "ref/netstandard1.1/System.ComponentModel.Annotations.dll",
+        "ref/netstandard1.3/System.ComponentModel.Annotations.dll",
+        "ref/netstandard1.4/System.ComponentModel.Annotations.dll",
+        "ref/netstandard2.0/System.ComponentModel.Annotations.dll",
+        "ref/netstandard2.1/System.ComponentModel.Annotations.dll",
+        "ref/portable-net45+win8/_._",
+        "ref/win8/_._",
+        "ref/xamarinios10/_._",
+        "ref/xamarinmac20/_._",
+        "ref/xamarintvos10/_._",
+        "ref/xamarinwatchos10/_._",
+        "system.componentmodel.annotations.5.0.0.nupkg.sha512",
+        "system.componentmodel.annotations.nuspec",
+        "useSharedDesignerContext.txt",
+        "version.txt"
       ]
     },
     "System.Composition/7.0.0": {
@@ -8713,37 +8856,35 @@
         "useSharedDesignerContext.txt"
       ]
     },
-    "System.Drawing.Common/6.0.0": {
-      "sha512": "NfuoKUiP2nUWwKZN6twGqXioIe1zVD0RIj2t976A+czLHr2nY454RwwXs6JU9Htc6mwqL6Dn/nEL3dpVf2jOhg==",
+    "System.Drawing.Common/7.0.0": {
+      "sha512": "KIX+oBU38pxkKPxvLcLfIkOV5Ien8ReN78wro7OF5/erwcmortzeFx+iBswlh2Vz6gVne0khocQudGwaO1Ey6A==",
       "type": "package",
-      "path": "system.drawing.common/6.0.0",
+      "path": "system.drawing.common/7.0.0",
       "files": [
         ".nupkg.metadata",
         ".signature.p7s",
         "Icon.png",
         "LICENSE.TXT",
         "THIRD-PARTY-NOTICES.TXT",
+        "buildTransitive/net461/System.Drawing.Common.targets",
+        "buildTransitive/net462/_._",
+        "buildTransitive/net6.0/_._",
         "buildTransitive/netcoreapp2.0/System.Drawing.Common.targets",
-        "buildTransitive/netcoreapp3.1/_._",
         "lib/MonoAndroid10/_._",
         "lib/MonoTouch10/_._",
-        "lib/net461/System.Drawing.Common.dll",
+        "lib/net462/System.Drawing.Common.dll",
         "lib/net6.0/System.Drawing.Common.dll",
-        "lib/netcoreapp3.1/System.Drawing.Common.dll",
+        "lib/net7.0/System.Drawing.Common.dll",
         "lib/netstandard2.0/System.Drawing.Common.dll",
         "lib/xamarinios10/_._",
         "lib/xamarinmac20/_._",
         "lib/xamarintvos10/_._",
         "lib/xamarinwatchos10/_._",
-        "runtimes/unix/lib/net6.0/System.Drawing.Common.dll",
-        "runtimes/unix/lib/net6.0/System.Drawing.Common.xml",
-        "runtimes/unix/lib/netcoreapp3.1/System.Drawing.Common.dll",
-        "runtimes/unix/lib/netcoreapp3.1/System.Drawing.Common.xml",
         "runtimes/win/lib/net6.0/System.Drawing.Common.dll",
         "runtimes/win/lib/net6.0/System.Drawing.Common.xml",
-        "runtimes/win/lib/netcoreapp3.1/System.Drawing.Common.dll",
-        "runtimes/win/lib/netcoreapp3.1/System.Drawing.Common.xml",
-        "system.drawing.common.6.0.0.nupkg.sha512",
+        "runtimes/win/lib/net7.0/System.Drawing.Common.dll",
+        "runtimes/win/lib/net7.0/System.Drawing.Common.xml",
+        "system.drawing.common.7.0.0.nupkg.sha512",
         "system.drawing.common.nuspec",
         "useSharedDesignerContext.txt"
       ]
@@ -9402,6 +9543,43 @@
         "system.text.encoding.nuspec"
       ]
     },
+    "System.Text.Encoding.CodePages/8.0.0": {
+      "sha512": "OZIsVplFGaVY90G2SbpgU7EnCoOO5pw1t4ic21dBF3/1omrJFpAGoNAVpPyMVOC90/hvgkGG3VFqR13YgZMQfg==",
+      "type": "package",
+      "path": "system.text.encoding.codepages/8.0.0",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "Icon.png",
+        "LICENSE.TXT",
+        "PACKAGE.md",
+        "THIRD-PARTY-NOTICES.TXT",
+        "buildTransitive/net461/System.Text.Encoding.CodePages.targets",
+        "buildTransitive/net462/_._",
+        "buildTransitive/net6.0/_._",
+        "buildTransitive/netcoreapp2.0/System.Text.Encoding.CodePages.targets",
+        "lib/MonoAndroid10/_._",
+        "lib/MonoTouch10/_._",
+        "lib/net462/System.Text.Encoding.CodePages.dll",
+        "lib/net6.0/System.Text.Encoding.CodePages.dll",
+        "lib/net7.0/System.Text.Encoding.CodePages.dll",
+        "lib/net8.0/System.Text.Encoding.CodePages.dll",
+        "lib/netstandard2.0/System.Text.Encoding.CodePages.dll",
+        "lib/xamarinios10/_._",
+        "lib/xamarinmac20/_._",
+        "lib/xamarintvos10/_._",
+        "lib/xamarinwatchos10/_._",
+        "runtimes/win/lib/net6.0/System.Text.Encoding.CodePages.dll",
+        "runtimes/win/lib/net6.0/System.Text.Encoding.CodePages.xml",
+        "runtimes/win/lib/net7.0/System.Text.Encoding.CodePages.dll",
+        "runtimes/win/lib/net7.0/System.Text.Encoding.CodePages.xml",
+        "runtimes/win/lib/net8.0/System.Text.Encoding.CodePages.dll",
+        "runtimes/win/lib/net8.0/System.Text.Encoding.CodePages.xml",
+        "system.text.encoding.codepages.8.0.0.nupkg.sha512",
+        "system.text.encoding.codepages.nuspec",
+        "useSharedDesignerContext.txt"
+      ]
+    },
     "System.Text.Encodings.Web/4.5.0": {
       "sha512": "Xg4G4Indi4dqP1iuAiMSwpiWS54ZghzR644OtsRCm/m/lBMG8dUBhLVN7hLm8NNrNTR+iGbshCPTwrvxZPlm4g==",
       "type": "package",
@@ -9586,15 +9764,17 @@
       "Hangfire.PostgreSql >= 1.20.12",
       "Microsoft.AspNetCore.Authentication.JwtBearer >= 9.0.10",
       "Microsoft.AspNetCore.OpenApi >= 9.0.10",
+      "Microsoft.AspNetCore.ResponseCompression >= 2.2.0",
       "Microsoft.AspNetCore.SignalR >= 1.1.0",
       "Microsoft.EntityFrameworkCore.Design >= 9.0.10",
-      "Polly >= 8.6.4",
+      "Microsoft.Extensions.Caching.StackExchangeRedis >= 10.0.0",
+      "Polly >= 8.5.0",
       "Serilog.AspNetCore >= 9.0.0",
       "Serilog.Enrichers.Environment >= 3.0.1",
       "Serilog.Enrichers.Thread >= 4.0.0",
       "Serilog.Formatting.Compact >= 3.0.0",
       "Serilog.Sinks.File >= 7.0.0",
-      "StackExchange.Redis >= 2.9.32",
+      "StackExchange.Redis >= 2.8.16",
       "Swashbuckle.AspNetCore >= 9.0.6"
     ]
   },
@@ -9699,6 +9879,10 @@
             "target": "Package",
             "version": "[9.0.10, )"
           },
+          "Microsoft.AspNetCore.ResponseCompression": {
+            "target": "Package",
+            "version": "[2.2.0, )"
+          },
           "Microsoft.AspNetCore.SignalR": {
             "target": "Package",
             "version": "[1.1.0, )"
@@ -9709,9 +9893,13 @@
             "target": "Package",
             "version": "[9.0.10, )"
           },
+          "Microsoft.Extensions.Caching.StackExchangeRedis": {
+            "target": "Package",
+            "version": "[10.0.0, )"
+          },
           "Polly": {
             "target": "Package",
-            "version": "[8.6.4, )"
+            "version": "[8.5.0, )"
           },
           "Serilog.AspNetCore": {
             "target": "Package",
@@ -9735,7 +9923,7 @@
           },
           "StackExchange.Redis": {
             "target": "Package",
-            "version": "[2.9.32, )"
+            "version": "[2.8.16, )"
           },
           "Swashbuckle.AspNetCore": {
             "target": "Package",

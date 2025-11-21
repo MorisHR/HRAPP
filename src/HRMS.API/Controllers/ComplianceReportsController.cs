@@ -149,7 +149,7 @@ public class ComplianceReportsController : ControllerBase
     /// Downloads ALL personal data for a user in specified format
     /// </summary>
     /// <param name="userId">User ID to export data for</param>
-    /// <param name="format">Export format: json, csv (default: json)</param>
+    /// <param name="format">Export format: json, csv, pdf, excel, xlsx (default: json)</param>
     [HttpGet("gdpr/export/{userId}")]
     [ProducesResponseType(typeof(FileContentResult), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

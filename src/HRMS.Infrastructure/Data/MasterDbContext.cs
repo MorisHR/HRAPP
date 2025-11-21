@@ -1613,5 +1613,201 @@ public class MasterDbContext : DbContext
             // Soft delete filter
             entity.HasQueryFilter(e => !e.IsDeleted);
         });
+
+        // ==========================================
+        // GDPR COMPLIANCE ENTITIES
+        // ==========================================
+
+        // Configure UserConsent entity (GDPR Article 7)
+        modelBuilder.Entity<UserConsent>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+
+            // Performance indexes for common queries
+            entity.HasIndex(e => e.UserId)
+                .HasDatabaseName("IX_UserConsents_UserId");
+
+            entity.HasIndex(e => new { e.UserId, e.ConsentType, e.Status })
+                .HasDatabaseName("IX_UserConsents_UserId_ConsentType_Status");
+
+            entity.HasIndex(e => new { e.TenantId, e.ConsentType })
+                .HasDatabaseName("IX_UserConsents_TenantId_ConsentType");
+
+            entity.HasIndex(e => e.Status)
+                .HasDatabaseName("IX_UserConsents_Status");
+
+            entity.HasIndex(e => e.ExpiresAt)
+                .HasDatabaseName("IX_UserConsents_ExpiresAt");
+
+            entity.HasIndex(e => e.GivenAt)
+                .HasDatabaseName("IX_UserConsents_GivenAt");
+
+            // ==========================================
+            // FORTUNE 500: Advanced Composite Indexes for Sub-5ms Queries
+            // ==========================================
+
+            // CONSENT EXPIRATION MONITORING (Background Jobs)
+            // Query: "Get all consents expiring in next 30 days for notification"
+            // Optimization: Covers Status + ExpiresAt in single index scan
+            entity.HasIndex(e => new { e.Status, e.ExpiresAt })
+                .HasDatabaseName("IX_UserConsents_Status_ExpiresAt")
+                .HasFilter("\"Status\" = 1 AND \"ExpiresAt\" IS NOT NULL"); // Partial index: Only Active with expiry
+
+            // TENANT-SCOPED ACTIVE CONSENTS (Most common query)
+            // Query: "Get all active consents for a user in a tenant"
+            // Optimization: Tenant isolation + Active status + Chronological
+            entity.HasIndex(e => new { e.TenantId, e.UserId, e.Status, e.GivenAt })
+                .HasDatabaseName("IX_UserConsents_TenantId_UserId_Status_GivenAt");
+
+            // CONSENT TYPE FILTERING WITH STATUS (Compliance Reports)
+            // Query: "Get all marketing consents that are active across all users"
+            // Optimization: ConsentType + Status + Timestamp for reporting
+            entity.HasIndex(e => new { e.ConsentType, e.Status, e.GivenAt })
+                .HasDatabaseName("IX_UserConsents_ConsentType_Status_GivenAt");
+
+            // WITHDRAWN CONSENT TRACKING (GDPR Article 7.3)
+            // Query: "Get all withdrawn consents in last 30 days for audit"
+            // Optimization: Partial index on withdrawn consents only
+            entity.HasIndex(e => new { e.Status, e.WithdrawnAt })
+                .HasDatabaseName("IX_UserConsents_Status_WithdrawnAt")
+                .HasFilter("\"WithdrawnAt\" IS NOT NULL"); // Partial index: Only withdrawn
+
+            // USER EMAIL LOOKUP (Support Queries)
+            // Query: "Find consent by user email for customer support"
+            // Optimization: Email-based lookup without UserId
+            entity.HasIndex(e => new { e.UserEmail, e.GivenAt })
+                .HasDatabaseName("IX_UserConsents_UserEmail_GivenAt")
+                .HasFilter("\"UserEmail\" IS NOT NULL"); // Partial index: Only with email
+
+            // INTERNATIONAL DATA TRANSFER TRACKING (GDPR Article 44-49)
+            // Query: "Find all consents involving international data transfer"
+            entity.HasIndex(e => new { e.InternationalTransfer, e.TenantId, e.Status })
+                .HasDatabaseName("IX_UserConsents_InternationalTransfer_TenantId_Status")
+                .HasFilter("\"InternationalTransfer\" = true"); // Partial index
+
+            // Properties
+            entity.Property(e => e.ConsentText).IsRequired();
+            entity.Property(e => e.ConsentTextHash).IsRequired().HasMaxLength(64);
+        });
+
+        // Configure DataProcessingAgreement entity (GDPR Article 28)
+        modelBuilder.Entity<DataProcessingAgreement>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+
+            // Performance indexes for common queries
+            entity.HasIndex(e => e.TenantId)
+                .HasDatabaseName("IX_DataProcessingAgreements_TenantId");
+
+            entity.HasIndex(e => new { e.TenantId, e.Status })
+                .HasDatabaseName("IX_DataProcessingAgreements_TenantId_Status");
+
+            entity.HasIndex(e => e.VendorName)
+                .HasDatabaseName("IX_DataProcessingAgreements_VendorName");
+
+            entity.HasIndex(e => new { e.TenantId, e.VendorName })
+                .HasDatabaseName("IX_DataProcessingAgreements_TenantId_VendorName");
+
+            entity.HasIndex(e => e.Status)
+                .HasDatabaseName("IX_DataProcessingAgreements_Status");
+
+            entity.HasIndex(e => e.RiskLevel)
+                .HasDatabaseName("IX_DataProcessingAgreements_RiskLevel");
+
+            entity.HasIndex(e => e.ExpiryDate)
+                .HasDatabaseName("IX_DataProcessingAgreements_ExpiryDate");
+
+            entity.HasIndex(e => e.NextRiskAssessmentDate)
+                .HasDatabaseName("IX_DataProcessingAgreements_NextRiskAssessmentDate");
+
+            entity.HasIndex(e => e.NextAuditDate)
+                .HasDatabaseName("IX_DataProcessingAgreements_NextAuditDate");
+
+            entity.HasIndex(e => e.InternationalDataTransfer)
+                .HasDatabaseName("IX_DataProcessingAgreements_InternationalDataTransfer");
+
+            // ==========================================
+            // FORTUNE 500: Advanced Composite Indexes for Sub-5ms DPA Queries
+            // ==========================================
+
+            // DPA RENEWAL WORKFLOW (Expiring DPAs Dashboard)
+            // Query: "Get all DPAs expiring in next 90 days for renewal reminders"
+            // Optimization: Status + ExpiryDate for renewal dashboard
+            entity.HasIndex(e => new { e.Status, e.ExpiryDate })
+                .HasDatabaseName("IX_DataProcessingAgreements_Status_ExpiryDate")
+                .HasFilter("\"Status\" IN (1, 2)"); // Partial: Active or PendingRenewal only
+
+            // TENANT VENDOR MANAGEMENT (Most Common Query)
+            // Query: "Get all active DPAs for a tenant ordered by vendor"
+            // Optimization: Tenant + Status + Vendor for vendor dashboard
+            entity.HasIndex(e => new { e.TenantId, e.Status, e.VendorName, e.ExpiryDate })
+                .HasDatabaseName("IX_DataProcessingAgreements_TenantId_Status_VendorName_ExpiryDate");
+
+            // RISK-BASED FILTERING (Security Dashboard)
+            // Query: "Get all high-risk DPAs across all tenants"
+            // Optimization: RiskLevel + Status + Creation date for security monitoring
+            entity.HasIndex(e => new { e.RiskLevel, e.Status, e.CreatedAt })
+                .HasDatabaseName("IX_DataProcessingAgreements_RiskLevel_Status_CreatedAt")
+                .HasFilter("\"RiskLevel\" IN (3, 4)"); // Partial: High and Critical risk only
+
+            // INTERNATIONAL TRANSFER COMPLIANCE (GDPR Article 44-49)
+            // Query: "Find all DPAs with international data transfers by tenant"
+            // Optimization: Transfer flag + Tenant + Status
+            entity.HasIndex(e => new { e.InternationalDataTransfer, e.TenantId, e.Status, e.EffectiveDate })
+                .HasDatabaseName("IX_DataProcessingAgreements_InternationalTransfer_TenantId_Status")
+                .HasFilter("\"InternationalDataTransfer\" = true"); // Partial: Only international transfers
+
+            // OVERDUE RISK ASSESSMENTS (Compliance Monitoring)
+            // Query: "Get all DPAs with overdue risk assessments"
+            // Optimization: Assessment date + Status for compliance alerts
+            entity.HasIndex(e => new { e.NextRiskAssessmentDate, e.Status, e.TenantId })
+                .HasDatabaseName("IX_DataProcessingAgreements_NextRiskAssessmentDate_Status")
+                .HasFilter("\"NextRiskAssessmentDate\" IS NOT NULL AND \"NextRiskAssessmentDate\" < CURRENT_DATE"); // Partial: Overdue only
+
+            // OVERDUE AUDITS (Compliance Monitoring)
+            // Query: "Get all DPAs with overdue audits"
+            // Optimization: Audit date + Status for compliance alerts
+            entity.HasIndex(e => new { e.NextAuditDate, e.Status, e.TenantId })
+                .HasDatabaseName("IX_DataProcessingAgreements_NextAuditDate_Status")
+                .HasFilter("\"NextAuditDate\" IS NOT NULL AND \"NextAuditDate\" < CURRENT_DATE"); // Partial: Overdue only
+
+            // VENDOR SEARCH OPTIMIZATION (Autocomplete/Search)
+            // Query: "Search DPAs by vendor name pattern"
+            // PostgreSQL: GIN index for text search (faster than LIKE)
+            entity.HasIndex(e => e.VendorName)
+                .HasDatabaseName("IX_DataProcessingAgreements_VendorName_GIN")
+                .HasMethod("gin")
+                .HasOperators("gin_trgm_ops"); // Trigram search for fuzzy matching
+
+            // PLATFORM-WIDE DPA QUERIES (SuperAdmin Dashboard)
+            // Query: "Get all platform-wide DPAs (AWS, GCP, etc.)"
+            // Optimization: Null TenantId + Status + Vendor
+            entity.HasIndex(e => new { e.Status, e.VendorName, e.ExpiryDate })
+                .HasDatabaseName("IX_DataProcessingAgreements_Platform_Status_VendorName")
+                .HasFilter("\"TenantId\" IS NULL"); // Partial: Platform-wide only
+
+            // VENDOR TYPE FILTERING (Processor vs Sub-Processor)
+            // Query: "Get all sub-processors for compliance registry"
+            entity.HasIndex(e => new { e.VendorType, e.Status, e.TenantId })
+                .HasDatabaseName("IX_DataProcessingAgreements_VendorType_Status_TenantId");
+
+            // COST TRACKING (Financial Reporting)
+            // Query: "Calculate total vendor spend by tenant"
+            // Optimization: Tenant + Status + Annual value for financial reports
+            entity.HasIndex(e => new { e.TenantId, e.Status, e.AnnualValueUsd })
+                .HasDatabaseName("IX_DataProcessingAgreements_TenantId_Status_AnnualValue")
+                .HasFilter("\"AnnualValueUsd\" IS NOT NULL"); // Partial: Only DPAs with cost data
+
+            // Properties
+            entity.Property(e => e.VendorName).IsRequired().HasMaxLength(500);
+            entity.Property(e => e.VendorType).IsRequired().HasMaxLength(50);
+            entity.Property(e => e.VendorCountry).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.ProcessingPurpose).IsRequired();
+            entity.Property(e => e.DataSubjectCategories).HasColumnType("jsonb");
+            entity.Property(e => e.PersonalDataCategories).HasColumnType("jsonb");
+            entity.Property(e => e.TransferCountries).HasColumnType("jsonb");
+            entity.Property(e => e.AuthorizedSubProcessors).HasColumnType("jsonb");
+            entity.Property(e => e.Certifications).HasColumnType("jsonb");
+        });
     }
 }

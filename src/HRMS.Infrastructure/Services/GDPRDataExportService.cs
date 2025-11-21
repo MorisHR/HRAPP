@@ -4,6 +4,10 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using HRMS.Application.Interfaces;
 using HRMS.Infrastructure.Data;
+using QuestPDF.Fluent;
+using QuestPDF.Helpers;
+using QuestPDF.Infrastructure;
+using OfficeOpenXml;
 
 namespace HRMS.Infrastructure.Services;
 
@@ -88,6 +92,9 @@ public class GDPRDataExportService : IGDPRDataExportService
         {
             "json" => GenerateJsonExport(package),
             "csv" => GenerateCsvExport(package),
+            "pdf" => GeneratePdfExport(package),
+            "excel" => GenerateExcelExport(package),
+            "xlsx" => GenerateExcelExport(package),
             _ => GenerateJsonExport(package) // Default to JSON
         };
     }
@@ -305,6 +312,279 @@ public class GDPRDataExportService : IGDPRDataExportService
             FileName = $"gdpr_data_export_{package.UserId}_{DateTime.UtcNow:yyyyMMdd_HHmmss}.csv",
             MimeType = "text/csv",
             FileSizeBytes = bytes.Length
+        };
+    }
+
+    private ExportFileResult GeneratePdfExport(UserDataExportPackage package)
+    {
+        // QuestPDF License Configuration (Community Edition)
+        QuestPDF.Settings.License = LicenseType.Community;
+
+        var document = Document.Create(container =>
+        {
+            container.Page(page =>
+            {
+                page.Size(PageSizes.A4);
+                page.Margin(2, Unit.Centimetre);
+                page.PageColor(Colors.White);
+                page.DefaultTextStyle(x => x.FontSize(10).FontFamily("Arial"));
+
+                // Header
+                page.Header().Row(row =>
+                {
+                    row.RelativeItem().Column(column =>
+                    {
+                        column.Item().Text("GDPR Data Export Report").FontSize(20).SemiBold();
+                        column.Item().Text($"User ID: {package.UserId}").FontSize(10);
+                        column.Item().Text($"Generated: {package.ExportGeneratedAt:yyyy-MM-dd HH:mm:ss} UTC").FontSize(8);
+                    });
+                });
+
+                // Content
+                page.Content().PaddingVertical(1, Unit.Centimetre).Column(column =>
+                {
+                    // Summary
+                    column.Item().Text("Summary").FontSize(14).SemiBold();
+                    column.Item().PaddingBottom(0.5f, Unit.Centimetre).Table(table =>
+                    {
+                        table.ColumnsDefinition(columns =>
+                        {
+                            columns.RelativeColumn(3);
+                            columns.RelativeColumn(2);
+                        });
+
+                        table.Cell().BorderBottom(1).Padding(5).Text("Metric").SemiBold();
+                        table.Cell().BorderBottom(1).Padding(5).Text("Value").SemiBold();
+
+                        table.Cell().BorderBottom(1).Padding(5).Text("Total Audit Log Entries");
+                        table.Cell().BorderBottom(1).Padding(5).Text(package.Metadata.TotalAuditLogEntries.ToString());
+
+                        table.Cell().BorderBottom(1).Padding(5).Text("Total Consents");
+                        table.Cell().BorderBottom(1).Padding(5).Text(package.Metadata.TotalConsents.ToString());
+
+                        table.Cell().BorderBottom(1).Padding(5).Text("Total Sessions");
+                        table.Cell().BorderBottom(1).Padding(5).Text(package.Metadata.TotalSessions.ToString());
+
+                        table.Cell().BorderBottom(1).Padding(5).Text("Total Files Uploaded");
+                        table.Cell().BorderBottom(1).Padding(5).Text(package.Metadata.TotalFilesUploaded.ToString());
+
+                        table.Cell().Padding(5).Text("Total Storage Used");
+                        table.Cell().Padding(5).Text($"{package.Metadata.TotalStorageUsedBytes:N0} bytes");
+                    });
+
+                    // Audit Logs Section
+                    if (package.AuditLogs.Any())
+                    {
+                        column.Item().PaddingTop(1, Unit.Centimetre).Text($"Audit Logs ({package.AuditLogs.Count})").FontSize(12).SemiBold();
+                        column.Item().PaddingBottom(0.5f, Unit.Centimetre).Table(table =>
+                        {
+                            table.ColumnsDefinition(columns =>
+                            {
+                                columns.RelativeColumn(2);
+                                columns.RelativeColumn(2);
+                                columns.RelativeColumn(2);
+                                columns.RelativeColumn(2);
+                            });
+
+                            table.Header(header =>
+                            {
+                                header.Cell().BorderBottom(1).Padding(3).Text("Timestamp").FontSize(8).SemiBold();
+                                header.Cell().BorderBottom(1).Padding(3).Text("Action").FontSize(8).SemiBold();
+                                header.Cell().BorderBottom(1).Padding(3).Text("Category").FontSize(8).SemiBold();
+                                header.Cell().BorderBottom(1).Padding(3).Text("IP Address").FontSize(8).SemiBold();
+                            });
+
+                            foreach (var log in package.AuditLogs.Take(20)) // Limit to first 20 for PDF
+                            {
+                                table.Cell().BorderBottom(1).Padding(3).Text(log.Timestamp.ToString("yyyy-MM-dd HH:mm")).FontSize(7);
+                                table.Cell().BorderBottom(1).Padding(3).Text(log.ActionType).FontSize(7);
+                                table.Cell().BorderBottom(1).Padding(3).Text(log.Category).FontSize(7);
+                                table.Cell().BorderBottom(1).Padding(3).Text(log.IpAddress).FontSize(7);
+                            }
+                        });
+                    }
+
+                    // Consents Section
+                    if (package.Consents.Any())
+                    {
+                        column.Item().PaddingTop(1, Unit.Centimetre).Text($"Consents ({package.Consents.Count})").FontSize(12).SemiBold();
+                        column.Item().Table(table =>
+                        {
+                            table.ColumnsDefinition(columns =>
+                            {
+                                columns.RelativeColumn(2);
+                                columns.RelativeColumn(2);
+                                columns.RelativeColumn(2);
+                                columns.RelativeColumn(1);
+                            });
+
+                            table.Header(header =>
+                            {
+                                header.Cell().BorderBottom(1).Padding(3).Text("Given At").FontSize(8).SemiBold();
+                                header.Cell().BorderBottom(1).Padding(3).Text("Type").FontSize(8).SemiBold();
+                                header.Cell().BorderBottom(1).Padding(3).Text("Purpose").FontSize(8).SemiBold();
+                                header.Cell().BorderBottom(1).Padding(3).Text("Status").FontSize(8).SemiBold();
+                            });
+
+                            foreach (var consent in package.Consents.Take(10))
+                            {
+                                table.Cell().BorderBottom(1).Padding(3).Text(consent.GivenAt.ToString("yyyy-MM-dd")).FontSize(7);
+                                table.Cell().BorderBottom(1).Padding(3).Text(consent.ConsentType).FontSize(7);
+                                table.Cell().BorderBottom(1).Padding(3).Text(consent.Purpose).FontSize(7);
+                                table.Cell().BorderBottom(1).Padding(3).Text(consent.Status).FontSize(7);
+                            }
+                        });
+                    }
+                });
+
+                // Footer
+                page.Footer().AlignCenter().Text(text =>
+                {
+                    text.Span("Page ");
+                    text.CurrentPageNumber();
+                    text.Span(" of ");
+                    text.TotalPages();
+                    text.Span(" | Generated by HRMS GDPR Compliance System");
+                });
+            });
+        });
+
+        var pdfBytes = document.GeneratePdf();
+
+        return new ExportFileResult
+        {
+            FileBytes = pdfBytes,
+            FileName = $"gdpr_data_export_{package.UserId}_{DateTime.UtcNow:yyyyMMdd_HHmmss}.pdf",
+            MimeType = "application/pdf",
+            FileSizeBytes = pdfBytes.Length
+        };
+    }
+
+    private ExportFileResult GenerateExcelExport(UserDataExportPackage package)
+    {
+        // EPPlus License Configuration (NonCommercial)
+        ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+
+        using var excelPackage = new ExcelPackage();
+
+        // Summary Sheet
+        var summarySheet = excelPackage.Workbook.Worksheets.Add("Summary");
+        summarySheet.Cells["A1"].Value = "GDPR Data Export Summary";
+        summarySheet.Cells["A1:B1"].Merge = true;
+        summarySheet.Cells["A1"].Style.Font.Size = 16;
+        summarySheet.Cells["A1"].Style.Font.Bold = true;
+
+        summarySheet.Cells["A3"].Value = "User ID";
+        summarySheet.Cells["B3"].Value = package.UserId.ToString();
+        summarySheet.Cells["A4"].Value = "User Email";
+        summarySheet.Cells["B4"].Value = package.UserEmail ?? "N/A";
+        summarySheet.Cells["A5"].Value = "Export Generated";
+        summarySheet.Cells["B5"].Value = package.ExportGeneratedAt.ToString("yyyy-MM-dd HH:mm:ss");
+
+        summarySheet.Cells["A7"].Value = "Metric";
+        summarySheet.Cells["B7"].Value = "Value";
+        summarySheet.Cells["A7:B7"].Style.Font.Bold = true;
+
+        summarySheet.Cells["A8"].Value = "Total Audit Log Entries";
+        summarySheet.Cells["B8"].Value = package.Metadata.TotalAuditLogEntries;
+        summarySheet.Cells["A9"].Value = "Total Consents";
+        summarySheet.Cells["B9"].Value = package.Metadata.TotalConsents;
+        summarySheet.Cells["A10"].Value = "Total Sessions";
+        summarySheet.Cells["B10"].Value = package.Metadata.TotalSessions;
+        summarySheet.Cells["A11"].Value = "Total Files Uploaded";
+        summarySheet.Cells["B11"].Value = package.Metadata.TotalFilesUploaded;
+        summarySheet.Cells["A12"].Value = "Total Storage Used (bytes)";
+        summarySheet.Cells["B12"].Value = package.Metadata.TotalStorageUsedBytes;
+
+        summarySheet.Cells[summarySheet.Dimension.Address].AutoFitColumns();
+
+        // Audit Logs Sheet
+        if (package.AuditLogs.Any())
+        {
+            var auditSheet = excelPackage.Workbook.Worksheets.Add("Audit Logs");
+            auditSheet.Cells["A1"].Value = "Timestamp";
+            auditSheet.Cells["B1"].Value = "Action Type";
+            auditSheet.Cells["C1"].Value = "Category";
+            auditSheet.Cells["D1"].Value = "Entity Type";
+            auditSheet.Cells["E1"].Value = "Description";
+            auditSheet.Cells["F1"].Value = "IP Address";
+            auditSheet.Cells["A1:F1"].Style.Font.Bold = true;
+
+            int row = 2;
+            foreach (var log in package.AuditLogs)
+            {
+                auditSheet.Cells[row, 1].Value = log.Timestamp.ToString("yyyy-MM-dd HH:mm:ss");
+                auditSheet.Cells[row, 2].Value = log.ActionType;
+                auditSheet.Cells[row, 3].Value = log.Category;
+                auditSheet.Cells[row, 4].Value = log.EntityType;
+                auditSheet.Cells[row, 5].Value = log.Description;
+                auditSheet.Cells[row, 6].Value = log.IpAddress;
+                row++;
+            }
+
+            auditSheet.Cells[auditSheet.Dimension.Address].AutoFitColumns();
+        }
+
+        // Consents Sheet
+        if (package.Consents.Any())
+        {
+            var consentsSheet = excelPackage.Workbook.Worksheets.Add("Consents");
+            consentsSheet.Cells["A1"].Value = "Given At";
+            consentsSheet.Cells["B1"].Value = "Consent Type";
+            consentsSheet.Cells["C1"].Value = "Category";
+            consentsSheet.Cells["D1"].Value = "Purpose";
+            consentsSheet.Cells["E1"].Value = "Status";
+            consentsSheet.Cells["F1"].Value = "Withdrawn At";
+            consentsSheet.Cells["A1:F1"].Style.Font.Bold = true;
+
+            int row = 2;
+            foreach (var consent in package.Consents)
+            {
+                consentsSheet.Cells[row, 1].Value = consent.GivenAt.ToString("yyyy-MM-dd HH:mm:ss");
+                consentsSheet.Cells[row, 2].Value = consent.ConsentType;
+                consentsSheet.Cells[row, 3].Value = consent.ConsentCategory;
+                consentsSheet.Cells[row, 4].Value = consent.Purpose;
+                consentsSheet.Cells[row, 5].Value = consent.Status;
+                consentsSheet.Cells[row, 6].Value = consent.WithdrawnAt?.ToString("yyyy-MM-dd HH:mm:ss") ?? "";
+                row++;
+            }
+
+            consentsSheet.Cells[consentsSheet.Dimension.Address].AutoFitColumns();
+        }
+
+        // Sessions Sheet
+        if (package.Sessions.Any())
+        {
+            var sessionsSheet = excelPackage.Workbook.Worksheets.Add("Sessions");
+            sessionsSheet.Cells["A1"].Value = "Created At";
+            sessionsSheet.Cells["B1"].Value = "Last Activity";
+            sessionsSheet.Cells["C1"].Value = "IP Address";
+            sessionsSheet.Cells["D1"].Value = "User Agent";
+            sessionsSheet.Cells["E1"].Value = "Is Active";
+            sessionsSheet.Cells["A1:E1"].Style.Font.Bold = true;
+
+            int row = 2;
+            foreach (var session in package.Sessions)
+            {
+                sessionsSheet.Cells[row, 1].Value = session.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss");
+                sessionsSheet.Cells[row, 2].Value = session.LastActivity?.ToString("yyyy-MM-dd HH:mm:ss") ?? "";
+                sessionsSheet.Cells[row, 3].Value = session.IpAddress;
+                sessionsSheet.Cells[row, 4].Value = session.UserAgent;
+                sessionsSheet.Cells[row, 5].Value = session.IsActive ? "Yes" : "No";
+                row++;
+            }
+
+            sessionsSheet.Cells[sessionsSheet.Dimension.Address].AutoFitColumns();
+        }
+
+        var excelBytes = excelPackage.GetAsByteArray();
+
+        return new ExportFileResult
+        {
+            FileBytes = excelBytes,
+            FileName = $"gdpr_data_export_{package.UserId}_{DateTime.UtcNow:yyyyMMdd_HHmmss}.xlsx",
+            MimeType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            FileSizeBytes = excelBytes.Length
         };
     }
 }

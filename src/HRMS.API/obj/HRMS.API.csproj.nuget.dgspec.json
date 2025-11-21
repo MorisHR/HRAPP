@@ -102,6 +102,10 @@
               "target": "Package",
               "version": "[9.0.10, )"
             },
+            "Microsoft.AspNetCore.ResponseCompression": {
+              "target": "Package",
+              "version": "[2.2.0, )"
+            },
             "Microsoft.AspNetCore.SignalR": {
               "target": "Package",
               "version": "[1.1.0, )"
@@ -112,9 +116,13 @@
               "target": "Package",
               "version": "[9.0.10, )"
             },
+            "Microsoft.Extensions.Caching.StackExchangeRedis": {
+              "target": "Package",
+              "version": "[10.0.0, )"
+            },
             "Polly": {
               "target": "Package",
-              "version": "[8.6.4, )"
+              "version": "[8.5.0, )"
             },
             "Serilog.AspNetCore": {
               "target": "Package",
@@ -138,7 +146,7 @@
             },
             "StackExchange.Redis": {
               "target": "Package",
-              "version": "[2.9.32, )"
+              "version": "[2.8.16, )"
             },
             "Swashbuckle.AspNetCore": {
               "target": "Package",
@@ -446,6 +454,10 @@
               "target": "Package",
               "version": "[9.0.2, )"
             },
+            "EPPlus": {
+              "target": "Package",
+              "version": "[7.4.2, )"
+            },
             "Google.Cloud.SecretManager.V1": {
               "target": "Package",
               "version": "[2.6.0, )"
@@ -524,7 +536,7 @@
             },
             "QuestPDF": {
               "target": "Package",
-              "version": "[2025.7.3, )"
+              "version": "[2024.10.3, )"
             },
             "Serilog": {
               "target": "Package",

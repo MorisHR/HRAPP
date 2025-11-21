@@ -282,6 +282,10 @@
               "target": "Package",
               "version": "[9.0.2, )"
             },
+            "EPPlus": {
+              "target": "Package",
+              "version": "[7.4.2, )"
+            },
             "Google.Cloud.SecretManager.V1": {
               "target": "Package",
               "version": "[2.6.0, )"
@@ -360,7 +364,7 @@
             },
             "QuestPDF": {
               "target": "Package",
-              "version": "[2025.7.3, )"
+              "version": "[2024.10.3, )"
             },
             "Serilog": {
               "target": "Package",

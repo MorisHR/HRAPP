@@ -572,13 +572,13 @@ namespace HRMS.Infrastructure.Data.Migrations.Master
                         .HasColumnType("text");
 
                     b.Property<string>("AuthorizedSubProcessors")
-                        .HasColumnType("text");
+                        .HasColumnType("jsonb");
 
                     b.Property<int>("BreachNotificationHours")
                         .HasColumnType("integer");
 
                     b.Property<string>("Certifications")
-                        .HasColumnType("text");
+                        .HasColumnType("jsonb");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -598,7 +598,7 @@ namespace HRMS.Infrastructure.Data.Migrations.Master
 
                     b.Property<string>("DataSubjectCategories")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("jsonb");
 
                     b.Property<string>("DocumentHash")
                         .HasColumnType("text");
@@ -654,7 +654,7 @@ namespace HRMS.Infrastructure.Data.Migrations.Master
 
                     b.Property<string>("PersonalDataCategories")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("jsonb");
 
                     b.Property<bool>("ProcessesSensitiveData")
                         .HasColumnType("boolean");
@@ -697,7 +697,7 @@ namespace HRMS.Infrastructure.Data.Migrations.Master
                         .HasColumnType("text");
 
                     b.Property<string>("TransferCountries")
-                        .HasColumnType("text");
+                        .HasColumnType("jsonb");
 
                     b.Property<string>("TransferMechanism")
                         .HasColumnType("text");
@@ -719,25 +719,93 @@ namespace HRMS.Infrastructure.Data.Migrations.Master
 
                     b.Property<string>("VendorCountry")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
                     b.Property<string>("VendorName")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
 
                     b.Property<string>("VendorPhone")
                         .HasColumnType("text");
 
                     b.Property<string>("VendorType")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
 
                     b.Property<string>("VendorWebsite")
                         .HasColumnType("text");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("TenantId");
+                    b.HasIndex("ExpiryDate")
+                        .HasDatabaseName("IX_DataProcessingAgreements_ExpiryDate");
+
+                    b.HasIndex("InternationalDataTransfer")
+                        .HasDatabaseName("IX_DataProcessingAgreements_InternationalDataTransfer");
+
+                    b.HasIndex("NextAuditDate")
+                        .HasDatabaseName("IX_DataProcessingAgreements_NextAuditDate");
+
+                    b.HasIndex("NextRiskAssessmentDate")
+                        .HasDatabaseName("IX_DataProcessingAgreements_NextRiskAssessmentDate");
+
+                    b.HasIndex("RiskLevel")
+                        .HasDatabaseName("IX_DataProcessingAgreements_RiskLevel");
+
+                    b.HasIndex("Status")
+                        .HasDatabaseName("IX_DataProcessingAgreements_Status");
+
+                    b.HasIndex("TenantId")
+                        .HasDatabaseName("IX_DataProcessingAgreements_TenantId");
+
+                    b.HasIndex("VendorName")
+                        .HasDatabaseName("IX_DataProcessingAgreements_VendorName_GIN");
+
+                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("VendorName"), "gin");
+                    NpgsqlIndexBuilderExtensions.HasOperators(b.HasIndex("VendorName"), new[] { "gin_trgm_ops" });
+
+                    b.HasIndex("Status", "ExpiryDate")
+                        .HasDatabaseName("IX_DataProcessingAgreements_Status_ExpiryDate")
+                        .HasFilter("\"Status\" IN (1, 2)");
+
+                    b.HasIndex("TenantId", "Status")
+                        .HasDatabaseName("IX_DataProcessingAgreements_TenantId_Status");
+
+                    b.HasIndex("TenantId", "VendorName")
+                        .HasDatabaseName("IX_DataProcessingAgreements_TenantId_VendorName");
+
+                    b.HasIndex("NextAuditDate", "Status", "TenantId")
+                        .HasDatabaseName("IX_DataProcessingAgreements_NextAuditDate_Status")
+                        .HasFilter("\"NextAuditDate\" IS NOT NULL AND \"NextAuditDate\" < CURRENT_DATE");
+
+                    b.HasIndex("NextRiskAssessmentDate", "Status", "TenantId")
+                        .HasDatabaseName("IX_DataProcessingAgreements_NextRiskAssessmentDate_Status")
+                        .HasFilter("\"NextRiskAssessmentDate\" IS NOT NULL AND \"NextRiskAssessmentDate\" < CURRENT_DATE");
+
+                    b.HasIndex("RiskLevel", "Status", "CreatedAt")
+                        .HasDatabaseName("IX_DataProcessingAgreements_RiskLevel_Status_CreatedAt")
+                        .HasFilter("\"RiskLevel\" IN (3, 4)");
+
+                    b.HasIndex("Status", "VendorName", "ExpiryDate")
+                        .HasDatabaseName("IX_DataProcessingAgreements_Platform_Status_VendorName")
+                        .HasFilter("\"TenantId\" IS NULL");
+
+                    b.HasIndex("TenantId", "Status", "AnnualValueUsd")
+                        .HasDatabaseName("IX_DataProcessingAgreements_TenantId_Status_AnnualValue")
+                        .HasFilter("\"AnnualValueUsd\" IS NOT NULL");
+
+                    b.HasIndex("VendorType", "Status", "TenantId")
+                        .HasDatabaseName("IX_DataProcessingAgreements_VendorType_Status_TenantId");
+
+                    b.HasIndex("InternationalDataTransfer", "TenantId", "Status", "EffectiveDate")
+                        .HasDatabaseName("IX_DataProcessingAgreements_InternationalTransfer_TenantId_Status")
+                        .HasFilter("\"InternationalDataTransfer\" = true");
+
+                    b.HasIndex("TenantId", "Status", "VendorName", "ExpiryDate")
+                        .HasDatabaseName("IX_DataProcessingAgreements_TenantId_Status_VendorName_ExpiryDate");
 
                     b.ToTable("DataProcessingAgreements", "master");
                 });
@@ -3002,7 +3070,8 @@ namespace HRMS.Infrastructure.Data.Migrations.Master
 
                     b.Property<string>("ConsentTextHash")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
 
                     b.Property<int>("ConsentType")
                         .HasColumnType("integer");
@@ -3109,7 +3178,45 @@ namespace HRMS.Infrastructure.Data.Migrations.Master
 
                     b.HasKey("Id");
 
-                    b.HasIndex("TenantId");
+                    b.HasIndex("ExpiresAt")
+                        .HasDatabaseName("IX_UserConsents_ExpiresAt");
+
+                    b.HasIndex("GivenAt")
+                        .HasDatabaseName("IX_UserConsents_GivenAt");
+
+                    b.HasIndex("Status")
+                        .HasDatabaseName("IX_UserConsents_Status");
+
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("IX_UserConsents_UserId");
+
+                    b.HasIndex("Status", "ExpiresAt")
+                        .HasDatabaseName("IX_UserConsents_Status_ExpiresAt")
+                        .HasFilter("\"Status\" = 1 AND \"ExpiresAt\" IS NOT NULL");
+
+                    b.HasIndex("Status", "WithdrawnAt")
+                        .HasDatabaseName("IX_UserConsents_Status_WithdrawnAt")
+                        .HasFilter("\"WithdrawnAt\" IS NOT NULL");
+
+                    b.HasIndex("TenantId", "ConsentType")
+                        .HasDatabaseName("IX_UserConsents_TenantId_ConsentType");
+
+                    b.HasIndex("UserEmail", "GivenAt")
+                        .HasDatabaseName("IX_UserConsents_UserEmail_GivenAt")
+                        .HasFilter("\"UserEmail\" IS NOT NULL");
+
+                    b.HasIndex("ConsentType", "Status", "GivenAt")
+                        .HasDatabaseName("IX_UserConsents_ConsentType_Status_GivenAt");
+
+                    b.HasIndex("InternationalTransfer", "TenantId", "Status")
+                        .HasDatabaseName("IX_UserConsents_InternationalTransfer_TenantId_Status")
+                        .HasFilter("\"InternationalTransfer\" = true");
+
+                    b.HasIndex("UserId", "ConsentType", "Status")
+                        .HasDatabaseName("IX_UserConsents_UserId_ConsentType_Status");
+
+                    b.HasIndex("TenantId", "UserId", "Status", "GivenAt")
+                        .HasDatabaseName("IX_UserConsents_TenantId_UserId_Status_GivenAt");
 
                     b.ToTable("UserConsents", "master");
                 });

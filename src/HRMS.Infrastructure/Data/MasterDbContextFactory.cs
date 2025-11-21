@@ -16,7 +16,7 @@ public class MasterDbContextFactory : IDesignTimeDbContextFactory<MasterDbContex
 
         // Use environment variable or default connection string for migrations
         var connectionString = Environment.GetEnvironmentVariable("DB_CONNECTION_STRING")
-            ?? "Host=localhost;Database=hrms_master;Username=postgres;Password=;SSL Mode=Prefer";
+            ?? "Host=localhost;Database=hrms_master;Username=postgres;Password=postgres;SSL Mode=Prefer";
 
         optionsBuilder.UseNpgsql(connectionString, b =>
         {
