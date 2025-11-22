@@ -1,0 +1,117 @@
+# Promtail Configuration - Log Shipping to Loki
+# Monitors: Application logs, API logs, system logs
+
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+
+positions:
+  filename: /tmp/positions.yaml
+
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+    # Performance tuning for high log volume
+    batchwait: 1s
+    batchsize: 1048576  # 1MB batch size
+
+    # Retry configuration
+    backoff_config:
+      min_period: 500ms
+      max_period: 5m
+      max_retries: 10
+
+    # External labels
+    external_labels:
+      environment: production
+      cluster: primary
+      application: hrms
+
+# Scrape configurations
+scrape_configs:
+  # ============================================================================
+  # HRMS API Logs
+  # ============================================================================
+  - job_name: hrms-api
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: hrms-api
+          __path__: /var/log/api/hrms-*.log
+
+    # Parse JSON logs
+    pipeline_stages:
+      - json:
+          expressions:
+            timestamp: Timestamp
+            level: Level
+            message: Message
+            tenant_id: Properties.TenantId
+            user_id: Properties.UserId
+            endpoint: Properties.RequestPath
+            status_code: Properties.StatusCode
+            duration_ms: Properties.ElapsedMilliseconds
+
+      - timestamp:
+          source: timestamp
+          format: RFC3339Nano
+
+      - labels:
+          level: level
+          tenant_id: tenant_id
+          endpoint: endpoint
+
+      - output:
+          source: message
+
+  # ============================================================================
+  # System Logs (syslog, auth, etc.)
+  # ============================================================================
+  - job_name: system-logs
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: system
+          __path__: /var/log/{syslog,messages,auth.log}
+
+  # ============================================================================
+  # HRMS Application Logs
+  # ============================================================================
+  - job_name: hrms-application
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: hrms-app
+          __path__: /var/log/hrms/*.log
+
+    # Extract structured data from application logs
+    pipeline_stages:
+      - regex:
+          expression: '(?P<timestamp>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}) \[(?P<level>\w+)\] (?P<message>.*)'
+
+      - timestamp:
+          source: timestamp
+          format: '2006-01-02 15:04:05.000'
+
+      - labels:
+          level: level
+
+  # ============================================================================
+  # PostgreSQL Logs (if configured to log to file)
+  # ============================================================================
+  - job_name: postgresql
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: postgresql
+          __path__: /var/log/postgresql/postgresql-*.log
+
+    pipeline_stages:
+      - regex:
+          expression: '(?P<timestamp>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}) \w+ \[(?P<pid>\d+)\] (?P<level>\w+):  (?P<message>.*)'
+
+      - labels:
+          level: level

@@ -102,8 +102,26 @@ public class AdminDashboardController : ControllerBase
             var lastMonthActiveTenants = await _masterContext.Tenants
                 .CountAsync(t => t.Status == TenantStatus.Active && t.CreatedAt < thisMonth);
 
-            // Historical employee count (approximate - would need proper tracking)
-            var employeeGrowthRate = totalEmployees > 0 ? 12.5 : 0; // TODO: Implement proper historical tracking
+            // ═══════════════════════════════════════════════════════════════
+            // PRODUCTION: Get historical data from DashboardStatisticsSnapshots
+            // Fortune 500 pattern: Real trend analysis vs hardcoded values
+            // ═══════════════════════════════════════════════════════════════
+            var previousSnapshot = await _masterContext.DashboardStatisticsSnapshots
+                .Where(s => s.SnapshotDate.Date == lastMonth)
+                .OrderByDescending(s => s.SnapshotDate)
+                .FirstOrDefaultAsync();
+
+            // Calculate employee growth from historical snapshot
+            var employeeGrowthRate = 0.0;
+            if (previousSnapshot != null && previousSnapshot.TotalEmployees > 0)
+            {
+                employeeGrowthRate = Math.Round(
+                    ((double)(totalEmployees - previousSnapshot.TotalEmployees) / previousSnapshot.TotalEmployees) * 100,
+                    1);
+            }
+
+            // Calculate revenue growth from historical snapshot
+            var previousRevenue = previousSnapshot?.MonthlyRevenue ?? monthlyRevenue;
 
             var stats = new AdminDashboardStatsResponse
             {
@@ -118,11 +136,11 @@ public class AdminDashboardController : ControllerBase
                     EmployeeGrowth = new TrendData
                     {
                         Value = totalEmployees,
-                        PercentChange = employeeGrowthRate,
-                        Direction = employeeGrowthRate >= 0 ? "up" : "down",
+                        PercentChange = Math.Abs(employeeGrowthRate),
+                        Direction = employeeGrowthRate > 0 ? "up" : employeeGrowthRate < 0 ? "down" : "stable",
                         Period = "month"
                     },
-                    RevenueGrowth = CalculateTrend((int)monthlyRevenue, (int)monthlyRevenue - 1000) // TODO: Historical revenue
+                    RevenueGrowth = CalculateTrend((int)monthlyRevenue, (int)previousRevenue)
                 },
                 GeneratedAt = now
             };

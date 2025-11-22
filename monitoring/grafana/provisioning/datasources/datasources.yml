@@ -1,0 +1,72 @@
+# Grafana Datasource Provisioning - Auto-configured on startup
+# Supports: PostgreSQL, Prometheus, Loki
+apiVersion: 1
+
+datasources:
+  # ============================================================================
+  # Prometheus - Time Series Metrics
+  # ============================================================================
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+    version: 1
+    editable: false
+    jsonData:
+      timeInterval: "30s"
+      queryTimeout: "300s"
+      httpMethod: POST
+      # Performance optimization
+      incrementalQuerying: true
+      incrementalQueryOverlapWindow: "10m"
+      disableMetricsLookup: false
+      customQueryParameters: ""
+      # Alerting
+      manageAlerts: true
+      prometheusType: Prometheus
+      prometheusVersion: "2.47.0"
+      cacheLevel: 'High'
+      # High-throughput settings
+      maxDataPoints: 10000
+
+  # ============================================================================
+  # PostgreSQL - Direct Database Queries
+  # ============================================================================
+  - name: PostgreSQL
+    type: postgres
+    access: proxy
+    url: host.docker.internal:5432
+    database: hrms_master
+    user: monitoring_reader
+    isDefault: false
+    version: 1
+    editable: false
+    jsonData:
+      sslmode: disable
+      maxOpenConns: 20
+      maxIdleConns: 5
+      connMaxLifetime: 300
+      postgresVersion: 1600  # PostgreSQL 16.0
+      timescaledb: false
+    secureJsonData:
+      password: monitoring_pass
+
+  # ============================================================================
+  # Loki - Log Aggregation
+  # ============================================================================
+  - name: Loki
+    type: loki
+    access: proxy
+    url: http://loki:3100
+    isDefault: false
+    version: 1
+    editable: false
+    jsonData:
+      maxLines: 1000
+      # Performance settings for high log volume
+      derivedFields:
+        - datasourceUid: Prometheus
+          matcherRegex: "tenant_id=(\\w+)"
+          name: TenantMetrics
+          url: "/d/tenant-insights?var-tenant_id=$${__value.raw}"
