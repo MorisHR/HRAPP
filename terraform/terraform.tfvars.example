@@ -1,0 +1,109 @@
+# ════════════════════════════════════════════════════════════════════════════
+# HRMS Fortune 500 - Terraform Variables Example
+# ════════════════════════════════════════════════════════════════════════════
+#
+# INSTRUCTIONS:
+# 1. Copy this file to terraform.tfvars
+# 2. Fill in your actual values
+# 3. NEVER commit terraform.tfvars to git (it's in .gitignore)
+#
+# ════════════════════════════════════════════════════════════════════════════
+
+# ───────────────────────────────────────────────────────────────────────────
+# PROJECT CONFIGURATION
+# ───────────────────────────────────────────────────────────────────────────
+
+project_id  = "your-gcp-project-id"  # e.g., "hrms-prod-12345"
+region      = "us-central1"
+zone        = "us-central1-a"
+environment = "production"  # production, staging, or development
+domain      = "api.yourdomain.com"  # Your API domain
+
+# ───────────────────────────────────────────────────────────────────────────
+# NETWORKING (Defaults are usually fine)
+# ───────────────────────────────────────────────────────────────────────────
+
+subnet_cidr         = "10.0.0.0/24"
+vpc_connector_cidr  = "10.8.0.0/28"
+redis_cidr          = "10.0.1.0/29"
+
+# ───────────────────────────────────────────────────────────────────────────
+# CLOUD SQL (PostgreSQL)
+# ───────────────────────────────────────────────────────────────────────────
+
+# Instance tier - Fortune 500 recommended configurations:
+# - Development: db-custom-2-8192 (2 vCPUs, 8GB RAM) ~$150/month
+# - Staging: db-custom-4-16384 (4 vCPUs, 16GB RAM) ~$300/month
+# - Production: db-custom-8-32768 (8 vCPUs, 32GB RAM) ~$600/month
+
+db_tier      = "db-custom-4-16384"  # 4 vCPUs, 16GB RAM
+db_disk_size = 100  # GB (auto-resizes as needed)
+
+# ───────────────────────────────────────────────────────────────────────────
+# CLOUD MEMORYSTORE (Redis)
+# ───────────────────────────────────────────────────────────────────────────
+
+# Memory size - Recommended configurations:
+# - Development: 1 GB ~$30/month
+# - Staging: 5 GB ~$150/month
+# - Production: 10+ GB ~$300+/month
+
+redis_memory_gb = 5  # GB
+
+# ───────────────────────────────────────────────────────────────────────────
+# CLOUD RUN
+# ───────────────────────────────────────────────────────────────────────────
+
+# Docker image - Update this after building your image
+# Format: gcr.io/PROJECT_ID/hrms-api:TAG
+api_image = "gcr.io/your-gcp-project-id/hrms-api:latest"
+
+# Resource allocation per container instance
+# Options: "1", "2", "4", "6", "8" CPUs
+api_cpu = "2"
+
+# Memory allocation per container instance
+# Format: "512Mi", "1Gi", "2Gi", "4Gi", etc.
+api_memory = "2Gi"
+
+# Auto-scaling configuration
+# Minimum instances (0 = scale to zero, 1+ = always running)
+min_instances = 1  # Recommended: 1 for production (faster response)
+
+# Maximum instances (handles traffic spikes)
+max_instances = 100  # Can scale up to 1000 for extreme loads
+
+# ───────────────────────────────────────────────────────────────────────────
+# TAGS (Optional)
+# ───────────────────────────────────────────────────────────────────────────
+
+tags = {
+  application = "hrms"
+  environment = "production"
+  managed-by  = "terraform"
+  team        = "platform"
+  cost-center = "engineering"
+}
+
+# ════════════════════════════════════════════════════════════════════════════
+# ESTIMATED MONTHLY COSTS (Based on above configuration)
+# ════════════════════════════════════════════════════════════════════════════
+#
+# Cloud SQL (db-custom-4-16384, HA):        ~$400/month
+# Cloud Memorystore (5GB, HA):              ~$150/month
+# Cloud Run (2 CPU, 2GB, avg 10 instances): ~$100/month
+# Cloud Storage (100GB):                    ~$2/month
+# Cloud Load Balancer:                      ~$20/month
+# VPC/Networking:                           ~$10/month
+# Secret Manager:                           ~$1/month
+# Logging & Monitoring:                     ~$20/month
+#
+# TOTAL ESTIMATED COST:                     ~$703/month
+#
+# Cost optimization tips:
+# - Use staging/dev environments with smaller instances
+# - Enable autoscaling to scale down during low traffic
+# - Use committed use discounts for predictable workloads
+# - Monitor usage with Cloud Billing reports
+#
+# ════════════════════════════════════════════════════════════════════════════
