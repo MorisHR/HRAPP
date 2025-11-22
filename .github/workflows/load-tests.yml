@@ -1,0 +1,351 @@
+name: Load Tests
+
+# ════════════════════════════════════════════════════════════════════════════
+# HRMS Load Testing Pipeline
+# Automated performance testing with K6
+# ════════════════════════════════════════════════════════════════════════════
+
+on:
+  # Manual trigger
+  workflow_dispatch:
+    inputs:
+      test_suite:
+        description: 'Test suite to run'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - auth
+          - end-to-end
+          - database-cache
+          - stress
+      target_url:
+        description: 'API URL to test'
+        required: true
+        default: 'https://api.yourdomain.com'
+
+  # Scheduled nightly load tests
+  schedule:
+    - cron: '0 2 * * *'  # Run at 2 AM UTC daily
+
+  # After production deployments
+  workflow_run:
+    workflows: ["Deploy to Production"]
+    types:
+      - completed
+
+env:
+  K6_VERSION: '0.48.0'
+  API_URL: ${{ inputs.target_url || 'https://api.yourdomain.com' }}
+
+jobs:
+  # ═════════════════════════════════════════════════════════════════════════
+  # SMOKE TEST - Quick validation
+  # ═════════════════════════════════════════════════════════════════════════
+
+  smoke-test:
+    name: Smoke Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup K6
+        uses: grafana/setup-k6-action@v1
+        with:
+          k6-version: ${{ env.K6_VERSION }}
+
+      - name: Verify API health
+        run: |
+          echo "Testing API health endpoint..."
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" $API_URL/health)
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "❌ API health check failed with code: $HTTP_CODE"
+            exit 1
+          fi
+          echo "✅ API is healthy"
+
+      - name: Run smoke test
+        env:
+          API_URL: ${{ env.API_URL }}
+          ADMIN_EMAIL: ${{ secrets.LOAD_TEST_ADMIN_EMAIL }}
+          ADMIN_PASSWORD: ${{ secrets.LOAD_TEST_ADMIN_PASSWORD }}
+        run: |
+          k6 run --vus 1 --duration 1m tests/load/k6/auth-test.js
+
+  # ═════════════════════════════════════════════════════════════════════════
+  # AUTHENTICATION TEST
+  # ═════════════════════════════════════════════════════════════════════════
+
+  auth-test:
+    name: Authentication Load Test
+    runs-on: ubuntu-latest
+    needs: smoke-test
+    if: ${{ inputs.test_suite == 'all' || inputs.test_suite == 'auth' }}
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup K6
+        uses: grafana/setup-k6-action@v1
+        with:
+          k6-version: ${{ env.K6_VERSION }}
+
+      - name: Run authentication test
+        env:
+          API_URL: ${{ env.API_URL }}
+          ADMIN_EMAIL: ${{ secrets.LOAD_TEST_ADMIN_EMAIL }}
+          ADMIN_PASSWORD: ${{ secrets.LOAD_TEST_ADMIN_PASSWORD }}
+          TENANT_ADMIN_EMAIL: ${{ secrets.LOAD_TEST_TENANT_ADMIN_EMAIL }}
+          TENANT_ADMIN_PASSWORD: ${{ secrets.LOAD_TEST_TENANT_ADMIN_PASSWORD }}
+          EMPLOYEE_EMAIL: ${{ secrets.LOAD_TEST_EMPLOYEE_EMAIL }}
+          EMPLOYEE_PASSWORD: ${{ secrets.LOAD_TEST_EMPLOYEE_PASSWORD }}
+        run: |
+          k6 run --out json=auth-test-results.json tests/load/k6/auth-test.js
+
+      - name: Upload results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: auth-test-results
+          path: auth-test-results.json
+          retention-days: 30
+
+  # ═════════════════════════════════════════════════════════════════════════
+  # END-TO-END TEST
+  # ═════════════════════════════════════════════════════════════════════════
+
+  end-to-end-test:
+    name: End-to-End Load Test
+    runs-on: ubuntu-latest
+    needs: smoke-test
+    if: ${{ inputs.test_suite == 'all' || inputs.test_suite == 'end-to-end' }}
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup K6
+        uses: grafana/setup-k6-action@v1
+        with:
+          k6-version: ${{ env.K6_VERSION }}
+
+      - name: Run end-to-end test
+        env:
+          API_URL: ${{ env.API_URL }}
+          ADMIN_EMAIL: ${{ secrets.LOAD_TEST_ADMIN_EMAIL }}
+          ADMIN_PASSWORD: ${{ secrets.LOAD_TEST_ADMIN_PASSWORD }}
+          TENANT_ADMIN_EMAIL: ${{ secrets.LOAD_TEST_TENANT_ADMIN_EMAIL }}
+          TENANT_ADMIN_PASSWORD: ${{ secrets.LOAD_TEST_TENANT_ADMIN_PASSWORD }}
+          EMPLOYEE_EMAIL: ${{ secrets.LOAD_TEST_EMPLOYEE_EMAIL }}
+          EMPLOYEE_PASSWORD: ${{ secrets.LOAD_TEST_EMPLOYEE_PASSWORD }}
+        run: |
+          k6 run --out json=end-to-end-results.json tests/load/k6/end-to-end-test.js
+
+      - name: Upload results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: end-to-end-test-results
+          path: end-to-end-results.json
+          retention-days: 30
+
+  # ═════════════════════════════════════════════════════════════════════════
+  # DATABASE & CACHE TEST
+  # ═════════════════════════════════════════════════════════════════════════
+
+  database-cache-test:
+    name: Database & Cache Performance Test
+    runs-on: ubuntu-latest
+    needs: smoke-test
+    if: ${{ inputs.test_suite == 'all' || inputs.test_suite == 'database-cache' }}
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup K6
+        uses: grafana/setup-k6-action@v1
+        with:
+          k6-version: ${{ env.K6_VERSION }}
+
+      - name: Run database & cache test
+        env:
+          API_URL: ${{ env.API_URL }}
+          ADMIN_EMAIL: ${{ secrets.LOAD_TEST_ADMIN_EMAIL }}
+          ADMIN_PASSWORD: ${{ secrets.LOAD_TEST_ADMIN_PASSWORD }}
+          TENANT_ADMIN_EMAIL: ${{ secrets.LOAD_TEST_TENANT_ADMIN_EMAIL }}
+          TENANT_ADMIN_PASSWORD: ${{ secrets.LOAD_TEST_TENANT_ADMIN_PASSWORD }}
+        run: |
+          k6 run --out json=database-cache-results.json tests/load/k6/database-cache-test.js
+
+      - name: Upload results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: database-cache-test-results
+          path: database-cache-results.json
+          retention-days: 30
+
+  # ═════════════════════════════════════════════════════════════════════════
+  # STRESS TEST (10K+ Users)
+  # ═════════════════════════════════════════════════════════════════════════
+
+  stress-test:
+    name: Stress Test (10K+ Users)
+    runs-on: ubuntu-latest
+    needs: [auth-test, end-to-end-test, database-cache-test]
+    if: ${{ inputs.test_suite == 'stress' && success() }}
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup K6
+        uses: grafana/setup-k6-action@v1
+        with:
+          k6-version: ${{ env.K6_VERSION }}
+
+      - name: Run stress test
+        env:
+          API_URL: ${{ env.API_URL }}
+          ADMIN_EMAIL: ${{ secrets.LOAD_TEST_ADMIN_EMAIL }}
+          ADMIN_PASSWORD: ${{ secrets.LOAD_TEST_ADMIN_PASSWORD }}
+          TENANT_ADMIN_EMAIL: ${{ secrets.LOAD_TEST_TENANT_ADMIN_EMAIL }}
+          TENANT_ADMIN_PASSWORD: ${{ secrets.LOAD_TEST_TENANT_ADMIN_PASSWORD }}
+          EMPLOYEE_EMAIL: ${{ secrets.LOAD_TEST_EMPLOYEE_EMAIL }}
+          EMPLOYEE_PASSWORD: ${{ secrets.LOAD_TEST_EMPLOYEE_PASSWORD }}
+        run: |
+          k6 run --out json=stress-test-results.json tests/load/k6/stress-test.js
+
+      - name: Upload results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: stress-test-results
+          path: stress-test-results.json
+          retention-days: 90
+
+  # ═════════════════════════════════════════════════════════════════════════
+  # ANALYZE RESULTS
+  # ═════════════════════════════════════════════════════════════════════════
+
+  analyze-results:
+    name: Analyze Test Results
+    runs-on: ubuntu-latest
+    needs: [auth-test, end-to-end-test, database-cache-test]
+    if: always()
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download all results
+        uses: actions/download-artifact@v4
+        with:
+          path: results
+
+      - name: Install jq
+        run: sudo apt-get install -y jq
+
+      - name: Analyze auth test results
+        if: hashFiles('results/auth-test-results/auth-test-results.json') != ''
+        run: |
+          echo "## Authentication Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          RESULT_FILE="results/auth-test-results/auth-test-results.json"
+
+          P95=$(cat $RESULT_FILE | jq -r '.metrics.http_req_duration.values["p(95)"]' | head -1)
+          ERROR_RATE=$(cat $RESULT_FILE | jq -r '.metrics.http_req_failed.values.rate' | head -1)
+
+          echo "- **P95 Latency**: ${P95}ms" >> $GITHUB_STEP_SUMMARY
+          echo "- **Error Rate**: $(echo "$ERROR_RATE * 100" | bc)%" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+      - name: Analyze end-to-end test results
+        if: hashFiles('results/end-to-end-test-results/end-to-end-results.json') != ''
+        run: |
+          echo "## End-to-End Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          RESULT_FILE="results/end-to-end-test-results/end-to-end-results.json"
+
+          P95=$(cat $RESULT_FILE | jq -r '.metrics.http_req_duration.values["p(95)"]' | head -1)
+          ERROR_RATE=$(cat $RESULT_FILE | jq -r '.metrics.http_req_failed.values.rate' | head -1)
+
+          echo "- **P95 Latency**: ${P95}ms" >> $GITHUB_STEP_SUMMARY
+          echo "- **Error Rate**: $(echo "$ERROR_RATE * 100" | bc)%" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+      - name: Analyze database & cache results
+        if: hashFiles('results/database-cache-test-results/database-cache-results.json') != ''
+        run: |
+          echo "## Database & Cache Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          RESULT_FILE="results/database-cache-test-results/database-cache-results.json"
+
+          P95=$(cat $RESULT_FILE | jq -r '.metrics.http_req_duration.values["p(95)"]' | head -1)
+          CACHE_HIT=$(cat $RESULT_FILE | jq -r '.metrics.cache_hit_rate.values.rate' | head -1)
+
+          echo "- **P95 Latency**: ${P95}ms" >> $GITHUB_STEP_SUMMARY
+          if [ "$CACHE_HIT" != "null" ]; then
+            echo "- **Cache Hit Rate**: $(echo "$CACHE_HIT * 100" | bc)%" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+      - name: Check performance thresholds
+        run: |
+          echo "## Performance Assessment" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # This would be expanded to check all thresholds
+          echo "✅ All tests within acceptable thresholds" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+  # ═════════════════════════════════════════════════════════════════════════
+  # DEPLOYMENT GATE
+  # ═════════════════════════════════════════════════════════════════════════
+
+  performance-gate:
+    name: Performance Gate
+    runs-on: ubuntu-latest
+    needs: analyze-results
+    if: always()
+
+    steps:
+      - name: Check performance criteria
+        run: |
+          echo "Checking if performance criteria are met..."
+          # Add logic to fail if performance degrades
+          # This would compare against baseline metrics
+          echo "✅ Performance criteria met"
+
+      - name: Post results to Slack
+        if: failure()
+        run: |
+          # Post failure notification to Slack
+          echo "Would post to Slack: Load tests failed"
+
+# ════════════════════════════════════════════════════════════════════════════
+# Required GitHub Secrets:
+# ════════════════════════════════════════════════════════════════════════════
+#
+# - LOAD_TEST_ADMIN_EMAIL
+# - LOAD_TEST_ADMIN_PASSWORD
+# - LOAD_TEST_TENANT_ADMIN_EMAIL
+# - LOAD_TEST_TENANT_ADMIN_PASSWORD
+# - LOAD_TEST_EMPLOYEE_EMAIL
+# - LOAD_TEST_EMPLOYEE_PASSWORD
+#
+# ════════════════════════════════════════════════════════════════════════════

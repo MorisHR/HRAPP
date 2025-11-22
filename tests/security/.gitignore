@@ -1,0 +1,8 @@
+# Security test results
+results/
+*.html
+*.json
+*.xml
+
+# Logs
+*.log

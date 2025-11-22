@@ -1,0 +1,12 @@
+# Load test results (can be large files)
+results/
+*.json
+
+# Environment file with credentials
+.env
+
+# K6 Cloud integration (if used)
+.k6cloud
+
+# Logs
+*.log
