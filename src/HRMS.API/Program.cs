@@ -588,6 +588,10 @@ builder.Services.AddScoped<IDatabaseBackupService, DatabaseBackupService>();
 builder.Services.AddScoped<DatabaseBackupJob>();
 Log.Information("Database backup service registered: daily backups with 30-day retention");
 
+// MONITORING JOBS
+builder.Services.AddScoped<MonitoringJobs>();
+Log.Information("Monitoring jobs registered: performance snapshots, dashboard refresh, alert checks, data cleanup, slow query analysis");
+
 // ======================
 // JWT AUTHENTICATION (PRODUCTION-GRADE)
 // ======================

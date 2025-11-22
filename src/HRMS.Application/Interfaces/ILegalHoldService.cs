@@ -61,4 +61,24 @@ public interface ILegalHoldService
     Task<bool> IsAuditLogUnderLegalHoldAsync(
         Guid auditLogId,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Updates a legal hold
+    /// </summary>
+    Task<LegalHold> UpdateLegalHoldAsync(
+        Guid legalHoldId,
+        string? description,
+        DateTime? endDate,
+        string? legalRepresentative,
+        string? legalRepresentativeEmail,
+        string? lawFirm,
+        Guid updatedBy,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets audit logs affected by a legal hold
+    /// </summary>
+    Task<List<object>> GetAffectedAuditLogsAsync(
+        Guid legalHoldId,
+        CancellationToken cancellationToken = default);
 }

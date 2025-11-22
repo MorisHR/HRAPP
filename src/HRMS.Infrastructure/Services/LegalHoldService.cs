@@ -164,4 +164,93 @@ public class LegalHoldService : ILegalHoldService
         var auditLog = await _context.AuditLogs.FindAsync(new object[] { auditLogId }, cancellationToken);
         return auditLog?.IsUnderLegalHold ?? false;
     }
+
+    public async Task<LegalHold> UpdateLegalHoldAsync(
+        Guid legalHoldId,
+        string? description,
+        DateTime? endDate,
+        string? legalRepresentative,
+        string? legalRepresentativeEmail,
+        string? lawFirm,
+        Guid updatedBy,
+        CancellationToken cancellationToken = default)
+    {
+        var legalHold = await _context.LegalHolds.FindAsync(new object[] { legalHoldId }, cancellationToken);
+        if (legalHold == null)
+            throw new NotFoundException(
+                ErrorCodes.SEC_ALERT_NOT_FOUND,
+                "The legal hold you requested could not be found.",
+                $"Legal hold {legalHoldId} not found in database",
+                "Verify the legal hold ID or contact your security administrator.");
+
+        // Only allow updates if legal hold is ACTIVE
+        if (legalHold.Status != LegalHoldStatus.ACTIVE)
+            throw new InvalidOperationException($"Cannot update legal hold with status {legalHold.Status}. Only ACTIVE legal holds can be updated.");
+
+        // Update allowed fields
+        if (!string.IsNullOrWhiteSpace(description))
+            legalHold.Description = description;
+
+        if (endDate.HasValue)
+            legalHold.EndDate = endDate.Value;
+
+        if (!string.IsNullOrWhiteSpace(legalRepresentative))
+            legalHold.LegalRepresentative = legalRepresentative;
+
+        if (!string.IsNullOrWhiteSpace(legalRepresentativeEmail))
+            legalHold.LegalRepresentativeEmail = legalRepresentativeEmail;
+
+        if (!string.IsNullOrWhiteSpace(lawFirm))
+            legalHold.LawFirm = lawFirm;
+
+        legalHold.UpdatedAt = DateTime.UtcNow;
+        legalHold.UpdatedBy = updatedBy;
+
+        await _context.SaveChangesAsync(cancellationToken);
+
+        _logger.LogInformation("Legal hold {LegalHoldId} updated by {UpdatedBy}", legalHoldId, updatedBy);
+
+        return legalHold;
+    }
+
+    public async Task<List<object>> GetAffectedAuditLogsAsync(
+        Guid legalHoldId,
+        CancellationToken cancellationToken = default)
+    {
+        var legalHold = await _context.LegalHolds.FindAsync(new object[] { legalHoldId }, cancellationToken);
+        if (legalHold == null)
+            throw new NotFoundException(
+                ErrorCodes.SEC_ALERT_NOT_FOUND,
+                "The legal hold you requested could not be found.",
+                $"Legal hold {legalHoldId} not found in database",
+                "Verify the legal hold ID or contact your security administrator.");
+
+        var auditLogs = await _context.AuditLogs
+            .Where(a => a.LegalHoldId == legalHoldId && a.IsUnderLegalHold)
+            .OrderByDescending(a => a.PerformedAt)
+            .Select(a => new
+            {
+                a.Id,
+                a.UserId,
+                a.ActionType,
+                a.Category,
+                a.Severity,
+                a.EntityType,
+                a.EntityId,
+                a.Description,
+                a.PerformedAt,
+                a.IpAddress,
+                a.UserAgent,
+                a.Success,
+                a.TenantId,
+                a.IsUnderLegalHold,
+                a.LegalHoldId
+            })
+            .Take(1000) // Limit to 1000 records for performance
+            .ToListAsync(cancellationToken);
+
+        _logger.LogInformation("Retrieved {Count} audit logs for legal hold {LegalHoldId}", auditLogs.Count, legalHoldId);
+
+        return auditLogs.Cast<object>().ToList();
+    }
 }

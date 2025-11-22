@@ -73,8 +73,11 @@ public class LegalHoldController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// Get all legal holds (filters to active by default)
+    /// </summary>
     [HttpGet]
-    public async Task<IActionResult> GetActiveLegalHolds([FromQuery] Guid? tenantId = null, CancellationToken cancellationToken = default)
+    public async Task<IActionResult> GetLegalHolds([FromQuery] Guid? tenantId = null, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -88,6 +91,27 @@ public class LegalHoldController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// Get active legal holds only
+    /// </summary>
+    [HttpGet("active")]
+    public async Task<IActionResult> GetActiveLegalHolds([FromQuery] Guid? tenantId = null, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var legalHolds = await _legalHoldService.GetActiveLegalHoldsAsync(tenantId, cancellationToken);
+            return Ok(legalHolds);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to retrieve active legal holds");
+            return StatusCode(500, new { error = "Failed to retrieve active legal holds" });
+        }
+    }
+
+    /// <summary>
+    /// Get legal hold by ID
+    /// </summary>
     [HttpGet("{id}")]
     public async Task<IActionResult> GetLegalHold(Guid id, CancellationToken cancellationToken = default)
     {
@@ -95,7 +119,7 @@ public class LegalHoldController : ControllerBase
         {
             var legalHold = await _legalHoldService.GetLegalHoldByIdAsync(id, cancellationToken);
             if (legalHold == null)
-                return NotFound();
+                return NotFound(new { error = $"Legal hold {id} not found" });
             return Ok(legalHold);
         }
         catch (Exception ex)
@@ -105,25 +129,94 @@ public class LegalHoldController : ControllerBase
         }
     }
 
-    [HttpPost("{id}/export")]
-    public async Task<IActionResult> ExportEDiscoveryPackage(Guid id, [FromQuery] EDiscoveryFormat format = EDiscoveryFormat.PDF, CancellationToken cancellationToken = default)
+    /// <summary>
+    /// Update legal hold
+    /// </summary>
+    [HttpPut("{id}")]
+    public async Task<IActionResult> UpdateLegalHold(Guid id, [FromBody] UpdateLegalHoldRequest request, CancellationToken cancellationToken = default)
     {
         try
         {
+            var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == "sub" || c.Type == "nameid");
+            if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
+                return Unauthorized();
+
+            var legalHold = await _legalHoldService.UpdateLegalHoldAsync(
+                id,
+                request.Description,
+                request.EndDate,
+                request.LegalRepresentative,
+                request.LegalRepresentativeEmail,
+                request.LawFirm,
+                userId,
+                cancellationToken);
+
+            return Ok(legalHold);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return NotFound(new { error = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to update legal hold {LegalHoldId}", id);
+            return StatusCode(500, new { error = "Failed to update legal hold" });
+        }
+    }
+
+    /// <summary>
+    /// Get audit logs affected by legal hold
+    /// </summary>
+    [HttpGet("{id}/audit-logs")]
+    public async Task<IActionResult> GetAffectedAuditLogs(Guid id, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var auditLogs = await _legalHoldService.GetAffectedAuditLogsAsync(id, cancellationToken);
+            return Ok(auditLogs);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to retrieve audit logs for legal hold {LegalHoldId}", id);
+            return StatusCode(500, new { error = "Failed to retrieve audit logs" });
+        }
+    }
+
+    /// <summary>
+    /// Export eDiscovery package (aligned with frontend: GET /ediscovery/{format})
+    /// </summary>
+    [HttpGet("{id}/ediscovery/{format}")]
+    public async Task<IActionResult> ExportEDiscoveryPackage(Guid id, EDiscoveryFormat format, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            _logger.LogInformation("Exporting eDiscovery package for legal hold {LegalHoldId} in format {Format}", id, format);
+
             var data = await _eDiscoveryService.CreateEDiscoveryPackageAsync(id, format, cancellationToken);
+
             var contentType = format switch
             {
                 EDiscoveryFormat.PDF => "application/pdf",
                 EDiscoveryFormat.JSON => "application/json",
                 EDiscoveryFormat.CSV => "text/csv",
+                EDiscoveryFormat.EMLX => "message/rfc822",
+                EDiscoveryFormat.NATIVE => "application/octet-stream",
                 _ => "application/octet-stream"
             };
-            return File(data, contentType, $"ediscovery_{id}.{format.ToString().ToLower()}");
+
+            var fileName = $"ediscovery_case_{id}_{DateTime.UtcNow:yyyyMMdd}.{format.ToString().ToLower()}";
+
+            return File(data, contentType, fileName);
+        }
+        catch (InvalidOperationException ex)
+        {
+            _logger.LogWarning(ex, "Legal hold {LegalHoldId} not found for eDiscovery export", id);
+            return NotFound(new { error = ex.Message });
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to export e-discovery package");
-            return StatusCode(500, new { error = "Failed to export package" });
+            _logger.LogError(ex, "Failed to export eDiscovery package for legal hold {LegalHoldId}", id);
+            return StatusCode(500, new { error = "Failed to export eDiscovery package", details = ex.Message });
         }
     }
 }
@@ -139,6 +232,15 @@ public class CreateLegalHoldRequest
     public List<string>? EntityTypes { get; set; }
     public string? LegalRepresentative { get; set; }
     public string? CourtOrder { get; set; }
+}
+
+public class UpdateLegalHoldRequest
+{
+    public string? Description { get; set; }
+    public DateTime? EndDate { get; set; }
+    public string? LegalRepresentative { get; set; }
+    public string? LegalRepresentativeEmail { get; set; }
+    public string? LawFirm { get; set; }
 }
 
 public class ReleaseLegalHoldRequest
