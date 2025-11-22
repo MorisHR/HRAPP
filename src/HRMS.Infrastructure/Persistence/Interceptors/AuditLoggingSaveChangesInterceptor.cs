@@ -124,7 +124,7 @@ public class AuditLoggingSaveChangesInterceptor : SaveChangesInterceptor
             // Capture audit information now (before save)
             var auditLogs = entries.Select(entry => CaptureAuditInfo(entry)).ToList();
 
-            // PERFORMANCE FIX: Use queue-based service if available, otherwise fallback to Task.Run
+            // FORTUNE 500 FIX: Use queue-based service (required for production scale)
             if (_queueService != null)
             {
                 // Queue audit logs for reliable background processing
@@ -147,26 +147,32 @@ public class AuditLoggingSaveChangesInterceptor : SaveChangesInterceptor
             }
             else
             {
-                // Fallback: Using Task.Run (less reliable but maintains backward compatibility)
-                _ = Task.Run(async () =>
-                {
-                    // Wait a moment for SaveChanges to complete
-                    await Task.Delay(100, cancellationToken);
+                // CRITICAL WARNING: IAuditLogQueueService not registered (degraded mode)
+                // This fallback uses synchronous saves which will block SaveChanges
+                // NOT RECOMMENDED for production use - register IAuditLogQueueService in DI container
+                _logger.LogWarning(
+                    "⚠️ DEGRADED MODE: IAuditLogQueueService not available. " +
+                    "Audit logs will be saved synchronously (performance impact). " +
+                    "Register IAuditLogQueueService for production scalability.");
 
-                    foreach (var auditLog in auditLogs)
+                // FORTUNE 500 FIX: Removed Task.Run - use synchronous save instead
+                // Under high load, fire-and-forget Task.Run causes thread pool exhaustion
+                // Better to block and ensure audit logs are saved reliably
+                foreach (var auditLog in auditLogs)
+                {
+                    try
                     {
-                        try
-                        {
-                            await SaveAuditLogAsync(auditLog, cancellationToken);
-                        }
-                        catch (Exception ex)
-                        {
-                            _logger.LogError(ex,
-                                "Failed to create audit log for {EntityType} {EntityId}, Action: {Action}",
-                                auditLog.EntityType, auditLog.EntityId, auditLog.ActionType);
-                        }
+                        EnrichAuditLog(auditLog);
+                        auditLog.Checksum = GenerateChecksum(auditLog);
+                        await SaveAuditLogAsync(auditLog, cancellationToken);
                     }
-                }, cancellationToken);
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex,
+                            "CRITICAL: Failed to save audit log for {EntityType} {EntityId}, Action: {Action}",
+                            auditLog.EntityType, auditLog.EntityId, auditLog.ActionType);
+                    }
+                }
             }
         }
 

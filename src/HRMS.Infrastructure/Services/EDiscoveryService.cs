@@ -205,24 +205,29 @@ public class EDiscoveryService : IEDiscoveryService
                 log.UserId,
                 log.UserEmail,
                 log.UserFullName,
+                log.UserRole,
                 log.ActionType,
                 log.Category,
                 log.Severity,
                 log.EntityType,
                 log.EntityId,
-                log.Description,
+                Description = log.Reason ?? $"{log.ActionType} on {log.EntityType}",
                 log.IpAddress,
                 log.UserAgent,
                 log.Geolocation,
                 log.Success,
-                log.FailureReason,
-                log.Changes,
+                FailureReason = log.ErrorMessage,
+                Changes = new
+                {
+                    OldValues = log.OldValues,
+                    NewValues = log.NewValues,
+                    ChangedFields = log.ChangedFields
+                },
                 log.CorrelationId,
                 log.SessionId,
                 log.TenantId,
                 log.IsUnderLegalHold,
                 log.LegalHoldId,
-                log.RetentionPolicy,
                 log.AdditionalMetadata
             }).ToList()
         };

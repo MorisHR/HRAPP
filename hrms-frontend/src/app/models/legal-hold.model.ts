@@ -39,9 +39,11 @@ export interface LegalHold {
 }
 
 export enum LegalHoldStatus {
+  PENDING = 'PENDING',
   ACTIVE = 'ACTIVE',
   RELEASED = 'RELEASED',
-  EXPIRED = 'EXPIRED'
+  EXPIRED = 'EXPIRED',
+  CANCELLED = 'CANCELLED'
 }
 
 export interface EDiscoveryPackage {
@@ -58,5 +60,6 @@ export enum EDiscoveryFormat {
   EMLX = 'EMLX',
   PDF = 'PDF',
   JSON = 'JSON',
-  CSV = 'CSV'
+  CSV = 'CSV',
+  NATIVE = 'NATIVE'
 }

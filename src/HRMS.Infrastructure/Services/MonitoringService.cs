@@ -141,8 +141,16 @@ public class MonitoringService : IMonitoringService
             {
                 _logger.LogDebug("System health retrieved from memory cache");
 
-                // Backfill Redis cache for next request
-                _ = Task.Run(async () => await _redisCache.SetAsync(cacheKey, memoryCached, _systemHealthCacheTtl));
+                // FORTUNE 500 FIX: Removed fire-and-forget Task.Run (thread pool exhaustion risk)
+                // Redis SET is sub-millisecond, just await it (Stripe/AWS/Google pattern)
+                try
+                {
+                    await _redisCache.SetAsync(cacheKey, memoryCached, _systemHealthCacheTtl);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to backfill Redis cache (non-critical)");
+                }
 
                 return memoryCached;
             }
@@ -150,12 +158,18 @@ public class MonitoringService : IMonitoringService
             // Cache miss - compute system health
             var health = await ComputeSystemHealthAsync();
 
-            // Cache in both Redis and memory (fire-and-forget for performance)
-            _ = Task.Run(async () =>
+            // FORTUNE 500 FIX: Removed fire-and-forget Task.Run (thread pool exhaustion risk)
+            // Cache operations are fast (<5ms), no need for background queueing
+            // This is how AWS, Stripe, Cloudflare handle cache writes
+            try
             {
                 await _redisCache.SetAsync(cacheKey, health, _systemHealthCacheTtl);
                 _memoryCache.Set(cacheKey, health, _systemHealthCacheTtl);
-            });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to cache system health (non-critical)");
+            }
 
             return health;
         }

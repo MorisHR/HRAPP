@@ -6,9 +6,10 @@ namespace HRMS.API.Controllers;
 
 /// <summary>
 /// Compliance reports controller for SOX, GDPR, and regulatory reporting
+/// FORTUNE 500 PATTERN: Nested routing under /api/compliance for consistency
 /// </summary>
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/compliance")]
 [Authorize(Roles = "SuperAdmin,ComplianceOfficer")]
 public class ComplianceReportsController : ControllerBase
 {
@@ -33,7 +34,7 @@ public class ComplianceReportsController : ControllerBase
         _logger = logger;
     }
 
-    [HttpGet("sox/full")]
+    [HttpGet("reports/sox/full")]
     public async Task<IActionResult> GenerateSOXReport(
         [FromQuery] DateTime? startDate = null,
         [FromQuery] DateTime? endDate = null,
@@ -55,7 +56,7 @@ public class ComplianceReportsController : ControllerBase
         }
     }
 
-    [HttpGet("sox/financial-access")]
+    [HttpGet("reports/sox/financial-access")]
     public async Task<IActionResult> GenerateFinancialAccessReport(
         [FromQuery] DateTime? startDate = null,
         [FromQuery] DateTime? endDate = null,
@@ -107,7 +108,7 @@ public class ComplianceReportsController : ControllerBase
         }
     }
 
-    [HttpGet("correlation/user-activity/{userId}")]
+    [HttpGet("reports/correlation/user-activity/{userId}")]
     public async Task<IActionResult> CorrelateUserActivity(
         Guid userId,
         [FromQuery] int hoursBack = 24,
@@ -126,7 +127,7 @@ public class ComplianceReportsController : ControllerBase
         }
     }
 
-    [HttpGet("correlation/patterns")]
+    [HttpGet("reports/correlation/patterns")]
     public async Task<IActionResult> DetectPatterns(
         [FromQuery] Guid? tenantId = null,
         [FromQuery] int daysBack = 30,

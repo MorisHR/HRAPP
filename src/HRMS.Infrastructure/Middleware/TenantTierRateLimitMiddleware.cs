@@ -5,6 +5,7 @@ using HRMS.Infrastructure.Data;
 using HRMS.Core.Enums;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Concurrent;
+using System.Threading;
 
 namespace HRMS.Infrastructure.Middleware;
 
@@ -42,12 +43,30 @@ public class TenantTierRateLimitMiddleware
     private const int CACHE_DURATION_SECONDS = 60; // 1-minute cache
     private const int WINDOW_SECONDS = 60; // 1-minute sliding window
 
+    // FORTUNE 500 PATTERN: Timer-based cleanup (similar to AWS, Stripe, Cloudflare)
+    // Prevents thread pool exhaustion from fire-and-forget Task.Run
+    private static readonly Timer _cleanupTimer;
+    private static readonly object _cleanupLock = new object();
+    private static ILogger<TenantTierRateLimitMiddleware>? _staticLogger;
+
+    static TenantTierRateLimitMiddleware()
+    {
+        // ENTERPRISE PATTERN: Background timer runs cleanup every 60 seconds
+        // This is how Fortune 500 companies handle periodic cleanup (e.g., AWS WAF, Cloudflare rate limiting)
+        _cleanupTimer = new Timer(
+            callback: _ => PerformCleanup(),
+            state: null,
+            dueTime: TimeSpan.FromSeconds(60),
+            period: TimeSpan.FromSeconds(60));
+    }
+
     public TenantTierRateLimitMiddleware(
         RequestDelegate next,
         ILogger<TenantTierRateLimitMiddleware> logger)
     {
         _next = next;
         _logger = logger;
+        _staticLogger ??= logger; // Set static logger once for timer callback
     }
 
     public async Task InvokeAsync(
@@ -297,9 +316,7 @@ public class TenantTierRateLimitMiddleware
                 return (Count: existing.Count + 1, WindowStart: existing.WindowStart);
             });
 
-        // Cleanup old windows (prevent memory leak)
-        CleanupOldWindows(now);
-
+        // NOTE: Cleanup now runs on timer, not per-request (Fortune 500 pattern)
         return entry.Count <= limit;
     }
 
@@ -344,26 +361,27 @@ public class TenantTierRateLimitMiddleware
     }
 
     // ============================================================
-    // MEMORY MANAGEMENT (PREVENT LEAKS)
+    // MEMORY MANAGEMENT (FORTUNE 500 PATTERN)
+    // ============================================================
+    // PATTERN: AWS WAF, Cloudflare rate limiting, Stripe API throttling
+    // Uses dedicated Timer instead of fire-and-forget Task.Run
+    // Prevents thread pool exhaustion under thousands of requests/second
     // ============================================================
 
-    private static DateTime _lastCleanup = DateTime.UtcNow;
-
-    private void CleanupOldWindows(DateTime now)
+    private static void PerformCleanup()
     {
-        // Only cleanup once per minute (performance optimization)
-        if ((now - _lastCleanup).TotalSeconds < 60)
+        // CONCURRENCY: Lock to prevent concurrent cleanup runs
+        if (!Monitor.TryEnter(_cleanupLock))
         {
-            return;
+            return; // Another cleanup is running, skip
         }
 
-        _lastCleanup = now;
-
-        // BACKGROUND: Remove expired windows
-        Task.Run(() =>
+        try
         {
+            var now = DateTime.UtcNow;
             var cutoff = now.AddSeconds(-WINDOW_SECONDS * 2); // Keep last 2 windows
 
+            // Cleanup rate limit counters
             var keysToRemove = _rateLimitCounters
                 .Where(kvp => kvp.Value.WindowStart < cutoff)
                 .Select(kvp => kvp.Key)
@@ -376,10 +394,10 @@ public class TenantTierRateLimitMiddleware
 
             if (keysToRemove.Any())
             {
-                _logger.LogDebug("Cleaned up {Count} expired rate limit windows", keysToRemove.Count);
+                _staticLogger?.LogDebug("Cleaned up {Count} expired rate limit windows", keysToRemove.Count);
             }
 
-            // Also cleanup tier cache
+            // Cleanup tier cache
             var expiredTiers = _tierCache
                 .Where(kvp => (now - kvp.Value.CachedAt).TotalSeconds > CACHE_DURATION_SECONDS * 2)
                 .Select(kvp => kvp.Key)
@@ -389,6 +407,19 @@ public class TenantTierRateLimitMiddleware
             {
                 _tierCache.TryRemove(key, out _);
             }
-        });
+
+            if (expiredTiers.Any())
+            {
+                _staticLogger?.LogDebug("Cleaned up {Count} expired tier cache entries", expiredTiers.Count);
+            }
+        }
+        catch (Exception ex)
+        {
+            _staticLogger?.LogError(ex, "CRITICAL: Rate limit cleanup failed");
+        }
+        finally
+        {
+            Monitor.Exit(_cleanupLock);
+        }
     }
 }

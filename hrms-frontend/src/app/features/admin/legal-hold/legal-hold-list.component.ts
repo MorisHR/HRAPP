@@ -3,12 +3,16 @@ import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { MatDialog } from '@angular/material/dialog';
 import { Chip, ChipColor } from '@app/shared/ui';
 import { UiModule } from '../../../shared/ui/ui.module';
 import { TableComponent, TableColumn, TableColumnDirective, TooltipDirective } from '../../../shared/ui';
 import { LegalHold, LegalHoldStatus } from '../../../models/legal-hold.model';
 import { LegalHoldService } from '../../../services/legal-hold.service';
 import { NotificationService } from '../../../services/notification.service';
+import { CreateLegalHoldDialogComponent } from './create-legal-hold-dialog.component';
+import { LegalHoldDetailsDialogComponent } from './legal-hold-details-dialog.component';
+import { EDiscoveryExportDialogComponent } from './ediscovery-export-dialog.component';
 
 @Component({
   selector: 'app-legal-hold-list',
@@ -43,7 +47,8 @@ export class LegalHoldListComponent implements OnInit {
 
   constructor(
     private legalHoldService: LegalHoldService,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
+    private dialog: MatDialog
   ) {}
 
   ngOnInit(): void {
@@ -78,14 +83,41 @@ export class LegalHoldListComponent implements OnInit {
     }
   }
 
+  createLegalHold(): void {
+    const dialogRef = this.dialog.open(CreateLegalHoldDialogComponent, {
+      width: '800px',
+      maxHeight: '90vh',
+      disableClose: true,
+      data: {}
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        this.loadLegalHolds();
+      }
+    });
+  }
+
   viewDetails(hold: LegalHold): void {
-    console.log('View details for legal hold:', hold.id);
-    this.notificationService.info('Legal hold details dialog not yet implemented');
+    this.dialog.open(LegalHoldDetailsDialogComponent, {
+      width: '900px',
+      maxHeight: '90vh',
+      data: { legalHold: hold }
+    });
   }
 
   exportEDiscovery(hold: LegalHold): void {
-    console.log('Export eDiscovery for legal hold:', hold.id);
-    this.notificationService.info('eDiscovery export not yet implemented');
+    const dialogRef = this.dialog.open(EDiscoveryExportDialogComponent, {
+      width: '700px',
+      maxHeight: '90vh',
+      data: { legalHold: hold }
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        console.log('eDiscovery export completed');
+      }
+    });
   }
 
   releaseLegalHold(hold: LegalHold): void {
