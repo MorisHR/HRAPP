@@ -1,0 +1,372 @@
+{
+  "dashboard": {
+    "title": "Frontend Real User Monitoring (RUM)",
+    "tags": ["frontend", "rum", "web-vitals", "performance"],
+    "timezone": "utc",
+    "schemaVersion": 36,
+    "version": 1,
+    "refresh": "30s",
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "panels": [
+      {
+        "id": 1,
+        "title": "Core Web Vitals Overview",
+        "type": "stat",
+        "gridPos": {"h": 8, "w": 24, "x": 0, "y": 0},
+        "targets": [
+          {
+            "expr": "avg(web_vitals_lcp_ms)",
+            "legendFormat": "LCP (ms)",
+            "refId": "A"
+          },
+          {
+            "expr": "avg(web_vitals_fid_ms)",
+            "legendFormat": "FID (ms)",
+            "refId": "B"
+          },
+          {
+            "expr": "avg(web_vitals_cls_score)",
+            "legendFormat": "CLS Score",
+            "refId": "C"
+          },
+          {
+            "expr": "avg(web_vitals_ttfb_ms)",
+            "legendFormat": "TTFB (ms)",
+            "refId": "D"
+          },
+          {
+            "expr": "avg(web_vitals_fcp_ms)",
+            "legendFormat": "FCP (ms)",
+            "refId": "E"
+          }
+        ],
+        "options": {
+          "reduceOptions": {
+            "values": false,
+            "calcs": ["lastNotNull"]
+          },
+          "orientation": "auto",
+          "textMode": "value_and_name",
+          "colorMode": "value",
+          "graphMode": "area"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "green"},
+                {"value": 2000, "color": "yellow"},
+                {"value": 4000, "color": "red"}
+              ]
+            },
+            "unit": "ms"
+          }
+        }
+      },
+      {
+        "id": 2,
+        "title": "Largest Contentful Paint (LCP) - Target: <2.5s",
+        "type": "timeseries",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+        "targets": [
+          {
+            "expr": "avg(web_vitals_lcp_ms) by (url)",
+            "legendFormat": "{{url}}",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "custom": {
+              "drawStyle": "line",
+              "lineInterpolation": "smooth",
+              "fillOpacity": 10
+            },
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "green"},
+                {"value": 2500, "color": "yellow"},
+                {"value": 4000, "color": "red"}
+              ]
+            },
+            "unit": "ms"
+          }
+        },
+        "options": {
+          "legend": {"displayMode": "list", "placement": "bottom"}
+        }
+      },
+      {
+        "id": 3,
+        "title": "First Input Delay (FID) - Target: <100ms",
+        "type": "timeseries",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
+        "targets": [
+          {
+            "expr": "avg(web_vitals_fid_ms) by (url)",
+            "legendFormat": "{{url}}",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "custom": {
+              "drawStyle": "line",
+              "lineInterpolation": "smooth",
+              "fillOpacity": 10
+            },
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "green"},
+                {"value": 100, "color": "yellow"},
+                {"value": 300, "color": "red"}
+              ]
+            },
+            "unit": "ms"
+          }
+        },
+        "options": {
+          "legend": {"displayMode": "list", "placement": "bottom"}
+        }
+      },
+      {
+        "id": 4,
+        "title": "Cumulative Layout Shift (CLS) - Target: <0.1",
+        "type": "timeseries",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16},
+        "targets": [
+          {
+            "expr": "avg(web_vitals_cls_score) by (url)",
+            "legendFormat": "{{url}}",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "custom": {
+              "drawStyle": "line",
+              "lineInterpolation": "smooth",
+              "fillOpacity": 10
+            },
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "green"},
+                {"value": 0.1, "color": "yellow"},
+                {"value": 0.25, "color": "red"}
+              ]
+            },
+            "decimals": 3
+          }
+        },
+        "options": {
+          "legend": {"displayMode": "list", "placement": "bottom"}
+        }
+      },
+      {
+        "id": 5,
+        "title": "Frontend Error Rate",
+        "type": "timeseries",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 16},
+        "targets": [
+          {
+            "expr": "sum(rate(frontend_error_total[5m])) by (type)",
+            "legendFormat": "{{type}}",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "custom": {
+              "drawStyle": "line",
+              "lineInterpolation": "smooth",
+              "fillOpacity": 10
+            },
+            "unit": "errors/sec"
+          }
+        },
+        "options": {
+          "legend": {"displayMode": "list", "placement": "bottom"}
+        }
+      },
+      {
+        "id": 6,
+        "title": "API Call Performance (Client-Side)",
+        "type": "timeseries",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 24},
+        "targets": [
+          {
+            "expr": "avg(frontend_api_call_duration_ms) by (endpoint)",
+            "legendFormat": "{{endpoint}}",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "custom": {
+              "drawStyle": "line",
+              "lineInterpolation": "smooth",
+              "fillOpacity": 10
+            },
+            "unit": "ms"
+          }
+        },
+        "options": {
+          "legend": {"displayMode": "list", "placement": "bottom"}
+        }
+      },
+      {
+        "id": 7,
+        "title": "API Error Rate (Client-Side)",
+        "type": "timeseries",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 24},
+        "targets": [
+          {
+            "expr": "sum(rate(frontend_api_error_total[5m])) by (endpoint, status)",
+            "legendFormat": "{{endpoint}} ({{status}})",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "custom": {
+              "drawStyle": "line",
+              "lineInterpolation": "smooth",
+              "fillOpacity": 10
+            },
+            "unit": "errors/sec"
+          }
+        },
+        "options": {
+          "legend": {"displayMode": "list", "placement": "bottom"}
+        }
+      },
+      {
+        "id": 8,
+        "title": "Route Navigation Performance",
+        "type": "timeseries",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 32},
+        "targets": [
+          {
+            "expr": "avg(route_change_duration_ms) by (route)",
+            "legendFormat": "{{route}}",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "custom": {
+              "drawStyle": "line",
+              "lineInterpolation": "smooth",
+              "fillOpacity": 10
+            },
+            "unit": "ms"
+          }
+        },
+        "options": {
+          "legend": {"displayMode": "list", "placement": "bottom"}
+        }
+      },
+      {
+        "id": 9,
+        "title": "Resource Loading Performance",
+        "type": "timeseries",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 32},
+        "targets": [
+          {
+            "expr": "avg(resource_load_duration_ms) by (resource_type)",
+            "legendFormat": "{{resource_type}}",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "custom": {
+              "drawStyle": "line",
+              "lineInterpolation": "smooth",
+              "fillOpacity": 10
+            },
+            "unit": "ms"
+          }
+        },
+        "options": {
+          "legend": {"displayMode": "list", "placement": "bottom"}
+        }
+      },
+      {
+        "id": 10,
+        "title": "Total Metrics Received",
+        "type": "stat",
+        "gridPos": {"h": 4, "w": 6, "x": 0, "y": 40},
+        "targets": [
+          {
+            "expr": "frontend_metrics_received_total",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "reduceOptions": {
+            "values": false,
+            "calcs": ["lastNotNull"]
+          },
+          "textMode": "value_and_name",
+          "colorMode": "background"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short",
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "blue"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 11,
+        "title": "Frontend Performance Score",
+        "type": "gauge",
+        "gridPos": {"h": 8, "w": 6, "x": 6, "y": 40},
+        "targets": [
+          {
+            "expr": "100 - (avg(web_vitals_lcp_ms) / 40 + avg(web_vitals_fid_ms) / 5 + avg(web_vitals_cls_score) * 100)",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "orientation": "auto",
+          "reduceOptions": {
+            "values": false,
+            "calcs": ["lastNotNull"]
+          },
+          "showThresholdLabels": true,
+          "showThresholdMarkers": true
+        },
+        "fieldConfig": {
+          "defaults": {
+            "min": 0,
+            "max": 100,
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "red"},
+                {"value": 50, "color": "yellow"},
+                {"value": 75, "color": "green"}
+              ]
+            },
+            "unit": "percent"
+          }
+        }
+      }
+    ]
+  },
+  "overwrite": true
+}

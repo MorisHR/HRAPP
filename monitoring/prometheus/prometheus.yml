@@ -49,7 +49,7 @@ scrape_configs:
         action: keep
 
   # ============================================================================
-  # HRMS API Application Metrics (custom exporter)
+  # HRMS API Application Metrics (backend .NET metrics)
   # ============================================================================
   - job_name: 'hrms-api'
     static_configs:
@@ -62,6 +62,22 @@ scrape_configs:
       - source_labels: [__address__]
         target_label: instance
         replacement: 'hrms-api-server'
+
+  # ============================================================================
+  # HRMS Frontend Metrics (Real User Monitoring - RUM)
+  # Tracks: Web Vitals (LCP, FID, CLS), client-side errors, API performance
+  # ============================================================================
+  - job_name: 'hrms-frontend'
+    static_configs:
+      - targets:
+          - 'localhost:5090/api/frontend-metrics/prometheus'  # Frontend RUM metrics
+
+    scrape_interval: 15s  # Frequent scraping for real-time user experience monitoring
+
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: 'hrms-frontend-app'
 
   # ============================================================================
   # Custom Monitoring Schema Metrics (via custom exporter)

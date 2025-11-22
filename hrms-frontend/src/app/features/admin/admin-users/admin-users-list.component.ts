@@ -1,7 +1,6 @@
 import { Component, signal, inject, OnInit, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 
@@ -13,6 +12,9 @@ import { Paginator, PageEvent } from '../../../shared/ui/components/paginator/pa
 
 // Services
 import { AdminUserService, AdminUser } from '../../../core/services/admin-user.service';
+
+// Dialog
+import { AdminUserDialogComponent } from './admin-user-dialog.component';
 
 @Component({
   selector: 'app-admin-users-list',
@@ -32,7 +34,6 @@ export class AdminUsersListComponent implements OnInit {
   private readonly adminUserService = inject(AdminUserService);
   private readonly dialog = inject(MatDialog);
   private readonly snackBar = inject(MatSnackBar);
-  private readonly router = inject(Router);
 
   // State
   users = signal<AdminUser[]>([]);
@@ -109,24 +110,37 @@ export class AdminUsersListComponent implements OnInit {
   }
 
   /**
-   * Navigate to create user
+   * Open dialog to create new user
    */
   createUser(): void {
-    this.router.navigate(['/admin/admin-users/create']);
+    const dialogRef = this.dialog.open(AdminUserDialogComponent, {
+      width: '700px',
+      maxWidth: '90vw',
+      data: { mode: 'create' }
+    });
+
+    dialogRef.afterClosed().subscribe((result) => {
+      if (result) {
+        this.loadUsers(); // Reload list if user was created
+      }
+    });
   }
 
   /**
-   * Navigate to edit user
+   * Open dialog to edit existing user
    */
   editUser(user: AdminUser): void {
-    this.router.navigate(['/admin/admin-users', user.id, 'edit']);
-  }
+    const dialogRef = this.dialog.open(AdminUserDialogComponent, {
+      width: '700px',
+      maxWidth: '90vw',
+      data: { mode: 'edit', user }
+    });
 
-  /**
-   * View user details
-   */
-  viewUser(user: AdminUser): void {
-    this.router.navigate(['/admin/admin-users', user.id]);
+    dialogRef.afterClosed().subscribe((result) => {
+      if (result) {
+        this.loadUsers(); // Reload list if user was updated
+      }
+    });
   }
 
   /**

@@ -5,6 +5,7 @@ import { provideAnimationsAsync } from '@angular/platform-browser/animations/asy
 
 import { routes } from './app.routes';
 import { authInterceptor } from './core/interceptors/auth.interceptor';
+import { performanceTrackingInterceptor } from './core/interceptors/performance-tracking.interceptor';
 import { CsrfInterceptor } from './core/interceptors/csrf.interceptor';
 import { CsrfService } from './core/services/csrf.service';
 import { provideServiceWorker } from '@angular/service-worker';
@@ -43,7 +44,7 @@ export const appConfig: ApplicationConfig = {
     provideRouter(routes, withComponentInputBinding()),
     provideHttpClient(
       withFetch(),
-      withInterceptors([authInterceptor]),
+      withInterceptors([authInterceptor, performanceTrackingInterceptor]),
       withInterceptorsFromDi() // Enable class-based interceptors for CSRF
     ),
     // FORTUNE 500 SECURITY: CSRF Protection Interceptor

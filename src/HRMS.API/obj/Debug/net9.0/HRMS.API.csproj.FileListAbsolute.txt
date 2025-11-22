@@ -361,3 +361,6 @@
 /workspaces/HRAPP/src/HRMS.API/obj/Debug/net9.0/HRMS.API.genruntimeconfig.cache
 /workspaces/HRAPP/src/HRMS.API/obj/Debug/net9.0/ref/HRMS.API.dll
 /workspaces/HRAPP/src/HRMS.API/bin/Debug/net9.0/UAParser.dll
+/workspaces/HRAPP/src/HRMS.API/bin/Debug/net9.0/Prometheus.NetStandard.dll
+/workspaces/HRAPP/src/HRMS.API/bin/Debug/net9.0/Prometheus.AspNetCore.dll
+/workspaces/HRAPP/src/HRMS.API/bin/Debug/net9.0/Prometheus.AspNetCore.HealthChecks.dll

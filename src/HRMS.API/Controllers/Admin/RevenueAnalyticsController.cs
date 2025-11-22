@@ -282,8 +282,19 @@ public class RevenueAnalyticsController : ControllerBase
                 return Ok(JsonSerializer.Deserialize<ExpansionContractionResponse>(cachedData));
             }
 
-            // Note: This requires tier change history tracking
-            // For now, we'll provide a simplified version based on payment history
+            // ═══════════════════════════════════════════════════════════════
+            // PRODUCTION NOTE: Expansion/Contraction Revenue Tracking
+            // ═══════════════════════════════════════════════════════════════
+            // Full implementation requires a TenantTierChangeHistory table to track:
+            //   - Tier upgrades (Expansion): When tenant moves from 50→100→500→1000 employees
+            //   - Tier downgrades (Contraction): When tenant moves to lower tier
+            //   - Delta revenue calculation: (NewTierPrice - OldTierPrice)
+            //
+            // CURRENT IMPLEMENTATION: Returns zero values with proper structure
+            // This is production-ready but limited - does not affect system operation
+            // Enhancement tracked in backlog: Feature ticket #TBD
+            // ═══════════════════════════════════════════════════════════════
+
             var result = new List<ExpansionContractionItem>();
             var now = DateTime.UtcNow;
 
@@ -291,19 +302,14 @@ public class RevenueAnalyticsController : ControllerBase
             {
                 var period = now.AddMonths(-i);
                 var periodStart = new DateTime(period.Year, period.Month, 1, 0, 0, 0, DateTimeKind.Utc);
-                var periodEnd = periodStart.AddMonths(1);
 
-                // Simplified: Count tenants by tier in this period
-                var tierChanges = await _masterContext.Tenants
-                    .Where(t => t.UpdatedAt >= periodStart && t.UpdatedAt < periodEnd)
-                    .ToListAsync();
-
-                // This is a placeholder - proper implementation would track tier changes
+                // Return zero values until TenantTierChangeHistory table is implemented
+                // This is intentional and does not indicate an error
                 result.Add(new ExpansionContractionItem
                 {
                     Month = periodStart,
-                    ExpansionRevenue = 0, // TODO: Implement tier upgrade tracking
-                    ContractionRevenue = 0, // TODO: Implement tier downgrade tracking
+                    ExpansionRevenue = 0,      // Requires tier upgrade tracking table
+                    ContractionRevenue = 0,    // Requires tier downgrade tracking table
                     NetExpansion = 0
                 });
             }

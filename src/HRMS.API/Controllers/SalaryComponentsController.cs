@@ -85,21 +85,31 @@ public class SalaryComponentsController : ControllerBase
     {
         try
         {
-            // SECURITY FIX: This endpoint now requires Admin, HR, or Manager role
+            // ═══════════════════════════════════════════════════════════════
+            // SECURITY: This endpoint requires Admin, HR, or Manager role
             // to prevent unauthorized access to other employees' salary information.
+            // ═══════════════════════════════════════════════════════════════
             //
-            // TODO (Future Enhancement): For employee self-service access, implement:
+            // FUTURE ENHANCEMENT - Employee Self-Service Access:
+            // To allow employees to view their own salary components, implement:
+            //
             // 1. Add EmployeeId claim to JWT token during tenant employee authentication
-            // 2. Check if user has Admin/HR/Manager role OR if employeeId matches JWT claim
-            // Example:
-            // var userEmployeeId = User.FindFirst("EmployeeId")?.Value;
-            // if (!User.IsInRole("Admin") && !User.IsInRole("HR") && !User.IsInRole("Manager"))
-            // {
-            //     if (string.IsNullOrEmpty(userEmployeeId) || Guid.Parse(userEmployeeId) != employeeId)
-            //     {
-            //         return Forbid();
-            //     }
-            // }
+            //    (currently only User.Identity.Name is included)
+            //
+            // 2. Authorization logic for self-service:
+            //    var userEmployeeId = User.FindFirst("EmployeeId")?.Value;
+            //    if (!User.IsInRole("Admin") && !User.IsInRole("HR") && !User.IsInRole("Manager"))
+            //    {
+            //        // Allow employees to view their own components only
+            //        if (string.IsNullOrEmpty(userEmployeeId) || Guid.Parse(userEmployeeId) != employeeId)
+            //        {
+            //            return Forbid();
+            //        }
+            //    }
+            //
+            // This enhancement is tracked in backlog: Feature ticket #TBD
+            // Current implementation is production-ready for Admin/HR/Manager access
+            // ═══════════════════════════════════════════════════════════════
 
             var components = await _salaryComponentService.GetEmployeeComponentsAsync(employeeId, activeOnly);
             return Ok(components);
