@@ -50,32 +50,9 @@ public class TenantContextValidationMiddleware
 
             if (!tenantId.HasValue || string.IsNullOrEmpty(tenantSchema))
             {
-#if DEBUG
-                // ============================================
-                // SECURITY: DEVELOPMENT-ONLY SuperAdmin Bypass
-                // This code is ONLY compiled in DEBUG builds and physically removed from Release/Production.
-                // Allows SuperAdmin to access tenant endpoints during development when subdomain routing
-                // is not available (localhost/Codespaces).
-                //
-                // CRITICAL: This bypass is DISABLED in production via conditional compilation.
-                // In Release builds, ALL requests must have valid tenant context - NO EXCEPTIONS.
-                // ============================================
-                var user = context.User;
-                var isSuperAdmin = user?.Identity?.IsAuthenticated == true &&
-                                   user.HasClaim(c => c.Type == "Role" && c.Value == "SuperAdmin");
-
-                if (isSuperAdmin)
-                {
-                    _logger.LogWarning(
-                        "⚠️ DEVELOPMENT MODE: SuperAdmin bypassing tenant context: {Path}. " +
-                        "This bypass is DISABLED in production builds.",
-                        path);
-                    await _next(context);
-                    return;
-                }
-#endif
-
-                // PRODUCTION: Block ALL users (including SuperAdmin) without valid tenant context
+                // FORTUNE 500 SECURITY: SuperAdmin bypass PERMANENTLY REMOVED
+                // ALL tenant endpoints require valid tenant context - NO EXCEPTIONS
+                // This ensures complete tenant isolation even for system administrators
                 // This ensures strict tenant isolation in production environments
                 _logger.LogWarning(
                     "SECURITY: Request blocked - No tenant context for path: {Path}, IP: {IP}",

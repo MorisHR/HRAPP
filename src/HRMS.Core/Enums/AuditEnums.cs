@@ -140,6 +140,21 @@ public enum AuditActionType
     /// <summary>Permission denied (unauthorized access attempt)</summary>
     PERMISSION_DENIED = 152,
 
+    /// <summary>Access token blacklisted (immediate revocation)</summary>
+    TOKEN_REVOKED = 153,
+
+    /// <summary>Token removed from blacklist</summary>
+    TOKEN_UNREVOKED = 154,
+
+    /// <summary>All user tokens blacklisted (mass revocation)</summary>
+    MASS_TOKEN_REVOCATION = 155,
+
+    /// <summary>Password expired and must be changed</summary>
+    PASSWORD_EXPIRED = 156,
+
+    /// <summary>Password change failed</summary>
+    PASSWORD_CHANGE_FAILED = 157,
+
     // ============================================
     // TENANT LIFECYCLE ACTIONS (21-30)
     // ============================================
@@ -214,17 +229,14 @@ public enum AuditActionType
     /// <summary>SuperAdmin performed bulk operation</summary>
     SUPERADMIN_BULK_OPERATION = 132,
 
-    /// <summary>Password expired due to rotation policy</summary>
-    PASSWORD_EXPIRED = 133,
-
     /// <summary>Security setting modified by SuperAdmin</summary>
     SECURITY_SETTING_CHANGED = 134,
 
     /// <summary>System-wide setting modified by SuperAdmin</summary>
     SYSTEM_WIDE_SETTING_CHANGED = 135,
 
-    /// <summary>Password change attempt failed (validation failure, wrong current password, password reuse)</summary>
-    PASSWORD_CHANGE_FAILED = 136,
+    /// <summary>SuperAdmin marked subscription payment as paid</summary>
+    PAYMENT_MARKED_PAID = 138,
 
     // ============================================
     // EMPLOYEE LIFECYCLE ACTIONS (31-40)

@@ -15,6 +15,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.Extensions.Configuration;
+using Microsoft.AspNetCore.Http;
 
 namespace HRMS.Infrastructure.Services;
 
@@ -28,6 +29,9 @@ public class AuthService : IAuthService
     private readonly IAuditLogService _auditLogService;
     private readonly IEmailService _emailService;
     private readonly IConfiguration _configuration;
+    private readonly IHttpContextAccessor _httpContextAccessor;
+    private readonly IDeviceFingerprintService _deviceFingerprintService;
+    private readonly ITokenBlacklistService _tokenBlacklistService;
     private readonly string _frontendUrl;
 
     public AuthService(
@@ -38,7 +42,10 @@ public class AuthService : IAuthService
         IMfaService mfaService,
         IAuditLogService auditLogService,
         IEmailService emailService,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        IHttpContextAccessor httpContextAccessor,
+        IDeviceFingerprintService deviceFingerprintService,
+        ITokenBlacklistService tokenBlacklistService)
     {
         _context = context;
         _passwordHasher = passwordHasher;
@@ -48,6 +55,9 @@ public class AuthService : IAuthService
         _auditLogService = auditLogService;
         _emailService = emailService;
         _configuration = configuration;
+        _httpContextAccessor = httpContextAccessor;
+        _deviceFingerprintService = deviceFingerprintService;
+        _tokenBlacklistService = tokenBlacklistService;
         _frontendUrl = _configuration["AppSettings:FrontendUrl"] ?? "http://localhost:4200";
     }
 
@@ -282,6 +292,46 @@ public class AuthService : IAuthService
         // PRODUCTION-GRADE: Generate access token AND refresh token
         // ============================================
 
+        // FORTUNE 500: Enforce concurrent session limits (default: 3 devices)
+        var maxConcurrentSessions = 3; // Default limit
+        var activeTokensCount = await _context.RefreshTokens
+            .Where(rt => rt.AdminUserId == adminUser.Id && rt.RevokedAt == null && rt.ExpiresAt > DateTime.UtcNow)
+            .CountAsync();
+
+        if (activeTokensCount >= maxConcurrentSessions)
+        {
+            // Revoke oldest active session to make room for new login
+            var oldestToken = await _context.RefreshTokens
+                .Where(rt => rt.AdminUserId == adminUser.Id && rt.RevokedAt == null && rt.ExpiresAt > DateTime.UtcNow)
+                .OrderBy(rt => rt.CreatedAt)
+                .FirstOrDefaultAsync();
+
+            if (oldestToken != null)
+            {
+                oldestToken.RevokedAt = DateTime.UtcNow;
+                oldestToken.RevokedByIp = ipAddress;
+                oldestToken.ReasonRevoked = "Concurrent session limit exceeded - oldest session revoked";
+
+                _logger.LogWarning(
+                    "Concurrent session limit ({Limit}) exceeded for user {Email}. Revoked oldest session (created {CreatedAt})",
+                    maxConcurrentSessions, email, oldestToken.CreatedAt);
+
+                // Audit log: Session limit exceeded
+                await _auditLogService.LogSecurityEventAsync(
+                    AuditActionType.SESSION_TIMEOUT,
+                    AuditSeverity.WARNING,
+                    adminUser.Id,
+                    description: $"Concurrent session limit ({maxConcurrentSessions}) exceeded - oldest session revoked",
+                    additionalInfo: JsonSerializer.Serialize(new
+                    {
+                        maxSessions = maxConcurrentSessions,
+                        activeSessionsBeforeRevoke = activeTokensCount,
+                        revokedSessionCreatedAt = oldestToken.CreatedAt,
+                        revokedSessionIp = oldestToken.CreatedByIp
+                    }));
+            }
+        }
+
         // Generate JWT access token (short-lived)
         var accessToken = GenerateJwtToken(adminUser.Id, adminUser.Email, adminUser.UserName);
         var expiresAt = DateTime.UtcNow.AddMinutes(_jwtSettings.ExpirationMinutes);
@@ -310,16 +360,35 @@ public class AuthService : IAuthService
 
     public string GenerateJwtToken(Guid userId, string email, string userName)
     {
-        var claims = new[]
+        var jti = Guid.NewGuid().ToString();
+        var expiresAt = DateTime.UtcNow.AddMinutes(_jwtSettings.ExpirationMinutes);
+
+        // FORTUNE 500: Generate device fingerprint for token theft detection
+        var httpContext = _httpContextAccessor.HttpContext;
+        var deviceFingerprint = httpContext != null
+            ? _deviceFingerprintService.GenerateFingerprint(httpContext)
+            : "unknown";
+        var userAgent = httpContext != null
+            ? _deviceFingerprintService.GetUserAgent(httpContext)
+            : "Unknown";
+        var deviceInfo = httpContext != null
+            ? _deviceFingerprintService.GetDeviceInfo(httpContext)
+            : "Unknown Device";
+
+        var claimsList = new List<Claim>
         {
             new Claim(JwtRegisteredClaimNames.Sub, userId.ToString()),
             new Claim(JwtRegisteredClaimNames.Email, email),
             new Claim(JwtRegisteredClaimNames.UniqueName, userName),
-            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+            new Claim(JwtRegisteredClaimNames.Jti, jti),
             new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
             new Claim(ClaimTypes.Name, userName),
             new Claim(ClaimTypes.Email, email),
-            new Claim(ClaimTypes.Role, "SuperAdmin") // ✅ FIX: Use ClaimTypes.Role instead of lowercase "role"
+            new Claim(ClaimTypes.Role, "SuperAdmin"),
+            // FORTUNE 500: Device security claims
+            new Claim("device_fingerprint", deviceFingerprint),
+            new Claim("user_agent", userAgent),
+            new Claim("device_info", deviceInfo)
         };
 
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSettings.Secret));
@@ -328,10 +397,16 @@ public class AuthService : IAuthService
         var token = new JwtSecurityToken(
             issuer: _jwtSettings.Issuer,
             audience: _jwtSettings.Audience,
-            claims: claims,
-            expires: DateTime.UtcNow.AddMinutes(_jwtSettings.ExpirationMinutes),
+            claims: claimsList,
+            expires: expiresAt,
             signingCredentials: credentials
         );
+
+        // Track token for future revocation
+        if (httpContext != null)
+        {
+            _ = _tokenBlacklistService.TrackUserTokenAsync(userId, jti, expiresAt);
+        }
 
         return new JwtSecurityTokenHandler().WriteToken(token);
     }

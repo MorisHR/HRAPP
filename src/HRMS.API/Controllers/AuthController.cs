@@ -310,23 +310,20 @@ public class AuthController : ControllerBase
     {
         try
         {
-            // DETAILED LOGGING FOR DEBUGGING
+            // SECURITY: NEVER log TOTP secrets or backup codes - they are authentication credentials
             _logger.LogInformation("=== MFA COMPLETE SETUP REQUEST RECEIVED ===");
             _logger.LogInformation("Request object is null: {IsNull}", request == null);
 
             if (request != null)
             {
                 _logger.LogInformation("UserId: {UserId}", request.UserId);
-                _logger.LogInformation("TotpCode: {TotpCode}", request.TotpCode);
-                _logger.LogInformation("Secret: {Secret}", request.Secret);  // Show full secret for debugging
-                _logger.LogInformation("Secret length: {SecretLength}", request.Secret?.Length ?? 0);
+                _logger.LogInformation("TotpCode present: {HasCode}", !string.IsNullOrEmpty(request.TotpCode));
+                // SECURITY: Never log the actual secret - it's equivalent to logging a password
+                _logger.LogInformation("Secret present: {HasSecret}, Length: {SecretLength}",
+                    !string.IsNullOrEmpty(request.Secret),
+                    request.Secret?.Length ?? 0);
                 _logger.LogInformation("BackupCodes count: {BackupCodesCount}", request.BackupCodes?.Count ?? 0);
-
-                // Debug: Show first few backup codes
-                if (request.BackupCodes?.Count > 0)
-                {
-                    _logger.LogInformation("First backup code: {Code}", request.BackupCodes[0]);
-                }
+                // SECURITY: Never log backup codes - they are single-use authentication tokens
             }
 
             _logger.LogInformation("ModelState.IsValid: {IsValid}", ModelState.IsValid);

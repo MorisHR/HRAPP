@@ -12,6 +12,7 @@
 /workspaces/HRAPP/src/HRMS.API/bin/Debug/net9.0/appsettings.Staging.json
 /workspaces/HRAPP/src/HRMS.API/bin/Debug/net9.0/Logs/siem/security-events-20251120.json
 /workspaces/HRAPP/src/HRMS.API/bin/Debug/net9.0/Logs/siem/security-events-20251121.json
+/workspaces/HRAPP/src/HRMS.API/bin/Debug/net9.0/Logs/siem/security-events-20251122.json
 /workspaces/HRAPP/src/HRMS.API/bin/Debug/net9.0/HRMS.API.staticwebassets.endpoints.json
 /workspaces/HRAPP/src/HRMS.API/bin/Debug/net9.0/LatoFont/Lato-Black.ttf
 /workspaces/HRAPP/src/HRMS.API/bin/Debug/net9.0/LatoFont/Lato-BlackItalic.ttf
@@ -56,6 +57,9 @@
 /workspaces/HRAPP/src/HRMS.API/bin/Debug/net9.0/EFCore.BulkExtensions.PostgreSql.dll
 /workspaces/HRAPP/src/HRMS.API/bin/Debug/net9.0/EFCore.BulkExtensions.Sqlite.dll
 /workspaces/HRAPP/src/HRMS.API/bin/Debug/net9.0/EFCore.BulkExtensions.SqlServer.dll
+/workspaces/HRAPP/src/HRMS.API/bin/Debug/net9.0/EPPlus.dll
+/workspaces/HRAPP/src/HRMS.API/bin/Debug/net9.0/EPPlus.Interfaces.dll
+/workspaces/HRAPP/src/HRMS.API/bin/Debug/net9.0/EPPlus.System.Drawing.dll
 /workspaces/HRAPP/src/HRMS.API/bin/Debug/net9.0/ExcelNumberFormat.dll
 /workspaces/HRAPP/src/HRMS.API/bin/Debug/net9.0/FluentValidation.dll
 /workspaces/HRAPP/src/HRMS.API/bin/Debug/net9.0/FluentValidation.AspNetCore.dll
@@ -142,6 +146,7 @@
 /workspaces/HRAPP/src/HRMS.API/bin/Debug/net9.0/Microsoft.IdentityModel.Protocols.dll
 /workspaces/HRAPP/src/HRMS.API/bin/Debug/net9.0/Microsoft.IdentityModel.Protocols.OpenIdConnect.dll
 /workspaces/HRAPP/src/HRMS.API/bin/Debug/net9.0/Microsoft.IdentityModel.Tokens.dll
+/workspaces/HRAPP/src/HRMS.API/bin/Debug/net9.0/Microsoft.IO.RecyclableMemoryStream.dll
 /workspaces/HRAPP/src/HRMS.API/bin/Debug/net9.0/Microsoft.OpenApi.dll
 /workspaces/HRAPP/src/HRMS.API/bin/Debug/net9.0/Microsoft.SqlServer.Server.dll
 /workspaces/HRAPP/src/HRMS.API/bin/Debug/net9.0/Microsoft.SqlServer.Types.dll
@@ -316,6 +321,7 @@
 /workspaces/HRAPP/src/HRMS.API/bin/Debug/net9.0/runtimes/win-x86/native/Microsoft.Data.SqlClient.SNI.dll
 /workspaces/HRAPP/src/HRMS.API/bin/Debug/net9.0/runtimes/win-x64/native/SqlServerSpatial160.dll
 /workspaces/HRAPP/src/HRMS.API/bin/Debug/net9.0/runtimes/win-x86/native/SqlServerSpatial160.dll
+/workspaces/HRAPP/src/HRMS.API/bin/Debug/net9.0/runtimes/win/lib/net7.0/Microsoft.Win32.SystemEvents.dll
 /workspaces/HRAPP/src/HRMS.API/bin/Debug/net9.0/runtimes/linux-arm64/native/libQuestPdfSkia.so
 /workspaces/HRAPP/src/HRMS.API/bin/Debug/net9.0/runtimes/linux-musl-x64/native/libQuestPdfSkia.so
 /workspaces/HRAPP/src/HRMS.API/bin/Debug/net9.0/runtimes/linux-x64/native/libQuestPdfSkia.so
@@ -329,6 +335,7 @@
 /workspaces/HRAPP/src/HRMS.API/bin/Debug/net9.0/runtimes/linux/lib/net8.0/System.DirectoryServices.Protocols.dll
 /workspaces/HRAPP/src/HRMS.API/bin/Debug/net9.0/runtimes/osx/lib/net8.0/System.DirectoryServices.Protocols.dll
 /workspaces/HRAPP/src/HRMS.API/bin/Debug/net9.0/runtimes/win/lib/net8.0/System.DirectoryServices.Protocols.dll
+/workspaces/HRAPP/src/HRMS.API/bin/Debug/net9.0/runtimes/win/lib/net7.0/System.Drawing.Common.dll
 /workspaces/HRAPP/src/HRMS.API/bin/Debug/net9.0/runtimes/win/lib/net7.0/System.Management.dll
 /workspaces/HRAPP/src/HRMS.API/bin/Debug/net9.0/runtimes/win/lib/net9.0/System.Security.Cryptography.Pkcs.dll
 /workspaces/HRAPP/src/HRMS.API/bin/Debug/net9.0/HRMS.Application.dll
@@ -353,9 +360,4 @@
 /workspaces/HRAPP/src/HRMS.API/obj/Debug/net9.0/HRMS.API.pdb
 /workspaces/HRAPP/src/HRMS.API/obj/Debug/net9.0/HRMS.API.genruntimeconfig.cache
 /workspaces/HRAPP/src/HRMS.API/obj/Debug/net9.0/ref/HRMS.API.dll
-/workspaces/HRAPP/src/HRMS.API/bin/Debug/net9.0/EPPlus.dll
-/workspaces/HRAPP/src/HRMS.API/bin/Debug/net9.0/EPPlus.Interfaces.dll
-/workspaces/HRAPP/src/HRMS.API/bin/Debug/net9.0/EPPlus.System.Drawing.dll
-/workspaces/HRAPP/src/HRMS.API/bin/Debug/net9.0/Microsoft.IO.RecyclableMemoryStream.dll
-/workspaces/HRAPP/src/HRMS.API/bin/Debug/net9.0/runtimes/win/lib/net7.0/Microsoft.Win32.SystemEvents.dll
-/workspaces/HRAPP/src/HRMS.API/bin/Debug/net9.0/runtimes/win/lib/net7.0/System.Drawing.Common.dll
+/workspaces/HRAPP/src/HRMS.API/bin/Debug/net9.0/UAParser.dll

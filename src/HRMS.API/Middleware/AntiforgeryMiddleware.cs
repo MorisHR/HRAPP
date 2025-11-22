@@ -14,12 +14,16 @@ public class AntiforgeryMiddleware
     private readonly ILogger<AntiforgeryMiddleware> _logger;
 
     // Endpoints that should skip CSRF validation
+    // SECURITY: Be specific with exemptions - avoid broad wildcards
     private static readonly HashSet<string> ExemptPaths = new(StringComparer.OrdinalIgnoreCase)
     {
         "/api/auth/login",
         "/api/auth/system-", // Secret SuperAdmin login paths
         "/api/auth/refresh-token",
         "/api/auth/csrf-token", // CSRF token endpoint itself
+        "/api/auth/mfa/verify", // MFA verification (part of auth flow)
+        "/api/auth/mfa/setup", // MFA setup during registration
+        "/api/auth/mfa/validate", // MFA validation
         "/api/setup/",
         "/health",
         "/swagger"

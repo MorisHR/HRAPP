@@ -102,6 +102,11 @@ export const routes: Routes = [
         loadComponent: () => import('./features/admin/tenant-management/tenant-form.component').then(m => m.TenantFormComponent)
       },
       {
+        path: 'admin-users',
+        loadComponent: () => import('./features/admin/admin-users/admin-users-list.component').then(m => m.AdminUsersListComponent),
+        data: { title: 'SuperAdmin User Management' }
+      },
+      {
         path: 'audit-logs',
         loadComponent: () => import('./features/admin/audit-logs/audit-logs.component').then(m => m.AdminAuditLogsComponent),
         data: { title: 'System Audit Logs' }

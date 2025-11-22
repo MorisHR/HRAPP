@@ -5,6 +5,7 @@ import { Observable, tap, map, catchError, throwError } from 'rxjs';
 import { User, LoginRequest, LoginResponse, UserRole } from '../models/user.model';
 import { SubdomainService } from './subdomain.service';
 import { SessionManagementService } from './session-management.service';
+import { CsrfService } from './csrf.service';
 import { environment } from '../../../environments/environment';
 
 @Injectable({
@@ -14,6 +15,7 @@ export class AuthService {
   private http = inject(HttpClient);
   private router = inject(Router);
   private sessionManagement = inject(SessionManagementService);
+  private csrfService = inject(CsrfService);
 
   // API URL from environment configuration
   private apiUrl = environment.apiUrl;
@@ -495,6 +497,12 @@ export class AuthService {
 
     // Save user role for post-logout redirect
     this.saveLastUserRole(response.user.role);
+
+    // SECURITY: Refresh CSRF token after authentication
+    // User context has changed, so old anonymous CSRF token is now invalid
+    this.csrfService.refreshToken().catch(err => {
+      console.error('[AUTH] Failed to refresh CSRF token after login:', err);
+    });
   }
 
   /**
@@ -515,6 +523,10 @@ export class AuthService {
 
     this.tokenSignal.set(null);
     this.userSignal.set(null);
+
+    // SECURITY: Clear CSRF token on logout
+    // User is no longer authenticated, get a new anonymous token
+    this.csrfService.clearToken();
   }
 
   /**

@@ -76,40 +76,53 @@
   }
 
   .tenant-info {
+    flex: 1;
+    min-width: 0; // Allows flex item to shrink below content size
+
     .tenant-name {
       font-size: 16px;
       font-weight: 600;
       color: #1f2937;
       margin-bottom: 4px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
     .tenant-subdomain {
       font-size: 14px;
       color: #6b7280;
       font-family: 'Monaco', 'Courier New', monospace;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
   }
 
   .tenant-metrics {
     display: flex;
     gap: 24px;
+    flex-shrink: 0; // Prevent metrics from shrinking
 
     .metric {
       display: flex;
       flex-direction: column;
       align-items: flex-end;
       gap: 4px;
+      min-width: fit-content; // Ensure metrics don't get cut off
 
       .metric-label {
         font-size: 12px;
         color: #6b7280;
         font-weight: 500;
+        white-space: nowrap;
       }
 
       span {
         font-size: 16px;
         font-weight: 600;
         font-variant-numeric: tabular-nums;
+        white-space: nowrap;
       }
     }
   }
@@ -211,8 +224,13 @@
       padding: 16px;
       font-size: 14px;
       color: #1f2937;
+      max-width: 300px; // Prevent table cells from becoming too wide
+      overflow: hidden;
+      text-overflow: ellipsis;
 
       &.subdomain-cell {
+        max-width: 200px;
+
         code {
           padding: 4px 8px;
           background: #f3f4f6;
@@ -220,6 +238,11 @@
           font-family: 'Monaco', 'Courier New', monospace;
           font-size: 13px;
           color: #1f2937;
+          display: inline-block;
+          max-width: 100%;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
         }
       }
 

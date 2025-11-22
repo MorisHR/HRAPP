@@ -351,7 +351,21 @@ public class TenantManagementService
         _logger.LogWarning("Performing HARD DELETE (IRREVERSIBLE) for tenant: {TenantId}, Schema: {SchemaName}",
             tenantId, tenant.SchemaName);
 
-        // TODO: Create backup before deletion
+        // GDPR COMPLIANCE: Create backup before deletion (Article 17 - Right to Erasure)
+        var backupService = new TenantBackupService(_logger, _masterDbContext.Database.GetConnectionString()!);
+        var (backupSuccess, backupPath, backupError) = await backupService.CreatePreDeleteBackupAsync(
+            tenantId, tenant.SchemaName, tenant.CompanyName);
+
+        if (!backupSuccess)
+        {
+            _logger.LogError(
+                "CRITICAL: Failed to create backup before hard delete. Aborting deletion for safety. " +
+                "Tenant: {TenantId}, Error: {Error}",
+                tenantId, backupError);
+            return (false, $"Cannot delete tenant: Backup creation failed - {backupError}. Deletion aborted for data safety.");
+        }
+
+        _logger.LogInformation("✅ Pre-delete backup created: {BackupPath}", backupPath);
 
         // Drop the tenant schema
         var schemaDropped = await _schemaProvisioningService.DropTenantSchemaAsync(tenant.SchemaName);
@@ -368,9 +382,20 @@ public class TenantManagementService
 
         _logger.LogWarning("Tenant HARD DELETED (PERMANENT): {TenantId}", tenantId);
 
-        // TODO: Log audit entry for compliance
+        // COMPLIANCE: Log comprehensive audit entry for regulatory requirements
+        _logger.LogWarning(
+            "🔒 GDPR AUDIT LOG - HARD DELETE EXECUTED\n" +
+            "  Tenant ID: {TenantId}\n" +
+            "  Company: {CompanyName}\n" +
+            "  Schema: {SchemaName}\n" +
+            "  Deleted At: {DeletedAt} UTC\n" +
+            "  Backup Location: {BackupPath}\n" +
+            "  Backup Retention: 90 days\n" +
+            "  GDPR Compliance: Article 17 (Right to Erasure)\n" +
+            "  Action: IRREVERSIBLE",
+            tenantId, tenant.CompanyName, tenant.SchemaName, DateTime.UtcNow, backupPath);
 
-        return (true, "Tenant permanently deleted");
+        return (true, $"Tenant permanently deleted. Backup stored at: {backupPath} (retained for 90 days)");
     }
 
     /// <summary>

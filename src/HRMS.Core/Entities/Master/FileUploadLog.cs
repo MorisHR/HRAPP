@@ -88,19 +88,19 @@ public class FileUploadLog : BaseEntity
     /// Soft delete flag (file still in storage but marked deleted)
     /// RECOVERY: 30-day grace period before permanent deletion
     /// </summary>
-    public bool IsDeleted { get; set; } = false;
+    public new bool IsDeleted { get; set; } = false;
 
     /// <summary>
     /// Soft delete timestamp
     /// COMPLIANCE: Track data retention periods
     /// </summary>
-    public DateTime? DeletedAt { get; set; }
+    public new DateTime? DeletedAt { get; set; }
 
     /// <summary>
     /// User who deleted the file
     /// AUDIT: Required for compliance
     /// </summary>
-    public Guid? DeletedBy { get; set; }
+    public new Guid? DeletedBy { get; set; }
 
     /// <summary>
     /// Permanent deletion date (when file removed from storage)

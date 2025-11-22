@@ -141,9 +141,58 @@ export class InfrastructureHealthComponent implements OnInit {
   }
 
   exportToCSV(): void {
-    console.log('Exporting slow queries to CSV...');
-    // TODO: Implement CSV export
-    alert('CSV export functionality coming soon!');
+    const queries = this.paginatedQueries();
+    if (!queries || queries.length === 0) {
+      alert('No data to export');
+      return;
+    }
+
+    // CSV headers
+    const headers = [
+      'Query Text',
+      'Tenant',
+      'Avg Execution Time (ms)',
+      'Max Execution Time (ms)',
+      'P95 Execution Time (ms)',
+      'Execution Count',
+      'Last Executed',
+      'Severity',
+      'Schema'
+    ];
+
+    // CSV rows
+    const rows = queries.map(q => [
+      `"${(q.queryText || '').replace(/"/g, '""')}"`, // Escape quotes
+      q.tenantSubdomain || 'N/A',
+      q.avgExecutionTimeMs.toFixed(2),
+      q.maxExecutionTimeMs.toFixed(2),
+      q.p95ExecutionTimeMs.toFixed(2),
+      q.executionCount,
+      new Date(q.lastExecuted).toLocaleString(),
+      q.severity,
+      q.schemaName || 'N/A'
+    ]);
+
+    // Combine headers and rows
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.join(','))
+    ].join('\n');
+
+    // Create and download file
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+
+    link.setAttribute('href', url);
+    link.setAttribute('download', `slow-queries-${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    console.log(`Exported ${queries.length} slow queries to CSV`);
   }
 
   getMetricStatusClass(value: number, threshold: number): string {

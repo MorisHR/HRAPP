@@ -1,5 +1,6 @@
 import { Component, signal, inject } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import { MatButtonModule } from '@angular/material/button';
 import { AuthService } from '../../../core/services/auth.service';
 import { UiModule } from '../../../shared/ui/ui.module';
 
@@ -8,6 +9,7 @@ import { UiModule } from '../../../shared/ui/ui.module';
   standalone: true,
   imports: [
     ReactiveFormsModule,
+    MatButtonModule,
     UiModule
   ],
   templateUrl: './login.component.html',

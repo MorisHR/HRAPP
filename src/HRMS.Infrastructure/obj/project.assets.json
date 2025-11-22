@@ -2721,6 +2721,15 @@
           "buildTransitive/net6.0/_._": {}
         }
       },
+      "UAParser/3.1.47": {
+        "type": "package",
+        "compile": {
+          "lib/netcoreapp2.0/UAParser.dll": {}
+        },
+        "runtime": {
+          "lib/netcoreapp2.0/UAParser.dll": {}
+        }
+      },
       "HRMS.Application/1.0.0": {
         "type": "project",
         "framework": ".NETCoreApp,Version=v9.0",
@@ -2740,6 +2749,9 @@
       "HRMS.Core/1.0.0": {
         "type": "project",
         "framework": ".NETCoreApp,Version=v9.0",
+        "dependencies": {
+          "Microsoft.AspNetCore.Http.Abstractions": "2.2.0"
+        },
         "compile": {
           "bin/placeholder/HRMS.Core.dll": {}
         },
@@ -7157,6 +7169,25 @@
         "useSharedDesignerContext.txt"
       ]
     },
+    "UAParser/3.1.47": {
+      "sha512": "I68Jl/Vs5RQZdz9BbmYtnXgujg0jVd61LhKbyNZOCm9lBxZFGxLbiQo6yFj21VYi7DzPvEvrVOmeC6v41AoLfw==",
+      "type": "package",
+      "path": "uaparser/3.1.47",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "lib/net20/UAParser.dll",
+        "lib/net35/UAParser.dll",
+        "lib/net40/UAParser.dll",
+        "lib/net45/UAParser.dll",
+        "lib/netcoreapp2.0/UAParser.dll",
+        "lib/netstandard1.0/UAParser.dll",
+        "lib/netstandard1.3/UAParser.dll",
+        "lib/netstandard1.6/UAParser.dll",
+        "uaparser.3.1.47.nupkg.sha512",
+        "uaparser.nuspec"
+      ]
+    },
     "HRMS.Application/1.0.0": {
       "type": "project",
       "path": "../HRMS.Application/HRMS.Application.csproj",
@@ -7197,7 +7228,8 @@
       "Serilog >= 4.2.0",
       "Serilog.Extensions.Logging >= 9.0.0",
       "StackExchange.Redis >= 2.8.16",
-      "System.IdentityModel.Tokens.Jwt >= 8.14.0"
+      "System.IdentityModel.Tokens.Jwt >= 8.14.0",
+      "UAParser >= 3.1.47"
     ]
   },
   "packageFolders": {
@@ -7357,6 +7389,10 @@
           "System.IdentityModel.Tokens.Jwt": {
             "target": "Package",
             "version": "[8.14.0, )"
+          },
+          "UAParser": {
+            "target": "Package",
+            "version": "[3.1.47, )"
           }
         },
         "imports": [

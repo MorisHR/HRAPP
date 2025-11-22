@@ -3,9 +3,11 @@ import { RouterModule } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
 import { FormsModule } from '@angular/forms';
 
-// Material imports (keeping for form fields only)
+// Material imports
 import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatButtonModule } from '@angular/material/button';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 // Custom UI Module with all components
 import { UiModule } from '../../../shared/ui/ui.module';
@@ -39,9 +41,11 @@ interface MetricConfig {
   imports: [
     RouterModule,
     FormsModule,
-    // Material imports (keeping for form fields only)
+    // Material imports
     MatSelectModule,
     MatFormFieldModule,
+    MatButtonModule,
+    MatTooltipModule,
     // Custom UI Module
     UiModule,
     // Fortune 500 Premium Components

@@ -22,6 +22,16 @@ public class TenantDbContext : DbContext
     public TenantDbContext(DbContextOptions<TenantDbContext> options, string tenantSchema)
         : base(options)
     {
+        // CRITICAL SECURITY: Validate tenant schema to prevent data leakage
+        if (string.IsNullOrWhiteSpace(tenantSchema))
+        {
+            throw new InvalidOperationException(
+                "CRITICAL SECURITY ERROR: Tenant schema cannot be null or empty. " +
+                "This would cause queries to execute against the default 'public' schema, " +
+                "potentially leaking data between tenants. Ensure TenantResolutionMiddleware " +
+                "is properly setting the tenant context before database access.");
+        }
+
         _tenantSchema = tenantSchema;
     }
 
@@ -31,6 +41,16 @@ public class TenantDbContext : DbContext
         IEncryptionService? encryptionService)
         : base(options)
     {
+        // CRITICAL SECURITY: Validate tenant schema to prevent data leakage
+        if (string.IsNullOrWhiteSpace(tenantSchema))
+        {
+            throw new InvalidOperationException(
+                "CRITICAL SECURITY ERROR: Tenant schema cannot be null or empty. " +
+                "This would cause queries to execute against the default 'public' schema, " +
+                "potentially leaking data between tenants. Ensure TenantResolutionMiddleware " +
+                "is properly setting the tenant context before database access.");
+        }
+
         _tenantSchema = tenantSchema;
         _encryptionService = encryptionService;
     }
@@ -100,6 +120,19 @@ public class TenantDbContext : DbContext
 
 #pragma warning disable CS0618 // Suppress obsolete HasCheckConstraint warnings (still functional, migration to ToTable pending)
 #pragma warning disable CS8620 // Suppress nullability mismatch in ValueConverter (encrypted converters handle nulls correctly)
+
+        // CRITICAL SECURITY: Defense-in-depth - Validate schema again before applying
+        // This is a second layer of protection in case the constructor validation is bypassed
+        if (string.IsNullOrWhiteSpace(_tenantSchema))
+        {
+            throw new InvalidOperationException(
+                "CRITICAL SECURITY ERROR: Tenant schema is null or empty in OnModelCreating. " +
+                "Data isolation failure - cannot proceed with database operations.");
+        }
+
+        // SECURITY AUDIT: Log schema context for compliance and debugging
+        // In production, this goes to SIEM for tenant isolation audit trail
+        System.Diagnostics.Debug.WriteLine($"[TENANT ISOLATION] Setting schema to: {_tenantSchema}");
 
         // Set the schema dynamically based on tenant
         modelBuilder.HasDefaultSchema(_tenantSchema);

@@ -107,27 +107,9 @@ public class TenantService : ITenantService, ITenantContext
         var host = httpContext.Request.Host.Host;
         var subdomain = GetSubdomainFromHost(host);
 
-        if (string.IsNullOrEmpty(subdomain))
-        {
-#if DEBUG
-            // ⚠️ SECURITY: Development-only tenant override feature
-            // This code is ONLY compiled in DEBUG builds and is IMPOSSIBLE to execute in Release/Production builds.
-            // Allows testing multi-tenant features locally without setting up DNS subdomains.
-            //
-            // THREAT MODEL: The X-Tenant-Subdomain header could allow tenant isolation bypass if available in production.
-            // MITIGATION: Conditional compilation ensures this feature is physically removed from Release builds.
-            // VERIFICATION: Release builds will not contain this code path, making it impossible to exploit.
-            var headerSubdomain = httpContext.Request.Headers["X-Tenant-Subdomain"].FirstOrDefault();
-            if (!string.IsNullOrEmpty(headerSubdomain))
-            {
-                subdomain = headerSubdomain;
-                _logger.LogWarning(
-                    "⚠️ DEVELOPMENT MODE: Using X-Tenant-Subdomain header override: {Subdomain}. " +
-                    "This feature is disabled in Release builds for security.",
-                    subdomain);
-            }
-#endif
-        }
+        // FORTUNE 500 SECURITY: Header-based tenant override has been PERMANENTLY REMOVED
+        // All tenant resolution MUST use proper subdomain routing for production security
+        // For local development, use: subdomain.localhost:port or configure /etc/hosts
 
         if (string.IsNullOrEmpty(subdomain))
             return (null, null);

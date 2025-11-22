@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "TmTNGH00HkM=",
+  "dgSpecHash": "eM4L+CaBN8k=",
   "success": true,
   "projectFilePath": "/workspaces/HRAPP/src/HRMS.Infrastructure/HRMS.Infrastructure.csproj",
   "expectedPackageFiles": [
@@ -170,7 +170,8 @@
     "/home/codespace/.nuget/packages/system.text.encoding.codepages/8.0.0/system.text.encoding.codepages.8.0.0.nupkg.sha512",
     "/home/codespace/.nuget/packages/system.text.encodings.web/4.5.0/system.text.encodings.web.4.5.0.nupkg.sha512",
     "/home/codespace/.nuget/packages/system.text.json/9.0.10/system.text.json.9.0.10.nupkg.sha512",
-    "/home/codespace/.nuget/packages/system.threading.channels/7.0.0/system.threading.channels.7.0.0.nupkg.sha512"
+    "/home/codespace/.nuget/packages/system.threading.channels/7.0.0/system.threading.channels.7.0.0.nupkg.sha512",
+    "/home/codespace/.nuget/packages/uaparser/3.1.47/uaparser.3.1.47.nupkg.sha512"
   ],
   "logs": []
 }

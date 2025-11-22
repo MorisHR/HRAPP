@@ -10,6 +10,7 @@ using HRMS.API.Filters;
 using HRMS.Core.Settings;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 using Serilog;
 using Serilog.Events;
@@ -351,6 +352,14 @@ builder.Services.AddScoped<IReportService, ReportService>();
 builder.Services.AddScoped<IPdfService, PdfService>();
 builder.Services.AddScoped<TenantManagementService>();
 
+// SuperAdmin User Management Service - Fortune 500-grade user management
+builder.Services.AddScoped<AdminUserManagementService>();
+Log.Information("SuperAdmin user management service registered: CRUD, permissions, password rotation, account locking");
+
+// Tenant Impersonation Service - Fortune 500-grade support/troubleshooting feature
+builder.Services.AddScoped<HRMS.API.Services.IImpersonationService, HRMS.API.Services.ImpersonationService>();
+Log.Information("Tenant impersonation service registered for secure support/troubleshooting");
+
 // Audit Logging Service - Production-grade audit trail
 builder.Services.AddScoped<IAuditLogService, AuditLogService>();
 Log.Information("Audit logging service registered for comprehensive audit trail");
@@ -401,6 +410,16 @@ Log.Information("SuperAdmin permission service registered for granular RBAC");
 // Fortune 500 Rate Limiting Service - DDoS protection with auto-blacklisting
 builder.Services.AddScoped<IRateLimitService, RateLimitService>();
 Log.Information("Fortune 500 rate limiting service registered with Redis support and auto-blacklisting");
+
+// FORTUNE 500: Token Blacklist Service - Immediate JWT revocation capability
+// Enables instant token revocation for employee termination, password resets, security incidents
+builder.Services.AddScoped<ITokenBlacklistService, TokenBlacklistService>();
+Log.Information("Fortune 500 token blacklist service registered: Redis-backed immediate JWT revocation");
+
+// FORTUNE 500: Device Fingerprinting Service - Detect token theft from different devices
+// Combines User-Agent, Accept-Language, and platform characteristics for device identification
+builder.Services.AddScoped<IDeviceFingerprintService, DeviceFingerprintService>();
+Log.Information("Fortune 500 device fingerprinting service registered: Multi-factor device identification");
 
 // Fortune 500 Feature Flag Service - Per-tenant feature control with gradual rollout
 builder.Services.AddScoped<IFeatureFlagService, FeatureFlagService>();
@@ -588,7 +607,7 @@ builder.Services.AddAuthentication(options =>
         ClockSkew = TimeSpan.Zero
     };
 
-    // Enhanced security logging
+    // Enhanced security logging + Token blacklist validation
     options.Events = new JwtBearerEvents
     {
         OnAuthenticationFailed = context =>
@@ -596,11 +615,36 @@ builder.Services.AddAuthentication(options =>
             Log.Warning("JWT authentication failed: {Exception}", context.Exception.Message);
             return Task.CompletedTask;
         },
-        OnTokenValidated = context =>
+        OnTokenValidated = async context =>
         {
             var userId = context.Principal?.Identity?.Name;
             Log.Debug("JWT token validated for user: {UserId}", userId ?? "Unknown");
-            return Task.CompletedTask;
+
+            // FORTUNE 500 SECURITY: Check if token is blacklisted (immediate revocation)
+            var jti = context.Principal?.FindFirst(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Jti)?.Value;
+            if (!string.IsNullOrEmpty(jti))
+            {
+                var blacklistService = context.HttpContext.RequestServices.GetRequiredService<ITokenBlacklistService>();
+                if (await blacklistService.IsTokenBlacklistedAsync(jti))
+                {
+                    Log.Warning("Blacklisted token detected: JTI={Jti}, User={UserId}", jti, userId);
+                    context.Fail("This token has been revoked. Please sign in again.");
+                    return;
+                }
+            }
+
+            // FORTUNE 500 SECURITY: Validate device fingerprint (detect token theft)
+            var tokenFingerprint = context.Principal?.FindFirst("device_fingerprint")?.Value;
+            if (!string.IsNullOrEmpty(tokenFingerprint) && tokenFingerprint != "unknown")
+            {
+                var fingerprintService = context.HttpContext.RequestServices.GetRequiredService<IDeviceFingerprintService>();
+                if (!fingerprintService.ValidateFingerprint(context.HttpContext, tokenFingerprint))
+                {
+                    Log.Warning("Device fingerprint mismatch detected: JTI={Jti}, User={UserId}", jti, userId);
+                    context.Fail("This token was issued for a different device. Please sign in again.");
+                    return;
+                }
+            }
         }
     };
 });

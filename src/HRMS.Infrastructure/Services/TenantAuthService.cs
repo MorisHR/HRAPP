@@ -2,6 +2,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
 using HRMS.Core.Entities.Tenant;
 using HRMS.Core.Entities.Master;
 using HRMS.Core.Interfaces;
@@ -14,6 +15,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.AspNetCore.Http;
 
 namespace HRMS.Infrastructure.Services;
 
@@ -29,6 +31,9 @@ public class TenantAuthService
     private readonly ILogger<TenantAuthService> _logger;
     private readonly IAuditLogService _auditLogService;
     private readonly PasswordValidationService _passwordValidationService;
+    private readonly IHttpContextAccessor _httpContextAccessor;
+    private readonly IDeviceFingerprintService _deviceFingerprintService;
+    private readonly ITokenBlacklistService _tokenBlacklistService;
 
     public TenantAuthService(
         MasterDbContext masterContext,
@@ -37,7 +42,10 @@ public class TenantAuthService
         IConfiguration configuration,
         ILogger<TenantAuthService> logger,
         IAuditLogService auditLogService,
-        PasswordValidationService passwordValidationService)
+        PasswordValidationService passwordValidationService,
+        IHttpContextAccessor httpContextAccessor,
+        IDeviceFingerprintService deviceFingerprintService,
+        ITokenBlacklistService tokenBlacklistService)
     {
         _masterContext = masterContext;
         _passwordHasher = passwordHasher;
@@ -47,6 +55,9 @@ public class TenantAuthService
         _logger = logger;
         _auditLogService = auditLogService;
         _passwordValidationService = passwordValidationService;
+        _httpContextAccessor = httpContextAccessor;
+        _deviceFingerprintService = deviceFingerprintService;
+        _tokenBlacklistService = tokenBlacklistService;
     }
 
     public async Task<(string Token, string RefreshToken, DateTime ExpiresAt, Employee User, Guid TenantId)?> LoginAsync(
@@ -327,6 +338,21 @@ public class TenantAuthService
         string subdomain,
         string schemaName)
     {
+        var jti = Guid.NewGuid().ToString();
+        var expiresAt = DateTime.UtcNow.AddMinutes(_jwtSettings.ExpirationMinutes);
+
+        // FORTUNE 500: Generate device fingerprint for token theft detection
+        var httpContext = _httpContextAccessor.HttpContext;
+        var deviceFingerprint = httpContext != null
+            ? _deviceFingerprintService.GenerateFingerprint(httpContext)
+            : "unknown";
+        var userAgent = httpContext != null
+            ? _deviceFingerprintService.GetUserAgent(httpContext)
+            : "Unknown";
+        var deviceInfo = httpContext != null
+            ? _deviceFingerprintService.GetDeviceInfo(httpContext)
+            : "Unknown Device";
+
         // Determine employee roles based on job title and manager status
         var roles = new List<string> { "TenantEmployee" };
 
@@ -366,13 +392,17 @@ public class TenantAuthService
             new Claim(JwtRegisteredClaimNames.Sub, employeeId.ToString()),
             new Claim(JwtRegisteredClaimNames.Email, email),
             new Claim(JwtRegisteredClaimNames.UniqueName, fullName),
-            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+            new Claim(JwtRegisteredClaimNames.Jti, jti),
             new Claim(ClaimTypes.NameIdentifier, employeeId.ToString()),
             new Claim(ClaimTypes.Name, fullName),
             new Claim(ClaimTypes.Email, email),
             new Claim("tenant_id", tenantId.ToString()),
             new Claim("tenant_subdomain", subdomain),
-            new Claim("tenant_schema", schemaName)
+            new Claim("tenant_schema", schemaName),
+            // FORTUNE 500: Device security claims
+            new Claim("device_fingerprint", deviceFingerprint),
+            new Claim("user_agent", userAgent),
+            new Claim("device_info", deviceInfo)
         };
 
         // Add all role claims
@@ -391,9 +421,15 @@ public class TenantAuthService
             issuer: _jwtSettings.Issuer,
             audience: _jwtSettings.Audience,
             claims: claims,
-            expires: DateTime.UtcNow.AddMinutes(_jwtSettings.ExpirationMinutes),
+            expires: expiresAt,
             signingCredentials: credentials
         );
+
+        // Track token for future revocation
+        if (httpContext != null)
+        {
+            _ = _tokenBlacklistService.TrackUserTokenAsync(employeeId, jti, expiresAt);
+        }
 
         return new JwtSecurityTokenHandler().WriteToken(token);
     }

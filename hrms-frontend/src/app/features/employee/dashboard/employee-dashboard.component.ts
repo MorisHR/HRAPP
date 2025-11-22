@@ -1,6 +1,9 @@
 import { Component, signal, inject, ChangeDetectionStrategy } from '@angular/core';
 import { RouterModule } from '@angular/router';
 
+// Material imports
+import { MatButtonModule } from '@angular/material/button';
+
 // Custom UI Module with all components
 import { UiModule } from '../../../shared/ui/ui.module';
 
@@ -12,6 +15,7 @@ import { ThemeService } from '../../../core/services/theme.service';
   standalone: true,
   imports: [
     RouterModule,
+    MatButtonModule,
     UiModule
   ],
   templateUrl: './employee-dashboard.component.html',

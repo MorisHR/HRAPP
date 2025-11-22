@@ -8,6 +8,7 @@ import { Subject, debounceTime, takeUntil } from 'rxjs';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatButtonModule } from '@angular/material/button';
 
 // Services
 import { EmployeeService } from '../../../core/services/employee.service';
@@ -78,6 +79,7 @@ import { Chip, ExpansionPanel, ExpansionPanelGroup } from '../../../shared/ui';
     MatCardModule,
     MatIconModule,
     MatProgressBarModule,
+    MatButtonModule,
     UiModule,
     Chip,
     DatePipe,

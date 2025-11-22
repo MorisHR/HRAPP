@@ -96,7 +96,7 @@ public class DPAController : ControllerBase
                 AuditRights = request.AuditRights ?? "Annual",
                 NextAuditDate = request.NextAuditDate,
                 CreatedAt = DateTime.UtcNow,
-                CreatedBy = Guid.Empty, // TODO: Get from current user context
+                CreatedBy = Guid.Parse(User.FindFirst("sub")?.Value ?? Guid.Empty.ToString()),
                 UpdatedAt = DateTime.UtcNow
             };
 

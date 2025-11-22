@@ -187,7 +187,7 @@ public class SubscriptionPaymentController : ControllerBase
 
             // Audit log
             await _auditLogService.LogSuperAdminActionAsync(
-                AuditActionType.TENANT_TIER_UPDATED, // TODO: Add PAYMENT_MARKED_PAID action type
+                AuditActionType.PAYMENT_MARKED_PAID,
                 superAdminId,
                 superAdminEmail,
                 targetTenantId: payment.TenantId,

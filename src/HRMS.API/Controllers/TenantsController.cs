@@ -372,16 +372,17 @@ public class TenantsController : ControllerBase
                 return NotFound(new { success = false, message = "No pending activation found for this email and company" });
             }
 
-            // STEP 3: EMAIL VERIFICATION - Must match tenant contact email
-            if (!string.Equals(tenant.ContactEmail, request.Email, StringComparison.OrdinalIgnoreCase))
+            // STEP 3: EMAIL VERIFICATION - Must match tenant admin email
+            // SECURITY FIX: Validate against AdminEmail (where activation was sent), not ContactEmail
+            if (!string.Equals(tenant.AdminEmail, request.Email, StringComparison.OrdinalIgnoreCase))
             {
-                _logger.LogWarning("Resend activation attempt with mismatched email. Subdomain: {Subdomain}, ProvidedEmail: {Email}, ActualEmail: {ContactEmail}. IP: {IpAddress}",
-                    request.Subdomain, request.Email, tenant.ContactEmail, ipAddress);
+                _logger.LogWarning("Resend activation attempt with mismatched email. Subdomain: {Subdomain}, ProvidedEmail: {Email}, ActualEmail: {AdminEmail}. IP: {IpAddress}",
+                    request.Subdomain, request.Email, tenant.AdminEmail, ipAddress);
 
                 await LogActivationResendAttemptAsync(tenant.Id, request.Email, ipAddress, userAgent,
                     success: false, failureReason: "Email mismatch");
 
-                return BadRequest(new { success = false, message = "Email does not match company registration" });
+                return BadRequest(new { success = false, message = "Email does not match the admin email used during registration" });
             }
 
             // STEP 4: STATUS CHECK - Tenant must be in Pending status

@@ -99,6 +99,12 @@ public class MasterDbContext : DbContext
     public DbSet<TenantHealthHistory> TenantHealthHistories { get; set; }
 
     /// <summary>
+    /// Dashboard statistics snapshots for historical trend analysis
+    /// FORTUNE 500 PATTERN: AWS CloudWatch Metrics, Datadog Time Series
+    /// </summary>
+    public DbSet<DashboardStatisticsSnapshot> DashboardStatisticsSnapshots { get; set; }
+
+    /// <summary>
     /// GDPR ARTICLE 7: User consent management with immutable audit trail
     /// FORTUNE 500 PATTERN: OneTrust, TrustArc consent platforms
     /// COMPLIANCE: GDPR, CCPA, ePrivacy Directive

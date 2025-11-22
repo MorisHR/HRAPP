@@ -10,3 +10,4 @@
 /workspaces/HRAPP/src/HRMS.Core/obj/Debug/net9.0/refint/HRMS.Core.dll
 /workspaces/HRAPP/src/HRMS.Core/obj/Debug/net9.0/HRMS.Core.pdb
 /workspaces/HRAPP/src/HRMS.Core/obj/Debug/net9.0/ref/HRMS.Core.dll
+/workspaces/HRAPP/src/HRMS.Core/obj/Debug/net9.0/HRMS.Core.csproj.AssemblyReference.cache

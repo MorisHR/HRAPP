@@ -1,0 +1,213 @@
+<div class="admin-users-container">
+  <app-card>
+    <div class="header">
+      <div class="title-section">
+        <h2>SuperAdmin User Management</h2>
+        <p class="subtitle">Manage platform administrators and their permissions</p>
+      </div>
+      <app-button
+        variant="primary"
+        (click)="createUser()"
+        [disabled]="loading()">
+        <i class="icon-plus"></i> Create SuperAdmin
+      </app-button>
+    </div>
+
+    <!-- Filters -->
+    <div class="filters">
+      <div class="search-box">
+        <input
+          type="text"
+          placeholder="Search by name, email, or username..."
+          [(ngModel)]="searchTerm"
+          (keyup.enter)="onSearch()"
+          class="search-input"
+        />
+        <app-button variant="secondary" size="small" (click)="onSearch()">
+          <i class="icon-search"></i> Search
+        </app-button>
+      </div>
+
+      <div class="filter-buttons">
+        <app-button
+          [variant]="activeFilter() === undefined ? 'primary' : 'secondary'"
+          size="small"
+          (click)="onFilterChange(undefined)">
+          All
+        </app-button>
+        <app-button
+          [variant]="activeFilter() === true ? 'primary' : 'secondary'"
+          size="small"
+          (click)="onFilterChange(true)">
+          Active Only
+        </app-button>
+        <app-button
+          [variant]="activeFilter() === false ? 'primary' : 'secondary'"
+          size="small"
+          (click)="onFilterChange(false)">
+          Inactive Only
+        </app-button>
+      </div>
+    </div>
+
+    <!-- Loading State -->
+    @if (loading()) {
+      <div class="loading-state">
+        <div class="spinner"></div>
+        <p>Loading SuperAdmin users...</p>
+      </div>
+    }
+
+    <!-- Error State -->
+    @if (error()) {
+      <div class="error-state">
+        <p>{{ error() }}</p>
+        <app-button variant="secondary" (click)="loadUsers()">
+          <i class="icon-refresh"></i> Retry
+        </app-button>
+      </div>
+    }
+
+    <!-- Users Table -->
+    @if (!loading() && !error()) {
+      <div class="table-container">
+        <table class="users-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Username</th>
+              <th>Status</th>
+              <th>Last Login</th>
+              <th>2FA</th>
+              <th>Session Timeout</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (user of users(); track user.id) {
+              <tr [class.locked]="user.isLocked" [class.inactive]="!user.isActive">
+                <td>
+                  <div class="user-name">
+                    <strong>{{ user.firstName }} {{ user.lastName }}</strong>
+                    @if (user.isInitialSetupAccount) {
+                      <app-badge color="primary" size="small">Setup Account</app-badge>
+                    }
+                  </div>
+                </td>
+                <td>{{ user.email }}</td>
+                <td>{{ user.userName }}</td>
+                <td>
+                  <app-badge [color]="getStatusColor(user)">
+                    {{ getStatusText(user) }}
+                  </app-badge>
+                  @if (isPasswordExpired(user)) {
+                    <app-badge color="error" size="small">Password Expired</app-badge>
+                  }
+                </td>
+                <td>
+                  <div class="last-login">
+                    <div>{{ formatDate(user.lastLoginDate) }}</div>
+                    @if (user.lastLoginIPAddress) {
+                      <small class="ip-address">{{ user.lastLoginIPAddress }}</small>
+                    }
+                  </div>
+                </td>
+                <td>
+                  <app-badge [color]="user.isTwoFactorEnabled ? 'success' : 'warning'" size="small">
+                    {{ user.isTwoFactorEnabled ? 'Enabled' : 'Disabled' }}
+                  </app-badge>
+                </td>
+                <td>{{ user.sessionTimeoutMinutes }} min</td>
+                <td>
+                  <div class="actions">
+                    <app-button
+                      variant="secondary"
+                      size="small"
+                      (click)="viewUser(user)"
+                      title="View Details">
+                      <i class="icon-eye"></i>
+                    </app-button>
+                    <app-button
+                      variant="secondary"
+                      size="small"
+                      (click)="editUser(user)"
+                      title="Edit User">
+                      <i class="icon-edit"></i>
+                    </app-button>
+                    @if (user.isLocked) {
+                      <app-button
+                        variant="warning"
+                        size="small"
+                        (click)="unlockAccount(user)"
+                        title="Unlock Account">
+                        <i class="icon-unlock"></i>
+                      </app-button>
+                    }
+                    <app-button
+                      variant="secondary"
+                      size="small"
+                      (click)="changePassword(user)"
+                      title="Change Password">
+                      <i class="icon-key"></i>
+                    </app-button>
+                    <app-button
+                      [variant]="user.isActive ? 'warning' : 'success'"
+                      size="small"
+                      (click)="toggleActive(user)"
+                      [title]="user.isActive ? 'Deactivate' : 'Activate'">
+                      <i [class]="user.isActive ? 'icon-pause' : 'icon-play'"></i>
+                    </app-button>
+                    @if (!user.isInitialSetupAccount) {
+                      <app-button
+                        variant="danger"
+                        size="small"
+                        (click)="deleteUser(user)"
+                        title="Delete User">
+                        <i class="icon-trash"></i>
+                      </app-button>
+                    }
+                  </div>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="8" class="empty-state">
+                  <div class="empty-content">
+                    <i class="icon-users"></i>
+                    <p>No SuperAdmin users found</p>
+                    @if (searchTerm() || activeFilter() !== undefined) {
+                      <app-button variant="secondary" (click)="searchTerm.set(''); activeFilter.set(undefined); loadUsers()">
+                        Clear Filters
+                      </app-button>
+                    }
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      @if (users().length > 0) {
+        <div class="pagination-container">
+          <app-paginator
+            [length]="totalCount()"
+            [pageSize]="pageSize()"
+            [pageIndex]="pageIndex()"
+            [pageSizeOptions]="[10, 20, 50, 100]"
+            (page)="onPageChange($event)">
+          </app-paginator>
+        </div>
+      }
+
+      <!-- Summary -->
+      <div class="summary">
+        <p>
+          Showing {{ users().length }} of {{ totalCount() }} SuperAdmin user{{ totalCount() !== 1 ? 's' : '' }}
+        </p>
+      </div>
+    }
+  </app-card>
+</div>

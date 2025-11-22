@@ -827,36 +827,50 @@ public class SubscriptionManagementService : ISubscriptionManagementService
             return cachedDashboard;
         }
 
-        // Calculate dashboard metrics
+        // FORTUNE 500 FIX: Execute queries sequentially to avoid DbContext concurrency issues
+        // Each await completes before the next one starts, preventing concurrent operations
+
+        // Get all metrics sequentially
+        var totalActiveSubscriptions = await _context.Tenants
+            .CountAsync(t => t.Status == TenantStatus.Active || t.Status == TenantStatus.ExpiringSoon);
+
+        var annualRecurringRevenue = await GetAnnualRecurringRevenueAsync();
+        var overdueAmount = await GetTotalOverdueAmountAsync();
+        var upcomingRevenue = await GetUpcomingRevenueAsync(30);
+
+        var overduePaymentCount = await _context.SubscriptionPayments
+            .CountAsync(p => p.Status == SubscriptionPaymentStatus.Overdue);
+
+        var upcomingRenewalsCount = await _context.Tenants
+            .CountAsync(t => t.SubscriptionEndDate.HasValue
+                && t.SubscriptionEndDate.Value >= DateTime.UtcNow
+                && t.SubscriptionEndDate.Value <= DateTime.UtcNow.AddDays(30));
+
+        var renewalRate = await GetRenewalRateAsync();
+        var churnRate = await GetChurnRateAsync();
+
+        var tenantsByTier = await _context.Tenants
+            .Where(t => t.Status == TenantStatus.Active)
+            .GroupBy(t => t.EmployeeTier)
+            .ToDictionaryAsync(g => g.Key, g => g.Count());
+
+        var paymentsByStatus = await _context.SubscriptionPayments
+            .GroupBy(p => p.Status)
+            .ToDictionaryAsync(g => g.Key, g => g.Count());
+
+        // Build dashboard object with pre-fetched data
         var dashboard = new RevenueDashboard
         {
-            TotalActiveSubscriptions = await _context.Tenants
-                .CountAsync(t => t.Status == TenantStatus.Active || t.Status == TenantStatus.ExpiringSoon),
-
-            AnnualRecurringRevenueMUR = await GetAnnualRecurringRevenueAsync(),
-            OverdueAmountMUR = await GetTotalOverdueAmountAsync(),
-            UpcomingRevenue30DaysMUR = await GetUpcomingRevenueAsync(30),
-
-            OverduePaymentCount = await _context.SubscriptionPayments
-                .CountAsync(p => p.Status == SubscriptionPaymentStatus.Overdue),
-
-            UpcomingRenewals30DaysCount = await _context.Tenants
-                .CountAsync(t => t.SubscriptionEndDate.HasValue
-                    && t.SubscriptionEndDate.Value >= DateTime.UtcNow
-                    && t.SubscriptionEndDate.Value <= DateTime.UtcNow.AddDays(30)),
-
-            RenewalRate = await GetRenewalRateAsync(),
-            ChurnRate = await GetChurnRateAsync(),
-
-            TenantsByTier = await _context.Tenants
-                .Where(t => t.Status == TenantStatus.Active)
-                .GroupBy(t => t.EmployeeTier)
-                .ToDictionaryAsync(g => g.Key, g => g.Count()),
-
-            PaymentsByStatus = await _context.SubscriptionPayments
-                .GroupBy(p => p.Status)
-                .ToDictionaryAsync(g => g.Key, g => g.Count()),
-
+            TotalActiveSubscriptions = totalActiveSubscriptions,
+            AnnualRecurringRevenueMUR = annualRecurringRevenue,
+            OverdueAmountMUR = overdueAmount,
+            UpcomingRevenue30DaysMUR = upcomingRevenue,
+            OverduePaymentCount = overduePaymentCount,
+            UpcomingRenewals30DaysCount = upcomingRenewalsCount,
+            RenewalRate = renewalRate,
+            ChurnRate = churnRate,
+            TenantsByTier = tenantsByTier,
+            PaymentsByStatus = paymentsByStatus,
             GeneratedAt = DateTime.UtcNow
         };
 
